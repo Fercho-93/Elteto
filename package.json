@@ -1,0 +1,8 @@
+{
+  "name": "elteto",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
