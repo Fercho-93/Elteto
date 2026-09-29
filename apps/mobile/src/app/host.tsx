@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { COLORS, SHADOW } from "../theme";
 import { View, Text, TextInput, Pressable, StyleSheet, FlatList } from "react-native";
 import { useRouter } from "expo-router";
 import { listGames } from "game-core";
@@ -55,14 +56,14 @@ export default function HostScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0b3d26", padding: 20, gap: 8 },
-  label: { color: "#d7f0e2", fontSize: 14, marginTop: 16, marginBottom: 4 },
-  input: { backgroundColor: "#124a30", color: "#fff", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
-  gameChip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: "#124a30", borderWidth: 1, borderColor: "#1f8a4c" },
-  gameChipSelected: { backgroundColor: "#1f8a4c" },
-  gameChipText: { color: "#cfe9db" },
-  gameChipTextSelected: { color: "#fff", fontWeight: "700" },
-  button: { backgroundColor: "#1f8a4c", paddingVertical: 16, borderRadius: 12, alignItems: "center", marginTop: 28 },
+  container: { flex: 1, backgroundColor: COLORS.ink, padding: 22, gap: 8 },
+  label: { color: COLORS.citrus, fontSize: 13, fontWeight: "900", letterSpacing: 1, textTransform: "uppercase", marginTop: 16, marginBottom: 4 },
+  input: { backgroundColor: COLORS.paper, color: COLORS.black, borderWidth: 3, borderColor: COLORS.black, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16, fontWeight: "700", ...SHADOW },
+  gameChip: { paddingHorizontal: 15, paddingVertical: 11, borderRadius: 12, backgroundColor: COLORS.plum, borderWidth: 2, borderColor: COLORS.black },
+  gameChipSelected: { backgroundColor: COLORS.citrus, transform: [{ rotate: "-1deg" }], ...SHADOW },
+  gameChipText: { color: COLORS.paper, fontWeight: "700" },
+  gameChipTextSelected: { color: COLORS.black, fontWeight: "900" },
+  button: { backgroundColor: COLORS.pink, paddingVertical: 17, paddingHorizontal: 14, borderWidth: 3, borderColor: COLORS.black, borderRadius: 14, alignItems: "center", marginTop: 28, ...SHADOW },
   buttonDisabled: { opacity: 0.4 },
-  buttonText: { color: "#fff", fontSize: 17, fontWeight: "700" },
+  buttonText: { color: COLORS.black, fontSize: 17, fontWeight: "900" },
 });
