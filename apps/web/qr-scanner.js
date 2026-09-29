@@ -54,11 +54,12 @@
 
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d", { willReadFrequently: true });
-    let stopped = false, frameHandle = null;
+    let stopped = false, frameHandle = null, lastScanAt = 0;
 
-    function tick() {
+    function tick(now) {
       if (stopped) return;
-      if (videoEl.readyState >= 2 && videoEl.videoWidth) {
+      if (now - lastScanAt >= 140 && videoEl.readyState >= 2 && videoEl.videoWidth) {
+        lastScanAt = now;
         canvas.width = videoEl.videoWidth;
         canvas.height = videoEl.videoHeight;
         context.drawImage(videoEl, 0, 0, canvas.width, canvas.height);

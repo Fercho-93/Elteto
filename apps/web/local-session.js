@@ -62,7 +62,7 @@ export class LocalHostSession {
   }
 
   async acceptOfflineAnswer(answerCode) {
-    const answer = decodeSignal(answerCode);
+    const answer = await decodeSignal(answerCode);
     if (answer.type !== "answer") throw new Error("Escanea el QR de respuesta del invitado.");
     const peer = this.peers.get(answer.peerId);
     if (!peer) throw new Error("Esta respuesta es de otra invitación o ya caducó.");

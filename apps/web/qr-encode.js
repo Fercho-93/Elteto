@@ -44,7 +44,7 @@
     const quietZone = 4;
     // Un código con muchos cuadraditos (una invitación larga) necesita más píxeles para
     // seguir siendo legible por una cámara; con pocos, no hace falta un lienzo enorme.
-    const targetSize = Math.min(420, Math.max(260, modules.length * 6));
+    const targetSize = Math.min(620, Math.max(320, modules.length * 8));
     const scale = Math.max(1, Math.floor(targetSize / (modules.length + quietZone * 2)));
     const size = (modules.length + quietZone * 2) * scale;
     canvas.width = size;

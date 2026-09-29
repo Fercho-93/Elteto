@@ -69,7 +69,7 @@ function renderJoinForm() {
 
 function codePanel(label, code, action) {
   if (!code) return "";
-  return `<section class="code-card"><div class="code-head"><span class="code-badge">1</span><div><strong>${label}</strong><small>${action === "offer" && state.inviteMode === "offline" ? "Escanea este QR desde el botón Abrir cámara dentro de Elteto." : action === "answer" ? "El anfitrión debe escanearlo desde Elteto para cerrar el enlace local." : "Escanea con la cámara normal del móvil para abrir Elteto."}</small></div></div>
+  return `<section class="code-card"><div class="code-head"><span class="code-badge">1</span><div><strong>${label}</strong><small>${action === "offer" && state.inviteMode === "offline" ? "Escanéalo desde Elteto. Sube el brillo de esta pantalla para que el otro móvil lo enfoque." : action === "answer" ? "El anfitrión debe escanearlo desde Elteto para cerrar el enlace local." : "Escanea con la cámara normal del móvil para abrir Elteto."}</small></div></div>
     <canvas class="invite-qr" data-qr-action="${action}" aria-label="Código QR de conexión"></canvas><textarea class="code-field code-output" rows="3" readonly spellcheck="false">${esc(code)}</textarea>
     <div class="code-actions"><button class="button button-small button-dark" data-action="copy-code" data-code-action="${action}">Copiar código</button><button class="button button-small button-paper" data-action="share-code" data-code-action="${action}">Compartir código</button></div>
   </section>`;
@@ -334,7 +334,7 @@ async function beginQrScan(target) {
   scanTarget = target;
   const overlay = document.createElement("section");
   overlay.className = "scan-overlay";
-  overlay.innerHTML = `<div class="scan-panel"><div class="eyebrow">Conexión de la mesa</div><h2>Apunta al código QR</h2><video id="qr-video" playsinline muted></video><p class="helper">Mantén el código entero dentro del recuadro y evita reflejos.</p><button class="button button-paper full-button" data-action="stop-scan">Cancelar</button></div>`;
+  overlay.innerHTML = `<div class="scan-panel"><div class="eyebrow">Conexión de la mesa</div><h2>Apunta al código QR</h2><video id="qr-video" playsinline muted></video><p class="helper">Centra el QR entero y sube el brillo de la pantalla que lo muestra. Dale unos segundos para enfocar.</p><button class="button button-paper full-button" data-action="stop-scan">Cancelar</button></div>`;
   document.body.appendChild(overlay);
   try {
     const video = overlay.querySelector("#qr-video");
