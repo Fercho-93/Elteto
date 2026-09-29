@@ -1,4 +1,5 @@
 import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
+import { COLORS, SHADOW } from "../theme";
 import type { CinquilloView } from "game-core";
 import { FRENCH_RANKS } from "game-core";
 import { CardView } from "./CardView";
@@ -62,18 +63,18 @@ export function CinquilloScreen({ view }: { view: CinquilloView }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0b3d26", padding: 16 },
-  banner: { color: "#8ee6b0", fontSize: 18, fontWeight: "800", textAlign: "center", marginBottom: 8 },
-  sectionTitle: { color: "#cfe9db", fontSize: 13, fontWeight: "700", marginTop: 12, textTransform: "uppercase" },
-  table: { backgroundColor: "#124a30", borderRadius: 10, padding: 10, marginTop: 4 },
-  tableRow: { color: "#fff", fontSize: 14 },
-  dim: { color: "#8fb99e" },
-  playerLine: { color: "#d7f0e2" },
-  playerTurn: { color: "#fff", fontWeight: "800" },
-  error: { color: "#ffb4b4", marginTop: 8 },
-  passButton: { backgroundColor: "#7a4a1f", paddingVertical: 12, borderRadius: 10, alignItems: "center", marginTop: 8 },
+  container: { flex: 1, backgroundColor: COLORS.ink, padding: 16 },
+  banner: { color: COLORS.black, backgroundColor: COLORS.citrus, borderWidth: 2, borderColor: COLORS.black, borderRadius: 12, padding: 10, fontSize: 18, fontWeight: "900", textAlign: "center", marginBottom: 10, ...SHADOW },
+  sectionTitle: { color: COLORS.citrus, fontSize: 12, fontWeight: "900", marginTop: 14, letterSpacing: 1.2, textTransform: "uppercase" },
+  table: { backgroundColor: COLORS.plum, borderWidth: 2, borderColor: COLORS.black, borderRadius: 14, padding: 12, marginTop: 5, ...SHADOW },
+  tableRow: { color: COLORS.paper, fontSize: 15, fontWeight: "800", lineHeight: 23 },
+  dim: { color: COLORS.muted },
+  playerLine: { color: COLORS.paper, backgroundColor: COLORS.plum, borderRadius: 8, paddingVertical: 5, paddingHorizontal: 8 },
+  playerTurn: { color: COLORS.black, backgroundColor: COLORS.cyan, fontWeight: "900" },
+  error: { color: COLORS.red, marginTop: 8, fontWeight: "800" },
+  passButton: { backgroundColor: COLORS.orange, borderWidth: 3, borderColor: COLORS.black, paddingVertical: 13, borderRadius: 12, alignItems: "center", marginTop: 8, ...SHADOW },
   disabled: { opacity: 0.4 },
-  passButtonText: { color: "#fff", fontWeight: "700" },
-  log: { maxHeight: 120, marginTop: 4 },
-  logLine: { color: "#a9cdb9", fontSize: 12 },
+  passButtonText: { color: COLORS.black, fontWeight: "900" },
+  log: { maxHeight: 120, marginTop: 5, backgroundColor: COLORS.plum, borderRadius: 10, padding: 8 },
+  logLine: { color: COLORS.paper, fontSize: 12, lineHeight: 17 },
 });
