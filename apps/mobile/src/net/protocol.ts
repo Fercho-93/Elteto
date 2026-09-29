@@ -1,17 +1,6 @@
-export const DISCOVERY_PORT = 57123;
 export const GAME_PORT = 57124;
-export const DISCOVERY_MAGIC = "elteto-host-v1";
 
 export type LobbyPlayer = { id: string; name: string; isHost: boolean };
-
-export type HostAnnouncement = {
-  magic: typeof DISCOVERY_MAGIC;
-  hostName: string;
-  roomName: string;
-  gameId: string;
-  port: number;
-  playerCount: number;
-};
 
 /** Mensajes cliente -> host. */
 export type ClientMessage =

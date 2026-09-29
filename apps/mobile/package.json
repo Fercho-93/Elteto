@@ -21,7 +21,6 @@
     "react-native-safe-area-context": "^5.10.0",
     "react-native-screens": "^4.28.0",
     "react-native-tcp-socket": "^6.4.3",
-    "react-native-udp": "^4.1.7",
     "uuid": "^14.0.2"
   },
   "devDependencies": {

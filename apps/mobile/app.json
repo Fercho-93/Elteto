@@ -9,7 +9,10 @@
     "userInterfaceStyle": "light",
     "plugins": ["expo-router"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocalNetworkUsageDescription": "Elteto conecta los móviles de una misma Wi-Fi o hotspot para jugar partidas locales."
+      }
     },
     "android": {
       "adaptiveIcon": {
