@@ -11,7 +11,7 @@ export default function HostScreen() {
   const games = useMemo(() => listGames(), []);
   const [gameId, setGameId] = useState(games[0]?.id ?? "");
   const [hostName, setHostName] = useState("");
-  const [roomName, setRoomName] = useState("Partida de " + (hostName || "alguien"));
+  const [roomName, setRoomName] = useState("");
 
   const canCreate = hostName.trim().length > 0 && gameId.length > 0;
 
@@ -36,10 +36,10 @@ export default function HostScreen() {
       />
 
       <Text style={styles.label}>Tu nombre</Text>
-      <TextInput style={styles.input} placeholder="p.ej. Fernando" placeholderTextColor="#8fb99e" value={hostName} onChangeText={setHostName} />
+      <TextInput style={styles.input} placeholder="p.ej. La jefa de la mesa" placeholderTextColor="#8E7B88" value={hostName} onChangeText={setHostName} />
 
       <Text style={styles.label}>Nombre de la sala</Text>
-      <TextInput style={styles.input} placeholder="p.ej. Partida del sábado" placeholderTextColor="#8fb99e" value={roomName} onChangeText={setRoomName} />
+      <TextInput style={styles.input} placeholder={`p.ej. La timba de ${hostName || "esta noche"}`} placeholderTextColor="#8fb99e" value={roomName} onChangeText={setRoomName} />
 
       <Pressable
         disabled={!canCreate}
