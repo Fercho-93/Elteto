@@ -76,6 +76,9 @@ export const cinquilloEngine: GameEngine<CinquilloState, CinquilloView, Cinquill
   maxPlayers: 6,
 
   createInitialState(players, seed) {
+    if (players.length < this.minPlayers || players.length > this.maxPlayers || new Set(players).size !== players.length) {
+      throw new Error(`El Cinquillo requiere entre ${this.minPlayers} y ${this.maxPlayers} jugadores distintos.`);
+    }
     const rng = createRng(seed);
     const deck = shuffle(buildFrenchDeck(), rng);
     const hands: Record<PlayerId, Card[]> = {};
