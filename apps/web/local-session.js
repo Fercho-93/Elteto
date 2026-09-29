@@ -161,7 +161,7 @@ export class LocalGuestSession {
     if (message.type === "welcome") {
       this.playerId = message.data.playerId;
       this.gameId = message.data.gameId;
-      this.onChange({ kind: "lobby", players: this.players, gameId: this.gameId, answerCode: this.answerCode, connected: true });
+      this.onChange({ kind: "lobby", playerId: this.playerId, players: this.players, gameId: this.gameId, answerCode: this.answerCode, connected: true });
     } else if (message.type === "lobby") {
       this.players = message.data.players || [];
       this.gameId = message.data.gameId;
@@ -169,7 +169,7 @@ export class LocalGuestSession {
     } else if (message.type === "started") {
       this.onChange({ kind: "started" });
     } else if (message.type === "state") {
-      this.onChange({ kind: "game", players: this.players, gameId: this.gameId, view: message.data.view });
+      this.onChange({ kind: "game", playerId: this.playerId, players: this.players, gameId: this.gameId, view: message.data.view });
     } else if (message.type === "error") {
       this.onChange({ kind: "error", message: message.data?.message || "No se pudo completar la acción." });
     }
