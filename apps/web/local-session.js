@@ -31,7 +31,9 @@ export class LocalHostSession {
   }
 
   publishLobby() {
-    this.onChange({ kind: "lobby", players: this.players(), gameId: this.engine.id, roomName: this.roomName });
+    const players = this.players();
+    this.onChange({ kind: "lobby", players, gameId: this.engine.id, roomName: this.roomName });
+    this.broadcast(say("lobby", { players, gameId: this.engine.id, roomName: this.roomName }));
   }
 
   async createInvite() {
