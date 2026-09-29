@@ -4,5 +4,8 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "scripts": {
+    "build:web": "npx tsc -p packages/game-core/tsconfig.json && node scripts/build-web.mjs"
+  }
 }
