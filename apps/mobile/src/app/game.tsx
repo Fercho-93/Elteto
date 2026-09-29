@@ -1,4 +1,5 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
+import { COLORS, SHADOW } from "../theme";
 import { useRouter } from "expo-router";
 import type { MusView, CinquilloView } from "game-core";
 import { useGameSession } from "../state/GameSession";
@@ -37,8 +38,8 @@ export default function GameScreen() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, backgroundColor: "#0b3d26", alignItems: "center", justifyContent: "center" },
-  dim: { color: "#a9cdb9" },
-  leaveButton: { paddingVertical: 12, alignItems: "center", backgroundColor: "#0b3d26" },
-  leaveButtonText: { color: "#cfe9db" },
+  center: { flex: 1, backgroundColor: COLORS.ink, alignItems: "center", justifyContent: "center" },
+  dim: { color: COLORS.paper, fontWeight: "700" },
+  leaveButton: { paddingVertical: 13, alignItems: "center", backgroundColor: COLORS.night, borderTopWidth: 2, borderColor: COLORS.black },
+  leaveButtonText: { color: COLORS.pink, fontWeight: "900", letterSpacing: 0.4 },
 });
