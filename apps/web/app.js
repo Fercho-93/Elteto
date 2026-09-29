@@ -244,8 +244,8 @@ app.addEventListener("click", async (event) => {
       if (!name || !offer) throw new Error("Escribe tu nombre y pega la invitación.");
       state.name = name; state.offerCode = offer; state.role = "client"; state.error = ""; state.screen = "lobby"; render();
       const guest = new LocalGuestSession(offer, name, (change) => {
-        if (change.kind === "lobby") { state.players = change.players || []; state.gameId = change.gameId || state.gameId; state.answerCode = change.answerCode || state.answerCode; }
-        else if (change.kind === "game") { state.players = change.players || state.players; state.view = change.view; state.gameId = change.gameId || state.gameId; state.screen = "game"; }
+        if (change.kind === "lobby") { state.players = change.players || []; state.playerId = change.playerId || state.playerId; state.gameId = change.gameId || state.gameId; state.answerCode = change.answerCode || state.answerCode; }
+        else if (change.kind === "game") { state.players = change.players || state.players; state.playerId = change.playerId || state.playerId; state.view = change.view; state.gameId = change.gameId || state.gameId; state.screen = "game"; }
         else if (change.kind === "started") state.error = "";
         else if (change.kind === "error" || change.kind === "disconnected") { state.error = change.message; flash(change.message); }
         render();
