@@ -298,6 +298,11 @@ app.addEventListener("click", async (event) => {
   }
 });
 
+app.addEventListener("input", (event) => {
+  if (event.target.matches("#host-name")) state.name = event.target.value;
+  else if (event.target.matches("#room-name")) state.roomName = event.target.value;
+});
+
 app.addEventListener("change", (event) => {
   if (event.target.matches('input[name="game"]')) {
     state.gameId = event.target.value;
