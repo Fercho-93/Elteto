@@ -269,7 +269,10 @@ app.addEventListener("click", async (event) => {
       await state.host.acceptAnswer(answer);
       state.answerCode = "";
       renderLobby();
-    } else if (action === "scan-offer") await beginQrScan("offer");\n    else if (action === "scan-answer") await beginQrScan("answer");\n    else if (action === "stop-scan") endQrScan();\n    else if (action === "copy-code") await copyCode(button.dataset.codeAction);
+    } else if (action === "scan-offer") await beginQrScan("offer");
+    else if (action === "scan-answer") await beginQrScan("answer");
+    else if (action === "stop-scan") endQrScan();
+    else if (action === "copy-code") await copyCode(button.dataset.codeAction);
     else if (action === "share-code") await shareCode(button.dataset.codeAction);
     else if (action === "start-game") {
       state.host.startGame();
@@ -354,7 +357,8 @@ function endQrScan() {
   scanTarget = null;
   document.querySelector(".scan-overlay")?.remove();
 }
-\nfunction sendAction(action) {
+
+function sendAction(action) {
   if (state.role === "host") state.host.applyLocalAction(action);
   else state.guest.sendAction(action);
 }
