@@ -13,8 +13,8 @@ async function rewriteModuleImports(directory) {
     if (entry.isDirectory()) await rewriteModuleImports(fullPath);
     else if (entry.name.endsWith(".js")) {
       const source = await readFile(fullPath, "utf8");
-      const updated = source.replace(/((?:from\\s*|import\\s*)["'])(\\.{1,2}\\/[^"']+)(["'])/g, (match, start, specifier, end) => {
-        if (/\\.[a-z0-9]+$/i.test(specifier)) return match;
+      const updated = source.replace(/((?:from\s*|import\s*)["'])(\.{1,2}\/[^"']+)(["'])/g, (match, start, specifier, end) => {
+        if (/\.[a-z0-9]+$/i.test(specifier)) return match;
         return `${start}${specifier}.js${end}`;
       });
       if (updated !== source) await writeFile(fullPath, updated);
