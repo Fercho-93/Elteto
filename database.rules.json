@@ -1,0 +1,29 @@
+{
+  "rules": {
+    "rooms": {
+      "$roomId": {
+        "meta": {
+          ".read": "auth != null",
+          ".write": "auth != null && ((!data.exists() && newData.child('ownerUid').val() == auth.uid) || data.child('ownerUid').val() == auth.uid)",
+          ".validate": "newData.hasChildren(['ownerUid', 'gameId', 'roomName', 'hostName'])"
+        },
+        "requests": {
+          ".read": "auth != null && auth.uid == root.child('rooms').child($roomId).child('meta').child('ownerUid').val()",
+          "$guestUid": {
+            ".read": "auth != null && (auth.uid == $guestUid || auth.uid == root.child('rooms').child($roomId).child('meta').child('ownerUid').val())",
+            "join": {
+              ".write": "auth != null && auth.uid == $guestUid",
+              ".validate": "newData.hasChildren(['name']) && newData.child('name').isString() && newData.child('name').val().length <= 24"
+            },
+            "offer": {
+              ".write": "auth != null && auth.uid == root.child('rooms').child($roomId).child('meta').child('ownerUid').val()"
+            },
+            "answer": {
+              ".write": "auth != null && (auth.uid == $guestUid || auth.uid == root.child('rooms').child($roomId).child('meta').child('ownerUid').val())"
+            }
+          }
+        }
+      }
+    }
+  }
+}
