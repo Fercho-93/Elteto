@@ -14,6 +14,7 @@ export default function LobbyScreen() {
 
   const engine = gameId ? getGame(gameId) : null;
   const enoughPlayers = engine ? players.length >= engine.minPlayers : false;
+  const roomFull = engine ? players.length >= engine.maxPlayers : false;
 
   return (
     <View style={styles.container}>
@@ -37,9 +38,13 @@ export default function LobbyScreen() {
       {error && <Text style={styles.error}>{error}</Text>}
 
       {role === "host" && (
-        <Pressable disabled={!enoughPlayers} style={[styles.button, !enoughPlayers && styles.buttonDisabled]} onPress={startGame}>
+        <Pressable disabled={!enoughPlayers || roomFull} style={[styles.button, (!enoughPlayers || roomFull) && styles.buttonDisabled]} onPress={startGame}>
           <Text style={styles.buttonText}>
-            {enoughPlayers ? "Empezar partida" : `Esperando jugadores (${players.length}/${engine?.minPlayers})`}
+            {roomFull
+            ? `Sala completa (${players.length}/${engine?.maxPlayers})`
+            : enoughPlayers
+              ? "Empezar partida"
+              : `Esperando jugadores (${players.length}/${engine?.minPlayers})`}
           </Text>
         </Pressable>
       )}
