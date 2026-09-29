@@ -72,7 +72,6 @@ export async function requestRoomJoin(roomId, playerName) {
   const { db, uid } = await connectFirebase();
   const metaSnapshot = await get(ref(db, path(roomId, "meta")));
   if (!metaSnapshot.exists()) throw new Error("No encuentro esa sala. Pide al anfitrión un QR nuevo.");
-  const requestRef = ref(db, path(roomId, `requests/${uid}`));
   await set(ref(db, path(roomId, `requests/${uid}/join`)), {
     name: playerName,
     createdAt: serverTimestamp(),
@@ -86,10 +85,7 @@ export async function requestRoomJoin(roomId, playerName) {
       });
     },
     async publishAnswer(answerCode) {
-      await set(ref(db, path(roomId, `requests/${uid}/answer`), answerCode));
-    },
-    async leave() {
-      await remove(requestRef);
+      await set(ref(db, path(roomId, `requests/${uid}/answer`)), answerCode);
     },
   };
 }
