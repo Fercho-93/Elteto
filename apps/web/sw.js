@@ -1,7 +1,7 @@
 const CACHE = "elteto-shell-v1";
 const ASSETS = [
   "./", "./index.html", "./styles.css", "./app.js", "./local-session.js", "./local-transport.js",
-  "./manifest.webmanifest", "./icon.svg",
+  "./manifest.webmanifest", "./icon.svg", "./qrcode-generator.js", "./qr-encode.js", "./qr-scanner.js", "./jsqr.js",
   "./game-core/index.js", "./game-core/engine.js", "./game-core/deck.js",
   "./game-core/games/mus.js", "./game-core/games/cinquillo.js"
 ];
