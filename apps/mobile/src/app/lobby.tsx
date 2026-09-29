@@ -38,13 +38,13 @@ export default function LobbyScreen() {
       {error && <Text style={styles.error}>{error}</Text>}
 
       {role === "host" && (
-        <Pressable disabled={!enoughPlayers || roomFull} style={[styles.button, (!enoughPlayers || roomFull) && styles.buttonDisabled]} onPress={startGame}>
+        <Pressable disabled={!enoughPlayers} style={[styles.button, !enoughPlayers && styles.buttonDisabled]} onPress={startGame}>
           <Text style={styles.buttonText}>
-            {roomFull
-            ? `Sala completa (${players.length}/${engine?.maxPlayers})`
-            : enoughPlayers
-              ? "Empezar partida"
-              : `Esperando jugadores (${players.length}/${engine?.minPlayers})`}
+            {enoughPlayers
+            ? roomFull
+              ? `Empezar partida (${players.length}/${engine?.maxPlayers})`
+              : "Empezar partida"
+            : `Esperando jugadores (${players.length}/${engine?.minPlayers})`}
           </Text>
         </Pressable>
       )}
