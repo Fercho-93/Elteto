@@ -1,4 +1,4 @@
-const CACHE = "elteto-shell-v1";
+const CACHE = "elteto-shell-v2";
 const ASSETS = [
   "./", "./index.html", "./styles.css", "./app.js", "./local-session.js", "./local-transport.js",
   "./manifest.webmanifest", "./icon.svg", "./qrcode-generator.js", "./qr-encode.js", "./qr-scanner.js", "./jsqr.js",
