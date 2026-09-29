@@ -3,7 +3,6 @@ import { COLORS, SHADOW } from "../theme";
 import { View, Text, Pressable, StyleSheet, FlatList } from "react-native";
 import { useRouter } from "expo-router";
 import { getGame } from "game-core";
-import { GAME_PORT } from "../net/protocol";
 import { useGameSession } from "../state/GameSession";
 
 export default function LobbyScreen() {
@@ -28,8 +27,8 @@ export default function LobbyScreen() {
       {role === "host" && (
         <View style={styles.addressCard}>
           <Text style={styles.addressLabel}>IP DE LA SALA</Text>
-          <Text selectable style={styles.address}>{hostAddress ? `${hostAddress}:${GAME_PORT}` : "Busca la IP local en los ajustes de Wi-Fi"}</Text>
-          {!hostAddress && <Text style={styles.addressHint}>En iPhone: Ajustes → Wi-Fi → toca ⓘ junto a la red conectada. Comparte la dirección IPv4.</Text>}
+          <Text selectable style={styles.address}>{hostAddress ? hostAddress : "Busca la IP local en los ajustes de Wi-Fi"}</Text>
+          {<Text style={styles.addressHint}>{hostAddress ? "El puerto ya está configurado. Comparte solo esta IP." : "En iPhone: Ajustes → Wi-Fi → toca ⓘ junto a la red conectada. Comparte la dirección IPv4."}</Text>}
         </View>
       )}
 
