@@ -1,0 +1,11 @@
+{
+  "name": "Elteto · Cartas, piques y revancha",
+  "short_name": "Elteto",
+  "description": "Juega a cartas con tu gente desde cada móvil.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#21172b",
+  "theme_color": "#21172b",
+  "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
