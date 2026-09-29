@@ -3,11 +3,12 @@ import { COLORS, SHADOW } from "../theme";
 import { View, Text, Pressable, StyleSheet, FlatList } from "react-native";
 import { useRouter } from "expo-router";
 import { getGame } from "game-core";
+import { GAME_PORT } from "../net/protocol";
 import { useGameSession } from "../state/GameSession";
 
 export default function LobbyScreen() {
   const router = useRouter();
-  const { role, gameId, players, started, error, startGame, leave } = useGameSession();
+  const { role, gameId, players, started, error, hostAddress, roomName, startGame, leave } = useGameSession();
 
   useEffect(() => {
     if (started) router.replace("/game");
@@ -19,10 +20,18 @@ export default function LobbyScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{engine?.label ?? "Cargando..."}</Text>
+      <Text style={styles.title}>{roomName || engine?.label || "Cargando..."}</Text>
       <Text style={styles.subtitle}>
-        {role === "host" ? "Comparte tu WiFi/hotspot: los demás se conectarán automáticamente." : "Esperando a que el anfitrión empiece la partida."}
+        {role === "host" ? "Pasa la IP a quienes vayan a jugar contigo. Debéis estar en la misma Wi-Fi o hotspot." : "Esperando a que el anfitrión empiece la partida."}
       </Text>
+
+      {role === "host" && (
+        <View style={styles.addressCard}>
+          <Text style={styles.addressLabel}>IP DE LA SALA</Text>
+          <Text selectable style={styles.address}>{hostAddress ? `${hostAddress}:${GAME_PORT}` : "Busca la IP local en los ajustes de Wi-Fi"}</Text>
+          {!hostAddress && <Text style={styles.addressHint}>En iPhone: Ajustes → Wi-Fi → toca ⓘ junto a la red conectada. Comparte la dirección IPv4.</Text>}
+        </View>
+      )}
 
       <FlatList
         data={players}
@@ -67,6 +76,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.ink, padding: 22 },
   title: { color: COLORS.citrus, fontSize: 32, fontWeight: "900", letterSpacing: -0.6 },
   subtitle: { color: COLORS.paper, fontSize: 15, lineHeight: 21, marginTop: 8 },
+  addressCard: { backgroundColor: COLORS.cyan, borderWidth: 3, borderColor: COLORS.black, borderRadius: 14, padding: 15, marginTop: 18, ...SHADOW },
+  addressLabel: { color: COLORS.black, fontSize: 12, fontWeight: "900", letterSpacing: 1 },
+  address: { color: COLORS.black, fontSize: 21, fontWeight: "900", marginTop: 6 },
+  addressHint: { color: COLORS.black, fontSize: 13, lineHeight: 19, marginTop: 7 },
   playerRow: { flexDirection: "row", justifyContent: "space-between", backgroundColor: COLORS.plum, padding: 14, borderRadius: 13, borderWidth: 2, borderColor: COLORS.black },
   playerName: { color: COLORS.paper, fontSize: 16, fontWeight: "800" },
   hostBadge: { color: COLORS.citrus, fontSize: 12, fontWeight: "900", textTransform: "uppercase" },
