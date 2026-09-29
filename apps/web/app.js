@@ -7,7 +7,7 @@ const SUITS = { oros: "🟡", copas: "🍷", espadas: "⚔️", bastos: "🌿", 
 const state = {
   screen: "home", role: null, name: "", roomName: "", gameId: "", playerId: null,
   players: [], view: null, host: null, guest: null, offerCode: "", answerCode: "",
-  selected: new Set(), error: "", started: false,
+  selected: new Set(), error: "", started: false, inviteMode: "offline",
 };
 
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
@@ -59,9 +59,9 @@ function renderJoinForm() {
   state.screen = "join-form";
   app.innerHTML = `${header()}<section class="panel">
     <div class="eyebrow">Te guardaron sitio… y fruta 🍑</div><h2>Busca tu mesa</h2>
-    <p class="helper">Escanea con la cámara el QR del anfitrión. Elteto se abrirá y te sentará en la mesa automáticamente.</p>
+    <p class="helper">Con internet, escanea el enlace del anfitrión. Sin internet, abre Elteto en ambos móviles, conéctalos a la misma Wi-Fi o hotspot y escanea aquí el QR de invitación; luego el anfitrión escanea tu respuesta.</p>
     <label class="field-label" for="join-name">Tu nombre</label><input class="text-field" id="join-name" maxlength="24" placeholder="Donde las dan, las toman" value="${esc(state.name)}">
-    <label class="field-label" for="offer-code">Enlace o código de sala</label><div class="scan-row"><button class="button button-paper" data-action="scan-offer">Abrir cámara</button><span>o pega el enlace</span></div><textarea class="code-field" id="offer-code" rows="3" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="https://fercho-93.github.io/Elteto/?join=…">${esc(state.offerCode)}</textarea>
+    <label class="field-label" for="offer-code">Enlace online o código offline</label><div class="scan-row"><button class="button button-paper" data-action="scan-offer">Abrir cámara</button><span>o pega el enlace</span></div><textarea class="code-field" id="offer-code" rows="3" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="https://fercho-93.github.io/Elteto/?join=…">${esc(state.offerCode)}</textarea>
     <button class="button button-cyan full-button" data-action="join-room">Entrar en la sala 🍑</button>
     <p class="fineprint">El QR abre este juego y te mete directamente en la sala.</p>
   </section>`;
@@ -69,9 +69,9 @@ function renderJoinForm() {
 
 function codePanel(label, code, action) {
   if (!code) return "";
-  return `<section class="code-card"><div class="code-head"><span class="code-badge">1</span><div><strong>${label}</strong><small>Escanea con la cámara del móvil para abrir Elteto y entrar directamente.</small></div></div>
+  return `<section class="code-card"><div class="code-head"><span class="code-badge">1</span><div><strong>${label}</strong><small>${action === "offer" && state.inviteMode === "offline" ? "Escanea este QR desde el botón Abrir cámara dentro de Elteto." : action === "answer" ? "El anfitrión debe escanearlo desde Elteto para cerrar el enlace local." : "Escanea con la cámara normal del móvil para abrir Elteto."}</small></div></div>
     <canvas class="invite-qr" data-qr-action="${action}" aria-label="Código QR de conexión"></canvas><textarea class="code-field code-output" rows="3" readonly spellcheck="false">${esc(code)}</textarea>
-    <div class="code-actions"><button class="button button-small button-dark" data-action="copy-code" data-code-action="${action}">Copiar enlace</button><button class="button button-small button-paper" data-action="share-code" data-code-action="${action}">Compartir enlace</button></div>
+    <div class="code-actions"><button class="button button-small button-dark" data-action="copy-code" data-code-action="${action}">Copiar código</button><button class="button button-small button-paper" data-action="share-code" data-code-action="${action}">Compartir código</button></div>
   </section>`;
 }
 
@@ -84,17 +84,19 @@ function renderLobby() {
   const enoughPlayers = game && state.players.length >= game.minPlayers;
   const connectionTools = host
     ? `<div class="invite-grid">
-         <button class="button button-cyan" data-action="new-invite">Crear QR para invitar 🍆</button>
-         ${codePanel("Escanea y entra a la timba", state.offerCode, "offer")}
+         <button class="button button-cyan" data-action="new-offline-invite">Invitar sin internet 🍆</button>
+         <button class="button button-paper" data-action="new-invite">Invitar con Firebase</button>
+         ${codePanel(state.inviteMode === "offline" ? "Invitación offline · escanéala desde Elteto" : "Enlace online · se abre desde la cámara", state.offerCode, "offer")}
+         ${state.inviteMode === "offline" ? `<label class="field-label" for="answer-code">Respuesta del invitado</label><textarea class="code-field" id="answer-code" rows="3" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Pega aquí su respuesta QR"></textarea><div class="scan-row"><button class="button button-paper" data-action="scan-answer">Escanear respuesta</button><button class="button button-small button-dark" data-action="accept-answer">Aceptar código</button></div>` : ""}
        </div>`
-    : `<div class="connection-status ${connected ? "connected" : ""}">${connected ? "Conexión directa establecida. Ya estás en la mesa." : "Conectando con el anfitrión… No cierres esta página."}</div>`;
+    : `<div class="connection-status ${connected ? "connected" : ""}">${connected ? "Conexión directa establecida. Ya estás en la mesa." : "Conectando con el anfitrión… No cierres esta página."}</div>${state.answerCode ? codePanel("Muestra este QR al anfitrión para completar la conexión", state.answerCode, "answer") : ""}`;
   const startButton = host
     ? `<button class="button button-pink full-button" data-action="start-game" ${!enoughPlayers ? "disabled" : ""}>${enoughPlayers ? "¡Que ruede la fruta! 🍑" : `Faltan jugadores (${state.players.length}/${game?.minPlayers ?? "?"})`}</button>`
     : "";
   app.innerHTML = `${header()}<section class="panel lobby-panel">
     <div class="eyebrow">${host ? "La mesa ya está servida 🍆" : "Ya estás en el huerto 🍑"}</div>
     <h2>${esc(state.roomName || game?.label || "Sala")}</h2>
-    <p class="helper">${host ? "Pásales el QR a tus colegas. Si se ponen intensos, culpa al Wi-Fi; si se ponen rojos, culpa al melocotón." : "Deja la página abierta y conecta el móvil a la misma Wi-Fi o hotspot. La fruta no se comparte sola."}</p>
+    <p class="helper">${host ? (state.inviteMode === "offline" ? "Modo sin internet: los dos móviles deben estar en la misma Wi-Fi o hotspot. Comparte la invitación y escanea luego la respuesta." : "Pásales el enlace. Si estáis en la misma Wi-Fi, la partida también viaja directa entre móviles.") : "Deja Elteto abierto. Para jugar sin internet, conecta ambos móviles a la misma Wi-Fi o hotspot; el anfitrión escaneará tu respuesta QR."}</p>
     <div class="connection-box">${connectionTools}</div>
     <div class="players-head"><span>EN LA MESA</span><span>${state.players.length}${game ? ` / ${game.maxPlayers}` : ""}</span></div>
     <div class="player-list">${rows || '<div class="empty-seat">Todavía no se ha sentado nadie. Dale al código.</div>'}</div>
@@ -103,7 +105,7 @@ function renderLobby() {
     <button class="text-button" data-action="leave-room">Cerrar y salir</button>
   </section>`;
   for (const canvas of app.querySelectorAll("[data-qr-action]")) {
-    const value = state.offerCode;
+    const value = canvas.dataset.qrAction === "answer" ? state.answerCode : state.offerCode;
     try { window.CONTINUUM.QrEncode.draw(canvas, value); }
     catch (error) { console.warn("No se pudo dibujar el código QR.", error); }
   }
@@ -216,7 +218,7 @@ async function shareCode(which) {
   const value = which === "offer" ? state.offerCode : state.answerCode;
   if (!value) return;
   try {
-    if (navigator.share) await navigator.share({ title: "Invitación a Elteto", url: value });
+    if (navigator.share) await navigator.share(value.startsWith("http") ? { title: "Invitación a Elteto", url: value } : { title: "Código de conexión de Elteto", text: value });
     else await copyCode(which);
   } catch (error) {
     if (error?.name !== "AbortError") flash("No se pudo abrir la hoja de compartir. Prueba a copiar el código.");
@@ -238,27 +240,38 @@ app.addEventListener("click", async (event) => {
       if (!name || !gameId) throw new Error("Elige un nombre y un juego para abrir la mesa.");
       state.name = name; state.roomName = roomName || `Partida de ${name}`; state.gameId = gameId; state.role = "host"; state.playerId = "host"; state.error = "";
       state.host = new LocalHostSession(gameId, name, state.roomName, onHostChange);
-      state.screen = "lobby"; render();
-      state.offerCode = await state.host.createInvite();
-      renderLobby();
+      state.inviteMode = "offline"; state.offerCode = ""; state.answerCode = "";
+      state.screen = "lobby"; renderLobby();
     } else if (action === "join-room") {
       const name = document.querySelector("#join-name")?.value.trim() || "Invitado";
       const invite = document.querySelector("#offer-code")?.value.trim();
       const roomId = parseRoomId(invite);
-      if (!roomId) throw new Error("Pega el enlace completo del QR de la sala.");
-      await beginGuestJoin(roomId, name);
+      if (roomId) await beginGuestJoin(roomId, name);
+      else {
+        if (!invite) throw new Error("Escanea el QR del anfitrión o pega su código de invitación.");
+        await beginOfflineGuestJoin(invite, name);
+      }
     } else if (action === "new-invite") {
+      state.inviteMode = "online";
       state.offerCode = await state.host.createInvite();
       state.answerCode = "";
       renderLobby();
-      flash("QR listo. Tus colegas lo escanean con la cámara y entran.");
+      flash("Enlace listo. Con internet, la cámara abrirá Elteto automáticamente.");
+    } else if (action === "new-offline-invite") {
+      state.inviteMode = "offline";
+      state.answerCode = "";
+      state.offerCode = await state.host.createOfflineInvite();
+      renderLobby();
+      flash("Invitación offline lista. El invitado la escanea dentro de Elteto y luego tú escaneas su respuesta.");
     } else if (action === "accept-answer") {
       const answer = document.querySelector("#answer-code")?.value.trim();
       if (!answer) throw new Error("Pega aquí el código de respuesta del invitado.");
-      await state.host.acceptAnswer(answer);
+      await state.host.acceptOfflineAnswer(answer);
       state.answerCode = "";
       renderLobby();
+      flash("Respuesta aceptada. La conexión directa está arrancando.");
     } else if (action === "scan-offer") await beginQrScan("offer");
+    else if (action === "scan-answer") await beginQrScan("answer");
     else if (action === "stop-scan") endQrScan();
     else if (action === "copy-code") await copyCode(button.dataset.codeAction);
     else if (action === "share-code") await shareCode(button.dataset.codeAction);
@@ -331,8 +344,11 @@ async function beginQrScan(target) {
       endQrScan();
       if (targetNow === "offer") {
         const roomId = parseRoomId(value);
-        if (!roomId) { flash("Ese QR no es un enlace de sala Elteto."); return; }
-        beginGuestJoin(roomId, localStorage.getItem("elteto.playerName") || "Invitado").catch((error) => { state.error = error.message || "No se pudo entrar en la sala."; flash(state.error); render(); });
+        const playerName = localStorage.getItem("elteto.playerName") || "Invitado";
+        const join = roomId ? beginGuestJoin(roomId, playerName) : beginOfflineGuestJoin(value, playerName);
+        join.catch((error) => { state.error = error.message || "No se pudo entrar en la sala."; flash(state.error); render(); });
+      } else if (targetNow === "answer") {
+        state.host.acceptOfflineAnswer(value).then(() => { state.answerCode = ""; renderLobby(); flash("Respuesta aceptada. Conexión directa en marcha."); }).catch((error) => { state.error = error.message || "No se pudo aceptar la respuesta."; flash(state.error); renderLobby(); });
       }
     }, (error) => console.warn("No se pudo leer el fotograma.", error));
     activeScanner = scanner;
@@ -363,11 +379,21 @@ function handleGuestChange(change) {
 async function beginGuestJoin(roomId, name) {
   state.name = name || "Invitado";
   try { localStorage.setItem("elteto.playerName", state.name); } catch {}
-  Object.assign(state, { role: "client", error: "", screen: "lobby", players: [], offerCode: "", answerCode: "" });
+  Object.assign(state, { role: "client", inviteMode: "online", error: "", screen: "lobby", players: [], offerCode: "", answerCode: "" });
   render();
   const guest = new LocalGuestSession(roomId, state.name, handleGuestChange);
   state.guest = guest;
   await guest.connect();
+}
+async function beginOfflineGuestJoin(offerCode, name) {
+  state.name = name || "Invitado";
+  try { localStorage.setItem("elteto.playerName", state.name); } catch {}
+  Object.assign(state, { role: "client", inviteMode: "offline", error: "", screen: "lobby", players: [], offerCode: "", answerCode: "" });
+  render();
+  const guest = new LocalGuestSession(null, state.name, handleGuestChange);
+  state.guest = guest;
+  state.answerCode = await guest.connectOffline(offerCode);
+  renderLobby();
 }
 function sendAction(action) {
   if (state.role === "host") state.host.applyLocalAction(action);

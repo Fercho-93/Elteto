@@ -1,6 +1,5 @@
 import { getGame } from "./game-core/index.js";
-import { acceptOffer, makeOffer } from "./local-transport.js";
-import { createSignalRoom, requestRoomJoin } from "./firebase-signal.js";
+import { acceptOffer, decodeSignal, makeOffer } from "./local-transport.js";
 
 const HOST_ID = "host";
 const say = (type, data = {}) => ({ type, data });
@@ -39,6 +38,7 @@ export class LocalHostSession {
   async createInvite() {
     if (this.closed) throw new Error("La sala está cerrada.");
     if (this.signalRoom) return this.signalRoom.inviteUrl;
+    const { createSignalRoom } = await import("./firebase-signal.js");
     this.signalRoom = await createSignalRoom(
       { gameId: this.engine.id, roomName: this.roomName, hostName: this.hostName },
       (requests) => this.handleJoinRequests(requests).catch((error) => {
@@ -46,6 +46,27 @@ export class LocalHostSession {
       })
     );
     return this.signalRoom.inviteUrl;
+  }
+
+  async createOfflineInvite() {
+    if (this.closed) throw new Error("La sala está cerrada.");
+    if (this.started) throw new Error("La partida ya ha empezado.");
+    if (this.connections.size + 1 >= this.engine.maxPlayers) throw new Error("La sala está completa.");
+    const peer = await makeOffer(
+      (message) => this.handleMessage(peer.peerId, message),
+      () => {},
+      () => this.handleClose(peer.peerId)
+    );
+    this.peers.set(peer.peerId, peer);
+    return peer.code;
+  }
+
+  async acceptOfflineAnswer(answerCode) {
+    const answer = decodeSignal(answerCode);
+    if (answer.type !== "answer") throw new Error("Escanea el QR de respuesta del invitado.");
+    const peer = this.peers.get(answer.peerId);
+    if (!peer) throw new Error("Esta respuesta es de otra invitación o ya caducó.");
+    await peer.acceptAnswer(answerCode);
   }
 
   async handleJoinRequests(requests) {
@@ -198,6 +219,7 @@ export class LocalGuestSession {
   }
 
   async connect() {
+    const { requestRoomJoin } = await import("./firebase-signal.js");
     this.signal = await requestRoomJoin(this.roomId, this.playerName);
     this.gameId = this.signal.meta.gameId;
     this.roomName = this.signal.meta.roomName;
@@ -217,6 +239,20 @@ export class LocalGuestSession {
       kind: "lobby", players: this.players, gameId: this.gameId,
       roomName: this.roomName, connected: false,
     });
+  }
+
+  async connectOffline(offerCode) {
+    const peer = await acceptOffer(
+      offerCode,
+      (message) => this.handleMessage(message),
+      () => this.peer?.send(say("hello", { name: this.playerName })),
+      () => this.onChange({ kind: "disconnected", message: "Se perdió la conexión local. Comprueba que ambos móviles siguen en la misma Wi-Fi." })
+    );
+    this.peer = peer;
+    this.answerCode = peer.answerCode;
+    this.roomName = "Sala sin internet";
+    this.onChange({ kind: "lobby", players: [], roomName: this.roomName, connected: false });
+    return peer.answerCode;
   }
 
   async acceptInvite(offerCode) {

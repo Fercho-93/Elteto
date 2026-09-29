@@ -1,7 +1,7 @@
 import { Card, FRENCH_RANKS, buildFrenchDeck, createRng, shuffle } from "../deck";
 import { GameEngine, PlayerId } from "../engine";
 
-// Cinquillo: se reparte toda la baraja francesa entre los jugadores. Empieza quien tiene
+// Cinquillo: se reparte toda la baraja francesa entre 2 y 6 jugadores. Empieza quien tiene
 // el 5 de corazones (rey de la mesa). En cada turno un jugador debe colocar, si puede, una
 // carta que continúe una secuencia ya abierta en la mesa (a partir de un 5, hacia arriba
 // hasta K o hacia abajo hasta A) en el palo correspondiente. Si no puede jugar, pasa.
@@ -72,7 +72,7 @@ function hasAnyMove(table: Record<string, CinquilloTableSuit>, hand: Card[]): bo
 export const cinquilloEngine: GameEngine<CinquilloState, CinquilloView, CinquilloAction> = {
   id: "cinquillo",
   label: "Cinquillo",
-  minPlayers: 3,
+  minPlayers: 2,
   maxPlayers: 6,
 
   createInitialState(players, seed) {
