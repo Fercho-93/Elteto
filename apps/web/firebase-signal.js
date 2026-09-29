@@ -58,6 +58,9 @@ export async function createSignalRoom({ gameId, roomName, hostName }, onRequest
         callback(snapshot.val());
       });
     },
+    async removeGuest(guestUid) {
+      await remove(ref(db, path(roomId, `requests/${guestUid}`)));
+    },
     async close() {
       stopRequests();
       await remove(roomRef);
@@ -70,10 +73,10 @@ export async function requestRoomJoin(roomId, playerName) {
   const metaSnapshot = await get(ref(db, path(roomId, "meta")));
   if (!metaSnapshot.exists()) throw new Error("No encuentro esa sala. Pide al anfitrión un QR nuevo.");
   const requestRef = ref(db, path(roomId, `requests/${uid}`));
-  await set(ref(db, path(roomId, `requests/${uid}/join`), {
+  await set(ref(db, path(roomId, `requests/${uid}/join`)), {
     name: playerName,
     createdAt: serverTimestamp(),
-  }));
+  });
   return {
     uid,
     meta: metaSnapshot.val(),
