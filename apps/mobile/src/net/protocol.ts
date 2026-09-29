@@ -16,9 +16,9 @@ export type ServerMessage =
   | { type: "state"; view: unknown }
   | { type: "error"; message: string };
 
-/** Los sockets TCP entregan un stream de bytes: delimitamos cada mensaje JSON con '\\n'. */
+/** Los sockets TCP entregan un stream de bytes: delimitamos cada mensaje JSON con '\n'. */
 export function encodeMessage(msg: unknown): string {
-  return JSON.stringify(msg) + "\\n";
+  return JSON.stringify(msg) + "\n";
 }
 
 export function makeLineBuffer(onMessage: (raw: string) => void) {
@@ -26,7 +26,7 @@ export function makeLineBuffer(onMessage: (raw: string) => void) {
   return (chunk: string) => {
     buffer += chunk;
     let idx: number;
-    while ((idx = buffer.indexOf("\\n")) >= 0) {
+    while ((idx = buffer.indexOf("\n")) >= 0) {
       const line = buffer.slice(0, idx);
       buffer = buffer.slice(idx + 1);
       if (line.trim().length > 0) onMessage(line);
