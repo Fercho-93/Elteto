@@ -1,10 +1,9 @@
 // Firebase web configuration is public client configuration, not a private service key.
-// Paste the web app values from Firebase Console here after creating the RTDB project.
-// Protect access with database.rules.json; never put a service-account key in this file.
+// Access is protected by database.rules.json and Firebase Authentication.
 export const firebaseConfig = {
-  apiKey: "",
-  authDomain: "",
-  databaseURL: "",
-  projectId: "",
-  appId: "",
+  apiKey: "AIzaSyDiThDm7aS5A11s4moCM6gWRSXWlTfuimE",
+  authDomain: "elteto-fercho93.firebaseapp.com",
+  databaseURL: "https://elteto-fercho93-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "elteto-fercho93",
+  appId: "1:302401135800:web:65035f3fd405935f0c404d",
 };
