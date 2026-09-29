@@ -24,7 +24,7 @@ export default function JoinScreen() {
       <FlatList
         data={discoveredHosts}
         keyExtractor={(h) => `${h.address}:${h.port}`}
-        ListEmptyComponent={<Text style={styles.empty}>Buscando... asegúrate de estar en la misma WiFi o hotspot que el anfitrión.</Text>}
+        ListEmptyComponent={<Text style={styles.empty}>Buscando mesa… Si no aparece, comprobad que estáis en la misma Wi-Fi o hotspot. El anfitrión no muerde (casi nunca).</Text>}
         renderItem={({ item }) => (
           <Pressable
             onPress={() => setSelected(item)}
@@ -40,7 +40,7 @@ export default function JoinScreen() {
       />
 
       <Text style={styles.label}>Tu nombre</Text>
-      <TextInput style={styles.input} placeholder="p.ej. Fernando" placeholderTextColor="#8fb99e" value={playerName} onChangeText={setPlayerName} />
+      <TextInput style={styles.input} placeholder="p.ej. Donde las dan, las toman" placeholderTextColor="#8E7B88" value={playerName} onChangeText={setPlayerName} />
 
       <Pressable
         disabled={!canJoin}
