@@ -1,5 +1,6 @@
 import { getGame } from "./game-core/index.js";
-import { acceptOffer, decodeSignal, makeOffer } from "./local-transport.js";
+import { acceptOffer, makeOffer } from "./local-transport.js";
+import { createSignalRoom, requestRoomJoin } from "./firebase-signal.js";
 
 const HOST_ID = "host";
 const say = (type, data = {}) => ({ type, data });
@@ -12,9 +13,13 @@ export class LocalHostSession {
     this.onChange = onChange;
     this.connections = new Map();
     this.peers = new Map();
+    this.requestPeers = new Map();
+    this.answerStops = new Map();
+    this.handledGuests = new Set();
     this.state = null;
     this.started = false;
     this.closed = false;
+    this.signalRoom = null;
     this.publishLobby();
   }
 
@@ -26,31 +31,59 @@ export class LocalHostSession {
   }
 
   publishLobby() {
-    const players = this.players();
-    this.onChange({ kind: "lobby", players, gameId: this.engine.id, roomName: this.roomName });
-    this.broadcast(say("lobby", { players, gameId: this.engine.id }));
-  }
-
-  broadcast(message) {
-    for (const connection of this.connections.values()) connection.peer.send(message);
+    this.onChange({ kind: "lobby", players: this.players(), gameId: this.engine.id, roomName: this.roomName });
   }
 
   async createInvite() {
     if (this.closed) throw new Error("La sala está cerrada.");
-    const peer = await makeOffer(
-      (message) => this.handleMessage(peer.peerId, message),
-      () => {},
-      () => this.handleClose(peer.peerId)
+    if (this.signalRoom) return this.signalRoom.inviteUrl;
+    this.signalRoom = await createSignalRoom(
+      { gameId: this.engine.id, roomName: this.roomName, hostName: this.hostName },
+      (requests) => this.handleJoinRequests(requests).catch((error) => {
+        this.onChange({ kind: "error", message: error.message || "No se pudo procesar la invitación." });
+      })
     );
-    this.peers.set(peer.peerId, peer);
-    return peer.code;
+    return this.signalRoom.inviteUrl;
   }
 
-  async acceptAnswer(code) {
-    const signal = decodeSignal(code);
-    const peer = this.peers.get(signal.peerId);
-    if (!peer) throw new Error("No encuentro esa invitación. Genera una nueva y vuelve a intentarlo.");
-    await peer.acceptAnswer(code);
+  async handleJoinRequests(requests) {
+    for (const [guestUid, request] of Object.entries(requests)) {
+      const playerName = String(request?.join?.name || "").trim();
+      if (!playerName || this.handledGuests.has(guestUid)) continue;
+      this.handledGuests.add(guestUid);
+
+      if (this.started || this.connections.size + 1 >= this.engine.maxPlayers) {
+        await this.signalRoom.publishOffer(guestUid, {
+          error: this.started ? "La partida ya ha empezado." : "La sala está completa.",
+        });
+        continue;
+      }
+
+      try {
+        const peer = await makeOffer(
+          (message) => this.handleMessage(peer.peerId, message),
+          () => {},
+          () => this.handleClose(peer.peerId)
+        );
+        this.peers.set(peer.peerId, peer);
+        this.requestPeers.set(guestUid, { peerId: peer.peerId, name: playerName });
+        await this.signalRoom.publishOffer(guestUid, { code: peer.code });
+        let answerAccepted = false;
+        const stop = this.signalRoom.watchAnswer(guestUid, async (answerCode) => {
+          if (typeof answerCode !== "string" || answerAccepted) return;
+          answerAccepted = true;
+          try {
+            await peer.acceptAnswer(answerCode);
+          } catch (error) {
+            answerAccepted = false;
+            this.onChange({ kind: "error", message: error.message || "No se pudo completar la conexión del invitado." });
+          }
+        });
+        this.answerStops.set(guestUid, stop);
+      } catch (error) {
+        await this.signalRoom.publishOffer(guestUid, { error: error.message || "No se pudo preparar la invitación." });
+      }
+    }
   }
 
   handleMessage(peerId, message) {
@@ -85,18 +118,31 @@ export class LocalHostSession {
 
   handleClose(peerId) {
     this.peers.delete(peerId);
+    const requestEntry = [...this.requestPeers.entries()].find(([, entry]) => entry.peerId === peerId);
+    if (requestEntry) {
+      const [guestUid] = requestEntry;
+      this.requestPeers.delete(guestUid);
+      this.answerStops.get(guestUid)?.();
+      this.answerStops.delete(guestUid);
+      this.handledGuests.delete(guestUid);
+      this.signalRoom?.removeGuest(guestUid).catch(() => {});
+    }
     if (this.connections.delete(peerId)) this.publishLobby();
   }
 
   startGame(seed = Date.now() >>> 0) {
     const players = this.players().map((player) => player.id);
-    if (players.length < this.engine.minPlayers) throw new Error(`Se necesitan al menos ${this.engine.minPlayers} jugadores.`);
-    if (players.length > this.engine.maxPlayers) throw new Error(`Este juego admite como máximo ${this.engine.maxPlayers} jugadores.`);
+    if (players.length < this.engine.minPlayers) throw new Error("Se necesitan al menos " + this.engine.minPlayers + " jugadores.");
+    if (players.length > this.engine.maxPlayers) throw new Error("Este juego admite como máximo " + this.engine.maxPlayers + " jugadores.");
     this.state = this.engine.createInitialState(players, seed);
     this.started = true;
     this.broadcast(say("started"));
     this.sendViews();
     this.onChange({ kind: "game", players: this.players(), gameId: this.engine.id, view: this.engine.view(this.state, HOST_ID) });
+  }
+
+  broadcast(message) {
+    for (const connection of this.connections.values()) connection.peer.send(message);
   }
 
   sendViews() {
@@ -126,34 +172,60 @@ export class LocalHostSession {
 
   close() {
     this.closed = true;
+    for (const stop of this.answerStops.values()) stop();
+    this.answerStops.clear();
     for (const peer of this.peers.values()) peer.close();
     this.peers.clear();
     this.connections.clear();
+    this.requestPeers.clear();
+    this.signalRoom?.close().catch(() => {});
   }
 }
 
 export class LocalGuestSession {
-  constructor(offerCode, playerName, onChange) {
-    this.offerCode = offerCode;
+  constructor(roomId, playerName, onChange) {
+    this.roomId = roomId;
     this.playerName = playerName;
     this.onChange = onChange;
     this.peer = null;
-    this.answerCode = "";
+    this.signal = null;
+    this.stopOffer = null;
     this.playerId = null;
     this.gameId = null;
     this.players = [];
   }
 
   async connect() {
-    this.peer = await acceptOffer(
-      this.offerCode,
+    this.signal = await requestRoomJoin(this.roomId, this.playerName);
+    this.gameId = this.signal.meta.gameId;
+    this.roomName = this.signal.meta.roomName;
+    this.stopOffer = this.signal.watchOffer((offer) => {
+      if (!offer || this.peer) return;
+      if (offer.error) {
+        this.onChange({ kind: "error", message: offer.error });
+        return;
+      }
+      if (typeof offer.code === "string") {
+        this.acceptInvite(offer.code).catch((error) => {
+          this.onChange({ kind: "error", message: error.message || "No se pudo entrar en la sala." });
+        });
+      }
+    });
+    this.onChange({
+      kind: "lobby", players: this.players, gameId: this.gameId,
+      roomName: this.roomName, connected: false,
+    });
+  }
+
+  async acceptInvite(offerCode) {
+    const peer = await acceptOffer(
+      offerCode,
       (message) => this.handleMessage(message),
       () => this.peer?.send(say("hello", { name: this.playerName })),
-      () => this.onChange({ kind: "disconnected", message: "Se perdió la conexión con la sala. Comprueba la Wi-Fi y vuelve a pedir una invitación." })
+      () => this.onChange({ kind: "disconnected", message: "Se perdió la conexión con la sala. Escanea de nuevo el QR del anfitrión." })
     );
-    this.answerCode = this.peer.answerCode;
-    this.onChange({ kind: "lobby", players: this.players, gameId: this.gameId, answerCode: this.answerCode, connected: false });
-    return this.answerCode;
+    this.peer = peer;
+    await this.signal.publishAnswer(peer.answerCode);
   }
 
   handleMessage(message) {
@@ -161,11 +233,11 @@ export class LocalGuestSession {
     if (message.type === "welcome") {
       this.playerId = message.data.playerId;
       this.gameId = message.data.gameId;
-      this.onChange({ kind: "lobby", playerId: this.playerId, players: this.players, gameId: this.gameId, answerCode: this.answerCode, connected: true });
+      this.onChange({ kind: "lobby", playerId: this.playerId, players: this.players, gameId: this.gameId, roomName: this.roomName, connected: true });
     } else if (message.type === "lobby") {
       this.players = message.data.players || [];
       this.gameId = message.data.gameId;
-      this.onChange({ kind: "lobby", players: this.players, gameId: this.gameId, answerCode: this.answerCode, connected: true });
+      this.onChange({ kind: "lobby", playerId: this.playerId, players: this.players, gameId: this.gameId, roomName: this.roomName, connected: true });
     } else if (message.type === "started") {
       this.onChange({ kind: "started" });
     } else if (message.type === "state") {
@@ -180,6 +252,7 @@ export class LocalGuestSession {
   }
 
   leave() {
+    this.stopOffer?.();
     this.peer?.send(say("leave"));
     this.peer?.close();
     this.peer = null;
