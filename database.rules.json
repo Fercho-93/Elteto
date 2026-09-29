@@ -2,6 +2,7 @@
   "rules": {
     "rooms": {
       "$roomId": {
+        ".write": "auth != null && auth.uid == data.child('meta').child('ownerUid').val()",
         "meta": {
           ".read": "auth != null",
           ".write": "auth != null && ((!data.exists() && newData.child('ownerUid').val() == auth.uid) || data.child('ownerUid').val() == auth.uid)",
@@ -10,6 +11,7 @@
         "requests": {
           ".read": "auth != null && auth.uid == root.child('rooms').child($roomId).child('meta').child('ownerUid').val()",
           "$guestUid": {
+            ".write": "auth != null && auth.uid == root.child('rooms').child($roomId).child('meta').child('ownerUid').val()",
             ".read": "auth != null && (auth.uid == $guestUid || auth.uid == root.child('rooms').child($roomId).child('meta').child('ownerUid').val())",
             "join": {
               ".write": "auth != null && auth.uid == $guestUid",
