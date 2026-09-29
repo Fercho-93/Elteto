@@ -239,6 +239,8 @@ app.addEventListener("click", async (event) => {
       state.name = name; state.roomName = roomName || `Partida de ${name}`; state.gameId = gameId; state.role = "host"; state.playerId = "host"; state.error = "";
       state.host = new LocalHostSession(gameId, name, state.roomName, onHostChange);
       state.screen = "lobby"; render();
+      state.offerCode = await state.host.createInvite();
+      renderLobby();
     } else if (action === "join-room") {
       const name = document.querySelector("#join-name")?.value.trim() || "Invitado";
       const invite = document.querySelector("#offer-code")?.value.trim();
@@ -291,6 +293,7 @@ app.addEventListener("click", async (event) => {
   } catch (error) {
     state.error = error instanceof Error ? error.message : "Algo se torció al preparar la jugada.";
     flash(state.error);
+    if (state.role === "host") state.screen = "lobby";
     render();
   }
 });
