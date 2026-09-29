@@ -319,7 +319,7 @@ app.addEventListener("change", (event) => {
 
 let activeScanner = null;
 let scanTarget = null;
-async function beginQrScan(target) {
+async async function beginQrScan(target) {
   if (!window.CONTINUUM?.QrScanner?.isSupported()) {
     flash("Este navegador no da acceso a la cámara. Puedes pegar el código a mano.");
     return;
