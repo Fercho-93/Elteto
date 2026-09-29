@@ -61,7 +61,7 @@ function renderJoinForm() {
     <div class="eyebrow">Te han invitado</div><h2>Busca tu mesa</h2>
     <p class="helper">Pide al anfitrión el código de invitación y pégalo aquí. La partida conecta los móviles directamente.</p>
     <label class="field-label" for="join-name">Tu nombre</label><input class="text-field" id="join-name" maxlength="24" placeholder="Donde las dan, las toman" value="${esc(state.name)}">
-    <label class="field-label" for="offer-code">Código de invitación</label><textarea class="code-field" id="offer-code" rows="5" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Pega aquí el código que te han compartido">${esc(state.offerCode)}</textarea>
+    <label class="field-label" for="offer-code">Código de invitación</label><div class="scan-row"><button class="button button-paper" data-action="scan-offer">Escanear QR</button><span>o pega el código</span></div><textarea class="code-field" id="offer-code" rows="4" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Pega aquí el código que te han compartido">${esc(state.offerCode)}</textarea>
     <button class="button button-cyan full-button" data-action="join-room">Conectar con la sala</button>
     <p class="fineprint">En móvil puedes abrir la hoja de compartir para pasar el código entre teléfonos.</p>
   </section>`;
@@ -70,7 +70,7 @@ function renderJoinForm() {
 function codePanel(label, code, action) {
   if (!code) return "";
   return `<section class="code-card"><div class="code-head"><span class="code-badge">1</span><div><strong>${label}</strong><small>El código puede ocupar varias líneas. Copia el texto entero.</small></div></div>
-    <textarea class="code-field code-output" rows="4" readonly spellcheck="false">${esc(code)}</textarea>
+    <canvas class="invite-qr" data-qr-action="${action}" aria-label="Código QR de conexión"></canvas><textarea class="code-field code-output" rows="3" readonly spellcheck="false">${esc(code)}</textarea>
     <div class="code-actions"><button class="button button-small button-dark" data-action="copy-code" data-code-action="${action}">Copiar código</button><button class="button button-small button-paper" data-action="share-code" data-code-action="${action}">Compartir…</button></div>
   </section>`;
 }
@@ -88,7 +88,7 @@ function renderLobby() {
          ${codePanel("Pásale este código a cada jugador", state.offerCode, "offer")}
        </div>
        <label class="field-label" for="answer-code">Código de respuesta del invitado</label>
-       <textarea class="code-field" id="answer-code" rows="3" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Pega aquí el código de respuesta">${esc(state.answerCode)}</textarea>
+       <div class="scan-row"><button class="button button-paper" data-action="scan-answer">Escanear QR</button><span>o pega el código</span></div><textarea class="code-field" id="answer-code" rows="3" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Pega aquí el código de respuesta">${esc(state.answerCode)}</textarea>
        <button class="button button-paper full-button" data-action="accept-answer">Sentar al invitado</button>`
     : `<div class="connection-status ${connected ? "connected" : ""}">${connected ? "Conexión directa establecida. Ya estás en la mesa." : "Conectando con el anfitrión…"}</div>
        ${!connected ? codePanel("Devuelve este código al anfitrión", state.answerCode, "answer") : ""}`;
@@ -106,6 +106,11 @@ function renderLobby() {
     ${startButton}
     <button class="text-button" data-action="leave-room">Cerrar y salir</button>
   </section>`;
+  for (const canvas of app.querySelectorAll("[data-qr-action]")) {
+    const value = canvas.dataset.qrAction === "offer" ? state.offerCode : state.answerCode;
+    try { window.CONTINUUM.QrEncode.draw(canvas, value); }
+    catch (error) { console.warn("No se pudo dibujar el código QR.", error); }
+  }
 }
 
 function renderCard(card, key, { disabled = false, selected = false } = {}) {
@@ -264,7 +269,7 @@ app.addEventListener("click", async (event) => {
       await state.host.acceptAnswer(answer);
       state.answerCode = "";
       renderLobby();
-    } else if (action === "copy-code") await copyCode(button.dataset.codeAction);
+    } else if (action === "scan-offer") await beginQrScan("offer");\n    else if (action === "scan-answer") await beginQrScan("answer");\n    else if (action === "stop-scan") endQrScan();\n    else if (action === "copy-code") await copyCode(button.dataset.codeAction);
     else if (action === "share-code") await shareCode(button.dataset.codeAction);
     else if (action === "start-game") {
       state.host.startGame();
@@ -308,7 +313,48 @@ app.addEventListener("change", (event) => {
   }
 });
 
-function sendAction(action) {
+
+let activeScanner = null;
+let scanTarget = null;
+async function beginQrScan(target) {
+  if (!window.CONTINUUM?.QrScanner?.isSupported()) {
+    flash("Este navegador no da acceso a la cámara. Puedes pegar el código a mano.");
+    return;
+  }
+  scanTarget = target;
+  const overlay = document.createElement("section");
+  overlay.className = "scan-overlay";
+  overlay.innerHTML = `<div class="scan-panel"><div class="eyebrow">Conexión de la mesa</div><h2>Apunta al código QR</h2><video id="qr-video" playsinline muted></video><p class="helper">Mantén el código entero dentro del recuadro y evita reflejos.</p><button class="button button-paper full-button" data-action="stop-scan">Cancelar</button></div>`;
+  document.body.appendChild(overlay);
+  try {
+    const video = overlay.querySelector("#qr-video");
+    const scanner = await window.CONTINUUM.QrScanner.start(video, (value) => {
+      if (!scanTarget) return;
+      const targetNow = scanTarget;
+      endQrScan();
+      if (targetNow === "offer") {
+        state.offerCode = value;
+        renderJoinForm();
+        flash("Invitación leída. Ahora indica tu nombre y conecta.");
+      } else {
+        state.answerCode = value;
+        renderLobby();
+        flash("Respuesta leída. Pulsa «Sentar al invitado».");
+      }
+    }, (error) => console.warn("No se pudo leer el fotograma.", error));
+    activeScanner = scanner;
+  } catch (error) {
+    endQrScan();
+    flash(error?.name === "NotAllowedError" ? "Activa el permiso de cámara para escanear el QR." : "No se pudo abrir la cámara. Puedes pegar el código.");
+  }
+}
+function endQrScan() {
+  activeScanner?.stop();
+  activeScanner = null;
+  scanTarget = null;
+  document.querySelector(".scan-overlay")?.remove();
+}
+\nfunction sendAction(action) {
   if (state.role === "host") state.host.applyLocalAction(action);
   else state.guest.sendAction(action);
 }
