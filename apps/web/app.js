@@ -18,7 +18,7 @@ function flash(message) {
   flash.timer = setTimeout(() => toastEl.classList.remove("show"), 2800);
 }
 function header(back = "home") {
-  return `<header class="topbar"><button class="icon-btn" data-action="back" aria-label="Volver">←</button><a class="brand" href="./" data-action="home">ELTETO</a><span class="topbar-tag">PIQUE SANO*</span></header>`;
+  return `<header class="topbar"><button class="icon-btn" data-action="back" aria-label="Volver">←</button><a class="brand" href="./" data-action="home"><span aria-hidden="true">🍆</span> ELTETO <span aria-hidden="true">🍑</span></a><span class="topbar-tag">FRUTA Y PIQUE*</span></header>`;
 }
 function cardName(card) { return `${card.rank} de ${card.suit}`; }
 function playerName(id) { return state.players.find((player) => player.id === id)?.name || (id === "host" ? state.name : id); }
@@ -27,16 +27,16 @@ function suitClass(suit) { return ["copas", "corazones", "diamantes", "oros"].in
 function renderHome() {
   state.screen = "home";
   app.innerHTML = `<section class="home">
-    <div class="sticker">BARAJA · PIQUE · REVANCHA</div>
-    <div class="logo-mark" aria-hidden="true">E!</div>
+    <div class="sticker">FRUTA · BARAJA · REVANCHA</div>
+    <div class="logo-mark" role="img" aria-label="Una berenjena y un melocotón"><span>🍆</span><span>🍑</span></div>
     <h1>Elteto</h1>
-    <p class="home-copy">Cartas, piques y revancha. Cada quien con su móvil; la mesa no necesita internet.</p>
-    <p class="home-note">Poneos en la misma Wi-Fi o en un hotspot. Lo demás es echarle cara.</p>
+    <p class="home-copy">La berenjena pone la cara; el melocotón, la tentación. 🍆🍑 Cartas, piques y revancha desde cada móvil.</p>
+    <p class="home-note">Misma Wi-Fi, fruta madura y cero vergüenza. Lo demás es echarle cara.</p>
     <div class="home-actions">
-      <button class="button button-pink" data-action="open-host">Crear partida</button>
-      <button class="button button-cyan" data-action="open-join">Unirse a una partida</button>
+      <button class="button button-pink" data-action="open-host">Crear partida 🍆</button>
+      <button class="button button-cyan" data-action="open-join">Unirse a la timba 🍑</button>
     </div>
-    <p class="fineprint">*El pique sí está incluido. La deportividad, ya tal.</p>
+    <p class="fineprint">*La fruta es fresca. Las intenciones, cosa vuestra. 😏</p>
   </section>`;
 }
 
@@ -47,18 +47,18 @@ function renderHostForm() {
     <span class="game-check">✦</span><span><strong>${esc(game.label)}</strong><small>${game.minPlayers === game.maxPlayers ? `${game.minPlayers} jugadores` : `${game.minPlayers}–${game.maxPlayers} jugadores`}</small></span>
   </label>`).join("");
   app.innerHTML = `${header()}<section class="panel">
-    <div class="eyebrow">Monta la mesa</div><h2>Que empiece el pique</h2>
+    <div class="eyebrow">La fruta está madura 🍑</div><h2>Que empiece el pique</h2>
     <label class="field-label" for="host-name">Tu nombre</label><input class="text-field" id="host-name" maxlength="24" placeholder="La jefa de la mesa" value="${esc(state.name)}">
     <label class="field-label" for="room-name">Nombre de la sala</label><input class="text-field" id="room-name" maxlength="30" placeholder="La timba de esta noche" value="${esc(state.roomName)}">
     <div class="field-label">Elige el juego</div><div class="game-options">${games}</div>
-    <button class="button button-pink full-button" data-action="create-room">Crear sala y esperar</button>
+    <button class="button button-pink full-button" data-action="create-room">Repartir y abrir sala 🍆</button>
   </section>`;
 }
 
 function renderJoinForm() {
   state.screen = "join-form";
   app.innerHTML = `${header()}<section class="panel">
-    <div class="eyebrow">Te han invitado</div><h2>Busca tu mesa</h2>
+    <div class="eyebrow">Te guardaron sitio… y fruta 🍑</div><h2>Busca tu mesa</h2>
     <p class="helper">Pide al anfitrión el código de invitación y pégalo aquí. La partida conecta los móviles directamente.</p>
     <label class="field-label" for="join-name">Tu nombre</label><input class="text-field" id="join-name" maxlength="24" placeholder="Donde las dan, las toman" value="${esc(state.name)}">
     <label class="field-label" for="offer-code">Código de invitación</label><div class="scan-row"><button class="button button-paper" data-action="scan-offer">Escanear QR</button><span>o pega el código</span></div><textarea class="code-field" id="offer-code" rows="4" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Pega aquí el código que te han compartido">${esc(state.offerCode)}</textarea>
@@ -84,8 +84,8 @@ function renderLobby() {
   const enoughPlayers = game && state.players.length >= game.minPlayers;
   const connectionTools = host
     ? `<div class="invite-grid">
-         <button class="button button-cyan" data-action="new-invite">Crear código de invitación</button>
-         ${codePanel("Pásale este código a cada jugador", state.offerCode, "offer")}
+         <button class="button button-cyan" data-action="new-invite">Repartir invitación 🍆</button>
+         ${codePanel("Pásales la fruta a tus colegas", state.offerCode, "offer")}
        </div>
        <label class="field-label" for="answer-code">Código de respuesta del invitado</label>
        <div class="scan-row"><button class="button button-paper" data-action="scan-answer">Escanear QR</button><span>o pega el código</span></div><textarea class="code-field" id="answer-code" rows="3" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Pega aquí el código de respuesta">${esc(state.answerCode)}</textarea>
@@ -93,12 +93,12 @@ function renderLobby() {
     : `<div class="connection-status ${connected ? "connected" : ""}">${connected ? "Conexión directa establecida. Ya estás en la mesa." : "Conectando con el anfitrión…"}</div>
        ${!connected ? codePanel("Devuelve este código al anfitrión", state.answerCode, "answer") : ""}`;
   const startButton = host
-    ? `<button class="button button-pink full-button" data-action="start-game" ${!enoughPlayers ? "disabled" : ""}>${enoughPlayers ? "Empezar partida" : `Faltan jugadores (${state.players.length}/${game?.minPlayers ?? "?"})`}</button>`
+    ? `<button class="button button-pink full-button" data-action="start-game" ${!enoughPlayers ? "disabled" : ""}>${enoughPlayers ? "¡Que ruede la fruta! 🍑" : `Faltan jugadores (${state.players.length}/${game?.minPlayers ?? "?"})`}</button>`
     : "";
   app.innerHTML = `${header()}<section class="panel lobby-panel">
-    <div class="eyebrow">${host ? "La mesa ya está abierta" : "Te has sentado"}</div>
+    <div class="eyebrow">${host ? "La mesa ya está servida 🍆" : "Ya estás en el huerto 🍑"}</div>
     <h2>${esc(state.roomName || game?.label || "Sala")}</h2>
-    <p class="helper">${host ? "Comparte el código con tus colegas. Si se ponen intensos, culpa al Wi-Fi." : "Mantened abierta esta página y conectad los móviles a la misma Wi-Fi o hotspot."}</p>
+    <p class="helper">${host ? "Pásales el QR a tus colegas. Si se ponen intensos, culpa al Wi-Fi; si se ponen rojos, culpa al melocotón." : "Deja la página abierta y conecta el móvil a la misma Wi-Fi o hotspot. La fruta no se comparte sola."}</p>
     <div class="connection-box">${connectionTools}</div>
     <div class="players-head"><span>EN LA MESA</span><span>${state.players.length}${game ? ` / ${game.maxPlayers}` : ""}</span></div>
     <div class="player-list">${rows || '<div class="empty-seat">Todavía no se ha sentado nadie. Dale al código.</div>'}</div>
@@ -139,7 +139,7 @@ function renderGame() {
     ? `<div class="score-strip"><span>Equipo A <b>${view.scores.A}</b></span><span>Equipo B <b>${view.scores.B}</b></span><span>Meta <b>${view.targetScore}</b></span></div><p class="phase-tag">Fase: ${esc(view.phase)}</p>`
     : `<div class="table-cards">${Object.entries(view.table).map(([suit, entry]) => `<div class="sequence"><b class="${suitClass(suit)}">${SUITS[suit] || esc(suit)}</b><span>${FRENCH_RANKS[entry.low]} — ${FRENCH_RANKS[entry.high]}</span></div>`).join("") || "La mesa espera al primer cinco."}</div><div class="table-players">${view.players.map((id) => `<span class="${id === view.turnPlayer ? "turn-now" : ""}">${esc(playerName(id))} · ${view.handSizes[id]} cartas</span>`).join("")}</div>`;
   app.innerHTML = `${header()}<section class="game-page">
-    <div class="game-top"><span class="game-ribbon">${esc(game.label)}</span><button class="text-button" data-action="leave-room">Salir</button></div>
+    <div class="game-top"><span class="game-ribbon">🍆 ${esc(game.label)} 🍑</span><button class="text-button" data-action="leave-room">Salir</button></div>
     ${view.finished ? `<div class="winner-banner">${esc(winner || "La partida ha terminado")}</div>` : ""}
     <section class="game-table">${table}</section>
     ${state.error ? `<p class="error-message">${esc(state.error)}</p>` : ""}
@@ -161,8 +161,8 @@ function musControls(view) {
   const team = view.players.indexOf(state.playerId) % 2 === 0 ? "A" : "B";
   const responds = betting.pendingBet && betting.pendingBet.team !== team;
   const controls = responds
-    ? `<button class="button button-cyan" data-action="mus-accept">Quiero</button><button class="button button-pink" data-action="mus-reject">No quiero</button><label class="bet-control"><input id="bet-amount" type="number" min="2" value="2"><button class="button button-paper" data-action="mus-bet">Subir</button></label>`
-    : `<button class="button button-paper" data-action="mus-pass">Paso</button><label class="bet-control"><input id="bet-amount" type="number" min="2" value="2"><button class="button button-cyan" data-action="mus-bet">Envido</button></label><button class="button button-pink" data-action="mus-ordago">¡Órdago!</button>`;
+    ? `<button class="button button-cyan" data-action="mus-accept">Me apunto 🍑</button><button class="button button-pink" data-action="mus-reject">Ni de fruta</button><label class="bet-control"><input id="bet-amount" type="number" min="2" value="2"><button class="button button-paper" data-action="mus-bet">Subir</button></label>`
+    : `<button class="button button-paper" data-action="mus-pass">Paso</button><label class="bet-control"><input id="bet-amount" type="number" min="2" value="2"><button class="button button-cyan" data-action="mus-bet">Envido 🍑</button></label><button class="button button-pink" data-action="mus-ordago">¡Órdago! 🍆</button>`;
   return `<p class="phase-tag">Te toca. ${betting.pendingBet ? `Envite: ${betting.pendingBet.amount}` : "¿Qué hacemos?"}</p><div class="action-row">${controls}</div>`;
 }
 
