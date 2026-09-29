@@ -1,64 +1,34 @@
 # Elteto
 
-App móvil (React Native / Expo) para jugar a juegos de cartas y de mesa **con amigos, cada uno
-desde su propio móvil, sin necesidad de internet**. Los dispositivos se conectan entre sí por
-la misma red WiFi o por el hotspot personal de uno de los jugadores; uno hace de anfitrión
-(host) y los demás se unen automáticamente a su partida (descubrimiento por broadcast UDP,
-sin tener que introducir ninguna IP a mano).
+Juego de cartas para jugar a Mus y Cinquillo desde móviles, con una mesa gamberra, reglas compartidas y partidas entre personas conectadas a la misma red.
 
-Juegos disponibles de momento:
+## Aplicación web y GitHub Pages
 
-- **Mus** (4 jugadores, 2 parejas)
-- **Cinquillo** (3 a 6 jugadores)
+`apps/web/` contiene la versión web instalable. GitHub Actions compila las reglas compartidas de `packages/game-core/`, genera una web estática y la publica en GitHub Pages cuando se actualiza `main`.
 
-Pensado para ir añadiendo más juegos de cartas y de mesa (parchís, dominó, ...) reutilizando
-la misma infraestructura de red y de lobby.
+La web conecta los móviles con WebRTC DataChannels. El anfitrión crea una invitación; cada invitado devuelve un código de respuesta. El anfitrión conserva la autoridad de la partida y comparte a cada jugador solo su vista de las cartas. Los códigos se pueden copiar o pasar con la hoja de compartir del teléfono. La web no usa un servidor de juego ni necesita enviar las jugadas a internet.
 
-## Estructura
+Para probar partidas locales, abrid la página segura de Pages en ambos teléfonos y conectadlos a la misma Wi-Fi o al hotspot de uno de ellos. Un jugador crea la sala y comparte el código de invitación. Cada invitado pega ese código, comparte su respuesta con el anfitrión y espera a que aparezca en la mesa.
 
-```
-packages/game-core/   Motor de reglas puro en TypeScript (sin dependencias de React Native).
-                       Aquí viven las reglas de cada juego (mus.ts, cinquillo.ts) y el
-                       contrato común GameEngine que deben implementar los juegos futuros.
-apps/mobile/           App Expo/React Native.
-  src/net/             Protocolo de mensajes, descubrimiento de partidas (UDP) y
-                       transporte host/cliente (TCP) sobre la red local.
-  src/state/           Contexto de React que expone la sesión de juego a la UI.
-  src/app/             Pantallas (Expo Router): inicio, crear sala, unirse, lobby y partida.
-  src/components/      UI de cada juego (MusScreen, CinquilloScreen).
-```
+Los juegos exigen al menos tres participantes para Cinquillo y cuatro para Mus. Con dos teléfonos puedes confirmar la conexión y ver cómo se actualiza la sala; para empezar una partida completa, añade participantes desde más teléfonos o navegadores.
 
-## Cómo funciona el multijugador local
+La aplicación web también se puede instalar desde el navegador usando «Añadir a pantalla de inicio».
 
-1. Un jugador pulsa **Crear partida**: su móvil abre un servidor TCP y empieza a anunciar la
-   sala por broadcast UDP en la red local.
-2. Los demás jugadores pulsan **Unirse a una partida**: su móvil escucha ese broadcast y
-   muestra la lista de salas encontradas, sin pedir ninguna IP.
-3. Al unirse, cada jugador se conecta por TCP directamente al anfitrión.
-4. El anfitrión es la autoridad de la partida: aplica las reglas (`game-core`) a cada jugada y
-   reenvía a cada móvil solo la información que le corresponde ver (p. ej. su propia mano).
+## Desarrollo web
 
-Esto requiere que todos los móviles estén en la misma red: o bien conectados al mismo WiFi, o
-bien todos conectados al hotspot personal que active uno de ellos. No se necesita datos
-móviles ni conexión a internet.
-
-## Desarrollo
+Requisitos: Node.js 20 o posterior.
 
 ```bash
-npm install            # instala dependencias de todo el workspace (raíz + apps/mobile + packages/game-core)
-cd apps/mobile
-npx expo start         # sirve la app para probarla con Expo Go / un dev client
+npm ci
+npm run build:web
 ```
 
-`react-native-tcp-socket` y `react-native-udp` son módulos nativos: para probar el
-multijugador local en un dispositivo real hace falta un **development build**
-(`npx expo run:android` / `npx expo run:ios`, o `eas build --profile development`), no
-funcionan dentro de Expo Go.
+El sitio compilado aparece en `dist/`. Para probarlo en el navegador durante el desarrollo, sírvelo desde un origen HTTPS o desde `localhost`, porque el navegador restringe WebRTC y la instalación PWA en orígenes inseguros.
 
-Comprobaciones antes de dar por terminado un cambio:
+## App móvil nativa
 
-```bash
-cd apps/mobile
-npx tsc --noEmit
-npx eslint src
-```
+`apps/mobile/` conserva el cliente Expo para las compilaciones móviles nativas. Comparte el motor de reglas con la versión web. Para usar módulos nativos, instala un development build propio; Expo Go no los incluye todos.
+
+## Motor de reglas
+
+`packages/game-core/` contiene los motores puros de Mus y Cinquillo. Cada motor valida las acciones, conserva el estado completo en el anfitrión y produce una vista individual para cada jugador.
