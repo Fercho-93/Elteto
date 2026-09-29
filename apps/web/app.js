@@ -59,19 +59,19 @@ function renderJoinForm() {
   state.screen = "join-form";
   app.innerHTML = `${header()}<section class="panel">
     <div class="eyebrow">Te guardaron sitio… y fruta 🍑</div><h2>Busca tu mesa</h2>
-    <p class="helper">Pide al anfitrión el código de invitación y pégalo aquí. La partida conecta los móviles directamente.</p>
+    <p class="helper">Escanea con la cámara el QR del anfitrión. Elteto se abrirá y te sentará en la mesa automáticamente.</p>
     <label class="field-label" for="join-name">Tu nombre</label><input class="text-field" id="join-name" maxlength="24" placeholder="Donde las dan, las toman" value="${esc(state.name)}">
-    <label class="field-label" for="offer-code">Código de invitación</label><div class="scan-row"><button class="button button-paper" data-action="scan-offer">Escanear QR</button><span>o pega el código</span></div><textarea class="code-field" id="offer-code" rows="4" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Pega aquí el código que te han compartido">${esc(state.offerCode)}</textarea>
-    <button class="button button-cyan full-button" data-action="join-room">Conectar con la sala</button>
-    <p class="fineprint">En móvil puedes abrir la hoja de compartir para pasar el código entre teléfonos.</p>
+    <label class="field-label" for="offer-code">Enlace o código de sala</label><div class="scan-row"><button class="button button-paper" data-action="scan-offer">Abrir cámara</button><span>o pega el enlace</span></div><textarea class="code-field" id="offer-code" rows="3" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="https://fercho-93.github.io/Elteto/?join=…">${esc(state.offerCode)}</textarea>
+    <button class="button button-cyan full-button" data-action="join-room">Entrar en la sala 🍑</button>
+    <p class="fineprint">El QR abre este juego y te mete directamente en la sala.</p>
   </section>`;
 }
 
 function codePanel(label, code, action) {
   if (!code) return "";
-  return `<section class="code-card"><div class="code-head"><span class="code-badge">1</span><div><strong>${label}</strong><small>El código puede ocupar varias líneas. Copia el texto entero.</small></div></div>
+  return `<section class="code-card"><div class="code-head"><span class="code-badge">1</span><div><strong>${label}</strong><small>Escanea con la cámara del móvil para abrir Elteto y entrar directamente.</small></div></div>
     <canvas class="invite-qr" data-qr-action="${action}" aria-label="Código QR de conexión"></canvas><textarea class="code-field code-output" rows="3" readonly spellcheck="false">${esc(code)}</textarea>
-    <div class="code-actions"><button class="button button-small button-dark" data-action="copy-code" data-code-action="${action}">Copiar código</button><button class="button button-small button-paper" data-action="share-code" data-code-action="${action}">Compartir…</button></div>
+    <div class="code-actions"><button class="button button-small button-dark" data-action="copy-code" data-code-action="${action}">Copiar enlace</button><button class="button button-small button-paper" data-action="share-code" data-code-action="${action}">Compartir enlace</button></div>
   </section>`;
 }
 
@@ -84,14 +84,10 @@ function renderLobby() {
   const enoughPlayers = game && state.players.length >= game.minPlayers;
   const connectionTools = host
     ? `<div class="invite-grid">
-         <button class="button button-cyan" data-action="new-invite">Repartir invitación 🍆</button>
-         ${codePanel("Pásales la fruta a tus colegas", state.offerCode, "offer")}
-       </div>
-       <label class="field-label" for="answer-code">Código de respuesta del invitado</label>
-       <div class="scan-row"><button class="button button-paper" data-action="scan-answer">Escanear QR</button><span>o pega el código</span></div><textarea class="code-field" id="answer-code" rows="3" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Pega aquí el código de respuesta">${esc(state.answerCode)}</textarea>
-       <button class="button button-paper full-button" data-action="accept-answer">Sentar al invitado</button>`
-    : `<div class="connection-status ${connected ? "connected" : ""}">${connected ? "Conexión directa establecida. Ya estás en la mesa." : "Conectando con el anfitrión…"}</div>
-       ${!connected ? codePanel("Devuelve este código al anfitrión", state.answerCode, "answer") : ""}`;
+         <button class="button button-cyan" data-action="new-invite">Crear QR para invitar 🍆</button>
+         ${codePanel("Escanea y entra a la timba", state.offerCode, "offer")}
+       </div>`
+    : `<div class="connection-status ${connected ? "connected" : ""}">${connected ? "Conexión directa establecida. Ya estás en la mesa." : "Conectando con el anfitrión… No cierres esta página."}</div>`;
   const startButton = host
     ? `<button class="button button-pink full-button" data-action="start-game" ${!enoughPlayers ? "disabled" : ""}>${enoughPlayers ? "¡Que ruede la fruta! 🍑" : `Faltan jugadores (${state.players.length}/${game?.minPlayers ?? "?"})`}</button>`
     : "";
@@ -107,7 +103,7 @@ function renderLobby() {
     <button class="text-button" data-action="leave-room">Cerrar y salir</button>
   </section>`;
   for (const canvas of app.querySelectorAll("[data-qr-action]")) {
-    const value = canvas.dataset.qrAction === "offer" ? state.offerCode : state.answerCode;
+    const value = state.offerCode;
     try { window.CONTINUUM.QrEncode.draw(canvas, value); }
     catch (error) { console.warn("No se pudo dibujar el código QR.", error); }
   }
@@ -208,7 +204,7 @@ async function copyCode(which) {
   if (!value) return;
   try {
     await navigator.clipboard.writeText(value);
-    flash("Código copiado. Pásalo al otro móvil.");
+    flash("Enlace copiado. Envíalo o muéstralo para escanear.");
   } catch {
     const field = document.querySelector(".code-output");
     field?.focus();
@@ -220,7 +216,7 @@ async function shareCode(which) {
   const value = which === "offer" ? state.offerCode : state.answerCode;
   if (!value) return;
   try {
-    if (navigator.share) await navigator.share({ title: "Conexión de Elteto", text: value });
+    if (navigator.share) await navigator.share({ title: "Invitación a Elteto", url: value });
     else await copyCode(which);
   } catch (error) {
     if (error?.name !== "AbortError") flash("No se pudo abrir la hoja de compartir. Prueba a copiar el código.");
@@ -244,25 +240,16 @@ app.addEventListener("click", async (event) => {
       state.host = new LocalHostSession(gameId, name, state.roomName, onHostChange);
       state.screen = "lobby"; render();
     } else if (action === "join-room") {
-      const name = document.querySelector("#join-name")?.value.trim();
-      const offer = document.querySelector("#offer-code")?.value.trim();
-      if (!name || !offer) throw new Error("Escribe tu nombre y pega la invitación.");
-      state.name = name; state.offerCode = offer; state.role = "client"; state.error = ""; state.screen = "lobby"; render();
-      const guest = new LocalGuestSession(offer, name, (change) => {
-        if (change.kind === "lobby") { state.players = change.players || []; state.playerId = change.playerId || state.playerId; state.gameId = change.gameId || state.gameId; state.answerCode = change.answerCode || state.answerCode; }
-        else if (change.kind === "game") { state.players = change.players || state.players; state.playerId = change.playerId || state.playerId; state.view = change.view; state.gameId = change.gameId || state.gameId; state.screen = "game"; }
-        else if (change.kind === "started") state.error = "";
-        else if (change.kind === "error" || change.kind === "disconnected") { state.error = change.message; flash(change.message); }
-        render();
-      });
-      state.guest = guest;
-      state.answerCode = await guest.connect();
-      render();
+      const name = document.querySelector("#join-name")?.value.trim() || "Invitado";
+      const invite = document.querySelector("#offer-code")?.value.trim();
+      const roomId = parseRoomId(invite);
+      if (!roomId) throw new Error("Pega el enlace completo del QR de la sala.");
+      await beginGuestJoin(roomId, name);
     } else if (action === "new-invite") {
       state.offerCode = await state.host.createInvite();
       state.answerCode = "";
       renderLobby();
-      flash("Invitación lista. Compártela con quien se vaya a sentar.");
+      flash("QR listo. Tus colegas lo escanean con la cámara y entran.");
     } else if (action === "accept-answer") {
       const answer = document.querySelector("#answer-code")?.value.trim();
       if (!answer) throw new Error("Pega aquí el código de respuesta del invitado.");
@@ -270,7 +257,6 @@ app.addEventListener("click", async (event) => {
       state.answerCode = "";
       renderLobby();
     } else if (action === "scan-offer") await beginQrScan("offer");
-    else if (action === "scan-answer") await beginQrScan("answer");
     else if (action === "stop-scan") endQrScan();
     else if (action === "copy-code") await copyCode(button.dataset.codeAction);
     else if (action === "share-code") await shareCode(button.dataset.codeAction);
@@ -336,13 +322,9 @@ async function beginQrScan(target) {
       const targetNow = scanTarget;
       endQrScan();
       if (targetNow === "offer") {
-        state.offerCode = value;
-        renderJoinForm();
-        flash("Invitación leída. Ahora indica tu nombre y conecta.");
-      } else {
-        state.answerCode = value;
-        renderLobby();
-        flash("Respuesta leída. Pulsa «Sentar al invitado».");
+        const roomId = parseRoomId(value);
+        if (!roomId) { flash("Ese QR no es un enlace de sala Elteto."); return; }
+        beginGuestJoin(roomId, localStorage.getItem("elteto.playerName") || "Invitado").catch((error) => { state.error = error.message || "No se pudo entrar en la sala."; flash(state.error); render(); });
       }
     }, (error) => console.warn("No se pudo leer el fotograma.", error));
     activeScanner = scanner;
@@ -358,9 +340,33 @@ function endQrScan() {
   document.querySelector(".scan-overlay")?.remove();
 }
 
+function parseRoomId(value) {
+  const input = String(value || "").trim();
+  if (/^[a-f0-9]{32}$/i.test(input)) return input.toLowerCase();
+  try { const url = new URL(input, location.origin); if (url.origin !== location.origin) return null; const id = url.searchParams.get("join"); return id && /^[a-f0-9]{32}$/i.test(id) ? id.toLowerCase() : null; } catch { return null; }
+}
+function handleGuestChange(change) {
+  if (change.kind === "lobby") { state.players = change.players || []; state.playerId = change.playerId || state.playerId; state.gameId = change.gameId || state.gameId; state.roomName = change.roomName || state.roomName; }
+  else if (change.kind === "game") { state.players = change.players || state.players; state.playerId = change.playerId || state.playerId; state.view = change.view; state.gameId = change.gameId || state.gameId; state.screen = "game"; }
+  else if (change.kind === "started") state.error = "";
+  else if (change.kind === "error" || change.kind === "disconnected") { state.error = change.message; flash(change.message); }
+  render();
+}
+async function beginGuestJoin(roomId, name) {
+  state.name = name || "Invitado";
+  try { localStorage.setItem("elteto.playerName", state.name); } catch {}
+  Object.assign(state, { role: "client", error: "", screen: "lobby", players: [], offerCode: "", answerCode: "" });
+  render();
+  const guest = new LocalGuestSession(roomId, state.name, handleGuestChange);
+  state.guest = guest;
+  await guest.connect();
+}
 function sendAction(action) {
   if (state.role === "host") state.host.applyLocalAction(action);
   else state.guest.sendAction(action);
 }
-renderHome();
+const incomingRoom = new URLSearchParams(location.search).get("join");
+if (incomingRoom && parseRoomId(incomingRoom)) {
+  beginGuestJoin(incomingRoom, localStorage.getItem("elteto.playerName") || "Invitado").catch((error) => { state.error = error.message || "No se pudo entrar en la sala."; renderJoinForm(); flash(state.error); });
+} else renderHome();
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
