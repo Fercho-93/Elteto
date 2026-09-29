@@ -1,4 +1,5 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
+import { COLORS, SHADOW } from "../theme";
 import { Link } from "expo-router";
 
 export default function HomeScreen() {
@@ -24,11 +25,11 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0b3d26", padding: 24, justifyContent: "center", gap: 12 },
-  title: { fontSize: 40, fontWeight: "800", color: "#fff", textAlign: "center" },
-  subtitle: { fontSize: 16, color: "#d7f0e2", textAlign: "center", marginBottom: 4 },
-  hint: { fontSize: 13, color: "#a9cdb9", textAlign: "center", marginBottom: 24 },
-  button: { backgroundColor: "#145c3a", paddingVertical: 16, borderRadius: 12, alignItems: "center", marginTop: 12 },
-  primary: { backgroundColor: "#1f8a4c" },
-  buttonText: { color: "#fff", fontSize: 18, fontWeight: "700" },
+  container: { flex: 1, backgroundColor: COLORS.ink, padding: 26, justifyContent: "center", gap: 14 },
+  title: { fontSize: 54, fontWeight: "900", color: COLORS.citrus, textAlign: "center", letterSpacing: -2, textShadowColor: COLORS.pinkDark, textShadowOffset: { width: 3, height: 4 }, textShadowRadius: 0 },
+  subtitle: { fontSize: 18, lineHeight: 25, fontWeight: "700", color: COLORS.paper, textAlign: "center", marginBottom: 4 },
+  hint: { fontSize: 14, lineHeight: 20, color: COLORS.muted, textAlign: "center", marginBottom: 24 },
+  button: { backgroundColor: COLORS.cyan, paddingVertical: 17, paddingHorizontal: 18, borderRadius: 14, borderWidth: 3, borderColor: COLORS.black, alignItems: "center", marginTop: 10, ...SHADOW },
+  primary: { backgroundColor: COLORS.pink },
+  buttonText: { color: COLORS.black, fontSize: 18, fontWeight: "900", letterSpacing: 0.3 },
 });
