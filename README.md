@@ -4,15 +4,15 @@ Juego de cartas para jugar a Mus y Cinquillo desde móviles, con una mesa gamber
 
 ## Aplicación web y GitHub Pages
 
-`apps/web/` contiene la versión web instalable. GitHub Actions compila las reglas compartidas de `packages/game-core/`, genera una web estática y la publica en GitHub Pages cuando se actualiza `main`.
+`apps/web/` contiene la versión web instalable. GitHub Actions compila las reglas compartidas de `packages/game-core/`, genera una web estática y la publica en GitHub Pages al actualizar `main`.
 
-La web conecta los móviles con WebRTC DataChannels. El anfitrión crea una invitación; cada invitado devuelve un código de respuesta. El anfitrión conserva la autoridad de la partida y comparte a cada jugador solo su vista de las cartas. Los códigos se pueden copiar o pasar con la hoja de compartir del teléfono. La web no usa un servidor de juego ni necesita enviar las jugadas a internet.
+La web conecta los móviles con WebRTC DataChannels. El anfitrión crea una invitación y enseña un QR; cada invitado lo escanea y devuelve otro QR que escanea el anfitrión. También se pueden copiar los códigos o compartirlos desde el teléfono. El anfitrión conserva la autoridad de la partida y comparte a cada jugador solo su vista de las cartas. No hace falta un servidor de juego.
 
-Para probar partidas locales, abrid la página segura de Pages en ambos teléfonos y conectadlos a la misma Wi-Fi o al hotspot de uno de ellos. Un jugador crea la sala y comparte el código de invitación. Cada invitado pega ese código, comparte su respuesta con el anfitrión y espera a que aparezca en la mesa.
+Para probarlo, abre la página segura de Pages en ambos teléfonos y conéctalos a la misma Wi-Fi o al hotspot de uno de ellos. En un móvil crea la sala; en el otro escanea la invitación. Después, escanea con el anfitrión el QR de respuesta del invitado. La cámara necesita permiso. Si el escaneo no funciona, puedes copiar y pegar el código.
 
-Los juegos exigen al menos tres participantes para Cinquillo y cuatro para Mus. Con dos teléfonos puedes confirmar la conexión y ver cómo se actualiza la sala; para empezar una partida completa, añade participantes desde más teléfonos o navegadores.
+Cinquillo requiere al menos tres participantes y Mus cuatro. Con dos teléfonos puedes comprobar la conexión y la sala; para iniciar una partida completa, añade más participantes desde otros teléfonos o navegadores.
 
-La aplicación web también se puede instalar desde el navegador usando «Añadir a pantalla de inicio».
+La web se puede instalar desde el navegador con «Añadir a pantalla de inicio».
 
 ## Desarrollo web
 
@@ -23,11 +23,11 @@ npm ci
 npm run build:web
 ```
 
-El sitio compilado aparece en `dist/`. Para probarlo en el navegador durante el desarrollo, sírvelo desde un origen HTTPS o desde `localhost`, porque el navegador restringe WebRTC y la instalación PWA en orígenes inseguros.
+El sitio compilado aparece en `dist/`. Para probarlo localmente, sírvelo desde HTTPS o desde `localhost`, porque el navegador restringe WebRTC, el acceso a la cámara y la instalación PWA en orígenes inseguros.
 
 ## App móvil nativa
 
-`apps/mobile/` conserva el cliente Expo para las compilaciones móviles nativas. Comparte el motor de reglas con la versión web. Para usar módulos nativos, instala un development build propio; Expo Go no los incluye todos.
+`apps/mobile/` conserva el cliente Expo para las compilaciones móviles nativas. Comparte el motor de reglas con la versión web, en `packages/game-core/`.
 
 ## Motor de reglas
 
