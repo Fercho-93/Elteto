@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { COLORS, SHADOW } from "../theme";
 import { View, Text, TextInput, Pressable, StyleSheet, FlatList } from "react-native";
 import { useRouter } from "expo-router";
 import { useGameSession } from "../state/GameSession";
@@ -23,7 +24,7 @@ export default function JoinScreen() {
       <FlatList
         data={discoveredHosts}
         keyExtractor={(h) => `${h.address}:${h.port}`}
-        ListEmptyComponent={<Text style={styles.empty}>Buscando... asegúrate de estar en la misma WiFi o hotspot que el anfitrión.</Text>}
+        ListEmptyComponent={<Text style={styles.empty}>Buscando mesa… Si no aparece, comprobad que estáis en la misma Wi-Fi o hotspot. El anfitrión no muerde (casi nunca).</Text>}
         renderItem={({ item }) => (
           <Pressable
             onPress={() => setSelected(item)}
@@ -39,7 +40,7 @@ export default function JoinScreen() {
       />
 
       <Text style={styles.label}>Tu nombre</Text>
-      <TextInput style={styles.input} placeholder="p.ej. Fernando" placeholderTextColor="#8fb99e" value={playerName} onChangeText={setPlayerName} />
+      <TextInput style={styles.input} placeholder="p.ej. Donde las dan, las toman" placeholderTextColor="#8E7B88" value={playerName} onChangeText={setPlayerName} />
 
       <Pressable
         disabled={!canJoin}
@@ -57,15 +58,15 @@ export default function JoinScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0b3d26", padding: 20, gap: 8 },
-  label: { color: "#d7f0e2", fontSize: 14, marginTop: 16, marginBottom: 4 },
-  empty: { color: "#a9cdb9", fontSize: 14, paddingVertical: 16 },
-  input: { backgroundColor: "#124a30", color: "#fff", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
-  room: { backgroundColor: "#124a30", borderRadius: 12, padding: 14, borderWidth: 1, borderColor: "#1f8a4c" },
-  roomSelected: { backgroundColor: "#1f8a4c" },
-  roomTitle: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  roomSubtitle: { color: "#cfe9db", fontSize: 13, marginTop: 2 },
-  button: { backgroundColor: "#1f8a4c", paddingVertical: 16, borderRadius: 12, alignItems: "center", marginTop: 28 },
+  container: { flex: 1, backgroundColor: COLORS.ink, padding: 22, gap: 8 },
+  label: { color: COLORS.citrus, fontSize: 13, fontWeight: "900", letterSpacing: 1, textTransform: "uppercase", marginTop: 16, marginBottom: 4 },
+  empty: { color: COLORS.muted, fontSize: 14, paddingVertical: 16 },
+  input: { backgroundColor: COLORS.paper, color: COLORS.black, borderWidth: 3, borderColor: COLORS.black, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16, fontWeight: "700", ...SHADOW },
+  room: { backgroundColor: COLORS.plum, borderRadius: 14, padding: 15, borderWidth: 2, borderColor: COLORS.black, ...SHADOW },
+  roomSelected: { backgroundColor: COLORS.cyan },
+  roomTitle: { color: COLORS.paper, fontSize: 17, fontWeight: "900" },
+  roomSubtitle: { color: COLORS.muted, fontSize: 13, marginTop: 3 },
+  button: { backgroundColor: COLORS.pink, paddingVertical: 17, paddingHorizontal: 14, borderWidth: 3, borderColor: COLORS.black, borderRadius: 14, alignItems: "center", marginTop: 28, ...SHADOW },
   buttonDisabled: { opacity: 0.4 },
-  buttonText: { color: "#fff", fontSize: 17, fontWeight: "700" },
+  buttonText: { color: COLORS.black, fontSize: 17, fontWeight: "900" },
 });

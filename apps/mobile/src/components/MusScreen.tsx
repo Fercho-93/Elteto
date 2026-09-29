@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { COLORS, SHADOW } from "../theme";
 import { View, Text, Pressable, StyleSheet, ScrollView, TextInput } from "react-native";
 import type { Card, MusView } from "game-core";
 import { CardView } from "./CardView";
@@ -125,22 +126,22 @@ function teamGuess(view: MusView, playerId: string | null): "A" | "B" | null {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0b3d26", padding: 16 },
-  banner: { color: "#8ee6b0", fontSize: 18, fontWeight: "800", textAlign: "center", marginBottom: 8 },
-  scoreRow: { flexDirection: "row", justifyContent: "space-between" },
-  score: { color: "#fff", fontWeight: "700" },
-  phase: { color: "#cfe9db", marginTop: 8, fontWeight: "700" },
-  error: { color: "#ffb4b4", marginTop: 8 },
-  sectionTitle: { color: "#cfe9db", fontSize: 13, fontWeight: "700", marginTop: 12, textTransform: "uppercase" },
-  dim: { color: "#a9cdb9", marginTop: 4 },
-  actionButton: { backgroundColor: "#1f8a4c", paddingVertical: 12, borderRadius: 10, alignItems: "center", marginTop: 8 },
-  actionButtonText: { color: "#fff", fontWeight: "700" },
-  bettingBox: { backgroundColor: "#124a30", borderRadius: 10, padding: 10, marginTop: 10 },
+  container: { flex: 1, backgroundColor: COLORS.ink, padding: 16 },
+  banner: { color: COLORS.black, backgroundColor: COLORS.citrus, borderWidth: 2, borderColor: COLORS.black, borderRadius: 12, padding: 10, fontSize: 18, fontWeight: "900", textAlign: "center", marginBottom: 10, ...SHADOW },
+  scoreRow: { flexDirection: "row", justifyContent: "space-between", backgroundColor: COLORS.plum, borderRadius: 12, borderWidth: 2, borderColor: COLORS.black, padding: 10 },
+  score: { color: COLORS.paper, fontWeight: "900" },
+  phase: { color: COLORS.cyan, marginTop: 10, fontWeight: "900", letterSpacing: 0.6 },
+  error: { color: COLORS.red, marginTop: 8, fontWeight: "800" },
+  sectionTitle: { color: COLORS.citrus, fontSize: 12, fontWeight: "900", marginTop: 14, letterSpacing: 1.2, textTransform: "uppercase" },
+  dim: { color: COLORS.muted, marginTop: 4 },
+  actionButton: { backgroundColor: COLORS.cyan, borderWidth: 3, borderColor: COLORS.black, paddingVertical: 13, borderRadius: 12, alignItems: "center", marginTop: 8, ...SHADOW },
+  actionButtonText: { color: COLORS.black, fontWeight: "900" },
+  bettingBox: { backgroundColor: COLORS.plum, borderWidth: 2, borderColor: COLORS.black, borderRadius: 14, padding: 12, marginTop: 10 },
   bettingActions: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8, alignItems: "center" },
-  smallButton: { backgroundColor: "#1f8a4c", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
-  ordago: { backgroundColor: "#a3271f" },
-  smallButtonText: { color: "#fff", fontWeight: "700" },
-  betInput: { backgroundColor: "#0b3d26", color: "#fff", width: 56, textAlign: "center", borderRadius: 8, paddingVertical: 6 },
-  log: { maxHeight: 120, marginTop: 4 },
-  logLine: { color: "#a9cdb9", fontSize: 12 },
+  smallButton: { backgroundColor: COLORS.cyan, borderWidth: 2, borderColor: COLORS.black, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10 },
+  ordago: { backgroundColor: COLORS.pink },
+  smallButtonText: { color: COLORS.black, fontWeight: "900" },
+  betInput: { backgroundColor: COLORS.paper, color: COLORS.black, width: 56, textAlign: "center", borderWidth: 2, borderColor: COLORS.black, borderRadius: 10, paddingVertical: 6, fontWeight: "900" },
+  log: { maxHeight: 120, marginTop: 5, backgroundColor: COLORS.plum, borderRadius: 10, padding: 8 },
+  logLine: { color: COLORS.paper, fontSize: 12, lineHeight: 17 },
 });
