@@ -93,16 +93,19 @@ function dealHand(state: MusState, seed: number): MusState {
   };
 }
 
-function pairCategory(hand: Card[]): { category: 0 | 1 | 2 | 3; rank: number } {
+function pairCategory(hand: Card[]): { category: 0 | 1 | 2 | 3; ranks: number[] } {
   const counts = new Map<number, number>();
   for (const c of hand) counts.set(RANK_INDEX[c.rank], (counts.get(RANK_INDEX[c.rank]) ?? 0) + 1);
-  let best: { category: 0 | 1 | 2 | 3; rank: number } = { category: 0, rank: -1 };
-  for (const [rank, count] of counts) {
-    if (count === 4 && best.category < 3) best = { category: 3, rank };
-    else if (count === 3 && best.category < 2) best = { category: 2, rank };
-    else if (count === 2 && best.category < 1) best = { category: 1, rank };
-  }
-  return best;
+  const groups = Array.from(counts.entries()).sort((a, b) => b[0] - a[0]);
+  const pairs = groups.filter(([, count]) => count === 2).map(([rank]) => rank);
+  const triple = groups.find(([, count]) => count === 3)?.[0];
+  const four = groups.find(([, count]) => count === 4)?.[0];
+
+  if (four !== undefined) return { category: 3, ranks: [four, four] };
+  if (pairs.length === 2) return { category: 3, ranks: pairs };
+  if (triple !== undefined) return { category: 2, ranks: [triple] };
+  if (pairs.length === 1) return { category: 1, ranks: pairs };
+  return { category: 0, ranks: [] };
 }
 
 function juegoInfo(hand: Card[]): { sum: number; isJuego: boolean; score: number } {
@@ -130,23 +133,33 @@ function phaseApplies(state: MusState, phase: MusPhaseName): boolean {
 }
 
 function compareForPhase(state: MusState, phase: MusPhaseName): Team {
-  const scoreOf = (playerId: PlayerId): number => {
+  const scoreOf = (playerId: PlayerId): number[] => {
     const hand = state.hands[playerId];
-    if (phase === "grande") return bestCard(hand, true);
-    if (phase === "chica") return bestCard(hand, false);
+    if (phase === "grande") return [bestCard(hand, true)];
+    if (phase === "chica") return [bestCard(hand, false)];
     if (phase === "pares") {
-      const p = pairCategory(hand);
-      return p.category * 1000 + p.rank;
+      const pairs = pairCategory(hand);
+      return [pairs.category, ...pairs.ranks];
     }
-    return juegoInfo(hand).score;
+    return [juegoInfo(hand).score];
   };
-  let bestPlayer = state.players[0];
-  let bestScore = -Infinity;
-  for (const p of state.players) {
-    const s = scoreOf(p);
-    if (s > bestScore) {
-      bestScore = s;
-      bestPlayer = p;
+  const compareScores = (left: number[], right: number[]): number => {
+    for (let i = 0; i < Math.max(left.length, right.length); i++) {
+      const difference = (left[i] ?? -1) - (right[i] ?? -1);
+      if (difference !== 0) return difference;
+    }
+    return 0;
+  };
+
+  // En caso de empate gana quien ocupa el primer asiento empezando por la mano.
+  let bestPlayer = state.players[state.mano];
+  let bestScore = scoreOf(bestPlayer);
+  for (let offset = 1; offset < state.players.length; offset++) {
+    const player = state.players[(state.mano + offset) % state.players.length];
+    const score = scoreOf(player);
+    if (compareScores(score, bestScore) > 0) {
+      bestScore = score;
+      bestPlayer = player;
     }
   }
   return teamOfPlayer(state, bestPlayer);
@@ -210,6 +223,9 @@ export const musEngine: GameEngine<MusState, MusView, MusAction> = {
   maxPlayers: 4,
 
   createInitialState(players, seed) {
+    if (players.length !== 4 || new Set(players).size !== 4) {
+      throw new Error("El Mus requiere exactamente 4 jugadores distintos.");
+    }
     const base: MusState = {
       players,
       hands: {},
@@ -238,6 +254,11 @@ export const musEngine: GameEngine<MusState, MusView, MusAction> = {
       if (action.type !== "discard") throw new Error("Debes decidir tu descarte.");
       if (state.pendingDiscard[playerId] !== null) throw new Error("Ya has descartado.");
       const hand = state.hands[playerId];
+      if (!hand) throw new Error("Jugador desconocido.");
+      const discardedKeys = action.cards.map((card) => `${card.suit}:${card.rank}`);
+      if (discardedKeys.length > hand.length || new Set(discardedKeys).size !== discardedKeys.length) {
+        throw new Error("El descarte contiene cartas repetidas o demasiadas cartas.");
+      }
       for (const c of action.cards) {
         if (!hand.some((h) => h.suit === c.suit && h.rank === c.rank)) {
           throw new Error("No tienes esa carta para descartar.");
