@@ -66,6 +66,17 @@ export class HostServer {
           return;
         }
         if (msg.type === "hello") {
+          if (connId) return;
+          if (typeof msg.name !== "string" || !msg.name.trim()) {
+            socket.write(encodeMessage({ type: "error", message: "Indica un nombre para unirte." }));
+            socket.end();
+            return;
+          }
+          if (this.started || this.connections.size + 1 >= this.engine.maxPlayers) {
+            socket.write(encodeMessage({ type: "error", message: this.started ? "La partida ya ha empezado." : "La sala está completa." }));
+            socket.end();
+            return;
+          }
           connId = `p${Date.now()}${Math.floor(Math.random() * 1000)}`;
           this.connections.set(connId, { id: connId, name: msg.name, socket });
           socket.write(encodeMessage({ type: "welcome", playerId: connId, gameId: this.engine.id }));
@@ -107,6 +118,9 @@ export class HostServer {
     const players = this.currentPlayerIds();
     if (players.length < this.engine.minPlayers) {
       throw new Error(`Se necesitan al menos ${this.engine.minPlayers} jugadores.`);
+    }
+    if (players.length > this.engine.maxPlayers) {
+      throw new Error(`Este juego admite como máximo ${this.engine.maxPlayers} jugadores.`);
     }
     this.state = this.engine.createInitialState(players, seed);
     this.started = true;
