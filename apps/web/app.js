@@ -260,7 +260,11 @@ app.addEventListener("click", async (event) => {
     } else if (action === "new-offline-invite") {
       state.inviteMode = "offline";
       state.answerCode = "";
-      state.offerCode = await state.host.createOfflineInvite();
+      const offlineOffer = await state.host.createOfflineInvite();
+      if (/^https?:\/\//i.test(String(offlineOffer || "").trim())) {
+        throw new Error("La invitación offline no puede ser una URL. Recarga Elteto para obtener la versión actualizada.");
+      }
+      state.offerCode = offlineOffer;
       renderLobby();
       flash("Invitación offline lista. El invitado la escanea dentro de Elteto y luego tú escaneas su respuesta.");
     } else if (action === "accept-answer") {
@@ -386,6 +390,9 @@ async function beginGuestJoin(roomId, name) {
   await guest.connect();
 }
 async function beginOfflineGuestJoin(offerCode, name) {
+  if (/^https?:\/\//i.test(String(offerCode || "").trim())) {
+    throw new Error("Ese código es una invitación online. Para jugar sin internet, usa el código offline generado por «Invitar sin internet».");
+  }
   state.name = name || "Invitado";
   try { localStorage.setItem("elteto.playerName", state.name); } catch {}
   Object.assign(state, { role: "client", inviteMode: "offline", error: "", screen: "lobby", players: [], offerCode: "", answerCode: "" });
