@@ -1,0 +1,214 @@
+rules_version = '2';
+
+// Salas online de Elteto. Mismo modelo que las salas de Timeline (Firestore + invitados
+// anónimos + reglas), adaptado a juegos con cartas ocultas:
+//
+//   rooms/{code}                    Documento público de la sala: quién está, fase y anfitrión.
+//   rooms/{code}/presence/{uid}     Latido de cada participante (relevo de anfitrión).
+//   rooms/{code}/actions/{uid}      Última jugada enviada por cada participante; la lee el anfitrión.
+//   rooms/{code}/views/{uid}        Vista privada de cada participante; la escribe el anfitrión.
+//   rooms/{code}/secret/state       Estado completo de la partida; solo el anfitrión lo lee y escribe.
+//   roomCreation/{uid}              Cuota de creación de salas: una cada 30 segundos por UID.
+//
+// El anfitrión sigue siendo la autoridad de las reglas del juego (como en el modo directo
+// entre móviles). Las reglas validan *quién* escribe, en qué fase y qué campos toca; no
+// pueden validar una jugada de Mus o Cinquillo, porque los motores viven en el cliente.
+// A cambio, las manos ajenas y el mazo no viajan en el documento de la sala: cada persona
+// solo puede leer su propia vista.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function registered() { return request.auth != null; }
+
+    // Una sala nueva por UID cada 30 segundos, en la misma operación que crea la sala.
+    // Los documentos se limpian con una política TTL sobre `lastCreatedAt` (ver
+    // CONFIGURAR_ONLINE.md).
+    match /roomCreation/{owner} {
+      allow get: if registered() && request.auth.uid == owner;
+      allow create, update: if registered() && request.auth.uid == owner
+        && request.resource.data.keys().hasOnly(['lastCreatedAt','roomCode'])
+        && request.resource.data.lastCreatedAt == request.time
+        && request.resource.data.roomCode is string
+        && (!exists(/databases/$(database)/documents/roomCreation/$(owner)) || request.time >= resource.data.lastCreatedAt + duration.value(30,'s'))
+        && !exists(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode))
+        && getAfter(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.hostUid == owner
+        && getAfter(/databases/$(database)/documents/rooms/$(request.resource.data.roomCode)).data.createdAt == request.time;
+      allow list, delete: if false;
+    }
+
+    match /rooms/{roomId} {
+      function room() { return get(/databases/$(database)/documents/rooms/$(roomId)).data; }
+      function uid() { return request.auth.uid; }
+      function before() { return resource.data; }
+      function after() { return request.resource.data; }
+      function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+
+      function isParticipant() { return registered() && request.auth.uid in resource.data.playerOrder; }
+      function isHost() { return registered() && resource.data.hostUid == request.auth.uid; }
+      // La versión sube de uno en uno y `updatedAt` es siempre la hora del servidor: nadie
+      // puede fechar una sala a mano, que es lo que protege a la política TTL de salas
+      // abandonadas.
+      function bumped() { return after().version == before().version + 1 && after().updatedAt == request.time; }
+      function validName(name) { return name is string && name.size() >= 1 && name.size() <= 24; }
+      function validPlayer(p) { return p.keys().hasOnly(['name','joinedAt']) && validName(p.name) && p.joinedAt is int; }
+
+      // Identidad de la sala: nunca cambia después de crearla.
+      function identityKept() { return !changed().hasAny(['roomCode','gameId','roomName','minPlayers','maxPlayers','createdAt']); }
+
+      function validJoin() {
+        return before().status == 'lobby'
+          && !(uid() in before().playerOrder)
+          && before().playerOrder.size() < before().maxPlayers
+          && changed().hasOnly(['players','playerOrder','version','updatedAt'])
+          && after().playerOrder == before().playerOrder.concat([uid()])
+          && after().players.diff(before().players).affectedKeys().hasOnly([uid()])
+          && validPlayer(after().players[uid()])
+          && bumped();
+      }
+      // Marcharse del vestíbulo (el anfitrión no: cierra la sala) o expulsar a alguien.
+      function validLeave() {
+        return before().status == 'lobby' && uid() in before().playerOrder && uid() != before().hostUid
+          && changed().hasOnly(['players','playerOrder','version','updatedAt'])
+          && after().playerOrder == before().playerOrder.removeAll([uid()])
+          && after().players.diff(before().players).affectedKeys().hasOnly([uid()])
+          && !(uid() in after().players)
+          && bumped();
+      }
+      function validKick() {
+        let removed = before().playerOrder.removeAll(after().playerOrder);
+        return isHost() && before().status == 'lobby'
+          && changed().hasOnly(['players','playerOrder','version','updatedAt'])
+          && removed.size() == 1 && !(before().hostUid in removed)
+          && after().playerOrder.size() == before().playerOrder.size() - 1
+          && after().playerOrder == before().playerOrder.removeAll(removed)
+          && after().players.diff(before().players).affectedKeys().hasOnly(removed)
+          && bumped();
+      }
+      function validStart() {
+        return isHost() && before().status == 'lobby'
+          && before().playerOrder.size() >= before().minPlayers
+          && changed().hasOnly(['status','version','updatedAt'])
+          && after().status == 'playing'
+          && bumped();
+      }
+      // Cada jugada confirmada sube la versión (y con ella `updatedAt`).
+      function validSync() {
+        return isHost() && before().status == 'playing'
+          && changed().hasOnly(['version','updatedAt'])
+          && bumped();
+      }
+      function validClose() {
+        return isHost() && before().status != 'ended'
+          && changed().hasOnly(['status','version','updatedAt'])
+          && after().status == 'ended'
+          && bumped();
+      }
+      // Si el anfitrión lleva sin dar señales 90 s (15 s si su pantalla está en segundo
+      // plano), cualquier participante puede tomar el relevo. La transacción del cliente
+      // evita que lo tomen dos a la vez.
+      function hostStale() {
+        let path = /databases/$(database)/documents/rooms/$(roomId)/presence/$(before().hostUid);
+        let host = exists(path) ? get(path).data : {'seenAt': before().updatedAt, 'visible': true};
+        return host.seenAt is timestamp && request.time > host.seenAt + duration.value(host.visible ? 90 : 15, 's');
+      }
+      function validHostClaim() {
+        return isParticipant() && before().status != 'ended'
+          && after().hostUid == uid() && changed().hasOnly(['hostUid','version','updatedAt'])
+          && hostStale() && bumped();
+      }
+
+      // Una sala que no existe se lee como vacía (así se distingue de «ya empezó»); una que
+      // empezó solo la leen sus participantes.
+      allow get: if registered() && (resource == null || resource.data.status == 'lobby' || isParticipant());
+      allow list: if false;
+
+      allow create: if registered()
+        && roomId.matches('^[A-HJ-NP-Z2-9]{8}$')
+        && after().keys().hasOnly(['roomCode','gameId','roomName','hostUid','status','version','minPlayers','maxPlayers','playerOrder','players','createdAt','updatedAt'])
+        && after().roomCode == roomId
+        && after().gameId is string && after().gameId.matches('^[a-z][a-z0-9-]{1,23}$')
+        && after().roomName is string && after().roomName.size() >= 1 && after().roomName.size() <= 40
+        && after().minPlayers is int && after().maxPlayers is int
+        && after().minPlayers >= 2 && after().minPlayers <= after().maxPlayers && after().maxPlayers <= 8
+        && after().hostUid == uid() && after().status == 'lobby' && after().version == 1
+        && after().playerOrder == [uid()]
+        && after().players.keys().hasOnly([uid()]) && validPlayer(after().players[uid()])
+        && after().createdAt == request.time && after().updatedAt == request.time
+        // La sala solo nace junto con su registro de cuota (una sala cada 30 s por UID).
+        && getAfter(/databases/$(database)/documents/roomCreation/$(uid())).data.roomCode == roomId;
+
+      allow update: if registered() && identityKept() && (
+        (after().hostUid != before().hostUid ? validHostClaim()
+          : (after().hostUid == before().hostUid
+              && (validJoin() || validLeave() || validKick() || validStart() || validSync() || validClose())))
+      );
+
+      allow delete: if false;
+
+      // Latido: un documento por persona, que solo ella escribe.
+      match /presence/{playerId} {
+        function member() { return registered() && request.auth.uid in room().playerOrder; }
+        allow get: if member();
+        allow list: if false;
+        allow create, update: if member() && request.auth.uid == playerId
+          && request.resource.data.keys().hasOnly(['seenAt','visible'])
+          && request.resource.data.seenAt == request.time && request.resource.data.visible is bool;
+        allow delete: if member() && request.auth.uid == playerId;
+      }
+
+      // Jugadas: cada persona escribe solo su documento, con `seq` creciente de uno en uno
+      // (así el anfitrión no procesa dos veces la misma). Solo el anfitrión y su autor
+      // pueden leerlo.
+      match /actions/{playerId} {
+        function member() { return registered() && request.auth.uid in room().playerOrder; }
+        allow get: if member() && (request.auth.uid == playerId || request.auth.uid == room().hostUid);
+        allow list: if registered() && request.auth.uid == room().hostUid;
+        allow create: if member() && request.auth.uid == playerId && room().status == 'playing'
+          && request.resource.data.keys().hasOnly(['seq','json','at'])
+          && request.resource.data.seq == 1
+          && request.resource.data.json is string && request.resource.data.json.size() <= 2000
+          && request.resource.data.at == request.time;
+        allow update: if member() && request.auth.uid == playerId && room().status == 'playing'
+          && request.resource.data.keys().hasOnly(['seq','json','at'])
+          && request.resource.data.seq == resource.data.seq + 1
+          && request.resource.data.json is string && request.resource.data.json.size() <= 2000
+          && request.resource.data.at == request.time;
+        allow delete: if false;
+      }
+
+      // Vista privada (`at` es la hora del servidor, para la política TTL): la escribe el anfitrión; la lee solo su dueño. Así las manos ajenas
+      // nunca llegan al móvil de nadie. `ack` es la última jugada de esa persona ya
+      // procesada y `error` el motivo si el motor la rechazó.
+      match /views/{playerId} {
+        function member() { return registered() && request.auth.uid in room().playerOrder; }
+        function hostWrites() { return registered() && request.auth.uid == room().hostUid && playerId in room().playerOrder; }
+        allow get: if registered() && (request.auth.uid == playerId || request.auth.uid == room().hostUid) && member();
+        allow list: if false;
+        allow create, update: if hostWrites()
+          && request.resource.data.keys().hasOnly(['rev','json','ack','error','at'])
+          && request.resource.data.at == request.time
+          && request.resource.data.rev is int && request.resource.data.json is string && request.resource.data.json.size() <= 100000
+          && request.resource.data.ack is int
+          && (request.resource.data.error == null || (request.resource.data.error is map && request.resource.data.error.keys().hasOnly(['seq','message'])
+              && request.resource.data.error.seq is int && request.resource.data.error.message is string && request.resource.data.error.message.size() <= 200));
+        allow delete: if false;
+      }
+
+      // Estado completo: el mazo y todas las manos. Solo el anfitrión de ese momento lo lee,
+      // lo que permite que quien tome el relevo continúe la partida donde se quedó.
+      match /secret/{docId} {
+        function isHostNow() { return registered() && request.auth.uid == room().hostUid; }
+        allow get: if isHostNow();
+        allow list: if false;
+        allow create, update: if isHostNow() && docId == 'state'
+          && request.resource.data.keys().hasOnly(['rev','json','acks','at'])
+          && request.resource.data.at == request.time
+          && request.resource.data.rev is int && request.resource.data.json is string && request.resource.data.json.size() <= 500000
+          && request.resource.data.acks is map;
+        allow delete: if false;
+      }
+    }
+
+    // Todo lo que no se nombra arriba queda cerrado.
+    match /{document=**} { allow read, write: if false; }
+  }
+}

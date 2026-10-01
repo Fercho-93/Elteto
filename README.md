@@ -6,22 +6,13 @@ Juego de cartas para jugar a Mus y Cinquillo desde móviles, con una mesa gamber
 
 `apps/web/` contiene la versión web instalable. GitHub Actions compila las reglas compartidas de `packages/game-core/`, genera una web estática y la publica en GitHub Pages al actualizar `main`.
 
-Con internet, el anfitrión crea una sala y la web muestra un enlace QR. Cada invitado lo escanea con la cámara normal del móvil; el enlace abre Elteto y lo mete en la sala. Si el invitado ya había usado Elteto, se recuerda su nombre; también se puede copiar o compartir el enlace.
+Con internet, el anfitrión crea una sala y la web muestra un código, un enlace y un QR. Cada invitado escanea el QR con la cámara normal del móvil, abre el enlace o escribe el código; si ya había usado Elteto, se recuerda su nombre.
 
-Firebase Realtime Database pasa únicamente los mensajes temporales necesarios para establecer la conexión WebRTC. Las jugadas y las cartas siguen viajando directamente entre los móviles. El anfitrión conserva la autoridad de la partida y cada jugador recibe solo su vista de las cartas. No hay un servidor de juego.
+Las salas viven en Firestore, con invitados anónimos de Firebase Authentication y reglas de seguridad, igual que el juego online de Timeline. El anfitrión conserva la autoridad de las reglas del juego y publica una vista privada por jugador, de modo que cada persona solo recibe sus propias cartas. Si el anfitrión desaparece, otra persona toma el relevo y continúa la partida guardada. No hay un servidor de juego propio.
 
-### Configurar Firebase (solo para el modo con internet)
+Arquitectura, modelo de datos, reglas, configuración de Firebase y pruebas: [CONFIGURAR_ONLINE.md](CONFIGURAR_ONLINE.md).
 
-1. Crea un proyecto Firebase y registra una aplicación web.
-2. En Firebase Authentication, activa el proveedor **Anónimo**.
-3. Crea una **Realtime Database**.
-4. Copia las reglas de `database.rules.json` en la pestaña **Reglas** de esa base de datos y publícalas.
-5. Copia los valores de configuración de la aplicación web en `apps/web/firebase-config.js`: `apiKey`, `authDomain`, `databaseURL`, `projectId` y `appId`.
-6. Guarda esos cambios en `main`; GitHub Pages publicará el juego configurado.
-
-La configuración web de Firebase es visible desde el navegador. La seguridad depende de las reglas de Realtime Database y del acceso anónimo; no pongas una clave de cuenta de servicio ni credenciales privadas en la web.
-
-Para probarlo, abre [Elteto en GitHub Pages](https://fercho-93.github.io/Elteto/) en ambos teléfonos. Conéctalos a la misma Wi-Fi o al hotspot de uno de ellos. En un móvil crea la partida y muestra el QR; desde la cámara del otro, escanéalo. La cámara abrirá el enlace y el juego comenzará a conectarse. La primera vez, el navegador puede pedir permiso para abrir la página o usar la cámara si escaneas desde dentro de Elteto.
+Para probarlo, abre [Elteto en GitHub Pages](https://fercho-93.github.io/Elteto/) en ambos teléfonos, crea la partida en uno, pulsa **Invitar con internet** y entra desde el otro con el QR o el código.
 
 Cinquillo admite de dos a seis participantes. Mus necesita cuatro.
 
@@ -37,7 +28,7 @@ El modo **Sin internet** no usa Firebase ni un servidor de señalización. La ap
 
 Los dos móviles deben permanecer en la misma red local y dejar Elteto abierto durante la partida. El modo offline de navegador requiere que la app se haya cargado previamente mientras había internet: GitHub Pages no puede entregar por primera vez la app cuando no hay conexión. Cinquillo ya permite jugar con dos personas; Mus sigue necesitando cuatro por sus reglas.
 
-La opción **Invitar con Firebase** conserva el enlace de un solo QR cuando hay internet.
+Si una sala usa **Invitar con internet**, no se pueden mezclar invitados sin internet en ella: elige un modo al abrir la mesa.
 
 La web se puede instalar desde el navegador con «Añadir a pantalla de inicio».
 
@@ -48,6 +39,9 @@ Requisitos: Node.js 20 o posterior.
 ```bash
 npm ci
 npm run build:web
+npm test              # códigos de sala e invitaciones
+npm run test:reglas   # reglas de Firestore (emulador, necesita Java)
+npm run test:online   # sesiones online completas (emuladores)
 ```
 
 El sitio compilado aparece en `dist/`. Para probarlo localmente, sírvelo desde HTTPS o desde `localhost`, porque el navegador restringe WebRTC, el acceso a la cámara y la instalación PWA en orígenes inseguros.

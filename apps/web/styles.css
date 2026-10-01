@@ -161,3 +161,4 @@ button:disabled { cursor: not-allowed; opacity: .45; transform: none !important;
   .topbar-tag { font-size: 8px; letter-spacing: .6px; }
   .logo-mark { width: 118px; height: 78px; font-size: 38px; }
 }
+.room-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.4em; letter-spacing: .18em; }

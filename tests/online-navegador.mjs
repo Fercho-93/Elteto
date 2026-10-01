@@ -1,0 +1,118 @@
+// Recorrido de la interfaz con dos «móviles» en Chromium contra los emuladores de Auth y
+// Firestore: crear sala con internet, entrar con el código, empezar y jugar un turno.
+// No forma parte de `npm test` (necesita Playwright y Chromium). Uso:
+//   npm run build:web
+//   PLAYWRIGHT_MODULE=/ruta/a/playwright/index.mjs \
+//   npx firebase emulators:exec --project elteto-fercho93 --only auth,firestore "node tests/online-navegador.mjs"
+import { createServer } from "node:http";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import assert from "node:assert/strict";
+
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : "playwright");
+const root = fileURLToPath(new URL("..", import.meta.url));
+const dist = path.join(root, "dist");
+const TYPES = { ".js": "text/javascript", ".css": "text/css", ".html": "text/html", ".svg": "image/svg+xml", ".webmanifest": "application/json", ".json": "application/json" };
+
+const server = createServer(async (req, res) => {
+  try {
+    const pathname = decodeURIComponent(new URL(req.url, "http://x").pathname);
+    const file = path.join(dist, pathname === "/" ? "index.html" : pathname);
+    const body = await fs.readFile(file);
+    res.setHeader("Content-Type", TYPES[path.extname(file)] || "application/octet-stream");
+    res.end(body);
+  } catch { res.writeHead(404); res.end(); }
+});
+await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+const base = `http://127.0.0.1:${server.address().port}/`;
+const browser = await chromium.launch();
+
+async function movil(label) {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
+  // El SDK se sirve desde node_modules en lugar de gstatic, y la app apunta a los emuladores.
+  await context.route(/https:\/\/www\.gstatic\.com\/firebasejs\/[^/]+\/([\w-]+\.js)$/, async (route) => {
+    const name = route.request().url().split("/").pop();
+    route.fulfill({ contentType: "text/javascript", body: await fs.readFile(path.join(root, "node_modules/firebase", name), "utf8") });
+  });
+  await context.addInitScript(() => { globalThis.__ELTETO_FIREBASE_EMULATOR = { auth: "http://127.0.0.1:9099", firestoreHost: "127.0.0.1", firestorePort: 8080 }; });
+  const page = await context.newPage();
+  const log = [];
+  page.on("pageerror", (error) => log.push(`pageerror ${error.message}`));
+  page.on("console", (message) => { if (message.type() === "error") log.push(message.text()); });
+  const text = () => page.evaluate(() => document.querySelector("#app").innerText);
+  const waitText = (pattern, timeout = 15000) => page.waitForFunction((source) => new RegExp(source, "i").test(document.querySelector("#app").innerText), pattern.source, { timeout })
+    .catch(async (error) => { console.log(`  [${label}] pantalla:\n${await text()}\n${log.join("\n")}`); throw error; });
+  return { label, page, context, log, text, waitText };
+}
+
+try {
+  const host = await movil("anfitrión");
+  await host.page.goto(base);
+  await host.page.click('[data-action="open-host"]');
+  await host.page.fill("#host-name", "Ana");
+  await host.page.fill("#room-name", "Mesa online");
+  await host.page.click('label.game-option:has(input[value="cinquillo"])');
+  await host.page.fill("#host-name", "Ana");
+  await host.page.click('[data-action="create-room"]');
+  await host.page.click('[data-action="new-invite"]');
+  await host.waitText(/Código de la sala/);
+  const code = (await host.page.locator(".room-code").textContent()).trim();
+  assert.match(code, /^[A-HJ-NP-Z2-9]{8}$/);
+  assert.equal(await host.page.locator("canvas.invite-qr").count(), 1);
+  console.log("  ok  el anfitrión abre una sala con internet:", code);
+
+  const guest = await movil("invitado");
+  await guest.page.goto(base);
+  await guest.page.click('[data-action="open-join"]');
+  await guest.page.fill("#join-name", "Bea");
+  await guest.page.fill("#offer-code", code.toLowerCase());
+  await guest.page.click('[data-action="join-room"]');
+  await guest.waitText(/Conectado a la sala/);
+  await host.waitText(/Bea/);
+  console.log("  ok  la invitada entra con el código y el anfitrión la ve");
+
+  // Entrar por el enlace de invitación (QR) con una tercera persona.
+  const third = await movil("tercera");
+  await third.page.goto(`${base}?join=${code}`);
+  await third.waitText(/Conectado a la sala/);
+  await host.waitText(/3 \/ 6/);
+  await third.page.click('[data-action="leave-room"]');
+  await host.waitText(/2 \/ 6/);
+  console.log("  ok  el enlace de invitación mete en la sala y salir deja la plaza libre");
+
+  await host.page.click('[data-action="start-game"]');
+  await host.waitText(/Tu mano/);
+  await guest.waitText(/Tu mano/);
+  const hostCards = await host.page.locator(".hand .playing-card").count();
+  const guestCards = await guest.page.locator(".hand .playing-card").count();
+  assert.ok(hostCards >= 20 && guestCards >= 20, `manos repartidas (${hostCards}/${guestCards})`);
+  console.log(`  ok  partida en marcha: ${hostCards} y ${guestCards} cartas`);
+
+  // Juega quien tiene el turno: una carta si puede colocarla; si no, pasa.
+  const turnos = [host, guest];
+  for (let i = 0; i < 4; i++) {
+    const jugador = await (async () => {
+      for (const p of turnos) {
+        if (await p.page.locator(".hand .playing-card:not([disabled])").count() || await p.page.locator('[data-action="cinquillo-pass"]').count() && /Juega una carta/.test(await p.text())) return p;
+      }
+      return null;
+    })();
+    assert.ok(jugador, "alguien tiene el turno");
+    const antes = await host.page.locator(".history li").count().catch(() => 0);
+    const carta = jugador.page.locator(".hand .playing-card:not([disabled])").first();
+    if (await carta.count()) await carta.click(); else await jugador.page.click('[data-action="cinquillo-pass"]');
+    await host.page.waitForFunction((n) => document.querySelectorAll(".history li").length > n, antes, { timeout: 15000 });
+    await guest.page.waitForTimeout(300);
+  }
+  console.log("  ok  cuatro turnos jugados desde la interfaz");
+
+  await host.page.click('[data-action="leave-room"]');
+  await guest.waitText(/Elteto|Crear partida/);
+  console.log("  ok  al cerrar la sala el invitado vuelve al inicio");
+  for (const p of [host, guest, third]) assert.deepEqual(p.log.filter((line) => !/favicon|Failed to load resource/.test(line)), [], `${p.label}: errores en consola`);
+  console.log("Interfaz de salas online: OK");
+} finally {
+  await browser.close();
+  server.close();
+}
