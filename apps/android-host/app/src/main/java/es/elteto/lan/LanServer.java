@@ -15,6 +15,7 @@ public class LanServer extends NanoWSD {
     private final String hostKey = UUID.randomUUID().toString();
     private final String roomCode;
     private final Map<String, Peer> guests = new HashMap<>();
+    private final Map<String, String> guestIds = new HashMap<>();
     private Peer host;
     public LanServer(File root, int port) {
         super("0.0.0.0", port);
@@ -79,7 +80,10 @@ public class LanServer extends NanoWSD {
             valid = session.getUri().equals("/socket") && (wantsHost
                 ? session.getRemoteIpAddress().equals("127.0.0.1") && hostKey.equals(session.getParms().get("host"))
                 : roomCode.equals(session.getParms().get("code")) && resume.matches("[a-f0-9]{48}"));
-            id = resume;
+            synchronized (LanServer.this) {
+                // Keep the private recovery token separate from the public player id.
+                id = valid && !wantsHost ? guestIds.computeIfAbsent(resume, key -> UUID.randomUUID().toString()) : "";
+            }
         }
         void transmit(JsonObject value) { try { send(value.toString()); } catch (IOException e) { terminate(); } }
         void fatal(String message) { JsonObject p=packet("fatal");p.addProperty("message",message);transmit(p);terminate(); }
@@ -123,7 +127,7 @@ public class LanServer extends NanoWSD {
             synchronized(LanServer.this) {
                 if(host==this) {
                     host=null;
-                    List<Peer> remaining=new ArrayList<>(guests.values());guests.clear();
+                    List<Peer> remaining=new ArrayList<>(guests.values());guests.clear();guestIds.clear();
                     for(Peer peer:remaining)peer.fatal("El anfitrión ha cerrado la mesa. Abre una nueva partida.");
                 } else if(guests.get(id)==this) {
                     guests.remove(id);

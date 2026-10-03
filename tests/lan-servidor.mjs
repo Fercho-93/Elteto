@@ -32,13 +32,13 @@ try {
  const g1=await connect(wsBase+'?code='+config.roomCode+'&resume='+'a'.repeat(48));await g1.wait('connected');
  const g2=await connect(wsBase+'?code='+config.roomCode+'&resume='+'b'.repeat(48));await g2.wait('connected');
  g1.ws.send(JSON.stringify({type:'hello',data:{name:'A'}}));
- const hello=await host.wait('guest-message');assert.equal(hello.playerId,'a'.repeat(48));
+ const hello=await host.wait('guest-message');const playerId=hello.playerId;assert.notEqual(playerId,'a'.repeat(48));assert.match(playerId,/^[a-f0-9-]{36}$/);
  host.ws.send(JSON.stringify({target:hello.playerId,message:{type:'private-hand',cards:['secret']}}));
  assert.deepEqual((await g1.wait('private-hand')).cards,['secret']);
  await new Promise(r=>setTimeout(r,40));assert.equal(g2.inbox.some(m=>m.type==='private-hand'),false);
- g1.ws.close();assert.equal((await host.wait('guest-left')).playerId,'a'.repeat(48));
+ g1.ws.close();assert.equal((await host.wait('guest-left')).playerId,playerId);
  const back=await connect(wsBase+'?code='+config.roomCode+'&resume='+'a'.repeat(48));await back.wait('connected');
- back.ws.send(JSON.stringify({type:'hello'}));assert.equal((await host.wait('guest-message')).playerId,'a'.repeat(48));
+ back.ws.send(JSON.stringify({type:'hello'}));assert.equal((await host.wait('guest-message')).playerId,playerId);
  host.ws.close();assert.match((await g2.wait('fatal')).message,/cerrado/);assert.match((await back.wait('fatal')).message,/cerrado/);
  console.log('Servidor Java real: HTTP offline, autorización, rutas privadas, reconexión y cierre: OK');
 } finally {clearTimeout(timeout);server.kill();}
