@@ -4,3 +4,8 @@ dist/
 firestore-debug.log
 firebase-debug.log
 ui-debug.log
+
+.lan-java-classpath
+apps/android-host/.gradle/
+apps/android-host/**/build/
+apps/android-host/local.properties

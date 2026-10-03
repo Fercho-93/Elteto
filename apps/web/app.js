@@ -2,6 +2,7 @@ import { FRENCH_RANKS, getGame, listGames } from "./game-core/index.js";
 import { LocalGuestSession, LocalHostSession } from "./local-session.js";
 import { parseRoomCode } from "./room-code.js";
 
+const LAN = window.ELTETO_LAN;
 const app = document.querySelector("#app");
 const toastEl = document.querySelector("#toast");
 const SUITS = { oros: "🟡", copas: "🍷", espadas: "⚔️", bastos: "🌿", picas: "♠", corazones: "♥", diamantes: "♦", treboles: "♣" };
@@ -32,9 +33,9 @@ function renderHome() {
     <div class="logo-mark" role="img" aria-label="Una berenjena y un melocotón"><span>🍆</span><span>🍑</span></div>
     <h1>Elteto</h1>
     <p class="home-copy">La berenjena pone la cara; el melocotón, la tentación. 🍆🍑 Cartas, piques y revancha desde cada móvil.</p>
-    <p class="home-note">Misma Wi-Fi, fruta madura y cero vergüenza. Lo demás es echarle cara.</p>
+    <p class="home-note">${LAN ? "Mesa local sin internet. Conecta todos los móviles a la misma Wi-Fi o hotspot." : "Misma Wi-Fi, fruta madura y cero vergüenza. Lo demás es echarle cara."}</p>
     <div class="home-actions">
-      <button class="button button-pink" data-action="open-host">Crear partida 🍆</button>
+      ${!LAN || LAN.hostKey ? '<button class="button button-pink" data-action="open-host">Crear partida 🍆</button>' : ""}
       <button class="button button-cyan" data-action="open-join">Unirse a la timba 🍑</button>
     </div>
     <p class="fineprint">*La fruta es fresca. Las intenciones, cosa vuestra. 😏</p>
@@ -43,7 +44,7 @@ function renderHome() {
 
 function renderHostForm() {
   state.screen = "host-form";
-  const games = listGames().map((game) => `<label class="game-option ${state.gameId === game.id ? "chosen" : ""}">
+  const games = listGames().filter(game => !LAN || game.id === "cinquillo").map((game) => `<label class="game-option ${state.gameId === game.id ? "chosen" : ""}">
     <input type="radio" name="game" value="${esc(game.id)}" ${state.gameId === game.id ? "checked" : ""}>
     <span class="game-check">✦</span><span><strong>${esc(game.label)}</strong><small>${game.minPlayers === game.maxPlayers ? `${game.minPlayers} jugadores` : `${game.minPlayers}–${game.maxPlayers} jugadores`}</small></span>
   </label>`).join("");
@@ -88,17 +89,17 @@ function renderLobby() {
          ${state.online ? "" : '<button class="button button-cyan" data-action="new-offline-invite">Invitar sin internet 🍆</button>'}
          ${state.online ? "" : '<button class="button button-paper" data-action="new-invite">Invitar con internet</button>'}
          ${state.online && state.roomCode ? `<p class="helper">Código de la sala: <strong class="room-code">${esc(state.roomCode)}</strong></p>` : ""}
-         ${codePanel(state.inviteMode === "offline" ? "Invitación offline · escanéala desde Elteto" : "Enlace online · se abre desde la cámara", state.offerCode, "offer")}
+         ${codePanel(state.inviteMode === "offline" ? "Invitación offline · escanéala desde Elteto" : (LAN ? "Mesa local · escanea con la cámara" : "Enlace online · se abre desde la cámara"), state.offerCode, "offer")}
          ${state.inviteMode === "offline" ? `<label class="field-label" for="answer-code">Respuesta del invitado</label><textarea class="code-field" id="answer-code" rows="3" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Pega aquí su respuesta QR"></textarea><div class="scan-row"><button class="button button-paper" data-action="scan-answer">Escanear respuesta</button><button class="button button-small button-dark" data-action="accept-answer">Aceptar código</button></div>` : ""}
        </div>`
-    : `<div class="connection-status ${connected ? "connected" : ""}">${connected ? (state.online ? "Conectado a la sala. Ya estás en la mesa." : "Conexión directa establecida. Ya estás en la mesa.") : "Conectando con el anfitrión… No cierres esta página."}</div>${state.answerCode ? codePanel("Muestra este QR al anfitrión para completar la conexión", state.answerCode, "answer") : ""}`;
+    : `<div class="connection-status ${connected ? "connected" : ""}">${connected ? (state.online ? (LAN ? "Conectado a la mesa local. Ya estás en la mesa." : "Conectado a la sala. Ya estás en la mesa.") : "Conexión directa establecida. Ya estás en la mesa.") : "Conectando con el anfitrión… No cierres esta página."}</div>${state.answerCode ? codePanel("Muestra este QR al anfitrión para completar la conexión", state.answerCode, "answer") : ""}`;
   const startButton = host
     ? `<button class="button button-pink full-button" data-action="start-game" ${!enoughPlayers ? "disabled" : ""}>${enoughPlayers ? "¡Que ruede la fruta! 🍑" : `Faltan jugadores (${state.players.length}/${game?.minPlayers ?? "?"})`}</button>`
     : "";
   app.innerHTML = `${header()}<section class="panel lobby-panel">
     <div class="eyebrow">${host ? "La mesa ya está servida 🍆" : "Ya estás en el huerto 🍑"}</div>
     <h2>${esc(state.roomName || game?.label || "Sala")}</h2>
-    <p class="helper">${host ? (state.online ? "Pásales el enlace, el QR o el código de la sala. Todos necesitáis internet." : state.inviteMode === "offline" ? "Modo sin internet: los dos móviles deben estar en la misma Wi-Fi o hotspot. Comparte la invitación y escanea luego la respuesta." : "Elige cómo invitar: con internet (enlace, QR o código) o sin internet (misma Wi-Fi).") : (state.online ? "Deja Elteto abierto: la sala se mantiene mientras el anfitrión siga conectado." : "Deja Elteto abierto. Para jugar sin internet, conecta ambos móviles a la misma Wi-Fi o hotspot; el anfitrión escaneará tu respuesta QR.")}</p>
+    <p class="helper">${host ? (state.online ? (LAN ? "Comparte el QR o enlace local. Todos debéis estar en la misma Wi-Fi o hotspot. Mantén Elteto abierto en este Android." : "Pásales el enlace, el QR o el código de la sala. Todos necesitáis internet.") : state.inviteMode === "offline" ? "Modo sin internet: los dos móviles deben estar en la misma Wi-Fi o hotspot. Comparte la invitación y escanea luego la respuesta." : "Elige cómo invitar: con internet (enlace, QR o código) o sin internet (misma Wi-Fi).") : (state.online ? (LAN ? "Mesa local: deja esta página abierta. Si pierdes la señal, intentaremos recuperar tu plaza." : "Deja Elteto abierto: la sala se mantiene mientras el anfitrión siga conectado.") : "Deja Elteto abierto. Para jugar sin internet, conecta ambos móviles a la misma Wi-Fi o hotspot; el anfitrión escaneará tu respuesta QR.")}</p>
     <div class="connection-box">${connectionTools}</div>
     <div class="players-head"><span>EN LA MESA</span><span>${state.players.length}${game ? ` / ${game.maxPlayers}` : ""}</span></div>
     <div class="player-list">${rows || '<div class="empty-seat">Todavía no se ha sentado nadie. Dale al código.</div>'}</div>
@@ -237,7 +238,7 @@ app.addEventListener("click", async (event) => {
   if (!button) return;
   const action = button.dataset.action;
   try {
-    if (action === "open-host") { state.screen = "host-form"; state.gameId = state.gameId || listGames()[0]?.id || ""; render(); }
+    if (action === "open-host") { state.screen = "host-form"; state.gameId = LAN ? "cinquillo" : state.gameId || listGames()[0]?.id || ""; render(); }
     else if (action === "open-join") { state.screen = "join-form"; render(); }
     else if (action === "home" || action === "back") { renderHome(); }
     else if (action === "create-room") {
@@ -246,6 +247,12 @@ app.addEventListener("click", async (event) => {
       const roomName = document.querySelector("#room-name")?.value.trim();
       if (!name || !gameId) throw new Error("Elige un nombre y un juego para abrir la mesa.");
       state.name = name; state.roomName = roomName || `Partida de ${name}`; state.gameId = gameId; state.role = "host"; state.playerId = "host"; state.error = "";
+      if (LAN) {
+        const { LanSession } = await import("./lan-session.js");
+        const session = await LanSession.create({gameId, hostName:name, roomName:state.roomName}, onOnlineChange);
+        Object.assign(state, {host:session,online:session,inviteMode:"online",roomCode:session.roomCode,offerCode:session.inviteUrl});
+        renderLobby(); return;
+      }
       state.host = new LocalHostSession(gameId, name, state.roomName, onHostChange);
       state.inviteMode = "offline"; state.offerCode = ""; state.answerCode = "";
       state.screen = "lobby"; renderLobby();
@@ -285,7 +292,7 @@ app.addEventListener("click", async (event) => {
     else if (action === "copy-code") await copyCode(button.dataset.codeAction);
     else if (action === "share-code") await shareCode(button.dataset.codeAction);
     else if (action === "start-game") {
-      await state.host.startGame();
+      await (state.online || state.host).startGame();
       state.error = "";
       render();
     } else if (action === "kick-player") {
@@ -424,10 +431,11 @@ async function beginOnlineJoin(code, name) {
   Object.assign(state, { role: "client", inviteMode: "online", error: "", screen: "lobby", players: [], offerCode: "", answerCode: "", roomCode: code });
   render();
   try {
-    const { OnlineSession } = await import("./online-room.js");
-    const session = await OnlineSession.join(code, state.name, onOnlineChange);
+    const { OnlineSession, LanSession } = await import(LAN ? "./lan-session.js" : "./online-room.js");
+    const session = await (LAN ? LanSession : OnlineSession).join(code, state.name, onOnlineChange);
     state.online = session;
     state.guest = session;
+    if (LAN) state.host = session;
   } catch (error) {
     Object.assign(state, { role: null, screen: "join-form", roomCode: "" });
     throw error;
@@ -455,4 +463,4 @@ const incomingRoom = parseRoomCode(location.search);
 if (incomingRoom) {
   beginOnlineJoin(incomingRoom, localStorage.getItem("elteto.playerName") || "Invitado").catch((error) => { state.error = error.message || "No se pudo entrar en la sala."; renderJoinForm(); flash(state.error); });
 } else renderHome();
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
+if (!LAN && "serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});

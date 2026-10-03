@@ -46,6 +46,10 @@ npm run test:online   # sesiones online completas (emuladores)
 
 El sitio compilado aparece en `dist/`. Para probarlo localmente, sírvelo desde HTTPS o desde `localhost`, porque el navegador restringe WebRTC, el acceso a la cámara y la instalación PWA en orígenes inseguros.
 
+## Nueva prueba: Android anfitrión e invitados por navegador
+
+`apps/android-host/` añade una app Android que sirve Elteto por HTTP y WebSocket en una red local. iPhone y Android invitados entran con un solo QR desde su navegador, sin Firebase ni una descarga previa de la web. La primera prueba habilita Cinquillo y requiere mantener abierta la app anfitriona. Instalación, arquitectura y límites: [CONFIGURAR_LAN.md](CONFIGURAR_LAN.md).
+
 ## App móvil nativa
 
 `apps/mobile/` conserva el cliente Expo para las compilaciones móviles nativas. Comparte el motor de reglas con la versión web, en `packages/game-core/`.
