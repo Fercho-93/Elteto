@@ -1,6 +1,7 @@
 import { FRENCH_RANKS, getGame, listGames } from "./game-core/index.js";
 import { LocalGuestSession, LocalHostSession } from "./local-session.js";
 import { parseRoomCode } from "./room-code.js";
+import { GAME_CATALOG, icon, mascot } from "./game-catalog.js";
 
 const LAN = window.ELTETO_LAN;
 const app = document.querySelector("#app");
@@ -10,6 +11,7 @@ const state = {
   screen: "home", role: null, name: "", roomName: "", gameId: "", playerId: null,
   players: [], view: null, host: null, guest: null, online: null, roomCode: "", offerCode: "", answerCode: "",
   selected: new Set(), error: "", started: false, inviteMode: "offline",
+  catalogFilter: "all",
 };
 
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
@@ -28,17 +30,26 @@ function suitClass(suit) { return ["copas", "corazones", "diamantes", "oros"].in
 
 function renderHome() {
   state.screen = "home";
-  app.innerHTML = `<section class="home">
-    <div class="sticker">FRUTA · BARAJA · REVANCHA</div>
-    <div class="logo-mark" role="img" aria-label="Una berenjena y un melocotón"><span>🍆</span><span>🍑</span></div>
-    <h1>Elteto</h1>
-    <p class="home-copy">La berenjena pone la cara; el melocotón, la tentación. 🍆🍑 Cartas, piques y revancha desde cada móvil.</p>
-    <p class="home-note">${LAN ? "Mesa local sin internet. Conecta todos los móviles a la misma Wi-Fi o hotspot." : "Misma Wi-Fi, fruta madura y cero vergüenza. Lo demás es echarle cara."}</p>
-    <div class="home-actions">
-      ${!LAN || LAN.hostKey ? '<button class="button button-pink" data-action="open-host">Crear partida 🍆</button>' : ""}
-      <button class="button button-cyan" data-action="open-join">Unirse a la timba 🍑</button>
-    </div>
-    <p class="fineprint">*La fruta es fresca. Las intenciones, cosa vuestra. 😏</p>
+  const canHost = !LAN || Boolean(LAN.hostKey);
+  const available = new Map(listGames().filter(game => !LAN || game.id === "cinquillo").map(game => [game.id, game]));
+  const games = GAME_CATALOG.filter(game => state.catalogFilter === "all" || game.category === state.catalogFilter);
+  const cards = games.map(game => {
+    const engine = available.get(game.id);
+    const playable = Boolean(engine) && canHost;
+    const players = engine ? (engine.minPlayers === engine.maxPlayers ? `${engine.minPlayers} jugadores` : `${engine.minPlayers}–${engine.maxPlayers} jugadores`) : game.players;
+    return `<button class="catalog-card accent-${game.accent}" data-action="select-game" data-game-id="${game.id}" ${playable ? "" : "disabled"} aria-label="${esc(game.label)} · ${players}${!engine ? " · Próximamente" : !canHost ? " · Únete a la mesa del anfitrión" : " · Crear partida"}">
+      <span class="catalog-art">${mascot(game.mascot)}<span class="catalog-badge ${engine ? "available" : ""}">${engine ? (canHost ? "¡A jugar!" : "Mesa del anfitrión") : "Próximamente"}</span></span>
+      <span class="catalog-caption"><span class="catalog-icon">${icon(game.icon)}</span><span class="catalog-label"><strong>${game.label}</strong><small>${players}</small></span><span class="catalog-arrow">${icon("arrow")}</span></span>
+    </button>`;
+  }).join("");
+  app.innerHTML = `<section class="game-home">
+    <header class="catalog-header"><a class="catalog-brand" href="./" data-action="home" aria-label="Elteto, inicio"><span class="catalog-wordmark">ELTETO</span><span class="catalog-tagline">FRUTA · PIQUE · REVANCHA</span></a><div class="catalog-profile">${mascot("aubergine")}<span>${esc(state.name || "Tu mesa")}</span></div></header>
+    <nav class="catalog-filters" aria-label="Filtrar juegos">${[["all", "Todos", "cards"], ["cards", "Cartas", "cards"], ["boards", "Tableros", "dice"]].map(([filter, label, glyph]) => `<button data-action="filter-games" data-filter="${filter}" aria-pressed="${state.catalogFilter === filter}" class="${state.catalogFilter === filter ? "active" : ""}">${icon(glyph)}<span>${label}</span></button>`).join("")}</nav>
+    <div class="catalog-heading"><h1>¿A qué jugamos?<span aria-hidden="true">✦</span></h1><p>Elige juego. Monta el pique.</p></div>
+    <div class="catalog-grid" id="game-catalog">${cards}</div>
+    <button class="catalog-all" data-action="all-games">${icon("cards")}<span>Ver todos los juegos</span>${icon("arrow")}</button>
+    <p class="catalog-note">${LAN ? "Todos en la misma Wi-Fi o hotspot. El anfitrión abre la mesa." : "Crea tu mesa o únete a la de tu gente."}</p>
+    <nav class="catalog-bottom" aria-label="Navegación principal"><button class="active" data-action="home" aria-current="page">${icon("home")}<span>Inicio</span></button><button data-action="open-join">${icon("join")}<span>Unirse</span></button>${canHost ? `<button data-action="open-host">${icon("plus")}<span>Crear partida</span></button>` : ""}</nav>
   </section>`;
 }
 
@@ -46,7 +57,7 @@ function renderHostForm() {
   state.screen = "host-form";
   const games = listGames().filter(game => !LAN || game.id === "cinquillo").map((game) => `<label class="game-option ${state.gameId === game.id ? "chosen" : ""}">
     <input type="radio" name="game" value="${esc(game.id)}" ${state.gameId === game.id ? "checked" : ""}>
-    <span class="game-check">✦</span><span><strong>${esc(game.label)}</strong><small>${game.minPlayers === game.maxPlayers ? `${game.minPlayers} jugadores` : `${game.minPlayers}–${game.maxPlayers} jugadores`}</small></span>
+    ${mascot(GAME_CATALOG.find(item => item.id === game.id)?.mascot || "aubergine", "game-option-mascot")}<span><strong>${esc(game.label)}</strong><small>${game.minPlayers === game.maxPlayers ? `${game.minPlayers} jugadores` : `${game.minPlayers}–${game.maxPlayers} jugadores`}</small></span>
   </label>`).join("");
   app.innerHTML = `${header()}<section class="panel">
     <div class="eyebrow">La fruta está madura 🍑</div><h2>Que empiece el pique</h2>
@@ -237,8 +248,24 @@ app.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-action]");
   if (!button) return;
   const action = button.dataset.action;
+  if (action === "home") event.preventDefault();
   try {
-    if (action === "open-host") { state.screen = "host-form"; state.gameId = LAN ? "cinquillo" : state.gameId || listGames()[0]?.id || ""; render(); }
+    if (action === "filter-games" || action === "all-games") {
+      const filter = action === "all-games" ? "all" : button.dataset.filter;
+      if (!["all", "cards", "boards"].includes(filter)) return;
+      state.catalogFilter = filter;
+      renderHome();
+      if (action === "filter-games") app.querySelector(`[data-filter="${filter}"]`)?.focus({ preventScroll: true });
+      else app.querySelector('[data-action="all-games"]')?.focus({ preventScroll: true });
+    }
+    else if (action === "select-game") {
+      const gameId = button.dataset.gameId;
+      if ((LAN && (!LAN.hostKey || gameId !== "cinquillo")) || !listGames().some(game => game.id === gameId)) return;
+      state.gameId = gameId;
+      state.screen = "host-form";
+      render();
+    }
+    else if (action === "open-host") { state.screen = "host-form"; state.gameId = LAN ? "cinquillo" : state.gameId || listGames()[0]?.id || ""; render(); }
     else if (action === "open-join") { state.screen = "join-form"; render(); }
     else if (action === "home" || action === "back") { renderHome(); }
     else if (action === "create-room") {

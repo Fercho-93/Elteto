@@ -1,6 +1,7 @@
-const CACHE = "elteto-shell-v6";
+const CACHE = "elteto-shell-v7";
 const ASSETS = [
   "./", "./index.html", "./styles.css", "./app.js", "./local-session.js", "./local-transport.js",
+  "./game-catalog.js", "./assets/elteto-characters.jpg",
   "./room-code.js", "./online-room.js", "./firebase-client.js", "./firebase-config.js",
   "./manifest.webmanifest", "./icon.svg", "./qrcode-generator.js", "./qr-encode.js", "./qr-scanner.js", "./jsqr.js",
   "./game-core/index.js", "./game-core/engine.js", "./game-core/deck.js",
