@@ -192,9 +192,9 @@ class TableScene {
     this.clear(p.fan);p.count=count;
     for(let i=0;i<count;i++) {
      // Opponent geometry contains backs only: no opponent rank/suit is supplied.
-     const card=this.card(null),a=(i-(count-1)/2)*Math.min(.10,.95/Math.max(1,count));card.scale.set(.656,1,.656);
-     card.position.set(Math.sin(a)*.23,1.34, .50+Math.cos(a)*.03+i*.001);
-     card.rotation.set(-Math.PI/2,0,-a);p.fan.add(card);
+     const card=this.card(null),a=(i-(count-1)/2)*Math.min(.10,.95/Math.max(1,count));card.scale.set(.5,1,.5);
+     const grip=new T.Group();grip.position.set(0,1.14,.54+i*.002);grip.rotation.z=-a;
+     card.position.y=.22;card.rotation.x=-Math.PI/2;grip.add(card);p.fan.add(grip);
     }
    }
    if(before&&before.log?.at(-1)!==view.log?.at(-1)&&before.turnPlayer===id)p.reaction=performance.now();
