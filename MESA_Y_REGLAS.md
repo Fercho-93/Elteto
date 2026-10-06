@@ -26,9 +26,9 @@ Las seña físicas, corte manual y errores de reparto no se simulan como accione
 
 ## Estructura para ampliar juegos
 
-La presentación común sigue los seis mockups conservados en `design/references/`, ahora con una escena WebGL 3D: cámara en perspectiva, mesa, sillas, diez mascotas modeladas, luces, sombras y cartas con grosor. Cinquillo y Mus la utilizan en web y Android LAN. La mano propia conserva botones ilustrados accesibles (abanico en pantallas amplias y desplazamiento en móvil); las rivales sostienen geometría de dorsos y solo reciben cantidades públicas. Hay vuelo de cartas y balanceo, con movimiento reducido respetado. Solo se colocan cartas jugadas en el tapete, sin cuadrícula de huecos vacíos.
+La presentación común sigue los seis mockups conservados en `design/references/`, con ilustraciones 2D: mesa ovalada de madera y tapete verde, diez mascotas sentadas detrás, brazos superpuestos al borde y abanicos de dorsos entre las manos. Cinquillo y Mus la utilizan en web y Android LAN. Las caras españolas y francesas son imágenes tradicionales originales almacenadas en `apps/web/assets/decks/`, con licencia y procedencia de cada carta. La mano propia conserva botones accesibles; las rivales solo reciben cantidades públicas. Hay vuelo de cartas, respiración y reacciones, con movimiento reducido respetado. Los huecos de cartas pendientes permanecen invisibles.
 
-`seatPosition` prepara posiciones para 2–8 participantes en la alternativa sencilla y `renderSeats` acepta vistas de tablero sin cartas. Esto no habilita todavía motores de Parchís/Oca ni amplía el límite actual de Cinquillo (2–6) o Mus (4). No se copian como reglas los tableros ni los recuentos dibujados en los mockups. Los modelos actuales son una base geométrica original; su funcionamiento y límites están documentados en `design/ESCENA_3D.md`. El atlas anterior queda para galería y dispositivos sin GPU.
+`seatPosition` prepara posiciones para 2–8 participantes y `renderSeats` acepta vistas de tablero sin cartas. Esto no habilita motores de Parchís/Oca ni amplía el límite actual de Cinquillo (2–6) o Mus (4). No se copian como reglas los tableros ni los recuentos dibujados en los mockups. La composición, sus capas y los recursos están documentados en `design/MESA_2D.md`. No se utiliza WebGL ni modelos 3D.
 
 | Capa | Ubicación | Responsabilidad |
 |---|---|---|

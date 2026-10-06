@@ -60,7 +60,7 @@ El sitio compilado aparece en `dist/`. Para probarlo localmente, sírvelo desde 
 
 ## Mesa y evolución de los juegos
 
-La web y Android LAN comparten una escena 3D con cámara en perspectiva: diez mascotas de Elteto modeladas, sillas, mesa ovalada, iluminación, sombras y cartas con grosor sujetas en las manos rivales. En Cinquillo aparecen únicamente las cartas jugadas sobre el tapete. Las referencias están conservadas en `design/references/`; el render y sus límites están documentados en [design/ESCENA_3D.md](design/ESCENA_3D.md). Las reglas implementadas, pruebas y pasos para añadir juegos se detallan en [MESA_Y_REGLAS.md](MESA_Y_REGLAS.md).
+La web y Android LAN comparten una mesa ilustrada en 2D siguiendo los mockups: diez mascotas con volumen pintado, sillas detrás del tapete y brazos por delante del borde, sosteniendo dorsos de cartas. Las caras usan dos barajas tradicionales completas, española (48 ilustraciones, seleccionando 40 cuando corresponde) y francesa (52), guardadas localmente con sus créditos. Cinquillo muestra únicamente cartas jugadas; los huecos de colocación son invisibles. La composición está documentada en [design/MESA_2D.md](design/MESA_2D.md). Las reglas implementadas, pruebas y pasos para añadir juegos se detallan en [MESA_Y_REGLAS.md](MESA_Y_REGLAS.md).
 
 ## Reglas y ampliación de juegos
 

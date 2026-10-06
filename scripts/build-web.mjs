@@ -1,4 +1,4 @@
-import { cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdir, readdir, readFile, writeFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -23,6 +23,10 @@ async function rewriteModuleImports(directory) {
 }
 
 await mkdir(output, { recursive: true });
+// Retire previous 3D bundles from incremental local builds as well as fresh builds.
+for (const obsolete of ['table-3d.js','vendor/three.module.min.js','vendor/three.core.min.js','vendor/THREE-LICENSE.txt','vendor/README.md']) {
+  await rm(path.join(output,obsolete),{force:true});
+}
 await cp(web, output, { recursive: true });
 await cp(path.join(root, "reglas_juegos"), path.join(output, "reglas_juegos"), {recursive:true});
 await cp(core, path.join(output, "game-core"), { recursive: true });
@@ -38,6 +42,7 @@ async function collectRules(dir, prefix="./reglas_juegos") {
  }
 }
 await collectRules(path.join(root,"reglas_juegos"));
+await collectRules(path.join(web,"assets","decks"),"./assets/decks");
 const swPath=path.join(output,"sw.js");
 const sw=await readFile(swPath,"utf8");
 await writeFile(swPath,sw.replace('const ASSETS = [',`const ASSETS = [...${JSON.stringify(rulesFiles)},`));

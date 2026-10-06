@@ -3,7 +3,6 @@ import { LocalGuestSession, LocalHostSession } from "./local-session.js";
 import { parseRoomCode } from "./room-code.js";
 
 import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, canPlayCinquillo, animateTable, animateSeats, MASCOTS, renderMascot } from "./table-view.js";
-import { mountTable3D, moveTableCamera, disposeTable3D } from './table-3d.js';
 
 const LAN = window.ELTETO_LAN;
 const app = document.querySelector("#app");
@@ -27,7 +26,6 @@ function header(back = "home") {
 function playerName(id) { return state.players.find((player) => player.id === id)?.name || (id === "host" ? state.name : id); }
 
 function renderHome() {
-  disposeTable3D();
   state.screen = "home";
   app.innerHTML = `<section class="home">
     <div class="sticker">FRUTA · BARAJA · REVANCHA</div>
@@ -41,7 +39,7 @@ function renderHome() {
     </div>
     <p><a href="./reglas_juegos/biblioteca.html">Reglas de todos los juegos</a></p><details class="game-rules"><summary>Próximos juegos</summary><ul>${GAME_CATALOG.filter(game => game.status === "planned").map(game => `<li>${esc(game.label)} · Pendiente <a href="./reglas_juegos/lectura/${game.id}.html">Reglas</a></li>`).join("")}</ul></details>
     <details class="mascot-gallery"><summary>Los diez personajes de Elteto</summary><div>${MASCOTS.map((label,index)=>`<figure>${renderMascot(index)}<figcaption>${label}</figcaption></figure>`).join('')}</div></details>
-    <p class="fineprint">*La fruta es fresca. Las intenciones, cosa vuestra. 😏</p>
+    <p><a href="./assets/decks/credits.html">Créditos de las barajas</a></p><p class="fineprint">*La fruta es fresca. Las intenciones, cosa vuestra. 😏</p>
   </section>`;
 }
 
@@ -129,7 +127,8 @@ function renderGame() {
   const stockOrigin = app.querySelector(".table-stock")?.getBoundingClientRect();
   const oldHandKeys = new Set(origins.keys());
   const actor = [...app.querySelectorAll('[data-player-id]')].find(el => el.dataset.playerId === previousTurn);
-  const sourceSeat = (actor?.querySelector('.rival-hand') || actor)?.getBoundingClientRect();
+  const actorFront = [...app.querySelectorAll('[data-front-player]')].find(el => el.dataset.frontPlayer === previousTurn);
+  const sourceSeat = (actorFront?.querySelector('.rival-hand') || actor)?.getBoundingClientRect();
   const gameToken = `${state.gameId}:${view.players.join(',')}`;
   if (renderedGame !== gameToken) { previousTableKeys = null; previousSeats = null; }
   renderedGame = gameToken;
@@ -151,8 +150,7 @@ function renderGame() {
     ${state.gameId === 'cinquillo' ? `<p class="match-score">Mano ${view.handNumber} · Meta ${view.targetScore} · ${view.players.map(id=>`${esc(playerName(id))}: ${view.scores[id]}`).join(' · ')}</p>` : `<p class="match-score">Juegos: A ${view.gamesWon?.A ?? 0} · B ${view.gamesWon?.B ?? 0} · primero a ${view.targetGames ?? 1}${view.gameWinner ? ` · Gana el juego ${esc(view.gameWinner)}` : ''}</p>`}
     ${state.gameId === 'mus' ? `<div class="score-strip"><span>Pareja A <b>${view.scores.A}</b></span><span>Pareja B <b>${view.scores.B}</b></span></div>` : ''}
     <div class="turn-banner ${myTurn || selecting ? 'your-turn' : ''}" role="status">${esc(hint)}</div>
-    <div class="camera-controls" role="group" aria-label="Cámara de la mesa"><button data-action="camera-left" aria-label="Mirar la mesa desde la izquierda">↶</button><button data-action="camera-reset">Centrar vista</button><button data-action="camera-right" aria-label="Mirar la mesa desde la derecha">↷</button></div>
-    <section class="game-table seats-${view.players.length}" aria-label="Mesa de ${esc(game.label)}">
+    <section class="game-table seats-${view.players.length}" data-scene="illustrated-2d" aria-label="Mesa de ${esc(game.label)}">
       <div class="table-surface" aria-hidden="true"><i class="table-leg leg-left"></i><i class="table-leg leg-right"></i></div>
       <div class="felt-watermark" aria-hidden="true">ELTETO <span>LA TIMBA</span></div>
       ${renderSeats(view, state.playerId, playerName, state.gameId)}
@@ -179,7 +177,6 @@ function renderGame() {
   animateSeats(app, previousSeats, view);
   previousSeats = {turnPlayer:view.turnPlayer,handSizes:{...view.handSizes},log:view.log?.at(-1)};
   previousTurn = view.turnPlayer;
-  mountTable3D(app.querySelector('.game-table'),view,state.playerId,state.gameId);
 }
 function readableLog(line) {
   for (const player of [...state.players].sort((a,b) => b.id.length - a.id.length)) {
@@ -221,7 +218,6 @@ function cinquilloControls(view) {
 }
 
 function render() {
-  if(state.screen !== 'game') disposeTable3D();
   if (state.screen === "host-form") renderHostForm();
   else if (state.screen === "join-form") renderJoinForm();
   else if (state.screen === "lobby") renderLobby();
@@ -281,10 +277,7 @@ app.addEventListener("click", async (event) => {
   if (!button) return;
   const action = button.dataset.action;
   try {
-    if(action === 'camera-left') moveTableCamera(-1);
-    else if(action === 'camera-right') moveTableCamera(1);
-    else if(action === 'camera-reset') moveTableCamera('reset');
-    else if (action === "open-host") { state.screen = "host-form"; state.gameId = LAN ? "cinquillo" : state.gameId || listGames()[0]?.id || ""; render(); }
+    if (action === "open-host") { state.screen = "host-form"; state.gameId = LAN ? "cinquillo" : state.gameId || listGames()[0]?.id || ""; render(); }
     else if (action === "open-join") { state.screen = "join-form"; render(); }
     else if (action === "home" || action === "back") { renderHome(); }
     else if (action === "create-room") {

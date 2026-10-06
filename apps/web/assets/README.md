@@ -1,6 +1,6 @@
 # Personajes de la mesa
 
-La mesa principal ya usa modelos geométricos 3D de los diez personajes (ver `design/ESCENA_3D.md`). El atlas de esta carpeta se conserva para la galería y la alternativa sencilla cuando WebGL no está disponible. Las caras de las cartas proceden de los dibujos originales de `card-art.js`, compartidos con las texturas 3D.
+La mesa principal usa las diez mascotas ilustradas del atlas, tanto en web como en Android LAN. Son recursos 2D con volumen pintado; el cuerpo y la silla quedan detrás de la mesa, y las capas de brazos por delante del borde y de las cartas. Ver `design/MESA_2D.md`. Las caras tradicionales de las dos barajas están en `decks/`; allí se incluyen manifiesto, fuente francesa, licencia y créditos accesibles sin conexión.
 
 `elteto-mascots-v1.png`: atlas RGBA de 1536 × 1024, diez personajes sentados en una cuadrícula de 5 × 2. Creado con la herramienta de generación de imágenes a partir de las referencias aportadas por el usuario (conservadas en `design/references/`). Se muestra mediante CSS; no depende de servidores externos y se incluye en la caché sin conexión y en Android LAN.
 

@@ -1,6 +1,6 @@
 // Presentation only: consumes a private engine view, never the host's hidden state.
 import { FRENCH_RANKS, SPANISH_RANKS, SPANISH_SUITS, canPlaceCinquillo } from "./game-core/index.js";
-import { cardSvg } from "./card-art.js";
+import { cardAsset } from "./card-art.js";
 export const escapeHtml = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -39,12 +39,25 @@ function suitArt(suit) {
   return `<svg class="suit-art" viewBox="0 0 60 60" aria-hidden="true">${art[suit] || ""}</svg>`;
 }
 export function cardFace(card) {
-  return `<span class="card-face"><span class="card-illustration">${cardSvg(card)}</span></span>`;
+  return `<span class="card-face"><span class="card-illustration"><img src="${cardAsset(card)}" alt="" draggable="false"></span></span>`;
 }
 export function renderHandCard(card, options = {}) {
   return `<button class="playing-card ${options.selected ? "selected" : ""} ${options.playable ? "legal-card" : ""}" style="--card-tilt:${Number(options.tilt) || 0}deg" data-action="play-card" data-card-key="${esc(cardKey(card))}" ${options.disabled ? "disabled" : ""} ${options.selectable ? `aria-pressed="${Boolean(options.selected)}"` : ""} aria-label="${esc(card.rank + " de " + card.suit)}${options.playable ? ", puedes jugarla" : ""}">${cardFace(card)}<span class="hand-index ${["corazones", "diamantes"].includes(card.suit) ? "card-red" : ""}" aria-hidden="true"><b>${esc(card.rank)}</b>${suitArt(card.suit)}</span></button>`;
 }
 export const MASCOTS = ["Berenjena", "Melocotón", "Plátano", "Bandera", "Aguacate", "Cerdito", "Seta", "Gota", "Caca", "Castañas"];
+// Per-illustration contours keep chair upholstery and torso out of the arm layer.
+const ARM_CONTOURS = [
+ ['19% 58%,30% 58%,37% 65%,46% 68%,55% 73%,54% 78%,48% 80%,40% 78%,35% 74%,24% 72%,17% 67%', '76% 58%,87% 58%,92% 67%,86% 72%,71% 75%,66% 79%,60% 79%,59% 74%,63% 70%,74% 66%'],
+ ['21% 65%,28% 66%,32% 68%,42% 70%,48% 75%,47% 79%,41% 80%,32% 77%,22% 75%,18% 70%', '77% 65%,84% 66%,86% 70%,82% 75%,72% 78%,66% 80%,61% 79%,60% 75%,66% 70%,74% 68%'],
+ ['19% 60%,29% 60%,34% 66%,41% 68%,46% 72%,45% 77%,41% 80%,34% 78%,30% 74%,23% 72%,15% 67%', '78% 60%,85% 64%,89% 68%,84% 72%,77% 74%,72% 78%,65% 80%,60% 77%,60% 72%,66% 68%,74% 66%'],
+ ['13% 65%,23% 65%,27% 68%,33% 69%,39% 73%,38% 78%,31% 79%,25% 76%,18% 77%,13% 73%,10% 69%', '72% 66%,80% 66%,87% 70%,88% 74%,81% 78%,75% 79%,70% 77%,66% 79%,61% 77%,62% 72%,67% 69%'],
+ ['14% 61%,25% 64%,29% 68%,34% 69%,39% 73%,36% 78%,29% 79%,22% 77%,17% 74%,10% 72%,6% 66%', '78% 61%,87% 61%,91% 66%,88% 71%,80% 74%,74% 77%,68% 79%,63% 78%,63% 73%,69% 69%,77% 67%'],
+ ['17% 58%,28% 58%,35% 61%,40% 65%,38% 69%,31% 69%,25% 67%,17% 67%,13% 63%', '72% 58%,81% 58%,86% 63%,82% 67%,74% 69%,67% 69%,64% 65%,66% 61%'],
+ ['20% 56%,30% 56%,34% 59%,40% 62%,41% 67%,36% 69%,29% 68%,24% 66%,17% 64%,16% 60%', '76% 56%,82% 59%,83% 64%,77% 67%,72% 69%,66% 69%,63% 65%,66% 61%,72% 59%'],
+ ['15% 55%,25% 56%,30% 59%,38% 61%,41% 65%,39% 69%,33% 70%,27% 68%,24% 65%,16% 64%,13% 60%', '77% 55%,86% 58%,87% 63%,80% 65%,74% 69%,68% 70%,64% 68%,64% 63%,70% 60%'],
+ ['12% 56%,22% 56%,31% 59%,37% 62%,39% 66%,36% 70%,29% 70%,23% 67%,17% 65%,10% 62%', '78% 56%,88% 56%,93% 61%,86% 65%,78% 68%,72% 70%,65% 70%,63% 66%,68% 62%'],
+ ['10% 55%,20% 55%,25% 58%,29% 61%,29% 65%,24% 67%,17% 66%,12% 62%,7% 60%', '80% 56%,89% 58%,91% 62%,86% 66%,78% 68%,72% 67%,68% 64%,70% 60%,75% 58%'],
+];
 // A public roster gives every device the same, unique identities without sending
 // cosmetic state or touching the room protocol. Identity never depends on POV.
 export function mascotForSeat(players, seat) {
@@ -77,6 +90,7 @@ export function renderSeats(view, playerId, name, gameId) {
       const relative = (index - ownIndex + n) % n,
         own = id === playerId;
       const [x, y] = seatPosition(n, relative);
+      const mobile = !relative ? [50,93] : n === 4 ? [[13,27],[50,18],[87,27]][relative-1] : n === 6 ? [[9,28],[28,23],[50,18],[72,23],[91,28]][relative-1] : [x,y];
       const character = mascotForSeat(view.players, index);
       const active =
         !view.finished &&
@@ -85,7 +99,12 @@ export function renderSeats(view, playerId, name, gameId) {
       const team = index % 2 === 0 ? "A" : "B";
       const count = view.handSizes?.[id] || 0;
       const cardGame = Boolean(view.handSizes);
-      return `<article class="table-seat ${own ? "own-seat" : ""} ${active ? "active-seat" : ""}" data-player-id="${esc(id)}" style="--seat-x:${x}%;--seat-y:${y}%" aria-label="${esc(name(id))}, ${MASCOTS[character]}${cardGame ? `, ${count} cartas` : ""}${active ? ", turno activo" : ""}">${renderMascot(character, index)}<div class="seat-label"><strong>${esc(own ? "Tú" : name(id))}</strong><small>${MASCOTS[character]}${gameId === "mus" ? ` · ${team}` : ""}${cardGame ? ` · ${count} cartas` : ""}</small></div>${view.mano === id ? '<span class="mano-badge">Mano</span>' : ""}${!own && cardGame ? `<div class="rival-hand" aria-label="${count} cartas boca abajo">${Array.from({ length: count }, (_, i) => `<i class="card-back" style="--fan-angle:${(i - (count - 1) / 2) * Math.min(10, 65 / Math.max(1, count))}deg"><span>✦</span></i>`).join("")}</div>` : ""}</article>`;
+      const style = `--seat-x:${x}%;--seat-y:${y}%;--seat-mobile-x:${mobile[0]}%;--seat-mobile-y:${mobile[1]}%;--character-x:${(character % 5) * 25}%;--character-y:${Math.floor(character / 5) * 100}%;--motion-delay:${index * -1.3}s;--grip-y:${character < 5 ? 73 : 64}%;--left-arm:polygon(${ARM_CONTOURS[character][0]});--right-arm:polygon(${ARM_CONTOURS[character][1]})`;
+      // Body/chair sit behind the felt. This sibling crosses the table rim:
+      // card backs under the hands, forearms over them. No hidden values enter it.
+      const front = own ? '' : `<div class="seat-front ${active ? 'active-seat' : ''}" data-front-player="${esc(id)}" style="${style}" aria-hidden="true"><div class="seat-grip">${cardGame ? `<div class="rival-hand">${Array.from({ length: count }, (_, i) => `<i class="card-back" style="--fan-angle:${(i - (count - 1) / 2) * Math.min(10, 65 / Math.max(1, count))}deg"><span>✦</span></i>`).join('')}</div>` : ''}<div class="player-character forearms"><div class="character-sprite arm-left"></div><div class="character-sprite arm-right"></div></div></div></div>`;
+      return `<article class="table-seat ${own ? 'own-seat' : ''} ${active ? 'active-seat' : ''}" data-player-id="${esc(id)}" style="${style}" aria-label="${esc(name(id))}, ${MASCOTS[character]}${cardGame ? `, ${count} cartas` : ''}${active ? ', turno activo' : ''}">${renderMascot(character, index)}<div class="seat-label"><strong>${esc(own ? 'Tú' : name(id))}</strong><small>${MASCOTS[character]}${gameId === 'mus' ? ` · ${team}` : ''}${cardGame ? ` · ${count} cartas` : ''}</small></div>${view.mano === id ? '<span class="mano-badge">Mano</span>' : ''}</article>${front}`;
+
     })
     .join("");
 }
@@ -173,7 +192,9 @@ export function animateSeats(app, before, view) {
   const changed = before.log !== view.log?.at(-1);
   for (const seat of app.querySelectorAll(".table-seat")) {
     const id = seat.dataset.playerId;
-    const sprite = seat.querySelector(".player-character");
+  const front = [...app.querySelectorAll("[data-front-player]")].find(el => el.dataset.frontPlayer === id);
+  const sprites = [seat.querySelector(".player-character"), front?.querySelector(".seat-grip")].filter(Boolean);
+    for (const sprite of sprites) {
     if (!sprite.animate) continue;
     const moved = before.handSizes?.[id] !== view.handSizes?.[id];
     const acted = changed && before.turnPlayer === id;
@@ -182,6 +203,7 @@ export function animateSeats(app, before, view) {
       sprite.animate([{transform:"none"},{transform:"translateY(4px) rotate(-3deg)",offset:.4},{transform:"translateY(-3px) rotate(2deg)",offset:.75},{transform:"none"}], {duration:520,easing:"ease-in-out"});
     } else if (enteredTurn) {
       sprite.animate([{transform:"none"},{transform:"translateY(-6px) scale(1.04)"},{transform:"none"}], {duration:650,easing:"ease-out"});
+    }
     }
   }
 }

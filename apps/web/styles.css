@@ -289,35 +289,10 @@ button:disabled { cursor: not-allowed; opacity: .45; transform: none !important;
 .suit-lane > b .suit-art { width:18px; height:22px; }
 .match-score { text-align:center; font-size:11px; color:#eee5c7; margin:4px; }
 
-.card-illustration,.card-illustration > svg { display:block; width:100%; height:100%; }
-.card-illustration > svg { object-fit:fill; }
+.card-illustration,.card-illustration > img { display:block; width:100%; height:100%; }
+.card-illustration > img { object-fit:fill; }
 .hand-index { display:none; }
 .playing-card .card-illustration { position:absolute; inset:0; }
-.camera-controls { display:flex; justify-content:center; gap:8px; margin-top:12px; }
-.camera-controls button { padding:7px 12px; color:#efe1ce; background:#24132d; border:1px solid #a461b5; border-radius:99px; font-size:12px; }
-body:has(.game-table:not(.scene-ready)) .camera-controls { display:none; }
-.table-canvas { display:block; position:absolute; inset:0; width:100%; height:100%; border-radius:22px; }
-.game-table:not(.scene-ready) .table-canvas { display:none; }
-.game-table.scene-ready,.game-table.scene-ready.seats-6 { margin-top:14px; height:560px; overflow:hidden; border-radius:22px; background:radial-gradient(ellipse at center,#613548,#22112b); }
-.scene-ready .table-surface,.scene-ready .felt-watermark { display:none; }
-.scene-ready .table-center { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; pointer-events:none; }
-.scene-ready .table-seat { width:auto; max-width:130px; pointer-events:none; z-index:2; }
-.scene-ready .table-seat .player-character,.scene-ready .rival-hand { display:none; }
-.scene-ready .seat-label { position:static; transform:none; margin:0; max-width:130px; }
-.scene-ready .own-seat { display:block; }
-.scene-ready .mano-badge { top:100%; right:0; }
-.game-table:not(.scene-ready) .empty-slot { visibility:hidden; }
-.game-table:not(.scene-ready) .suit-lane > b { visibility:hidden; }
-@media (max-width:600px) {
- .game-table.scene-ready,.game-table.scene-ready.seats-6 { height:430px; }
- .scene-ready .seat-label { max-width:92px; padding:3px 6px; }
- .scene-ready .table-seat { font-size:9px; max-width:92px; }
- .scene-ready .table-seat small { font-size:7px; }
-}
-@media (orientation:landscape) and (max-height:600px) {
- .game-table.scene-ready,.game-table.scene-ready.seats-6 { height:360px; }
-}
-
 /* Elteto mockup composition: chairs outside the rim, playable felt in the middle.
    The scene stays tall on phones; landscape uses larger characters and cards. */
 body:has(.game-page) {
@@ -350,8 +325,8 @@ body:has(.game-page) {
 .own-seat .seat-label { position:static; transform:none; max-width:115px; background:#260b2dee; border-color:#a951b9; padding:5px 10px; }
 .own-seat.active-seat .seat-label { border-color:#45f0f6; }
 .own-seat .mano-badge { top:3px; right:0; }
-.table-center,.game-table:has(.revealed-hands) .table-center { top:66%; width:86%; z-index:1; }
-.seats-6 .table-center { top:68%; }
+.table-center,.game-table:has(.revealed-hands) .table-center { top:60%; width:80%; z-index:1; }
+.seats-6 .table-center { top:61%; }
 .seats-6 .table-seat:not(.own-seat) { width:75px; }
 .seats-6 .table-seat:not(.own-seat) .player-character { width:75px; height:125px; }
 .seats-6 .seat-label { max-width:95px; padding:3px 5px; }
@@ -384,8 +359,8 @@ body:has(.game-page) {
  .table-seat small { font-size:10px; }
  .rival-hand { top:139px; transform:translateX(-50%) scale(1.3); }
  .seat-label { max-width:160px; }
- .table-center,.game-table:has(.revealed-hands) .table-center { top:65%; width:62%; }
- .seats-6 .table-center { top:67%; }
+ .table-center,.game-table:has(.revealed-hands) .table-center { top:60%; width:62%; }
+ .seats-6 .table-center { top:61%; }
  .seats-6 .table-seat:not(.own-seat) { width:114px; }
  .seats-6 .table-seat:not(.own-seat) .player-character { width:114px; height:190px; }
  .seats-6 .rival-hand { top:108px; transform:translateX(-50%) scale(1.05); }
@@ -426,10 +401,55 @@ body:has(.game-page) {
  .seats-6 .table-seat:not(.own-seat) { width:80px; }
  .seats-6 .table-seat:not(.own-seat) .player-character { width:80px; height:133px; }
  .seats-6 .rival-hand { top:75px; transform:translateX(-50%) scale(.75); }
- .table-center,.seats-6 .table-center,.game-table:has(.revealed-hands) .table-center { top:61%; }
+ .table-center,.seats-6 .table-center,.game-table:has(.revealed-hands) .table-center { top:56%; }
  .board-card { height:34px; }
  .board-card .card-pips { display:none; }
  .own-seat .player-character { width:36px; height:60px; }
  .hand-fan { min-height:144px; }
  .hand-fan .playing-card { height:108px; }
 }
+
+/* Illustrated scene layers: chair/body → felt/rim → held fan → forearms. */
+.game-table { isolation:isolate; --avatar-w:96px; --avatar-h:160px; }
+.table-seat,.seat-front { width:var(--avatar-w); height:var(--avatar-h); }
+.table-seat:not(.own-seat) { z-index:1; }
+.table-seat:not(.own-seat) .player-character,.seat-front .player-character { width:100%; height:100%; }
+.table-surface { z-index:2; }
+.felt-watermark { z-index:2; pointer-events:none; }
+.seat-front { position:absolute; left:var(--seat-x); top:var(--seat-y); transform:translate(-50%,-50%); z-index:3; pointer-events:none; }
+.seat-grip { position:absolute; inset:0; }
+.seat-front .rival-hand { left:50%; top:60%; width:58%; height:25%; transform:translateX(-50%); z-index:1; }
+.seat-front[style*="--grip-y:64%"] .rival-hand { top:61%; }
+.seat-front .rival-hand .card-back { left:calc(50% - var(--avatar-w) * .08); top:0; width:calc(var(--avatar-w) * .16); height:calc(var(--avatar-h) * .145); transform-origin:50% 115%; }
+.seat-front .forearms { position:absolute; inset:0; z-index:2; filter:none; }
+.arm-left { clip-path:var(--left-arm); }
+.arm-right { clip-path:var(--right-arm); }
+.table-center,.game-table:has(.revealed-hands) .table-center { z-index:4; }
+.own-seat { z-index:5; height:70px; }
+.empty-slot { visibility:hidden; }
+.suit-lane > b { display:none; }
+.board-card.placed { box-shadow:0 2px 1px #e5d7b7,0 4px 5px #001b2090; }
+.card-illustration > img { object-fit:fill; user-select:none; }
+.seats-6 { --avatar-w:75px; --avatar-h:125px; }
+.seats-6 .table-seat:not(.own-seat) { width:var(--avatar-w); }
+.seats-6 .table-seat:not(.own-seat) .player-character { width:100%; height:100%; }
+.seats-7,.seats-8 { --avatar-w:62px; --avatar-h:103px; }
+@media(max-width:699px) {
+ .table-seat,.seat-front { left:var(--seat-mobile-x); top:var(--seat-mobile-y); }
+}
+@media(min-width:700px) {
+ .game-table { --avatar-w:145px; --avatar-h:242px; }
+ .seats-6 { --avatar-w:114px; --avatar-h:190px; }
+ .seats-7,.seats-8 { --avatar-w:100px; --avatar-h:167px; }
+ .own-seat { height:80px; }
+}
+@media(max-width:360px) {
+ .game-table { --avatar-w:82px; --avatar-h:137px; }
+ .seats-6 { --avatar-w:65px; --avatar-h:108px; }
+}
+@media(min-width:700px) and (max-height:600px) and (orientation:landscape) {
+ .game-table { --avatar-w:100px; --avatar-h:167px; }
+ .seats-6 { --avatar-w:80px; --avatar-h:133px; }
+ .own-seat { height:60px; }
+}
+@media(prefers-reduced-motion:reduce) { .seat-front .rival-hand { animation:none; } }
