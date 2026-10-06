@@ -144,9 +144,9 @@ try {
       const mine = group.findIndex((p) => p.session.uid === turn);
       const view = latest[mine].view;
       const playable = view.myHand.find((card) => {
-        const idx = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"].indexOf(card.rank);
+        const idx = ["1", "2", "3", "4", "5", "6", "7", "10", "11", "12"].indexOf(card.rank);
         const entry = view.table[card.suit];
-        if (!Object.keys(view.table).length) return card.suit === "corazones" && card.rank === "5";
+        if (!Object.keys(view.table).length) return card.suit === "oros" && card.rank === "5";
         return entry ? idx === entry.high + 1 || idx === entry.low - 1 : card.rank === "5";
       });
       const startLog = latest[mine].view.log.length;

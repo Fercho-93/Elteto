@@ -65,9 +65,11 @@ try {
         { game, id },
       );
       assert.equal(await page.locator(".table-seat").count(), count);
+      assert.equal(await page.locator('.suit-lane .board-card').count(),40);
+      assert.match(await page.locator('.game-ribbon').textContent(),/40 cartas españolas/);
       assert.equal(
         await page.locator(".rival-hand .card-back").count(),
-        52 - game.hands[id].length,
+        40 - game.hands[id].length,
       );
       assert.equal(
         await page.locator(".hand .playing-card:not([disabled])").count(),
@@ -83,7 +85,7 @@ try {
         true,
       );
       await page.locator(".hand .playing-card:not([disabled])").click();
-      await page.locator('[data-table-key="corazones:5"]').waitFor();
+      await page.locator('[data-table-key="oros:5"]').waitFor();
       assert.equal(await page.locator("[data-table-key]").count(), 1);
       assert.equal(
         await page.locator(".hand .playing-card").count(),
@@ -113,6 +115,16 @@ try {
           fullPage: true,
         });
     }
+    // A completed hand exposes the cumulative score and winner-only continuation.
+    let closing = cinquilloEngine.createInitialState(['a','b','c','d'],19);
+    closing.hands={a:[{suit:'oros',rank:'6'}],b:[{suit:'copas',rank:'1'}],c:[{suit:'bastos',rank:'12'}],d:[{suit:'espadas',rank:'2'}]};
+    closing.table={oros:{low:4,high:4}};closing.turn=0;
+    await page.evaluate(game=>window.testTable('cinquillo',game,'a'),closing);
+    await page.locator('.legal-card').click();
+    assert.ok(await page.locator('[data-action="cinquillo-next-hand"]').isVisible());
+    assert.match(await page.locator('.game-controls').textContent(),/Ana: 8/);
+    await page.locator('[data-action="cinquillo-next-hand"]').click();
+    assert.equal((await page.evaluate(()=>window.tableSnapshot())).handNumber,2);
     const ids = ["a", "b", "c", "d"];
     let game = musEngine.createInitialState(ids, 7);
     await page.evaluate((game) => window.testTable("mus", game, "a"), game);
@@ -148,6 +160,7 @@ try {
       await page.locator(".revealed-hands .reveal-card").count(),
       16,
     );
+    assert.ok(await page.evaluate(()=>document.querySelector('.revealed-hands').getBoundingClientRect().bottom <= document.querySelector('.own-seat .player-character').getBoundingClientRect().top+2));
     await page.evaluate(() => scrollTo(0, 0));
     if (width === 390)
       await page.screenshot({ path: "dist/table-mus.png", fullPage: true });
@@ -161,6 +174,26 @@ try {
       "none",
     );
     await context.close();
+  }
+  // Real service worker: all references remain readable after network loss.
+  if(process.env.TABLE_BROWSER !== 'webkit') {
+    const offlineContext=await browser.newContext();
+    const page=await offlineContext.newPage();
+    await page.goto(base);
+    await page.evaluate(()=>navigator.serviceWorker.ready);
+    await page.waitForFunction(()=>navigator.serviceWorker.controller);
+    assert.equal(await page.locator('details ul li').count(),18);
+    await offlineContext.setOffline(true);
+    await page.goto(base+'reglas_juegos/biblioteca.html');
+    assert.equal(await page.locator('li a').count(),20);
+    await page.goto(base+'reglas_juegos/lectura/cinquillo.html');
+    assert.match(await page.locator('pre').textContent(),/cinco de oros/);
+    const cached = await page.evaluate(async()=>{
+      const response=await fetch('../mus.html');
+      return response.ok && (await response.text()).includes('8 reyes');
+    });
+    assert.ok(cached);
+    await offlineContext.close();
   }
   assert.deepEqual(errors, []);
   console.log(

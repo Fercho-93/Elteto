@@ -29,7 +29,7 @@ class Socket {
 }
 globalThis.WebSocket=Socket;
 const {LanSession}=await import('../dist/lan-session.js');
-const {FRENCH_RANKS}=await import('../dist/game-core/index.js');
+const {SPANISH_RANKS}=await import('../dist/game-core/index.js');
 const tick=()=>new Promise(r=>setImmediate(r));
 const events=[[],[]];
 const host=await LanSession.create({gameId:'cinquillo',hostName:'Ana',roomName:'Mesa'},e=>events[0].push(e));
@@ -40,8 +40,8 @@ assert.equal(host.local.players().length,2);
 assert.equal(guest.playerId,guest.resume);
 await host.startGame();await tick();
 const last=i=>events[i].findLast(e=>e.kind==='game')?.view;
-assert.equal(last(0).myHand.length+last(1).myHand.length,52);
-assert.equal(new Set([...last(0).myHand,...last(1).myHand].map(c=>c.suit+':'+c.rank)).size,52);
+assert.equal(last(0).myHand.length+last(1).myHand.length,40);
+assert.equal(new Set([...last(0).myHand,...last(1).myHand].map(c=>c.suit+':'+c.rank)).size,40);
 assert.ok(!('hands' in last(1)),'guest does not receive the complete state');
 assert.equal(host.local.connections.get(guest.playerId).peer.connected,true);
 // Losing a guest retains the seat and pauses play. A reconnect recovers its hand.
@@ -53,15 +53,15 @@ assert.equal(JSON.stringify(last(1).myHand),before);
 assert.equal(host.local.players().length,2);
 // Play a complete game through host validation and private messages.
 let turns=0;
-while(!last(0).finished && turns++<160){
+while(!last(0).finished && turns++<3000){
  const mine=last(0).turnPlayer==='host'?0:1;
  const view=last(mine);
  const card=view.myHand.find(c=>{
-  const entry=view.table[c.suit],n=FRENCH_RANKS.indexOf(c.rank);
-  if (!Object.keys(view.table).length) return c.suit === 'corazones' && c.rank === '5';
+  const entry=view.table[c.suit],n=SPANISH_RANKS.indexOf(c.rank);
+  if (!Object.keys(view.table).length) return c.suit === 'oros' && c.rank === '5';
   return entry?n===entry.low-1||n===entry.high+1:c.rank==='5';
  });
- await (mine===0?host:guest).sendAction(card?{type:'play',card}:{type:'pass'});
+ await (mine===0?host:guest).sendAction(view.handWinner?{type:'next-hand'}:card?{type:'play',card}:{type:'pass'});
  await tick();await tick();
 }
 assert.ok(last(0).finished,'game completes');assert.equal(last(0).winner,last(1).winner);
@@ -70,4 +70,4 @@ const snapshot=JSON.stringify(host.local.state);
 host.handleHostPacket({type:'guest-message',playerId:guest.playerId,message:{type:'action',seq:guest.seq,data:{action:{type:'pass'}}}});
 assert.equal(JSON.stringify(host.local.state),snapshot);
 await guest.exit();await host.exit();
-console.log('LAN: conexión, 52 cartas privadas, pausa, reconexión, partida completa y deduplicación: OK');
+console.log('LAN: conexión, 40 cartas privadas, pausa, reconexión, partida completa y deduplicación: OK');

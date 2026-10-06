@@ -9,3 +9,5 @@ import { cinquilloEngine } from "./games/cinquillo";
 
 registerGame(musEngine);
 registerGame(cinquilloEngine);
+
+export * from "./catalog";

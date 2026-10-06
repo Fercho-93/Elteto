@@ -1,5 +1,5 @@
 // Presentation only: consumes a private engine view, never the host's hidden state.
-import { FRENCH_RANKS, SPANISH_RANKS } from "./game-core/index.js";
+import { FRENCH_RANKS, SPANISH_RANKS, SPANISH_SUITS, canPlaceCinquillo } from "./game-core/index.js";
 export const escapeHtml = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -20,20 +20,10 @@ const suitNames = {
   corazones: "Corazones",
   diamantes: "Diamantes",
   treboles: "Tréboles",
+  oros: "Oros", copas: "Copas", espadas: "Espadas", bastos: "Bastos",
 };
 export const cardKey = (card) => `${card.suit}:${card.rank}`;
-export function canPlayCinquillo(table, card) {
-  if (!Object.keys(table).length)
-    return card.suit === "corazones" && card.rank === "5";
-  const index = FRENCH_RANKS.indexOf(card.rank),
-    entry = table[card.suit];
-  return (
-    index >= 0 &&
-    (entry
-      ? index === entry.low - 1 || index === entry.high + 1
-      : card.rank === "5")
-  );
-}
+export const canPlayCinquillo = (table, card, ruleset = "spanish-40") => canPlaceCinquillo(table, card, ruleset);
 function suitArt(suit) {
   if (symbols[suit]) return `<span class="suit-symbol">${symbols[suit]}</span>`;
   const art = {
@@ -93,10 +83,13 @@ export function renderSeats(view, playerId, name, gameId) {
     .join("");
 }
 export function renderCinquilloBoard(view) {
-  return `<div class="cinquillo-board">${Object.keys(symbols)
+  const legacy = view.ruleset === "legacy-french-52";
+  const ranks = legacy ? FRENCH_RANKS : SPANISH_RANKS;
+  const suits = legacy ? Object.keys(symbols) : SPANISH_SUITS;
+  return `<div class="cinquillo-board">${suits
     .map((suit) => {
       const entry = view.table[suit];
-      return `<div class="suit-lane"><b class="${["corazones", "diamantes"].includes(suit) ? "card-red" : ""}" aria-label="${suitNames[suit]}">${symbols[suit]}</b><div class="lane-cards">${FRENCH_RANKS.map(
+      return `<div class="suit-lane"><b class="${["corazones", "diamantes"].includes(suit) ? "card-red" : ""}" aria-label="${suitNames[suit]}">${suitArt(suit)}</b><div class="lane-cards">${ranks.map(
         (rank, index) => {
           const placed = entry && index >= entry.low && index <= entry.high;
           return `<span class="board-card ${placed ? "placed" : "empty-slot"} ${rank === "5" ? "five-slot" : ""}" ${placed ? `data-table-key="${suit}:${rank}"` : ""} aria-label="${rank} de ${suit}${placed ? ", colocada" : ", pendiente"}">${placed ? cardFace({ suit, rank }) : `<span>${rank}</span>`}</span>`;

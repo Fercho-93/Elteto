@@ -27,7 +27,7 @@ try {
  await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===2);
  await host.locator('[data-action="start-game"]').click();
  await guest.locator('.hand .playing-card').first().waitFor();
- assert.equal(await host.locator('.hand .playing-card').count()+await guest.locator('.hand .playing-card').count(),52);
+ assert.equal(await host.locator('.hand .playing-card').count()+await guest.locator('.hand .playing-card').count(),40);
  for(let i=0;i<8;i++){
   let active;
   for(const p of [host,guest])if(await p.locator('.game-controls').textContent().then(s=>s.includes('Juega una carta')))active=p;

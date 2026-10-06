@@ -1,18 +1,20 @@
 import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
 import { COLORS, SHADOW } from "../theme";
 import type { CinquilloView } from "game-core";
-import { FRENCH_RANKS } from "game-core";
+import { FRENCH_RANKS, SPANISH_RANKS, canPlaceCinquillo } from "game-core";
 import { CardView } from "./CardView";
 import { useGameSession } from "../state/GameSession";
 
-function sequenceLabel(suit: string, entry: { low: number; high: number } | undefined) {
+function sequenceLabel(suit: string, entry: { low: number; high: number } | undefined, ruleset: CinquilloView["ruleset"]) {
   if (!entry) return `${suit}: vacío`;
-  return `${suit}: ${FRENCH_RANKS[entry.low]} ... ${FRENCH_RANKS[entry.high]}`;
+  const ranks = ruleset === "legacy-french-52" ? FRENCH_RANKS : SPANISH_RANKS;
+  return `${suit}: ${ranks[entry.low]} ... ${ranks[entry.high]}`;
 }
 
 export function CinquilloScreen({ view }: { view: CinquilloView }) {
   const { playerId, sendAction, error } = useGameSession();
-  const isMyTurn = view.turnPlayer === playerId;
+  const isMyTurn = view.turnPlayer === playerId && !view.finished && !view.handWinner;
+  const canPass = isMyTurn && !view.myHand.some(c => canPlaceCinquillo(view.table,c,view.ruleset));
 
   return (
     <View style={styles.container}>
@@ -20,12 +22,16 @@ export function CinquilloScreen({ view }: { view: CinquilloView }) {
         <Text style={styles.banner}>{view.winner ? `¡${view.winner} gana la partida!` : "Nadie puede jugar más: partida bloqueada."}</Text>
       )}
 
+      <Text style={styles.dim}>Mano {view.handNumber} · Meta {view.targetScore}</Text>
+      <Text style={styles.dim}>{view.players.map(p=>`${p}: ${view.scores[p]}`).join(" · ")}</Text>
+      {view.handWinner && !view.finished && <Text style={styles.dim}>Gana la mano: {view.handWinner}</Text>}
+      {view.handWinner === playerId && !view.finished && <Pressable style={styles.passButton} onPress={()=>sendAction({type:"next-hand"})}><Text style={styles.passButtonText}>Siguiente mano</Text></Pressable>}
       <Text style={styles.sectionTitle}>Mesa</Text>
       <View style={styles.table}>
         {Object.keys(view.table).length === 0 && <Text style={styles.dim}>Aún no hay cartas en la mesa.</Text>}
         {Object.entries(view.table).map(([suit, entry]) => (
           <Text key={suit} style={styles.tableRow}>
-            {sequenceLabel(suit, entry)}
+            {sequenceLabel(suit, entry, view.ruleset)}
           </Text>
         ))}
       </View>
@@ -42,11 +48,11 @@ export function CinquilloScreen({ view }: { view: CinquilloView }) {
       <Text style={styles.sectionTitle}>Tu mano</Text>
       <ScrollView horizontal contentContainerStyle={{ paddingVertical: 8 }}>
         {view.myHand.map((c, i) => (
-          <CardView key={`${c.suit}-${c.rank}-${i}`} card={c} disabled={!isMyTurn} onPress={() => sendAction({ type: "play", card: c })} />
+          <CardView key={`${c.suit}-${c.rank}-${i}`} card={c} disabled={!isMyTurn || !canPlaceCinquillo(view.table,c,view.ruleset)} onPress={() => sendAction({ type: "play", card: c })} />
         ))}
       </ScrollView>
 
-      <Pressable disabled={!isMyTurn} style={[styles.passButton, !isMyTurn && styles.disabled]} onPress={() => sendAction({ type: "pass" })}>
+      <Pressable disabled={!canPass} style={[styles.passButton, !canPass && styles.disabled]} onPress={() => sendAction({ type: "pass" })}>
         <Text style={styles.passButtonText}>Paso</Text>
       </Pressable>
 

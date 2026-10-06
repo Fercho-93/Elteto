@@ -284,4 +284,7 @@ button:disabled { cursor: not-allowed; opacity: .45; transform: none !important;
 .mus-board:has(.revealed-hands) .mus-phase { margin:6px 0; }
 .mus-board:has(.revealed-hands) .mus-phase strong { font-size:18px; margin:4px 0; }
 
-.game-table:has(.revealed-hands) .table-center { top:66%; }
+.game-table:has(.revealed-hands) .table-center { top:60%; }
+
+.suit-lane > b .suit-art { width:18px; height:22px; }
+.match-score { text-align:center; font-size:11px; color:#eee5c7; margin:4px; }

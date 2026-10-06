@@ -24,6 +24,20 @@ async function rewriteModuleImports(directory) {
 
 await mkdir(output, { recursive: true });
 await cp(web, output, { recursive: true });
+await cp(path.join(root, "reglas_juegos"), path.join(output, "reglas_juegos"), {recursive:true});
 await cp(core, path.join(output, "game-core"), { recursive: true });
 await rewriteModuleImports(path.join(output, "game-core"));
 console.log("Elteto web build generated in dist/.");
+
+// Include the source archive and inert library in the offline shell.
+const rulesFiles=[];
+async function collectRules(dir, prefix="./reglas_juegos") {
+ for (const entry of await readdir(dir,{withFileTypes:true})) {
+  if(entry.isDirectory()) await collectRules(path.join(dir,entry.name),`${prefix}/${entry.name}`);
+  else rulesFiles.push(`${prefix}/${entry.name}`);
+ }
+}
+await collectRules(path.join(root,"reglas_juegos"));
+const swPath=path.join(output,"sw.js");
+const sw=await readFile(swPath,"utf8");
+await writeFile(swPath,sw.replace('const ASSETS = [',`const ASSETS = [...${JSON.stringify(rulesFiles)},`));

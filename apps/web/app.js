@@ -1,4 +1,4 @@
-import { getGame, listGames } from "./game-core/index.js";
+import { getGame, listGames, GAME_CATALOG } from "./game-core/index.js";
 import { LocalGuestSession, LocalHostSession } from "./local-session.js";
 import { parseRoomCode } from "./room-code.js";
 
@@ -37,6 +37,7 @@ function renderHome() {
       ${!LAN || LAN.hostKey ? '<button class="button button-pink" data-action="open-host">Crear partida 🍆</button>' : ""}
       <button class="button button-cyan" data-action="open-join">Unirse a la timba 🍑</button>
     </div>
+    <p><a href="./reglas_juegos/biblioteca.html">Reglas de todos los juegos</a></p><details class="game-rules"><summary>Próximos juegos</summary><ul>${GAME_CATALOG.filter(game => game.status === "planned").map(game => `<li>${esc(game.label)} · Pendiente <a href="./reglas_juegos/lectura/${game.id}.html">Reglas</a></li>`).join("")}</ul></details>
     <p class="fineprint">*La fruta es fresca. Las intenciones, cosa vuestra. 😏</p>
   </section>`;
 }
@@ -134,15 +135,16 @@ function renderGame() {
   const myTurn = view.turnPlayer === state.playerId;
   const selecting = state.gameId === 'mus' && view.phase === 'discard' && view.awaitingDiscardFrom.includes(state.playerId);
   const hand = sortedHand(view.myHand).map(card => {
-    const playable = state.gameId === 'cinquillo' && !view.finished && myTurn && canPlayCinquillo(view.table, card);
+    const playable = state.gameId === 'cinquillo' && !view.finished && !view.handWinner && myTurn && canPlayCinquillo(view.table, card, view.ruleset);
     return renderHandCard(card, {playable, selected: selecting && state.selected.has(cardKey(card)), selectable: selecting, disabled: !selecting && !playable});
   }).join('');
   const controls = state.gameId === 'mus' ? musControls(view) : cinquilloControls(view);
   const table = state.gameId === 'mus' ? renderMusBoard(view) : renderCinquilloBoard(view);
   const hint = view.finished ? winner : selecting ? 'Selecciona tu descarte' : myTurn ? 'Tu turno' : view.phase === 'discard' ? 'Esperando descartes' : `Turno de ${playerName(view.turnPlayer)}`;
   app.innerHTML = `${header()}<section class="game-page">
-    <div class="game-top"><span class="game-ribbon">${esc(game.label)} · ${state.gameId === 'mus' ? '4 reyes' : '52 cartas'}</span><button class="text-button" data-action="leave-room">Salir</button></div>
+    <div class="game-top"><span class="game-ribbon">${esc(game.label)} · ${state.gameId === 'mus' ? (view.ruleset === 'eight-kings' ? '8 reyes y 8 ases' : '4 reyes') : (view.ruleset === 'legacy-french-52' ? '52 cartas · mesa anterior' : '40 cartas españolas')}</span><button class="text-button" data-action="leave-room">Salir</button></div>
     ${view.finished ? `<div class="winner-banner" role="status">${esc(winner)}</div>` : ''}
+    ${state.gameId === 'cinquillo' ? `<p class="match-score">Mano ${view.handNumber} · Meta ${view.targetScore} · ${view.players.map(id=>`${esc(playerName(id))}: ${view.scores[id]}`).join(' · ')}</p>` : `<p class="match-score">Juegos: A ${view.gamesWon?.A ?? 0} · B ${view.gamesWon?.B ?? 0} · primero a ${view.targetGames ?? 1}${view.gameWinner ? ` · Gana el juego ${esc(view.gameWinner)}` : ''}</p>`}
     <div class="turn-banner ${myTurn || selecting ? 'your-turn' : ''}" role="status">${esc(hint)}</div>
     <section class="game-table seats-${view.players.length}" aria-label="Mesa de ${esc(game.label)}">
       <div class="felt-watermark" aria-hidden="true">ELTETO <span>LA TIMBA</span></div>
@@ -154,7 +156,7 @@ function renderGame() {
     <h3>Tu mano <small>${view.myHand.length} cartas · desliza para verlas</small></h3>
     <div class="hand" aria-label="Tus cartas">${hand || '<p>No tienes cartas.</p>'}</div>
     ${controls ? `<section class="game-controls">${controls}</section>` : ""}
-    <details class="game-rules"><summary>Cómo jugar · reglas de esta mesa</summary>${state.gameId === 'cinquillo' ? '<p>Baraja francesa de 52 cartas. Salida obligatoria con el 5 de corazones. Abre los otros palos con su 5 y continúa hacia el as o el rey, sin saltos. Solo puedes pasar si no tienes jugada. Gana quien vacía su mano.</p>' : '<p>Cuatro jugadores en parejas opuestas; baraja española de 40 cartas, modalidad de 4 reyes (2 y 3 conservan su valor), a 40 tantos. Se decide si hay mus; si todos quieren, se descarta y se vuelve a preguntar. Grande, chica, pares y juego o punto. Los envites aceptados se cuentan al acabar la mano; un órdago aceptado decide la partida. No se aplica juego real ni mus corrido.</p>'}</details>
+    <details class="game-rules"><summary>Cómo jugar · reglas de esta mesa</summary>${state.gameId === 'cinquillo' ? view.ruleset === 'legacy-french-52' ? '<p>Mesa anterior: 52 cartas francesas, salida cinco de corazones, una mano.</p>' : '<p>40 cartas españolas; salida cinco de oros. Escaleras sin saltos: 1–7, sota (10), caballo (11), rey (12). Solo pasa quien no tiene jugada. Ganador de mano: 5 puntos más cartas ajenas; los demás restan sus cartas. Gana quien alcanza 30. La fuente clásica usa cuatro jugadores; las mesas de 2–6 son una ampliación de Elteto.</p>' : `<p>Cuatro jugadores por parejas; ${view.ruleset === 'eight-kings' ? '8 reyes y 8 ases: treses como reyes y doses como ases; mus corrido en la primera mano' : '4 reyes: doses y treses conservan su valor'}. Grande, chica, pares y juego o punto. Juegos a ${view.targetScore} tantos; gana quien logra ${view.targetGames ?? 1} juegos completos. El órdago aceptado decide un juego completo.</p>`}<a href="./reglas_juegos/lectura/${state.gameId}.html">Consultar reglamento completo</a></details>
     <details class="history" ${historyOpen ? 'open' : ''}><summary>Historial de la partida</summary><ol>${(view.log || []).slice().reverse().map(line => `<li>${esc(readableLog(line))}</li>`).join('')}</ol></details>
   </section>`;
   app.querySelector('.hand').scrollLeft = scroll;
@@ -202,8 +204,9 @@ function musControls(view) {
 
 function cinquilloControls(view) {
   if (view.finished) return "";
+  if (view.handWinner) return `<p class="helper">${esc(playerName(view.handWinner))} gana la mano ${view.handNumber}. Meta: ${view.targetScore} puntos.</p><p>${view.players.map(id=>`${esc(playerName(id))}: ${view.scores[id]}`).join(' · ')}</p>${view.handWinner === state.playerId ? '<button class="button button-paper" data-action="cinquillo-next-hand">Siguiente mano</button>' : ''}`;
   if (view.turnPlayer !== state.playerId) return `<p class="helper">Turno de ${esc(playerName(view.turnPlayer))}.</p>`;
-  const canPass = !view.myHand.some(card => canPlayCinquillo(view.table, card));
+  const canPass = !view.myHand.some(card => canPlayCinquillo(view.table, card, view.ruleset));
   return `<p class="helper">Juega una carta que continúe una escalera de la mesa. Las cartas válidas brillan.</p><button class="button button-paper" data-action="cinquillo-pass" ${canPass ? "" : "disabled"}>Paso</button>`;
 }
 
@@ -347,6 +350,7 @@ app.addEventListener("click", async (event) => {
     else if (action === "mus-ordago") sendAction({ type: "ordago" });
     else if (action === "mus-accept") sendAction({ type: "accept" });
     else if (action === "mus-reject") sendAction({ type: "reject" });
+    else if (action === "cinquillo-next-hand") sendAction({ type: "next-hand" });
     else if (action === "cinquillo-pass") sendAction({ type: "pass" });
     else if (action === "leave-room") {
       if (state.online) void state.online.exit(); else { state.host?.close(); state.guest?.leave(); }

@@ -61,3 +61,7 @@ El sitio compilado aparece en `dist/`. Para probarlo localmente, sírvelo desde 
 ## Mesa y evolución de los juegos
 
 La web y Android LAN comparten la nueva mesa con tapete, avatares animados, manos rivales boca abajo y animaciones de cartas. Las reglas implementadas, pruebas y pasos para añadir juegos se detallan en [MESA_Y_REGLAS.md](MESA_Y_REGLAS.md).
+
+## Reglas y ampliación de juegos
+
+Las [reglas aportadas](reglas_juegos/README.md) conservan los 20 reglamentos originales. La biblioteca está en `reglas_juegos/biblioteca.html` y en la portada del juego. El [catálogo y la arquitectura](MESA_Y_REGLAS.md) distinguen motores disponibles de 18 juegos preparados para desarrollo. Nuevas mesas de Cinquillo: española 40, cinco de oros y puntuación a 30; Mus: ocho reyes/ases, juegos a 40 y partida a tres juegos.
