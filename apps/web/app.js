@@ -123,7 +123,8 @@ function renderGame() {
   const origins = new Map([...app.querySelectorAll('.hand [data-card-key]')].map(el => [el.dataset.cardKey, el.getBoundingClientRect()]));
   const stockOrigin = app.querySelector(".table-stock")?.getBoundingClientRect();
   const oldHandKeys = new Set(origins.keys());
-  const sourceSeat = [...app.querySelectorAll('[data-player-id]')].find(el => el.dataset.playerId === previousTurn)?.getBoundingClientRect();
+  const actor = [...app.querySelectorAll('[data-player-id]')].find(el => el.dataset.playerId === previousTurn);
+  const sourceSeat = (actor?.querySelector('.rival-hand') || actor)?.getBoundingClientRect();
   const gameToken = `${state.gameId}:${view.players.join(',')}`;
   if (renderedGame !== gameToken) previousTableKeys = null;
   renderedGame = gameToken;
@@ -143,7 +144,7 @@ function renderGame() {
     <div class="game-top"><span class="game-ribbon">${esc(game.label)} · ${state.gameId === 'mus' ? '4 reyes' : '52 cartas'}</span><button class="text-button" data-action="leave-room">Salir</button></div>
     ${view.finished ? `<div class="winner-banner" role="status">${esc(winner)}</div>` : ''}
     <div class="turn-banner ${myTurn || selecting ? 'your-turn' : ''}" role="status">${esc(hint)}</div>
-    <section class="game-table" aria-label="Mesa de ${esc(game.label)}">
+    <section class="game-table seats-${view.players.length}" aria-label="Mesa de ${esc(game.label)}">
       <div class="felt-watermark" aria-hidden="true">ELTETO <span>LA TIMBA</span></div>
       ${renderSeats(view, state.playerId, playerName, state.gameId)}
       <div class="table-center">${table}</div>

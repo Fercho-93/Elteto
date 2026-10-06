@@ -65,13 +65,11 @@ export function cardFace(card) {
   return `<span class="card-face ${red ? "card-red" : ""}"><span class="card-corner">${esc(card.rank)}${symbol}</span>${center}<span class="card-corner corner-bottom">${esc(card.rank)}${symbol}</span></span>`;
 }
 export function renderHandCard(card, options = {}) {
-  return `<button class="playing-card ${options.selected ? "selected" : ""} ${options.playable ? "legal-card" : ""}" data-action="play-card" data-card-key="${esc(cardKey(card))}" ${options.disabled ? "disabled" : ""} ${options.selectable ? `aria-pressed="${Boolean(options.selected)}"` : ""} aria-label="${esc(card.rank + " de " + card.suit)}${options.playable ? ", puedes jugarla" : ""}">${cardFace(card)}</button>`;
+  return `<button class="playing-card ${options.selected ? "selected" : ""} ${options.playable ? "legal-card" : ""}" data-action="play-card" data-card-key="${esc(cardKey(card))}" ${options.disabled ? "disabled" : ""} ${options.selectable ? `aria-pressed="${Boolean(options.selected)}"` : ""} aria-label="${esc(card.rank + " de " + card.suit)}${options.playable ? ", puedes jugarla" : ""}">${cardFace(card)}<span class="hand-index ${["corazones", "diamantes"].includes(card.suit) ? "card-red" : ""}" aria-hidden="true"><b>${esc(card.rank)}</b>${suitArt(card.suit)}</span></button>`;
 }
-function avatar(id, seat) {
-  let hash = 0;
-  for (const ch of id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-  const hue = [284, 24, 160, 210, 345, 47][hash % 6];
-  return `<svg class="player-avatar" viewBox="0 0 64 64" aria-hidden="true" style="--avatar-hue:${hue};--blink-delay:${seat * 0.7}s"><circle cx="32" cy="32" r="30" fill="hsl(${hue} 50% 24%)"/><path d="M16 38C10 13 46 10 50 28c9 25-29 34-34 10" fill="hsl(${hue} 75% 65%)"/><path d="M31 16q-5-13 10-10l-4 12" fill="#8ed078"/><g class="avatar-eyes" fill="#21172b"><ellipse cx="25" cy="31" rx="3" ry="4"/><ellipse cx="41" cy="30" rx="3" ry="4"/></g><path d="M27 41q7 6 14-2" fill="none" stroke="#21172b" stroke-width="3" stroke-linecap="round"/><circle cx="19" cy="38" r="3" fill="#f3778b"/></svg>`;
+function avatar(seat) {
+  const character = seat % 6;
+  return `<div class="player-character" aria-hidden="true"><div class="character-sprite" data-character="${character}" style="--character-x:${(character % 3) * 50}%;--character-y:${Math.floor(character / 3) * 100}%;--motion-delay:${seat * -1.3}s"></div></div>`;
 }
 export function renderSeats(view, playerId, name, gameId) {
   const ownIndex = view.players.indexOf(playerId),
@@ -82,15 +80,15 @@ export function renderSeats(view, playerId, name, gameId) {
         own = id === playerId;
       const angle =
         n === 2 ? Math.PI / 2 : (Math.PI * (relative - 1)) / (n - 2);
-      const x = own ? 50 : n === 2 ? 50 : 14 + (72 * (1 - Math.cos(angle))) / 2;
-      const y = own ? 91 : n === 2 ? 16 : 25 - 9 * Math.sin(angle);
+      const x = own ? 50 : n === 2 ? 50 : n === 6 ? [50,14,32,50,68,86][relative] : 14 + (72 * (1 - Math.cos(angle))) / 2;
+      const y = own ? 91 : n === 2 ? 21 : n === 6 ? [91,40,24,14,24,40][relative] : 32 - 11 * Math.sin(angle);
       const active =
         !view.finished &&
         (view.turnPlayer === id ||
           (view.phase === "discard" && view.awaitingDiscardFrom.includes(id)));
       const team = index % 2 === 0 ? "A" : "B";
       const count = view.handSizes[id] || 0;
-      return `<article class="table-seat ${own ? "own-seat" : ""} ${active ? "active-seat" : ""}" data-player-id="${esc(id)}" style="--seat-x:${x}%;--seat-y:${y}%" aria-label="${esc(name(id))}, ${count} cartas${active ? ", turno activo" : ""}">${avatar(id, index)}<strong>${esc(own ? "Tú" : name(id))}</strong><small>${gameId === "mus" ? `Pareja ${team} · ` : ""}${count} cartas</small>${view.mano === id ? '<span class="mano-badge">Mano</span>' : ""}${!own ? `<div class="rival-hand" aria-label="${count} cartas boca abajo">${Array.from({ length: count }, (_, i) => `<i class="card-back" style="--fan-angle:${(i - (count - 1) / 2) * Math.min(10, 65 / Math.max(1, count))}deg"><span>✦</span></i>`).join("")}</div>` : ""}</article>`;
+      return `<article class="table-seat ${own ? "own-seat" : ""} ${active ? "active-seat" : ""}" data-player-id="${esc(id)}" style="--seat-x:${x}%;--seat-y:${y}%" aria-label="${esc(name(id))}, ${count} cartas${active ? ", turno activo" : ""}">${avatar(index)}<div class="seat-label"><strong>${esc(own ? "Tú" : name(id))}</strong><small>${gameId === "mus" ? `Pareja ${team} · ` : ""}${count} cartas</small></div>${view.mano === id ? '<span class="mano-badge">Mano</span>' : ""}${!own ? `<div class="rival-hand" aria-label="${count} cartas boca abajo">${Array.from({ length: count }, (_, i) => `<i class="card-back" style="--fan-angle:${(i - (count - 1) / 2) * Math.min(10, 65 / Math.max(1, count))}deg"><span>✦</span></i>`).join("")}</div>` : ""}</article>`;
     })
     .join("");
 }
