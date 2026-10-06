@@ -1,5 +1,7 @@
 # Personajes de la mesa
 
+La mesa principal ya usa modelos geométricos 3D de los diez personajes (ver `design/ESCENA_3D.md`). El atlas de esta carpeta se conserva para la galería y la alternativa sencilla cuando WebGL no está disponible. Las caras de las cartas proceden de los dibujos originales de `card-art.js`, compartidos con las texturas 3D.
+
 `elteto-mascots-v1.png`: atlas RGBA de 1536 × 1024, diez personajes sentados en una cuadrícula de 5 × 2. Creado con la herramienta de generación de imágenes a partir de las referencias aportadas por el usuario (conservadas en `design/references/`). Se muestra mediante CSS; no depende de servidores externos y se incluye en la caché sin conexión y en Android LAN.
 
 Orden: Berenjena, Melocotón, Plátano, Bandera, Aguacate, Cerdito, Seta, Gota, Caca y Castañas. La selección única se deriva del listado público de jugadores y del asiento original; todos los dispositivos ven la misma identidad, aunque miren desde posiciones diferentes. La portada permite ver los diez personajes.

@@ -289,6 +289,35 @@ button:disabled { cursor: not-allowed; opacity: .45; transform: none !important;
 .suit-lane > b .suit-art { width:18px; height:22px; }
 .match-score { text-align:center; font-size:11px; color:#eee5c7; margin:4px; }
 
+.card-illustration,.card-illustration > svg { display:block; width:100%; height:100%; }
+.card-illustration > svg { object-fit:fill; }
+.hand-index { display:none; }
+.playing-card .card-illustration { position:absolute; inset:0; }
+.camera-controls { display:flex; justify-content:center; gap:8px; margin-top:12px; }
+.camera-controls button { padding:7px 12px; color:#efe1ce; background:#24132d; border:1px solid #a461b5; border-radius:99px; font-size:12px; }
+body:has(.game-table:not(.scene-ready)) .camera-controls { display:none; }
+.table-canvas { display:block; position:absolute; inset:0; width:100%; height:100%; border-radius:22px; }
+.game-table:not(.scene-ready) .table-canvas { display:none; }
+.game-table.scene-ready,.game-table.scene-ready.seats-6 { margin-top:14px; height:560px; overflow:hidden; border-radius:22px; background:radial-gradient(ellipse at center,#613548,#22112b); }
+.scene-ready .table-surface,.scene-ready .felt-watermark { display:none; }
+.scene-ready .table-center { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; pointer-events:none; }
+.scene-ready .table-seat { width:auto; max-width:130px; pointer-events:none; z-index:2; }
+.scene-ready .table-seat .player-character,.scene-ready .rival-hand { display:none; }
+.scene-ready .seat-label { position:static; transform:none; margin:0; max-width:130px; }
+.scene-ready .own-seat { display:block; }
+.scene-ready .mano-badge { top:100%; right:0; }
+.game-table:not(.scene-ready) .empty-slot { visibility:hidden; }
+.game-table:not(.scene-ready) .suit-lane > b { visibility:hidden; }
+@media (max-width:600px) {
+ .game-table.scene-ready,.game-table.scene-ready.seats-6 { height:430px; }
+ .scene-ready .seat-label { max-width:92px; padding:3px 6px; }
+ .scene-ready .table-seat { font-size:9px; max-width:92px; }
+ .scene-ready .table-seat small { font-size:7px; }
+}
+@media (orientation:landscape) and (max-height:600px) {
+ .game-table.scene-ready,.game-table.scene-ready.seats-6 { height:360px; }
+}
+
 /* Elteto mockup composition: chairs outside the rim, playable felt in the middle.
    The scene stays tall on phones; landscape uses larger characters and cards. */
 body:has(.game-page) {

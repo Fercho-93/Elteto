@@ -60,7 +60,7 @@ El sitio compilado aparece en `dist/`. Para probarlo localmente, sírvelo desde 
 
 ## Mesa y evolución de los juegos
 
-La web y Android LAN comparten la mesa inspirada en los mockups: diez mascotas de Elteto sentadas, tapete verde y madera con profundidad, manos rivales boca abajo y animaciones de reparto, jugada y turno. Las referencias están conservadas en `design/references/`. Las reglas implementadas, pruebas y pasos para añadir juegos se detallan en [MESA_Y_REGLAS.md](MESA_Y_REGLAS.md).
+La web y Android LAN comparten una escena 3D con cámara en perspectiva: diez mascotas de Elteto modeladas, sillas, mesa ovalada, iluminación, sombras y cartas con grosor sujetas en las manos rivales. En Cinquillo aparecen únicamente las cartas jugadas sobre el tapete. Las referencias están conservadas en `design/references/`; el render y sus límites están documentados en [design/ESCENA_3D.md](design/ESCENA_3D.md). Las reglas implementadas, pruebas y pasos para añadir juegos se detallan en [MESA_Y_REGLAS.md](MESA_Y_REGLAS.md).
 
 ## Reglas y ampliación de juegos
 

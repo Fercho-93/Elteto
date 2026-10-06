@@ -1,5 +1,6 @@
 // Presentation only: consumes a private engine view, never the host's hidden state.
 import { FRENCH_RANKS, SPANISH_RANKS, SPANISH_SUITS, canPlaceCinquillo } from "./game-core/index.js";
+import { cardSvg } from "./card-art.js";
 export const escapeHtml = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -38,21 +39,7 @@ function suitArt(suit) {
   return `<svg class="suit-art" viewBox="0 0 60 60" aria-hidden="true">${art[suit] || ""}</svg>`;
 }
 export function cardFace(card) {
-  const symbol = suitArt(card.suit),
-    red = ["corazones", "diamantes"].includes(card.suit);
-  const spanish = !symbols[card.suit];
-  const figure = spanish
-    ? { 10: "Sota", 11: "Caballo", 12: "Rey" }[card.rank]
-    : { J: "Jota", Q: "Reina", K: "Rey" }[card.rank];
-  const count = figure
-    ? 1
-    : card.rank === "A"
-      ? 1
-      : Math.min(10, Number(card.rank));
-  const center = figure
-    ? `<div class="court-art"><span>${card.rank === "11" ? "♞" : "♛"}</span>${symbol}<small>${figure}</small></div>`
-    : `<div class="card-pips pips-${count}">${Array.from({ length: count }, () => symbol).join("")}</div>`;
-  return `<span class="card-face ${red ? "card-red" : ""}"><span class="card-corner">${esc(card.rank)}${symbol}</span>${center}<span class="card-corner corner-bottom">${esc(card.rank)}${symbol}</span></span>`;
+  return `<span class="card-face"><span class="card-illustration">${cardSvg(card)}</span></span>`;
 }
 export function renderHandCard(card, options = {}) {
   return `<button class="playing-card ${options.selected ? "selected" : ""} ${options.playable ? "legal-card" : ""}" style="--card-tilt:${Number(options.tilt) || 0}deg" data-action="play-card" data-card-key="${esc(cardKey(card))}" ${options.disabled ? "disabled" : ""} ${options.selectable ? `aria-pressed="${Boolean(options.selected)}"` : ""} aria-label="${esc(card.rank + " de " + card.suit)}${options.playable ? ", puedes jugarla" : ""}">${cardFace(card)}<span class="hand-index ${["corazones", "diamantes"].includes(card.suit) ? "card-red" : ""}" aria-hidden="true"><b>${esc(card.rank)}</b>${suitArt(card.suit)}</span></button>`;

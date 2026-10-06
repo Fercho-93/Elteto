@@ -5,6 +5,18 @@ import { readFile } from "node:fs/promises";
 const { chromium, webkit } = await import(process.env.PLAYWRIGHT_MODULE || "playwright");
 import { cinquilloEngine, musEngine } from "../dist/game-core/index.js";
 import { MASCOTS, mascotForSeat, renderSeats, seatPosition } from "../dist/table-view.js";
+import { publicCardLayout } from '../dist/table-3d.js';
+const fullTable={ruleset:'spanish-40',table:Object.fromEntries(['oros','copas','espadas','bastos'].map(s=>[s,{low:0,high:9}]))};
+const layout=publicCardLayout(fullTable);
+assert.equal(layout.length,40);
+for(const card of layout) {
+  assert.ok(card.y-.006>=1.35,'card thickness cannot intersect the felt');
+  assert.ok(((Math.abs(card.x)+.32)/4.82)**2+((Math.abs(card.z)+.46)/3.02)**2<1,'whole card must fit inside the felt');
+}
+const legacy=publicCardLayout({ruleset:'legacy-french-52',table:Object.fromEntries(['picas','corazones','diamantes','treboles'].map(s=>[s,{low:0,high:12}]))});
+assert.equal(legacy.length,52);
+assert.ok(legacy.every(c=>((Math.abs(c.x)+.32*c.scale)/4.82)**2+((Math.abs(c.z)+.46*c.scale)/3.02)**2<1));
+assert.equal(publicCardLayout({table:{}}).length,0,'no empty slot objects on the table');
 assert.equal(MASCOTS.length, 10);
 const roster = Array.from({length:10},(_,i)=>`mascot-${i}`);
 assert.equal(new Set(roster.map((_,i)=>mascotForSeat(roster,i))).size,10);
@@ -56,13 +68,14 @@ const server = createServer(async (req, res) => {
 });
 await new Promise((r) => server.listen(0, "127.0.0.1", r));
 const base = `http://127.0.0.1:${server.address().port}/`;
-const browser = await (process.env.TABLE_BROWSER === "webkit" ? webkit : chromium).launch();
+const browser = await (process.env.TABLE_BROWSER === "webkit" ? webkit : chromium).launch(process.env.TABLE_BROWSER === 'webkit'?{}:{args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const errors = [];
 try {
   for (const width of [320, 390, 900, 844]) {
     const context = await browser.newContext({
       viewport: { width, height: width === 844 ? 390 : 844 },
       serviceWorkers: "block",
+      reducedMotion: 'reduce',
     });
     await context.route("**/*", (r) =>
       new URL(r.request().url()).origin === new URL(base).origin
@@ -102,7 +115,7 @@ try {
         true,
       );
       await page.locator(".hand .playing-card:not([disabled])").click();
-      await page.locator('[data-table-key="oros:5"]').waitFor();
+      await page.locator('[data-table-key="oros:5"]').waitFor({state:'attached'});
       assert.equal(await page.locator("[data-table-key]").count(), 1);
       assert.equal(
         await page.locator(".hand .playing-card").count(),
@@ -119,16 +132,25 @@ try {
       assert.ok(await page.locator(".hand .playing-card").first().isDisabled());
       assert.ok(await page.locator(".hand .playing-card").evaluateAll(cards => cards.every(card => {
         const face=card.querySelector('.card-face').getBoundingClientRect();
-        const badge=card.querySelector('.hand-index').getBoundingClientRect();
-        const rank=card.querySelector('.hand-index b');
-        return face.width > 60 && face.height > 90 && badge.width > 8 && badge.height > 25 && badge.x >= face.x && badge.y >= face.y && badge.bottom <= face.bottom && rank.textContent.trim() && getComputedStyle(rank).webkitTextFillColor !== 'rgba(0, 0, 0, 0)';
+        const art=card.querySelector('.card-illustration svg').getBoundingClientRect();
+        const ranks=card.querySelectorAll('.card-illustration text');
+        return face.width > 60 && face.height > 90 && art.width > 60 && art.height > 90 && ranks.length===2 && [...ranks].every(rank=>rank.textContent.trim());
       })));
       assert.equal(await page.locator('.character-sprite').evaluateAll(els => new Set(els.map(el => el.dataset.character)).size),count);
       assert.ok(await page.evaluate(async () => { const image=new Image(); image.src='/assets/elteto-mascots-v1.png'; await image.decode(); return image.naturalWidth===1536 && image.naturalHeight===1024; }));
+      if(process.env.TABLE_BROWSER !== 'webkit') {
+        assert.equal(await page.locator('.game-table').getAttribute('data-scene'),'webgl');
+        assert.equal(await page.locator('.game-table').getAttribute('data-public-cards'),'1');
+        assert.equal(Number(await page.locator('.game-table').getAttribute('data-rival-cards')),40-game.hands[id].length);
+        await page.locator('[data-action="camera-right"]').click();
+        assert.ok(Number(await page.locator('.game-table').getAttribute('data-camera'))>0);
+        await page.locator('[data-action="camera-reset"]').click();
+        assert.equal(await page.locator('.game-table').getAttribute('data-camera'),'0');
+      }
       await page.evaluate(() => scrollTo(0, 0));
       if (width === 390 || width === 900 || width === 844)
         await page.screenshot({
-          path: `dist/table-cinquillo-${count}-${width}.png`,
+          path: `dist/table-cinquillo-${count}-${width}-${process.env.TABLE_BROWSER||'chromium'}.png`,
           fullPage: true,
         });
     }
@@ -177,10 +199,10 @@ try {
       await page.locator(".revealed-hands .reveal-card").count(),
       16,
     );
-    assert.ok(await page.evaluate(()=>document.querySelector('.revealed-hands').getBoundingClientRect().bottom <= document.querySelector('.own-seat .player-character').getBoundingClientRect().top+2));
+    assert.ok(await page.locator('.hand .card-illustration svg').count()>0);
     await page.evaluate(() => scrollTo(0, 0));
     if (width === 390)
-      await page.screenshot({ path: "dist/table-mus.png", fullPage: true });
+      await page.screenshot({ path: `dist/table-mus-${process.env.TABLE_BROWSER||'chromium'}.png`, fullPage: true });
     // Reduced motion prevents both CSS avatar animation and card flight.
     await page.emulateMedia({ reducedMotion: "reduce" });
     assert.equal(
@@ -216,9 +238,24 @@ try {
     }));
     await offlineContext.close();
   }
+  // Explicit no-GPU route: real hand remains playable, no empty cells visible.
+  const fallback=await browser.newContext({serviceWorkers:'block'});
+  await fallback.addInitScript(()=>{
+    const original=HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext=function(type,...args){return type.startsWith('webgl')?null:original.call(this,type,...args);};
+  });
+  const fallbackPage=await fallback.newPage();await fallbackPage.goto(base);await fallbackPage.waitForFunction(()=>window.testTable);
+  const fallbackGame=cinquilloEngine.createInitialState(['a','b'],3);
+  await fallbackPage.evaluate(game=>window.testTable('cinquillo',game,game.players[game.turn]),fallbackGame);
+  assert.equal(await fallbackPage.locator('.game-table').getAttribute('data-scene'),'fallback');
+  assert.ok(await fallbackPage.locator('.legal-card').isVisible());
+  assert.equal(await fallbackPage.locator('.empty-slot').first().evaluate(el=>getComputedStyle(el).visibility),'hidden');
+  await fallbackPage.locator('.legal-card').click();
+  assert.equal(await fallbackPage.locator('[data-table-key]').count(),1);
+  await fallback.close();
   assert.deepEqual(errors, []);
   console.log(
-    "Tables at 320/390/900px and phone landscape: ten mascots, 2/4/6 seats, future 8-seat board layouts, hidden hands, legal moves, Mus discard/envite/ordago, reveal, offline assets, no overflow, reduced motion: OK",
+    "3D table: WebGL camera, cards supported on felt, hidden rival faces, complete vector deck, Mus/Cinquillo actions, portrait/landscape, offline, reduced motion and playable no-GPU fallback: OK",
   );
 } finally {
   await browser.close();
