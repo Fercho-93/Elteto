@@ -2,17 +2,17 @@ import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 import {readFile} from 'node:fs/promises';
-import {chromium} from 'playwright';
+import {chromium,webkit} from 'playwright';
 const cp=process.env.LAN_JAVA_CP || await readFile('.lan-java-classpath','utf8');
 const server=spawn('java',['-cp',cp,'LanServerMain','dist','0']);
 server.stderr.on('data',data=>process.stderr.write(data));
 let browser;
 try {
  const [output]=await once(server.stdout,'data');const hostUrl=String(output).trim();const base=new URL(hostUrl).origin;
- browser=await chromium.launch();
+ browser=await (process.env.LAN_BROWSER==='webkit'?webkit:chromium).launch();
  const errors=[];
  const context=async name=>{
-  const ctx=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
+  const ctx=await browser.newContext({viewport:{width:390,height:664},serviceWorkers:'block',reducedMotion:'reduce'});
   await ctx.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
   await ctx.addInitScript(name=>localStorage.setItem('elteto.playerName',name),name);
   const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));return page;
@@ -28,6 +28,26 @@ try {
  await host.locator('[data-action="start-game"]').click();
  await guest.locator('.hand .playing-card').first().waitFor();
  assert.equal(await host.locator('.hand .playing-card').count()+await guest.locator('.hand .playing-card').count(),40);
+ // Exercise the actual LAN entry page: a correct index.html does not cover lan.html.
+ for(const page of [host,guest]) {
+  assert.ok(await page.locator('.table-seat:not(.own-seat)').evaluate(seat=>{
+   const body=seat.getBoundingClientRect(),felt=document.querySelector('.table-surface').getBoundingClientRect();
+   return body.top+body.height*.5<felt.top;
+  }), 'The rival face must remain above the felt on the LAN page');
+  assert.equal(await page.locator('.table-tools').evaluate(el=>getComputedStyle(el).display),'flex');
+  assert.ok(await page.locator('.table-seat:not(.own-seat) .seat-label').evaluate(el=>el.getBoundingClientRect().top>=document.querySelector('.turn-banner').getBoundingClientRect().bottom), 'Player label stays below turn indicator');
+  const hand=await page.locator('.hand .playing-card').first().boundingBox();
+  assert.ok(hand.y+hand.height<=664, 'Own cards fit with the compact mobile browser viewport');
+  assert.ok(await page.locator('.hand .playing-card').evaluateAll(async cards=>{
+   await Promise.all(cards.map(card=>card.querySelector('img').decode()));
+   return cards.every(card=>{const rect=card.getBoundingClientRect();return Math.abs(rect.width/rect.height-208/319)<.02;});
+  }));
+  await page.locator('[data-action="open-table-zoom"]').click();
+  assert.ok(await page.locator('.board-zoom').evaluate(el=>el.open && getComputedStyle(el).position==='fixed'));
+  await page.locator('[data-action="close-table-zoom"]').click();
+  await page.evaluate(()=>scrollTo(0,0));
+ }
+ await guest.screenshot({path:`dist/lan-mobile-${process.env.LAN_BROWSER||'chromium'}.png`,fullPage:true});
  for(let i=0;i<8;i++){
   let active;
   for(const p of [host,guest])if(await p.locator('.game-controls').textContent().then(s=>s.includes('Juega una carta')))active=p;

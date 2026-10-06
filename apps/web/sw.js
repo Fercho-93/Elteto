@@ -1,4 +1,4 @@
-const CACHE = "elteto-shell-v13";
+const CACHE = "elteto-shell-v14";
 const ASSETS = [
   "./table-layout.css",
   "./", "./index.html", "./styles.css", "./app.js", "./table-view.js", "./card-art.js", "./assets/elteto-mascots-v1.png", "./local-session.js", "./local-transport.js",

@@ -37,6 +37,11 @@ body:has(.game-page) .topbar .icon-btn { width:32px; height:32px; }
 .lane-cards { gap:3px; }
 .board-card { height:auto; aspect-ratio:208 / 319; border-radius:3px; }
 .legacy-board .board-card { aspect-ratio:169.075 / 244.64; }
+.revealed-hands { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin-top:6px; }
+.revealed-hands > div { min-width:0; }
+.revealed-hands small { display:block; line-height:12px; }
+.mus-board:has(.revealed-hands) .mus-phase { margin:0 0 6px; }
+.reveal-card { flex:none; width:min(26px,calc((100% - 6px) / 4)); height:auto; aspect-ratio:208 / 319; }
 .board-card.placed { box-shadow:0 1px 0 #e6d8c0,1px 3px 3px #001b2080; }
 .card-illustration > img { object-fit:contain; }
 .playing-card { flex-basis:76px; width:76px; height:auto; aspect-ratio:208 / 319; border-radius:6px; }
@@ -66,9 +71,10 @@ body:has(.game-page) .topbar .icon-btn { width:32px; height:32px; }
 .mascot-gallery .player-character { filter:drop-shadow(0 5px 4px #08010b88); }
 @media(max-width:699px) {
  .game-page { width:calc(100% - 16px); }
- .game-table,.game-table.seats-6,.game-table.seats-7,.game-table.seats-8 { --scene-h:390px; --avatar-w:86px; }
- .game-table.seats-6 { --avatar-w:70px; --scene-h:430px; }
+ .game-table,.game-table.seats-6,.game-table.seats-7,.game-table.seats-8 { --scene-h:clamp(244px,calc(100svh - 426px),390px); --avatar-w:86px; margin-top:48px; }
+ .game-table.seats-6 { --avatar-w:70px; --scene-h:clamp(284px,calc(100svh - 386px),430px); }
  .game-table.seats-7,.game-table.seats-8 { --avatar-w:60px; --scene-h:470px; }
+ .game-table:has(.mus-board) { --scene-h:390px; }
  .table-surface { inset:31% 12% 12%; border-width:10px; border-radius:48% / 23%; }
  .table-surface::before { inset:-8px; }
  .table-seat:not(.own-seat),.seat-front { left:var(--seat-mobile-x); top:var(--seat-mobile-y); }
@@ -94,6 +100,7 @@ body:has(.game-page) .topbar .icon-btn { width:32px; height:32px; }
  .game-page { width:calc(100% - 20px); }
  .game-table,.game-table.seats-6 { --scene-h:330px; --avatar-w:104px; margin-top:25px; }
  .game-table.seats-6 { --avatar-w:84px; }
+ .game-table:has(.mus-board) { --scene-h:390px; }
  .table-center,.seats-6 .table-center,.game-table:has(.revealed-hands) .table-center { width:min(58%,calc(var(--scene-h) * .68)); top:61%; }
  .playing-card,.hand-fan .playing-card { height:auto; }
  .turn-banner { position:absolute; right:16px; top:80px; z-index:5; }

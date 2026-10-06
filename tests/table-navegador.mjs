@@ -66,9 +66,9 @@ const deckPage=await browser.newPage();await deckPage.goto(base);
 assert.ok(await deckPage.evaluate(async files=>{await Promise.all(files.map(async file=>{const img=new Image();img.src='./assets/decks/'+file;await img.decode();if(img.naturalWidth<200)throw Error(file);}));return true;},manifest.map(card=>card.file)));
 await deckPage.close();
 try {
-  for (const width of [320, 390, 900, 844]) {
+  for (const [width,height] of [[320,844], [390,844], [390,664], [900,844], [844,390]]) {
     const context = await browser.newContext({
-      viewport: { width, height: width === 844 ? 390 : 844 },
+      viewport: { width, height },
       serviceWorkers: "block",
       reducedMotion: 'reduce',
     });
@@ -255,6 +255,13 @@ try {
       16,
     );
     assert.ok(await page.locator('.hand .card-illustration img').count()>0);
+    assert.ok(await page.locator('.game-table .reveal-card,.game-table .mus-phase').evaluateAll(elements=>{
+      const felt=document.querySelector('.table-surface').getBoundingClientRect();
+      const border=parseFloat(getComputedStyle(document.querySelector('.table-surface')).borderLeftWidth);
+      const outside=elements.filter(el=>{const r=el.getBoundingClientRect();return r.left<felt.left+border || r.right>felt.right-border || r.top<felt.top+border || r.bottom>felt.bottom-border;});
+      if(outside.length) throw Error(JSON.stringify({felt:felt.toJSON(),outside:outside.map(el=>({class:el.className,rect:el.getBoundingClientRect().toJSON()}))}));
+      return true;
+    }),`Mus recuento remains on the felt at ${width} × ${height}`);
     await page.evaluate(() => scrollTo(0, 0));
     if (width === 390)
       await page.screenshot({ path: `dist/table-mus-${process.env.TABLE_BROWSER||'chromium'}.png`, fullPage: true });

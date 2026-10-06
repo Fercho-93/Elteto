@@ -14,6 +14,8 @@ La disposición se adapta a móvil vertical, horizontal y escritorio. Hay posici
 
 La distribución toma las manos de cada personaje como punto de apoyo sobre el borde. Los rivales ocupan varios niveles alrededor del óvalo, con etiquetas escalonadas en las mesas de seis. La altura de la escena y el tamaño de los personajes se ajustan juntos para reducir espacio vacío y dejar sitio a la mano propia y sus controles. `table-layout.css` reúne estos ajustes de composición.
 
+Las dos entradas, `index.html` y `lan.html`, cargan esa misma composición. La altura móvil depende de `svh` para reservar sitio a la mano cuando las barras del navegador reducen el espacio disponible. Las pruebas LAN abren el servidor Java real con Chromium y WebKit a 390 × 664: verifican que la cara del rival esté sobre el tapete, su nombre no pise el turno, la mano propia entre en la pantalla y la ampliación funcione.
+
 ## Barajas
 
 100 caras originales sin modificaciones: 48 españolas de Basquetteur y Germarquezm (CC BY-SA 3.0, Wikimedia Commons) y 52 francesas de David Bellot/SVG-cards de Huub de Beer (LGPL 2.1). card-art.js asigna explícitamente palo y valor a una imagen. No se reinterpretan sotas, caballos o reyes. El juego usa solo los valores de su variante; las caras 8 y 9 quedan disponibles para futuros juegos con española de 48.
