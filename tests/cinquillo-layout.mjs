@@ -18,6 +18,9 @@ try {
    if(phase==='middle')for(let n=0;n<200&&moves<18&&!game.handWinner;n++){const id=game.players[game.turn],card=game.hands[id].find(c=>canPlaceCinquillo(game.table,c,game.ruleset));game=cinquilloEngine.applyAction(game,id,card?{type:'play',card}:{type:'pass'});if(card)moves++;}
    if(phase==='full')game.table=Object.fromEntries(['oros','copas','espadas','bastos'].map(suit=>[suit,{low:0,high:9}]));
    await page.evaluate(game=>window.testTable('cinquillo',game,game.players[game.turn],['Alejandra Fernanda','José Manuel','Cristina','Francisco Javier','María del Carmen','Sebastián']),game);
+   // WebKit resolves media and container queries over rendering frames after resize.
+   // Measure the settled presentation, without retrying until a desired result appears.
+   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
    const metrics=await page.evaluate(()=>{
     const rect=el=>el.getBoundingClientRect(),inside=r=>r.left>=-1&&r.right<=innerWidth+1&&r.top>=-1&&r.bottom<=innerHeight+1;
     const overlap=(a,b)=>a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5;

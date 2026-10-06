@@ -33,6 +33,7 @@ jobs:
       - run: node tests/cinquillo-layout.mjs
       - run: LAYOUT_BROWSER=webkit node tests/cinquillo-layout.mjs
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: capturas-y-medidas-mesa
           path: tests/artifacts/
