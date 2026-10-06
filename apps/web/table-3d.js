@@ -98,9 +98,9 @@ function mascot(index) {
  // Both hands wrap the lower corners of the physical fan; hands sit in front.
  const handColor=index===3||index===6?'#fff1d3':c;
  for(const side of [-1,1]) {
-  tube(g,[[side*.37,1.65,.08],[side*.46,1.40,.32],[side*.27,1.47,.57]],handColor,.095);
-  shape(g,handColor,[side*.25,1.49,.57],[.115,.10,.10]);
-  for(let f=0;f<3;f++) shape(g,handColor,[side*(.23+f*.027),1.54,.62],[.028,.067,.025]);
+  tube(g,[[side*.37,1.65,.08],[side*.46,1.22,.32],[side*.27,1.13,.57]],handColor,.095);
+  shape(g,handColor,[side*.25,1.15,.57],[.115,.10,.10]);
+  for(let f=0;f<3;f++) shape(g,handColor,[side*(.23+f*.027),1.20,.62],[.028,.067,.025]);
  }
  return g;
 }
@@ -193,7 +193,7 @@ class TableScene {
     for(let i=0;i<count;i++) {
      // Opponent geometry contains backs only: no opponent rank/suit is supplied.
      const card=this.card(null),a=(i-(count-1)/2)*Math.min(.10,.95/Math.max(1,count));card.scale.set(.656,1,.656);
-     card.position.set(Math.sin(a)*.23,1.72, .50+Math.cos(a)*.03+i*.001);
+     card.position.set(Math.sin(a)*.23,1.34, .50+Math.cos(a)*.03+i*.001);
      card.rotation.set(-Math.PI/2,0,-a);p.fan.add(card);
     }
    }
