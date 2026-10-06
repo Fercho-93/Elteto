@@ -52,9 +52,10 @@ try {
  }
  await guest.screenshot({path:`tests/artifacts/lan-mobile-${process.env.LAN_BROWSER||'chromium'}.png`,fullPage:true});
  for(let i=0;i<8;i++){
-  let active;
-  for(const p of [host,guest])if(await p.locator('.game-controls').textContent().then(s=>s.includes('Juega una carta')))active=p;
-  assert.ok(active,'a player has the turn');
+  const activePages=[];
+  for(const p of [host,guest])if(await p.locator('.turn-banner.your-turn').count())activePages.push(p);
+  assert.equal(activePages.length,1,'exactly one player has the turn, including a mandatory pass');
+  const active=activePages[0];
   const previous=await host.locator('.history li').count();const cards=active.locator('.hand .playing-card:not([disabled])');
   if(await cards.count())await cards.first().click();else await active.locator('[data-action="cinquillo-pass"]').click();
   await host.waitForFunction(n=>document.querySelectorAll('.history li').length>n,previous);
