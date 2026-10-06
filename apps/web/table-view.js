@@ -70,15 +70,15 @@ export function renderMascot(character, seat = character) {
 // Shared seating for card and board games, with the local player at the bottom.
 // These layouts do not change the supported player counts of any engine.
 export function seatPosition(count, relative) {
-  if (!relative) return [50, 93];
-  if (count === 2) return [50, 18];
+  if (!relative) return [50, 94];
+  if (count === 2) return [50, 32];
   const layouts = {
-    3: [[14, 32], [86, 32]],
-    4: [[8, 36], [50, 18], [92, 36]],
-    5: [[13, 40], [35, 20], [65, 20], [87, 40]],
-    6: [[8, 40], [28, 23], [50, 15], [72, 23], [92, 40]],
-    7: [[12, 48], [21, 30], [39, 18], [61, 18], [79, 30], [88, 48]],
-    8: [[12, 57], [12, 35], [29, 20], [50, 14], [71, 20], [88, 35], [88, 57]],
+    3: [[24, 35], [76, 35]],
+    4: [[9, 49], [50, 32], [91, 49]],
+    5: [[9, 51], [35, 33], [65, 33], [91, 51]],
+    6: [[9, 52], [28, 35], [50, 31], [72, 35], [91, 52]],
+    7: [[9, 59], [21, 39], [39, 32], [61, 32], [79, 39], [91, 59]],
+    8: [[9, 70], [9, 49], [29, 35], [50, 31], [71, 35], [91, 49], [91, 70]],
   };
   return layouts[count]?.[relative - 1] || [50, 18];
 }
@@ -90,7 +90,7 @@ export function renderSeats(view, playerId, name, gameId) {
       const relative = (index - ownIndex + n) % n,
         own = id === playerId;
       const [x, y] = seatPosition(n, relative);
-      const mobile = !relative ? [50,93] : n === 4 ? [[13,27],[50,18],[87,27]][relative-1] : n === 6 ? [[9,28],[28,23],[50,18],[72,23],[91,28]][relative-1] : [x,y];
+      const mobile = [x<20?12:x>80?88:x,y];
       const character = mascotForSeat(view.players, index);
       const active =
         !view.finished &&
@@ -103,7 +103,7 @@ export function renderSeats(view, playerId, name, gameId) {
       // Body/chair sit behind the felt. This sibling crosses the table rim:
       // card backs under the hands, forearms over them. No hidden values enter it.
       const front = own ? '' : `<div class="seat-front ${active ? 'active-seat' : ''}" data-front-player="${esc(id)}" style="${style}" aria-hidden="true"><div class="seat-grip">${cardGame ? `<div class="rival-hand">${Array.from({ length: count }, (_, i) => `<i class="card-back" style="--fan-angle:${(i - (count - 1) / 2) * Math.min(10, 65 / Math.max(1, count))}deg"><span>✦</span></i>`).join('')}</div>` : ''}<div class="player-character forearms"><div class="character-sprite arm-left"></div><div class="character-sprite arm-right"></div></div></div></div>`;
-      return `<article class="table-seat ${own ? 'own-seat' : ''} ${active ? 'active-seat' : ''}" data-player-id="${esc(id)}" style="${style}" aria-label="${esc(name(id))}, ${MASCOTS[character]}${cardGame ? `, ${count} cartas` : ''}${active ? ', turno activo' : ''}">${renderMascot(character, index)}<div class="seat-label"><strong>${esc(own ? 'Tú' : name(id))}</strong><small>${MASCOTS[character]}${gameId === 'mus' ? ` · ${team}` : ''}${cardGame ? ` · ${count} cartas` : ''}</small></div>${view.mano === id ? '<span class="mano-badge">Mano</span>' : ''}</article>${front}`;
+      return `<article class="table-seat ${own ? 'own-seat' : ''} ${active ? 'active-seat' : ''}" data-position="${x<20?'left':x>80?'right':x===50?'top':'upper'}" data-player-id="${esc(id)}" style="${style}" aria-label="${esc(name(id))}, ${MASCOTS[character]}${cardGame ? `, ${count} cartas` : ''}${active ? ', turno activo' : ''}">${renderMascot(character, index)}<div class="seat-label"><strong>${esc(own ? 'Tú' : name(id))}</strong><small>${MASCOTS[character]}${gameId === 'mus' ? ` · ${team}` : ''}${cardGame ? ` · ${count} cartas` : ''}</small></div>${view.mano === id ? '<span class="mano-badge">Mano</span>' : ''}</article>${front}`;
 
     })
     .join("");

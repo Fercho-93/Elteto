@@ -108,6 +108,7 @@ try {
           () => document.documentElement.scrollWidth <= innerWidth,
         ),
         true,
+        `No page overflow: ${width}px, ${count} players`,
       );
       await page.locator(".hand .playing-card:not([disabled])").click();
       await page.locator('[data-table-key="oros:5"]').waitFor({state:'attached'});
@@ -134,6 +135,12 @@ try {
       assert.equal(await page.locator('.game-table').getAttribute('data-scene'),'illustrated-2d');
       assert.equal(await page.locator('.table-canvas,.camera-controls').count(),0);
       assert.equal(await page.locator('.seat-front').count(),count-1);
+      assert.ok(await page.locator('.table-seat:not(.own-seat) .seat-label').evaluateAll(labels=>{
+        const boxes=labels.map(label=>label.getBoundingClientRect());
+        const clear=boxes.every((a,i)=>a.left>=0 && a.right<=innerWidth && boxes.slice(i+1).every(b=>a.right<=b.left || b.right<=a.left || a.bottom<=b.top || b.bottom<=a.top));
+        if(!clear) throw Error(JSON.stringify(boxes.map(box=>box.toJSON())));
+        return clear;
+      }),`Readable, separate player labels: ${width}px, ${count} players`);
       assert.ok(await page.locator('.seat-front').evaluateAll(fronts=>fronts.every(front=>{
         const body=document.querySelector('[data-player-id="'+front.dataset.frontPlayer+'"]');
         const felt=document.querySelector('.table-surface');
@@ -169,6 +176,26 @@ try {
         return true;
       }),`Full deck must stay inside rounded felt at width ${width}`);
       await page.locator('.board-card img').evaluateAll(images=>Promise.all(images.map(image=>image.decode())));
+      assert.ok(await page.locator('.board-card.placed').evaluateAll(cards=>cards.every(card=>{
+        const r=card.getBoundingClientRect();return Math.abs(r.width/r.height-208/319)<.02;
+      })), 'Spanish cards retain their printed proportions');
+      const normalCard=await page.locator('.board-card.placed').first().boundingBox();
+      await page.locator('[data-action="open-table-zoom"]').click();
+      assert.ok(await page.locator('.board-zoom').evaluate(dialog=>dialog.open));
+      assert.equal(await page.locator('.board-zoom [data-zoom-key]').count(),40);
+      const enlarged=await page.locator('.board-zoom .board-card.placed').first().boundingBox();
+      assert.ok(enlarged.width>normalCard.width*1.4, 'Magnifier makes actual public cards larger');
+      assert.equal(await page.locator('.board-zoom .hand,.board-zoom .rival-hand').count(),0);
+      // Incoming public state updates keep the magnifier open and current.
+      await page.evaluate(game=>window.testTable('cinquillo',game,'a'),{...full,table:{oros:{low:4,high:4}}});
+      assert.ok(await page.locator('.board-zoom').evaluate(dialog=>dialog.open));
+      assert.equal(await page.locator('.board-zoom [data-zoom-key]').count(),1);
+      await page.locator('[data-action="close-table-zoom"]').click();
+      assert.equal(await page.locator('.board-zoom').evaluate(dialog=>dialog.open),false);
+      await page.locator('[data-action="open-table-zoom"]').click();
+      await page.keyboard.press('Escape');
+      assert.equal(await page.locator('.board-zoom').evaluate(dialog=>dialog.open),false);
+      await page.evaluate(game=>window.testTable('cinquillo',game,'a'),full);
       if(width === 900) await page.screenshot({path:`dist/table-full-spanish-${process.env.TABLE_BROWSER||'chromium'}.png`,fullPage:true});
       full.ruleset='legacy-french-52';
       full.table=Object.fromEntries(['picas','corazones','diamantes','treboles'].map(suit=>[suit,{low:4,high:6}]));
@@ -177,6 +204,9 @@ try {
       assert.equal(await page.locator('.board-card').count(),52);
       await page.locator('.card-illustration img').evaluateAll(images=>Promise.all(images.map(image=>image.decode())));
       assert.ok(await page.locator('.hand img').evaluateAll(images=>images.every(image=>/spade_1|heart_king|diamond_queen|club_jack/.test(image.src))));
+      assert.ok(await page.locator('.board-card.placed').evaluateAll(cards=>cards.every(card=>{
+        const r=card.getBoundingClientRect();return Math.abs(r.width/r.height-169.075/244.64)<.02;
+      })), 'French cards retain their printed proportions');
       if(width === 900) await page.screenshot({path:`dist/table-french-${process.env.TABLE_BROWSER||'chromium'}.png`,fullPage:true});
     }
     // A completed hand exposes the cumulative score and winner-only continuation.
@@ -266,6 +296,10 @@ try {
       return response.ok && (await response.text()).includes('8 reyes');
     });
     assert.ok(cached);
+    assert.ok(await page.evaluate(async()=>{
+      const response=await fetch('../../table-layout.css');
+      return response.ok && (await response.text()).includes('.board-zoom');
+    }));
     assert.ok(await page.evaluate(async()=>{
       const response=await fetch('../../assets/elteto-mascots-v1.png');
       return response.ok && (await response.blob()).size>10000;
