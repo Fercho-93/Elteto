@@ -60,7 +60,7 @@ El sitio compilado aparece en `dist/`. Para probarlo localmente, sírvelo desde 
 
 ## Mesa y evolución de los juegos
 
-La web y Android LAN comparten una mesa ilustrada en 2D siguiendo los mockups: diez mascotas con volumen pintado, sillas detrás del tapete y brazos por delante del borde, sosteniendo dorsos de cartas. Las caras usan dos barajas tradicionales completas, española (48 ilustraciones, seleccionando 40 cuando corresponde) y francesa (52), guardadas localmente con sus créditos. Cinquillo muestra únicamente cartas jugadas; los huecos de colocación son invisibles. La composición está documentada en [design/MESA_2D.md](design/MESA_2D.md). Las reglas implementadas, pruebas y pasos para añadir juegos se detallan en [MESA_Y_REGLAS.md](MESA_Y_REGLAS.md).
+La web y Android LAN comparten una mesa ilustrada en 2D siguiendo los mockups: diez mascotas con volumen pintado, sillas detrás del tapete y brazos por delante del borde, sosteniendo dorsos de cartas. Las caras usan dos barajas tradicionales completas, española (48 ilustraciones, seleccionando 40 cuando corresponde) y francesa (52), guardadas localmente con sus créditos. Cinquillo muestra completos los extremos de cada palo, sin números añadidos sobre las ilustraciones, en cuatro zonas (dos por dos en móvil). «Ver todas las cartas» permite consultar la escalera completa a mayor tamaño. La composición está documentada en [design/MESA_2D.md](design/MESA_2D.md). Las reglas implementadas, pruebas y pasos para añadir juegos se detallan en [MESA_Y_REGLAS.md](MESA_Y_REGLAS.md).
 
 ## Reglas y ampliación de juegos
 

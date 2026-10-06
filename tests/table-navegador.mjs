@@ -66,7 +66,7 @@ const deckPage=await browser.newPage();await deckPage.goto(base);
 assert.ok(await deckPage.evaluate(async files=>{await Promise.all(files.map(async file=>{const img=new Image();img.src='./assets/decks/'+file;await img.decode();if(img.naturalWidth<200)throw Error(file);}));return true;},manifest.map(card=>card.file)));
 await deckPage.close();
 try {
-  for (const [width,height] of [[320,844], [390,844], [390,664], [900,844], [844,390]]) {
+  for (const [width,height] of [[320,844], [390,844], [390,664], [699,844], [700,844], [900,844], [844,390]]) {
     const context = await browser.newContext({
       viewport: { width, height },
       serviceWorkers: "block",
@@ -115,6 +115,8 @@ try {
       await page.locator(".hand .playing-card:not([disabled])").click();
       await page.locator('[data-table-key="oros:5"]').waitFor({state:'attached'});
       assert.equal(await page.locator("[data-table-key]").count(), 1);
+      assert.equal(await page.locator('.game-table .endpoint:visible').count(),1,'An opening five is shown once');
+      assert.equal(await page.locator('.game-table [data-suit="oros"] .lane-next').textContent(),'Sigue con 4 o 6');
       assert.equal(
         await page.locator(".hand .playing-card").count(),
         game.hands[id].length - 1,
@@ -175,7 +177,9 @@ try {
       full.table=Object.fromEntries(['oros','copas','espadas','bastos'].map(suit=>[suit,{low:0,high:9}]));
       await page.evaluate(game=>window.testTable('cinquillo',game,'a'),full);
       assert.equal(await page.locator('[data-table-key]').count(),40);
-      assert.ok(await page.locator('[data-table-key]').evaluateAll(cards=>{
+      assert.equal(await page.locator('.game-table .endpoint:visible').count(),8);
+      assert.ok(await page.locator('.game-table .lane-next').evaluateAll(labels=>labels.every(label=>label.textContent==='Palo completo')));
+      assert.ok(await page.locator('[data-table-key]:visible').evaluateAll(cards=>{
         const surface=document.querySelector('.table-surface'),felt=surface.getBoundingClientRect(),style=getComputedStyle(surface);
         const border=parseFloat(style.borderLeftWidth);
         const radius=(value,size)=>value.includes('%')?parseFloat(value)*size/100:parseFloat(value);
@@ -194,29 +198,47 @@ try {
         return true;
       }),`Full deck must stay inside rounded felt at width ${width}`);
       await page.locator('.board-card img').evaluateAll(images=>Promise.all(images.map(image=>image.decode())));
-      assert.ok(await page.locator('.board-card.placed').evaluateAll(cards=>cards.every(card=>{
+      assert.ok(await page.locator('.board-card.placed:visible').evaluateAll(cards=>cards.every(card=>{
         const r=card.getBoundingClientRect();return Math.abs(r.width/r.height-208/319)<.02;
       })), 'Spanish cards retain their printed proportions');
-      assert.ok(await page.locator('.game-table .suit-lane').evaluateAll(lanes=>lanes.every(lane=>{
-        const cards=[...lane.querySelectorAll('.placed')].map(card=>card.getBoundingClientRect());
-        return cards.every((r,i)=>r.width>=46 && (!i || (Math.abs(r.x-cards[i-1].x)<1 && r.top-cards[i-1].top>=17)));
-      })), 'Suit columns keep card values exposed and readable');
+      assert.ok(await page.locator('.game-table .endpoint').evaluateAll(cards=>{
+        const rects=cards.map(card=>card.getBoundingClientRect());
+        return cards.every((card,i)=>{
+          const r=rects[i];
+          return r.width>=58 && ['none','normal'].includes(getComputedStyle(card,'::after').content) && rects.slice(i+1).every(b=>r.right<=b.left || b.right<=r.left || r.bottom<=b.top || b.bottom<=r.top);
+        });
+      }), 'Both extremes show full, non-overlapping original faces without overprinted numbers');
+      const fullHeight=await page.locator('.game-table').evaluate(el=>el.getBoundingClientRect().height);
       const normalCard=await page.locator('.board-card.placed').first().boundingBox();
       await page.locator('[data-action="open-table-zoom"]').click();
       assert.ok(await page.locator('.board-zoom').evaluate(dialog=>dialog.open));
       assert.equal(await page.locator('.board-zoom [data-zoom-key]').count(),40);
+      assert.ok(await page.locator('.board-zoom [data-zoom-key]').evaluateAll(cards=>{
+        const rects=cards.map(card=>card.getBoundingClientRect());
+        return rects.every((r,i)=>r.width>=90 && rects.slice(i+1).every(b=>r.right<=b.left || b.right<=r.left || r.bottom<=b.top || b.bottom<=r.top));
+      }), 'Detail view includes every public card at readable size without overlap');
+      assert.ok(await page.locator('.zoom-scroll').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Detail view wraps without horizontal scrolling');
       const enlarged=await page.locator('.board-zoom .board-card.placed').first().boundingBox();
       assert.ok(enlarged.width>normalCard.width, 'Full-card view presents larger, unoverlapped public cards');
       assert.equal(await page.locator('.board-zoom .hand,.board-zoom .rival-hand').count(),0);
+      await page.locator('.zoom-scroll').evaluate(el=>{el.scrollTop=200;});
+      const readingPosition=await page.locator('.zoom-scroll').evaluate(el=>el.scrollTop);
+      await page.evaluate(game=>window.testTable('cinquillo',game,'a'),full);
+      assert.equal(await page.locator('.zoom-scroll').evaluate(el=>el.scrollTop),readingPosition,'Public updates retain the reading position');
       // Incoming public state updates keep the magnifier open and current.
       await page.evaluate(game=>window.testTable('cinquillo',game,'a'),{...full,table:{oros:{low:4,high:4}}});
       assert.ok(await page.locator('.board-zoom').evaluate(dialog=>dialog.open));
       assert.equal(await page.locator('.board-zoom [data-zoom-key]').count(),1);
+      assert.equal(await page.locator('.game-table').evaluate(el=>el.getBoundingClientRect().height),fullHeight,'Table size stays stable from one card to a full deck');
       await page.locator('[data-action="close-table-zoom"]').click();
       assert.equal(await page.locator('.board-zoom').evaluate(dialog=>dialog.open),false);
       await page.locator('[data-action="open-table-zoom"]').click();
       await page.keyboard.press('Escape');
       assert.equal(await page.locator('.board-zoom').evaluate(dialog=>dialog.open),false);
+      await page.evaluate(game=>window.testTable('cinquillo',game,'a'),{...full,table:{oros:{low:4,high:6}}});
+      assert.deepEqual(await page.locator('.game-table .endpoint:visible').evaluateAll(cards=>cards.map(card=>card.dataset.tableKey)),['oros:5','oros:7']);
+      assert.equal(await page.locator('.game-table [data-suit="oros"] .lane-next').textContent(),'Sigue con 4 o 10','Spanish seven continues with the sota, not eight');
+      assert.equal(await page.locator('.game-table [data-suit="oros"] b small').textContent(),'· 3 cartas');
       await page.evaluate(game=>window.testTable('cinquillo',game,'a'),full);
       if(width === 900) await page.screenshot({path:`dist/table-full-spanish-${process.env.TABLE_BROWSER||'chromium'}.png`,fullPage:true});
       full.ruleset='legacy-french-52';
@@ -226,7 +248,7 @@ try {
       assert.equal(await page.locator('.board-card').count(),52);
       await page.locator('.card-illustration img').evaluateAll(images=>Promise.all(images.map(image=>image.decode())));
       assert.ok(await page.locator('.hand img').evaluateAll(images=>images.every(image=>/spade_1|heart_king|diamond_queen|club_jack/.test(image.src))));
-      assert.ok(await page.locator('.board-card.placed').evaluateAll(cards=>cards.every(card=>{
+      assert.ok(await page.locator('.board-card.placed:visible').evaluateAll(cards=>cards.every(card=>{
         const r=card.getBoundingClientRect();return Math.abs(r.width/r.height-169.075/244.64)<.02;
       })), 'French cards retain their printed proportions');
       if(width === 900) await page.screenshot({path:`dist/table-french-${process.env.TABLE_BROWSER||'chromium'}.png`,fullPage:true});

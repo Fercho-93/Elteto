@@ -36,8 +36,10 @@ try {
   }), 'The rival face must remain above the felt on the LAN page');
   assert.equal(await page.locator('.table-tools').evaluate(el=>getComputedStyle(el).display),'flex');
   assert.ok(await page.locator('.table-seat:not(.own-seat) .seat-label').evaluate(el=>el.getBoundingClientRect().top>=document.querySelector('.turn-banner').getBoundingClientRect().bottom), 'Player label stays below turn indicator');
+  await page.locator('[data-action="go-to-hand"]').click();
   const hand=await page.locator('.hand .playing-card').first().boundingBox();
-  assert.ok(hand.y+hand.height<=664, 'Own cards fit with the compact mobile browser viewport');
+  assert.ok(hand.y>=0 && hand.y+hand.height<=664, 'Hand shortcut brings full-size cards into the compact mobile viewport');
+  assert.ok(await page.locator('.hand-heading').evaluate(el=>document.activeElement===el),'Hand shortcut also moves keyboard focus');
   assert.ok(await page.locator('.hand .playing-card').evaluateAll(async cards=>{
    await Promise.all(cards.map(card=>card.querySelector('img').decode()));
    return cards.every(card=>{const rect=card.getBoundingClientRect();return Math.abs(rect.width/rect.height-208/319)<.02;});

@@ -135,6 +135,7 @@ function renderGame() {
   const scroll = app.querySelector('.hand')?.scrollLeft || 0;
   const historyOpen = app.querySelector('.history')?.open || false;
   const zoomOpen = app.querySelector('.board-zoom')?.open || false;
+  const zoomScrollTop = app.querySelector('.board-zoom .zoom-scroll')?.scrollTop || 0;
   const winner = state.gameId === 'mus' ? `Gana la pareja ${view.winnerTeam || ''}` : view.winner ? `Gana ${playerName(view.winner)}` : 'Fin de partida';
   const myTurn = view.turnPlayer === state.playerId;
   const selecting = state.gameId === 'mus' && view.phase === 'discard' && view.awaitingDiscardFrom.includes(state.playerId);
@@ -151,16 +152,16 @@ function renderGame() {
     ${state.gameId === 'cinquillo' ? `<p class="match-score">Mano ${view.handNumber} · Meta ${view.targetScore} · ${view.players.map(id=>`${esc(playerName(id))}: ${view.scores[id]}`).join(' · ')}</p>` : `<p class="match-score">Juegos: A ${view.gamesWon?.A ?? 0} · B ${view.gamesWon?.B ?? 0} · primero a ${view.targetGames ?? 1}${view.gameWinner ? ` · Gana el juego ${esc(view.gameWinner)}` : ''}</p>`}
     ${state.gameId === 'mus' ? `<div class="score-strip"><span>Pareja A <b>${view.scores.A}</b></span><span>Pareja B <b>${view.scores.B}</b></span></div>` : ''}
     <div class="turn-banner ${myTurn || selecting ? 'your-turn' : ''}" role="status">${esc(hint)}</div>
-    <section class="game-table seats-${view.players.length}" style="--longest-lane:${Math.max(1,...Object.values(view.table || {}).filter(Boolean).map(lane=>lane.high-lane.low+1))}" data-scene="illustrated-2d" aria-label="Mesa de ${esc(game.label)}">
+    <section class="game-table seats-${view.players.length}" data-scene="illustrated-2d" aria-label="Mesa de ${esc(game.label)}">
       <div class="table-surface" aria-hidden="true"><i class="table-leg leg-left"></i><i class="table-leg leg-right"></i></div>
       <div class="felt-watermark" aria-hidden="true">ELTETO <span>LA TIMBA</span></div>
       ${renderSeats(view, state.playerId, playerName, state.gameId)}
       <div class="table-center">${table}</div>
     </section>
-    <div class="table-tools"><button data-action="open-table-zoom">Ampliar mesa</button></div>
+    <div class="table-tools"><button data-action="open-table-zoom">${state.gameId === 'cinquillo' ? 'Ver todas las cartas' : 'Ampliar mesa'}</button>${state.gameId === 'cinquillo' ? '<button data-action="go-to-hand">Mi mano ↓</button>' : ''}</div>
     <p class="last-play" aria-live="polite">${esc(readableLog(view.log?.at(-1) || 'La mesa está lista.'))}</p>
     ${state.error ? `<p class="error-message" role="alert">${esc(state.error)}</p>` : ''}
-    <h3>Tu mano <small>${view.myHand.length} cartas${state.gameId==='mus' ? ` · Pareja ${view.players.indexOf(state.playerId)%2 ? 'B' : 'A'}` : ''}${view.mano===state.playerId ? ' · Eres mano' : ''}</small></h3>
+    <h3 tabindex="-1" class="hand-heading">Tu mano <small>${view.myHand.length} cartas${state.gameId==='mus' ? ` · Pareja ${view.players.indexOf(state.playerId)%2 ? 'B' : 'A'}` : ''}${view.mano===state.playerId ? ' · Eres mano' : ''}</small></h3>
     <div class="hand ${view.myHand.length <= 10 ? 'hand-fan' : ''}" aria-label="Tus cartas">${hand || '<p>No tienes cartas.</p>'}</div>
     ${controls ? `<section class="game-controls">${controls}</section>` : ""}
     <details class="game-rules"><summary>Cómo jugar · reglas de esta mesa</summary>${state.gameId === 'cinquillo' ? view.ruleset === 'legacy-french-52' ? '<p>Mesa anterior: 52 cartas francesas, salida cinco de corazones, una mano.</p>' : '<p>40 cartas españolas; salida cinco de oros. Escaleras sin saltos: 1–7, sota (10), caballo (11), rey (12). Solo pasa quien no tiene jugada. Ganador de mano: 5 puntos más cartas ajenas; los demás restan sus cartas. Gana quien alcanza 30. La fuente clásica usa cuatro jugadores; las mesas de 2–6 son una ampliación de Elteto.</p>' : `<p>Cuatro jugadores por parejas; ${view.ruleset === 'eight-kings' ? '8 reyes y 8 ases: treses como reyes y doses como ases; mus corrido en la primera mano' : '4 reyes: doses y treses conservan su valor'}. Grande, chica, pares y juego o punto. Juegos a ${view.targetScore} tantos; gana quien logra ${view.targetGames ?? 1} juegos completos. El órdago aceptado decide un juego completo.</p>`}<a href="./reglas_juegos/lectura/${state.gameId}.html">Consultar reglamento completo</a></details>
@@ -168,7 +169,7 @@ function renderGame() {
     <dialog class="board-zoom" aria-label="Mesa ampliada"></dialog>
   </section>`;
   app.querySelector('.board-zoom').addEventListener('close',event=>event.target.replaceChildren());
-  if(zoomOpen) openTableZoom();
+  if(zoomOpen) { openTableZoom(); app.querySelector('.board-zoom .zoom-scroll').scrollTop=zoomScrollTop; }
   app.querySelector('.hand').scrollLeft = scroll;
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const stock = stockOrigin || app.querySelector('.game-table').getBoundingClientRect();
@@ -187,7 +188,7 @@ function openTableZoom() {
   const dialog=app.querySelector('.board-zoom');
   if(!dialog || !state.view) return;
   const board=(state.gameId==='mus'?renderMusBoard(state.view):renderCinquilloBoard(state.view)).replaceAll('data-table-key=','data-zoom-key=');
-  dialog.innerHTML=`<header><h2>${esc(getGame(state.gameId).label)} · Mesa ampliada</h2><button data-action="close-table-zoom">Volver</button></header><div class="zoom-scroll">${board}</div><p class="zoom-note">Desliza la mesa para ver todas las cartas. Puedes volver a tu mano en cualquier momento.</p>`;
+  dialog.innerHTML=`<header><h2>${esc(getGame(state.gameId).label)} · ${state.gameId==='cinquillo' ? 'Todas las cartas' : 'Mesa ampliada'}</h2><button data-action="close-table-zoom">Volver</button></header><div class="zoom-scroll">${board}</div><p class="zoom-note">${state.gameId==='cinquillo' ? 'Todas las cartas jugadas, ordenadas por palo. En el tapete se muestran los dos extremos de cada escalera.' : 'Desliza la mesa para ver todas las cartas. Puedes volver a tu mano en cualquier momento.'}</p>`;
   dialog.showModal();
 }
 function readableLog(line) {
@@ -290,6 +291,7 @@ app.addEventListener("click", async (event) => {
   const action = button.dataset.action;
   try {
     if (action === "open-table-zoom") openTableZoom();
+    if (action === "go-to-hand") { const heading=app.querySelector('.hand-heading'); heading.focus({preventScroll:true}); heading.scrollIntoView({block:'start',behavior:'instant'}); }
     else if(action === "close-table-zoom") app.querySelector('.board-zoom')?.close();
     else if (action === "open-host") { state.screen = "host-form"; state.gameId = LAN ? "cinquillo" : state.gameId || listGames()[0]?.id || ""; render(); }
     else if (action === "open-join") { state.screen = "join-form"; render(); }

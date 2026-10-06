@@ -1,4 +1,4 @@
-/* First-person Cinquillo: inward-looking rivals and four readable suit cascades. */
+/* Public endpoints stay fully visible. The detail view exposes every played card. */
 .unopened-suit { display:none; }
 .table-seat[data-direction="left"] .player-character { scale:-1 1; }
 .seat-front[data-direction="left"] .seat-grip { scale:-1 1; }
@@ -9,21 +9,21 @@
  left:81%; top:var(--side-fan-y); width:42%;
 }
 body:has([data-game="cinquillo"]) { background:radial-gradient(ellipse at 50% 20%,#35263d,#17151e 85%); }
-[data-game="cinquillo"] { --pile-w:84px; --pile-h:calc(var(--pile-w) * 319 / 208); --pile-step:22px; --board-top:174px; }
+[data-game="cinquillo"] { --pile-w:84px; --pile-h:calc(var(--pile-w) * 319 / 208); --board-top:194px; }
 [data-game="cinquillo"] .game-ribbon { border:1px solid #ae906355; background:#241f2b; box-shadow:none; color:#eee0c5; letter-spacing:.07em; }
 [data-game="cinquillo"] .match-score { color:#b9aebe; }
 [data-game="cinquillo"] .turn-banner { border:1px solid #b4c8bd66; box-shadow:none; background:#22352e; color:#e8f1e8; }
 [data-game="cinquillo"] .turn-banner.your-turn { background:#d9c28b; color:#26251e; border-color:#f6dfb0; }
 [data-game="cinquillo"] .game-table {
- --scene-h:calc(var(--board-top) + 48px + var(--pile-h) + (var(--longest-lane) - 1) * var(--pile-step));
+ --scene-h:calc(var(--board-top) + 90px + var(--pile-h));
  --avatar-w:106px; --avatar-h:calc(var(--avatar-w) * 5 / 3);
  height:var(--scene-h); margin-top:48px;
 }
-[data-game="cinquillo"] .game-table.seats-2 { --board-top:calc(112px + min(50px,(var(--longest-lane) - 1) * 10px)); }
+[data-game="cinquillo"] .game-table.seats-2 { --board-top:182px; }
 [data-game="cinquillo"] .game-table.seats-6 { --board-top:194px; --avatar-w:88px; }
 [data-game="cinquillo"] .table-surface {
  inset:108px 4% 5px; border-width:9px; border-radius:48% 48% 15% 15% / 100px 100px 24px 24px;
- background:radial-gradient(ellipse at 50% 0,#28765b66,transparent 70%),repeating-linear-gradient(35deg,#ffffff04 0 1px,transparent 1px 4px),#124b3c;
+ background:radial-gradient(ellipse at 50% 20%,#33745a55,transparent 75%),repeating-linear-gradient(0deg,#ffffff02 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,#00000006 0 1px,transparent 1px 3px),#164b3e;
  box-shadow:inset 0 0 0 1px #b5aa79,inset 0 0 28px #092d23,0 3px 0 #977349,0 10px 0 #39291f,0 19px 24px #07080b70;
 }
 [data-game="cinquillo"] .table-surface::before { inset:-6px; border-width:1px; border-color:#c8aa76; box-shadow:none; }
@@ -40,47 +40,68 @@ body:has([data-game="cinquillo"]) { background:radial-gradient(ellipse at 50% 20
 [data-game="cinquillo"] .active-seat .player-character { filter:drop-shadow(0 4px 5px #03080688); }
 [data-game="cinquillo"] .active-seat .seat-label strong::before { background:#e3c78a; }
 [data-game="cinquillo"] .table-center {
- top:var(--board-top); transform:translateX(-50%); width:min(calc(100% - 130px),560px);
+ top:var(--board-top); transform:translateX(-50%); width:min(calc(100% - 110px),960px);
 }
-[data-game="cinquillo"] .game-table .cinquillo-board { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px; }
-[data-game="cinquillo"] .game-table .suit-lane { display:flex; flex-direction:column; gap:10px; min-width:0; }
+[data-game="cinquillo"] .game-table .cinquillo-board { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+[data-game="cinquillo"] .game-table .suit-lane { display:flex; flex-direction:column; gap:9px; min-width:0; }
 [data-game="cinquillo"] .game-table .suit-lane > b {
- display:flex; align-items:center; justify-content:center; gap:5px; color:#dfcfaa; font:500 11px/18px system-ui,sans-serif; letter-spacing:.03em;
+ display:flex; width:auto; align-items:center; justify-content:center; gap:5px; color:#e2d5b5; font:500 12px/18px system-ui,sans-serif; letter-spacing:.03em;
 }
 [data-game="cinquillo"] .game-table .suit-lane > b .suit-art { width:15px; height:18px; }
 [data-game="cinquillo"] .game-table .lane-cards {
- display:flex; flex-direction:column; align-items:center; gap:0; width:100%;
+ display:flex; flex-direction:row; align-items:center; justify-content:center; gap:10px; width:100%; height:var(--pile-h);
 }
-[data-game="cinquillo"] .game-table .board-card.empty-slot { display:none; }
+[data-game="cinquillo"] .game-table .board-card.empty-slot,[data-game="cinquillo"] .game-table .board-card.placed:not(.endpoint) { display:none; }
 [data-game="cinquillo"] .game-table .board-card.placed {
  flex:none; width:var(--pile-w); height:var(--pile-h); aspect-ratio:208 / 319; border-radius:4px;
- margin:0; box-shadow:0 1px 2px #04251b99,0 0 0 1px #133b2c50;
+ margin:0; box-shadow:0 1px 1px #e5ddc7,0 3px 5px #06251faa;
 }
 [data-game="cinquillo"] .game-table .legacy-board .board-card.placed { height:calc(var(--pile-w) * 244.64 / 169.075); aspect-ratio:169.075 / 244.64; }
-[data-game="cinquillo"] .game-table .board-card.placed::after { content:attr(data-rank); position:absolute; top:2px; left:3px; min-width:16px; padding:0 2px; background:#fffdf2; color:#26261e; border-radius:2px; font:600 13px/15px Georgia,serif; text-align:left; }
-[data-game="cinquillo"] .game-table .board-card.placed ~ .board-card.placed { margin-top:calc(var(--pile-step) - var(--pile-h)); }
-[data-game="cinquillo"] .game-table .legacy-board .board-card.placed ~ .board-card.placed { margin-top:calc(var(--pile-step) - var(--pile-w) * 244.64 / 169.075); }
-[data-game="cinquillo"] .game-table .unopened-suit { display:block; color:#bdd0c177; font:400 10px/1.5 system-ui,sans-serif; padding-top:28px; }
+[data-game="cinquillo"] .game-table .has-stack .endpoint { box-shadow:0 1px 0 #bdb7a6,0 3px 0 -1px #eee7d8,0 4px 0 -1px #a8a58e,0 6px 6px #06251f99; }
+[data-game="cinquillo"] .game-table .unopened-suit { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; width:var(--pile-w); height:var(--pile-h); border:1px solid #d3d7bc30; border-radius:5px; background:#052c2118; color:#c5d5bd; font:400 11px/1.5 system-ui,sans-serif; }
+[data-game="cinquillo"] .unopened-suit > span { font:26px/1 Georgia,serif; opacity:.7; }
+[data-game="cinquillo"] .unopened-suit .suit-art { width:23px; height:23px; opacity:.5; }
+[data-game="cinquillo"] .unopened-suit > small { font-size:10px; }
+[data-game="cinquillo"] .suit-lane > b > small { color:#b6ccbd; font:400 10px system-ui,sans-serif; }
+[data-game="cinquillo"] .lane-next { display:block; color:#e2e6d6; font:500 11px/16px system-ui,sans-serif; text-align:center; white-space:nowrap; }
+[data-game="cinquillo"] .lane-range { display:none; }
 [data-game="cinquillo"] .table-tools { margin-top:14px; }
-[data-game="cinquillo"] .table-tools button { border-color:#c9ad7266; color:#dfceaa; background:#242329; padding:7px 18px; }
+[data-game="cinquillo"] .table-tools button { border-color:#c9ad7266; color:#dfceaa; background:#242329; padding:7px 18px; min-height:44px; }
 [data-game="cinquillo"] > h3 { color:#dfceaa; font-weight:500; letter-spacing:.07em; }
 [data-game="cinquillo"] .last-play { color:#b8b5be; }
 [data-game="cinquillo"] .hand { background:none; }
 [data-game="cinquillo"] .game-controls { border:1px solid #b9a16e44; background:#24232c; box-shadow:none; }
 [data-game="cinquillo"] .game-controls p { color:#d0cbd1; }
 [data-game="cinquillo"] .game-controls .button { background:#dbc58e; color:#25251f; border:0; box-shadow:none; }
-[data-game="cinquillo"] .board-zoom .cinquillo-board { min-width:1000px; }
-[data-game="cinquillo"] .board-zoom .legacy-board { min-width:1300px; }
+[data-game="cinquillo"] .board-zoom { border-color:#a88b6166; background:#211f27; display:none; }
+[data-game="cinquillo"] .board-zoom[open] { display:flex; flex-direction:column; overflow:hidden; }
+[data-game="cinquillo"] .board-zoom header { flex:none; }
+[data-game="cinquillo"] .board-zoom h2 { font:600 16px/1.4 system-ui,sans-serif; }
+[data-game="cinquillo"] .board-zoom button { background:#dbc58e; color:#25251f; min-height:44px; }
+[data-game="cinquillo"] .board-zoom .zoom-scroll { min-height:0; background:#164b3e; }
+[data-game="cinquillo"] .board-zoom .cinquillo-board { min-width:0; display:flex; flex-direction:column; gap:24px; }
+[data-game="cinquillo"] .board-zoom .suit-lane { display:flex; flex-direction:column; gap:10px; }
+[data-game="cinquillo"] .board-zoom .suit-lane > b { display:flex; width:100%; align-items:center; gap:6px; color:#e2d5b5; font:500 14px system-ui,sans-serif; }
+[data-game="cinquillo"] .board-zoom .suit-art { width:20px; height:20px; }
+[data-game="cinquillo"] .board-zoom .lane-cards { display:flex; flex-wrap:wrap; gap:10px; }
+[data-game="cinquillo"] .board-zoom .board-card.placed { flex:none; width:92px; height:auto; margin:0; }
+[data-game="cinquillo"] .board-zoom .empty-slot { display:none; }
+[data-game="cinquillo"] .board-zoom .lane-next { display:none; }
+[data-game="cinquillo"] .board-zoom .lane-range { display:block; color:#b6ccbd; font:400 12px system-ui,sans-serif; }
+@media(min-width:700px) and (max-width:1000px) {
+ [data-game="cinquillo"] { --pile-w:clamp(58px,calc((100vw - 222px) / 8),84px); }
+}
 @media(max-width:699px) {
- [data-game="cinquillo"] { --pile-w:clamp(42px,14.8vw,62px); --pile-step:18px; }
- [data-game="cinquillo"] .game-table { --avatar-w:78px; --board-top:172px; margin-top:36px; }
+ [data-game="cinquillo"] { --pile-w:clamp(56px,18.4vw,88px); }
+ [data-game="cinquillo"] .game-table { --avatar-w:78px; --board-top:166px; --scene-h:calc(var(--board-top) + 152px + var(--pile-h) * 2); margin-top:36px; }
+ [data-game="cinquillo"] .game-table.seats-2 { --board-top:164px; }
  [data-game="cinquillo"] .game-table.seats-6 { --avatar-w:63px; --board-top:194px; }
  [data-game="cinquillo"] .game-table [data-position="left"],[data-game="cinquillo"] .game-table [data-position="right"] { top:148px; }
  [data-game="cinquillo"] .table-surface { inset:108px 3% 5px; border-width:7px; }
  [data-game="cinquillo"] .table-surface::before { inset:-5px; }
- [data-game="cinquillo"] .table-center { width:calc(100% - 96px); }
- [data-game="cinquillo"] .game-table .cinquillo-board { gap:8px; }
- [data-game="cinquillo"] .game-table .suit-lane > b { gap:3px; font-size:9px; }
+ [data-game="cinquillo"] .table-center { width:calc(100% - 68px); }
+ [data-game="cinquillo"] .game-table .cinquillo-board { grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px 14px; }
+ [data-game="cinquillo"] .game-table .suit-lane > b { gap:4px; font-size:12px; }
  [data-game="cinquillo"] .game-table .suit-lane > b .suit-art { width:12px; height:16px; }
  [data-game="cinquillo"] .game-table .seat-label { max-width:76px; bottom:89%; }
  [data-game="cinquillo"] .game-table .seat-label small { font-size:9px; color:#c8bfba; }
@@ -88,5 +109,7 @@ body:has([data-game="cinquillo"]) { background:radial-gradient(ellipse at 50% 20
 @media(max-width:360px) {
  [data-game="cinquillo"] .game-table { --avatar-w:68px; }
  [data-game="cinquillo"] .game-table.seats-6 { --avatar-w:55px; }
- [data-game="cinquillo"] .table-center { width:calc(100% - 76px); }
+ [data-game="cinquillo"] .table-center { width:calc(100% - 60px); }
+ [data-game="cinquillo"] .game-table .cinquillo-board { column-gap:12px; }
+ [data-game="cinquillo"] .game-table .lane-cards { gap:7px; }
 }

@@ -125,12 +125,15 @@ export function renderCinquilloBoard(view) {
   return `<div class="cinquillo-board ${legacy ? "legacy-board" : "spanish-board"}">${suits
     .map((suit) => {
       const entry = view.table[suit];
-      return `<div class="suit-lane" data-suit="${suit}"><b class="${["corazones", "diamantes"].includes(suit) ? "card-red" : ""}" aria-label="${suitNames[suit]}">${suitArt(suit)}<span>${suitNames[suit]}</span></b><div class="lane-cards" style="--lane-size:${entry ? entry.high-entry.low+1 : 1}">${ranks.map(
+      const count = entry ? entry.high - entry.low + 1 : 0;
+      const next = entry ? [ranks[entry.low - 1], ranks[entry.high + 1]].filter(Boolean) : ['5'];
+      return `<div class="suit-lane ${count > 2 ? 'has-stack' : ''}" data-suit="${suit}"><b class="${["corazones", "diamantes"].includes(suit) ? "card-red" : ""}" aria-label="${suitNames[suit]}">${suitArt(suit)}<span>${suitNames[suit]}</span><small>· ${count} ${count === 1 ? 'carta' : 'cartas'}</small></b><div class="lane-cards">${ranks.map(
         (rank, index) => {
           const placed = entry && index >= entry.low && index <= entry.high;
-          return `<span class="board-card ${placed ? "placed" : "empty-slot"} ${rank === "5" ? "five-slot" : ""}" data-rank="${rank}" ${placed ? `data-table-key="${suit}:${rank}"` : ""} aria-label="${rank} de ${suit}${placed ? ", colocada" : ", pendiente"}">${placed ? cardFace({ suit, rank }) : `<span>${rank}</span>`}</span>`;
+          const endpoint = placed && (index === entry.low || index === entry.high);
+          return `<span class="board-card ${placed ? "placed" : "empty-slot"} ${endpoint ? 'endpoint' : ''} ${rank === "5" ? "five-slot" : ""}" data-rank="${rank}" ${placed ? `data-table-key="${suit}:${rank}"` : ""} aria-label="${rank} de ${suit}${placed ? ", colocada" : ", pendiente"}">${placed ? cardFace({ suit, rank }) : `<span>${rank}</span>`}</span>`;
         },
-      ).join("")}${entry ? '' : '<span class="unopened-suit">Sin abrir</span>'}</div></div>`;
+      ).join("")}${entry ? '' : `<span class="unopened-suit" aria-label="${suitNames[suit]} sin abrir"><span>5</span>${suitArt(suit)}<small>Sin abrir</small></span>`}</div><span class="lane-next">${entry ? next.length ? `Sigue con ${next.join(' o ')}` : 'Palo completo' : 'Abre con el 5'}</span><span class="lane-range">${count ? `${ranks[entry.low]}${count > 1 ? '–' + ranks[entry.high] : ''} · ${count} ${count === 1 ? 'carta' : 'cartas'}` : 'Sin cartas'}</span></div>`;
     })
     .join("")}</div>`;
 }
