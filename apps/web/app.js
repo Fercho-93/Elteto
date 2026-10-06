@@ -145,13 +145,13 @@ function renderGame() {
   const controls = state.gameId === 'mus' ? musControls(view) : cinquilloControls(view);
   const table = state.gameId === 'mus' ? renderMusBoard(view) : renderCinquilloBoard(view);
   const hint = view.finished ? winner : selecting ? 'Selecciona tu descarte' : myTurn ? 'Tu turno' : view.phase === 'discard' ? 'Esperando descartes' : `Turno de ${playerName(view.turnPlayer)}`;
-  app.innerHTML = `${header()}<section class="game-page">
+  app.innerHTML = `${header()}<section class="game-page" data-game="${state.gameId}">
     <div class="game-top"><span class="game-ribbon">${esc(game.label)} · ${state.gameId === 'mus' ? (view.ruleset === 'eight-kings' ? '8 reyes y 8 ases' : '4 reyes') : (view.ruleset === 'legacy-french-52' ? '52 cartas · mesa anterior' : '40 cartas españolas')}</span><button class="text-button" data-action="leave-room">Salir</button></div>
     ${view.finished ? `<div class="winner-banner" role="status">${esc(winner)}</div>` : ''}
     ${state.gameId === 'cinquillo' ? `<p class="match-score">Mano ${view.handNumber} · Meta ${view.targetScore} · ${view.players.map(id=>`${esc(playerName(id))}: ${view.scores[id]}`).join(' · ')}</p>` : `<p class="match-score">Juegos: A ${view.gamesWon?.A ?? 0} · B ${view.gamesWon?.B ?? 0} · primero a ${view.targetGames ?? 1}${view.gameWinner ? ` · Gana el juego ${esc(view.gameWinner)}` : ''}</p>`}
     ${state.gameId === 'mus' ? `<div class="score-strip"><span>Pareja A <b>${view.scores.A}</b></span><span>Pareja B <b>${view.scores.B}</b></span></div>` : ''}
     <div class="turn-banner ${myTurn || selecting ? 'your-turn' : ''}" role="status">${esc(hint)}</div>
-    <section class="game-table seats-${view.players.length}" data-scene="illustrated-2d" aria-label="Mesa de ${esc(game.label)}">
+    <section class="game-table seats-${view.players.length}" style="--longest-lane:${Math.max(1,...Object.values(view.table || {}).filter(Boolean).map(lane=>lane.high-lane.low+1))}" data-scene="illustrated-2d" aria-label="Mesa de ${esc(game.label)}">
       <div class="table-surface" aria-hidden="true"><i class="table-leg leg-left"></i><i class="table-leg leg-right"></i></div>
       <div class="felt-watermark" aria-hidden="true">ELTETO <span>LA TIMBA</span></div>
       ${renderSeats(view, state.playerId, playerName, state.gameId)}
@@ -160,7 +160,7 @@ function renderGame() {
     <div class="table-tools"><button data-action="open-table-zoom">Ampliar mesa</button></div>
     <p class="last-play" aria-live="polite">${esc(readableLog(view.log?.at(-1) || 'La mesa está lista.'))}</p>
     ${state.error ? `<p class="error-message" role="alert">${esc(state.error)}</p>` : ''}
-    <h3>Tu mano <small>${view.myHand.length} cartas</small></h3>
+    <h3>Tu mano <small>${view.myHand.length} cartas${state.gameId==='mus' ? ` · Pareja ${view.players.indexOf(state.playerId)%2 ? 'B' : 'A'}` : ''}${view.mano===state.playerId ? ' · Eres mano' : ''}</small></h3>
     <div class="hand ${view.myHand.length <= 10 ? 'hand-fan' : ''}" aria-label="Tus cartas">${hand || '<p>No tienes cartas.</p>'}</div>
     ${controls ? `<section class="game-controls">${controls}</section>` : ""}
     <details class="game-rules"><summary>Cómo jugar · reglas de esta mesa</summary>${state.gameId === 'cinquillo' ? view.ruleset === 'legacy-french-52' ? '<p>Mesa anterior: 52 cartas francesas, salida cinco de corazones, una mano.</p>' : '<p>40 cartas españolas; salida cinco de oros. Escaleras sin saltos: 1–7, sota (10), caballo (11), rey (12). Solo pasa quien no tiene jugada. Ganador de mano: 5 puntos más cartas ajenas; los demás restan sus cartas. Gana quien alcanza 30. La fuente clásica usa cuatro jugadores; las mesas de 2–6 son una ampliación de Elteto.</p>' : `<p>Cuatro jugadores por parejas; ${view.ruleset === 'eight-kings' ? '8 reyes y 8 ases: treses como reyes y doses como ases; mus corrido en la primera mano' : '4 reyes: doses y treses conservan su valor'}. Grande, chica, pares y juego o punto. Juegos a ${view.targetScore} tantos; gana quien logra ${view.targetGames ?? 1} juegos completos. El órdago aceptado decide un juego completo.</p>`}<a href="./reglas_juegos/lectura/${state.gameId}.html">Consultar reglamento completo</a></details>

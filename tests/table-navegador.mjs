@@ -17,9 +17,9 @@ for (const count of [2,3,4,5,6,7,8]) {
 const boardView={players:roster.slice(0,8),turnPlayer:roster[0]};
 for (const id of boardView.players) {
   const html=renderSeats(boardView,id,p=>p,'oca');
-  assert.equal((html.match(/data-character=/g)||[]).length,8);
+  assert.equal((html.match(/data-character=/g)||[]).length,7);
   assert.ok(!html.includes('rival-hand'));
-  assert.ok(html.includes(`data-character="${mascotForSeat(boardView.players,0)}"`));
+  assert.equal(html.includes(`data-character="${mascotForSeat(boardView.players,0)}"`),id!==boardView.players[0]);
 }
 const fixture = `
 let testGame;
@@ -89,7 +89,9 @@ try {
         ({ game, id }) => window.testTable("cinquillo", game, id),
         { game, id },
       );
-      assert.equal(await page.locator(".table-seat").count(), count);
+      assert.equal(await page.locator(".table-seat").count(), count-1);
+      assert.equal(await page.locator('.own-seat').count(),0);
+      assert.equal(await page.locator(`[data-player-id="${id}"]`).count(),0);
       assert.equal(await page.locator('.suit-lane .board-card').count(),40);
       assert.match(await page.locator('.game-ribbon').textContent(),/40 cartas españolas/);
       assert.equal(
@@ -130,8 +132,15 @@ try {
         await Promise.all(cards.map(card=>card.querySelector('img').decode()));
         return cards.every(card=>{const image=card.querySelector('img'),rect=image.getBoundingClientRect(); return image.naturalWidth>=200 && rect.width>60 && rect.height>90 && card.getAttribute('aria-label').includes(' de ');});
       }));
-      assert.equal(await page.locator('.character-sprite[data-character]').evaluateAll(els => new Set(els.map(el => el.dataset.character)).size),count);
+      assert.equal(await page.locator('.character-sprite[data-character]').evaluateAll(els => new Set(els.map(el => el.dataset.character)).size),count-1);
+      assert.ok(await page.locator('.table-seat').evaluateAll(seats=>seats.every(seat=>{
+        const direction=seat.dataset.direction;
+        if(direction==='front') return seat.dataset.position==='top';
+        const body=seat.querySelector('.player-character'),sprite=body.querySelector('.character-sprite');
+        return getComputedStyle(sprite).backgroundImage.includes('mascots-side-v1') && (direction==='left' ? getComputedStyle(body).scale==='-1 1' : getComputedStyle(body).scale==='none');
+      })), 'Side seats use directional artwork facing the play area');
       assert.ok(await page.evaluate(async () => { const image=new Image(); image.src='/assets/elteto-mascots-v1.png'; await image.decode(); return image.naturalWidth===1536 && image.naturalHeight===1024; }));
+      assert.ok(await page.evaluate(async () => { const image=new Image(); image.src='/assets/elteto-mascots-side-v1.png'; await image.decode(); return image.naturalWidth===1536 && image.naturalHeight===1024; }));
       assert.equal(await page.locator('.game-table').getAttribute('data-scene'),'illustrated-2d');
       assert.equal(await page.locator('.table-canvas,.camera-controls').count(),0);
       assert.equal(await page.locator('.seat-front').count(),count-1);
@@ -148,6 +157,12 @@ try {
         return Math.abs(a.x-b.x)<1 && Math.abs(a.y-b.y)<1 && Math.abs(a.width-b.width)<1 && Math.abs(a.height-b.height)<1 && +getComputedStyle(body).zIndex<+getComputedStyle(felt).zIndex && +getComputedStyle(front).zIndex>+getComputedStyle(felt).zIndex && +getComputedStyle(front.querySelector('.forearms')).zIndex>+getComputedStyle(front.querySelector('.rival-hand')).zIndex;
       })));
       await page.evaluate(() => scrollTo(0, 0));
+      assert.ok(await page.locator('.table-seat').evaluateAll(seats=>seats.every(seat=>{
+        const r=seat.getBoundingClientRect(),character=Number(seat.querySelector('[data-character]').dataset.character);
+        const x=r.left+r.width*(seat.dataset.direction==='left'?.35:seat.dataset.direction==='right'?.65:.5);
+        const y=r.top+r.height*(character<5?.43:.47);
+        return document.elementFromPoint(x,y)?.closest('[data-player-id]')===seat;
+      })), `Rival faces stay visible above the table: ${width} × ${height}, ${count} players`);
       if (width === 390 || width === 900 || width === 844)
         await page.screenshot({
           path: `dist/table-cinquillo-${count}-${width}-${process.env.TABLE_BROWSER||'chromium'}.png`,
@@ -162,29 +177,36 @@ try {
       assert.equal(await page.locator('[data-table-key]').count(),40);
       assert.ok(await page.locator('[data-table-key]').evaluateAll(cards=>{
         const surface=document.querySelector('.table-surface'),felt=surface.getBoundingClientRect(),style=getComputedStyle(surface);
-        const border=parseFloat(style.borderLeftWidth),radii=style.borderTopLeftRadius.split(' ');
+        const border=parseFloat(style.borderLeftWidth);
         const radius=(value,size)=>value.includes('%')?parseFloat(value)*size/100:parseFloat(value);
-        const rx=radius(radii[0],felt.width)-border,ry=radius(radii[1]||radii[0],felt.height)-border;
         const left=felt.left+border,right=felt.right-border,top=felt.top+border,bottom=felt.bottom-border;
+        const corners=['TopLeft','TopRight','BottomLeft','BottomRight'].map((name,index)=>{
+          const values=style['border'+name+'Radius'].split(' ');
+          const rx=radius(values[0],felt.width)-border,ry=radius(values[1]||values[0],felt.height)-border;
+          return {rx,ry,cx:index%2?right-rx:left+rx,cy:index>1?bottom-ry:top+ry,sx:index%2?1:-1,sy:index>1?1:-1};
+        });
         const inside=(x,y)=>{
           if(x<left||x>right||y<top||y>bottom)return false;
-          const dx=Math.max(left+rx-x,x-(right-rx),0),dy=Math.max(top+ry-y,y-(bottom-ry),0);
-          return !dx||!dy||(dx/rx)**2+(dy/ry)**2<=1;
+          return corners.every(({rx,ry,cx,cy,sx,sy})=>{const dx=(x-cx)*sx,dy=(y-cy)*sy;return dx<=0||dy<=0||(dx/rx)**2+(dy/ry)**2<=1;});
         };
         const outside=cards.find(card=>{const r=card.getBoundingClientRect();return ![[r.left,r.top],[r.right,r.top],[r.left,r.bottom],[r.right,r.bottom]].every(([x,y])=>inside(x,y));});
-        if(outside) throw new Error(JSON.stringify({card:outside.dataset.tableKey,rect:outside.getBoundingClientRect().toJSON(),felt:felt.toJSON(),rx,ry,center:document.querySelector('.table-center').getBoundingClientRect().toJSON()}));
+        if(outside) throw new Error(JSON.stringify({card:outside.dataset.tableKey,rect:outside.getBoundingClientRect().toJSON(),felt:felt.toJSON(),center:document.querySelector('.table-center').getBoundingClientRect().toJSON()}));
         return true;
       }),`Full deck must stay inside rounded felt at width ${width}`);
       await page.locator('.board-card img').evaluateAll(images=>Promise.all(images.map(image=>image.decode())));
       assert.ok(await page.locator('.board-card.placed').evaluateAll(cards=>cards.every(card=>{
         const r=card.getBoundingClientRect();return Math.abs(r.width/r.height-208/319)<.02;
       })), 'Spanish cards retain their printed proportions');
+      assert.ok(await page.locator('.game-table .suit-lane').evaluateAll(lanes=>lanes.every(lane=>{
+        const cards=[...lane.querySelectorAll('.placed')].map(card=>card.getBoundingClientRect());
+        return cards.every((r,i)=>r.width>=46 && (!i || (Math.abs(r.x-cards[i-1].x)<1 && r.top-cards[i-1].top>=17)));
+      })), 'Suit columns keep card values exposed and readable');
       const normalCard=await page.locator('.board-card.placed').first().boundingBox();
       await page.locator('[data-action="open-table-zoom"]').click();
       assert.ok(await page.locator('.board-zoom').evaluate(dialog=>dialog.open));
       assert.equal(await page.locator('.board-zoom [data-zoom-key]').count(),40);
       const enlarged=await page.locator('.board-zoom .board-card.placed').first().boundingBox();
-      assert.ok(enlarged.width>normalCard.width*1.4, 'Magnifier makes actual public cards larger');
+      assert.ok(enlarged.width>normalCard.width, 'Full-card view presents larger, unoverlapped public cards');
       assert.equal(await page.locator('.board-zoom .hand,.board-zoom .rival-hand').count(),0);
       // Incoming public state updates keep the magnifier open and current.
       await page.evaluate(game=>window.testTable('cinquillo',game,'a'),{...full,table:{oros:{low:4,high:4}}});
@@ -306,6 +328,10 @@ try {
     assert.ok(await page.evaluate(async()=>{
       const response=await fetch('../../table-layout.css');
       return response.ok && (await response.text()).includes('.board-zoom');
+    }));
+    assert.ok(await page.evaluate(async()=>{
+      const style=await fetch('../../cinquillo-table.css'),art=await fetch('../../assets/elteto-mascots-side-v1.png');
+      return style.ok && (await style.text()).includes('--pile-w') && art.ok && (await art.blob()).size>10000;
     }));
     assert.ok(await page.evaluate(async()=>{
       const response=await fetch('../../assets/elteto-mascots-v1.png');

@@ -59,7 +59,8 @@ try {
  }
  const guestCards=await guest.locator('.hand .playing-card').count();await guest.reload();
  await guest.locator('.hand .playing-card').first().waitFor();assert.equal(await guest.locator('.hand .playing-card').count(),guestCards);
- assert.equal(await host.locator('.table-seat').count(),2);
+ assert.equal(await host.locator('.table-seat').count(),1);
+ assert.equal(await host.locator('.own-seat').count(),0);
  await host.locator('[data-action="leave-room"]').click();
  await guest.locator('[data-action="open-join"]').waitFor();
  // Open another LAN table using the unchanged generic transport, now choosing Mus.

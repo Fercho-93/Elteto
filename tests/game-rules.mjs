@@ -189,7 +189,8 @@ const view = cinquilloEngine.view(
 );
 const html = renderSeats(view, "c", (id) => id, "cinquillo");
 assert.equal((html.match(/class="card-back"/g) || []).length, 30);
-assert.equal((html.match(/data-player-id=/g) || []).length, 4);
+assert.equal((html.match(/data-player-id=/g) || []).length, 3);
+assert.ok(!html.includes('data-player-id="c"'));
 console.log(
   "100 Cinquillo games, 80 Mus matches, repeated discards, conservation, privacy, scoring, turn restrictions and ordago: OK",
 );

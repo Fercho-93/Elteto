@@ -2,6 +2,16 @@
 
 La referencia visual son los seis mockups aportados, conservados en references/. El aspecto volumétrico procede de ilustraciones sombreadas y del borde dibujado de la mesa. No hay modelos, cámara giratoria, WebGL ni dependencia de Three.js.
 
+## Cinquillo en primera persona
+
+El jugador local ya no aparece como avatar en ninguna mesa. Su mano y los indicadores de turno permanecen en primer plano; Mus conserva la pareja y la condición de mano junto a sus cartas.
+
+Cinquillo emplea un segundo atlas transparente de los mismos diez personajes, con poses de tres cuartos hacia la derecha. Los asientos de la derecha reflejan esa pose para mirar a la izquierda, hacia el tapete. El rival central conserva el atlas frontal. El cuerpo y los antebrazos comparten identidad, escala y dirección; el abanico mantiene la cantidad pública real de cartas. El atlas lateral no lleva cartas dibujadas.
+
+Cuatro columnas identificadas por palo sustituyen las cuatro filas diminutas. Las cartas se solapan verticalmente y dejan expuesto el valor de todas las jugadas; la última carta de cada columna se ve completa. El tamaño mínimo y la separación de índices se comprueban con la baraja completa. La mesa crece con la escalera más larga y conserva su curva superior para no tapar las caras. La vista ampliada separa todas las cartas y permite examinarlas sin solapamientos. En móvil, las partidas avanzadas pueden requerir desplazamiento vertical para conservar este tamaño legible.
+
+`cinquillo-table.css` contiene la composición y la paleta sobria de verde profundo, madera y dorado suave. Se carga tanto en la entrada web como en la entrada LAN. Ambos atlas se almacenan localmente y se incluyen en Android y en la caché sin conexión.
+
 ## Composición
 
 - Cuerpos y sillas del atlas transparente de diez mascotas, detrás del tapete.

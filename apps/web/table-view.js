@@ -58,6 +58,11 @@ const ARM_CONTOURS = [
  ['12% 56%,22% 56%,31% 59%,37% 62%,39% 66%,36% 70%,29% 70%,23% 67%,17% 65%,10% 62%', '78% 56%,88% 56%,93% 61%,86% 65%,78% 68%,72% 70%,65% 70%,63% 66%,68% 62%'],
  ['10% 55%,20% 55%,25% 58%,29% 61%,29% 65%,24% 67%,17% 66%,12% 62%,7% 60%', '80% 56%,89% 58%,91% 62%,86% 66%,78% 68%,72% 67%,68% 64%,70% 60%,75% 58%'],
 ];
+const SIDE_ARMS = [
+ '33% 53%,42% 55%,54% 62%,62% 61%,70% 60%,78% 63%,80% 67%,76% 72%,66% 73%,50% 72%,40% 66%,33% 60%',
+ '84% 59%,94% 58%,99% 63%,98% 69%,91% 73%,84% 71%,82% 66%',
+];
+const sideArms = character => SIDE_ARMS.map(contour=>character<5 ? contour : contour.replace(/(\d+)% (\d+)%/g,(_,x,y)=>`${x}% ${Number(y)-7}%`));
 // A public roster gives every device the same, unique identities without sending
 // cosmetic state or touching the room protocol. Identity never depends on POV.
 export function mascotForSeat(players, seat) {
@@ -89,9 +94,12 @@ export function renderSeats(view, playerId, name, gameId) {
     .map((id, index) => {
       const relative = (index - ownIndex + n) % n,
         own = id === playerId;
+      if (own) return '';
       const [x, y] = seatPosition(n, relative);
       const mobile = [x<20?12:x>80?88:x,y];
       const character = mascotForSeat(view.players, index);
+      const direction = gameId === 'cinquillo' && x !== 50 ? (x < 50 ? 'right' : 'left') : 'front';
+      const side = direction !== 'front';
       const active =
         !view.finished &&
         (view.turnPlayer === id ||
@@ -99,11 +107,13 @@ export function renderSeats(view, playerId, name, gameId) {
       const team = index % 2 === 0 ? "A" : "B";
       const count = view.handSizes?.[id] || 0;
       const cardGame = Boolean(view.handSizes);
-      const style = `--seat-x:${x}%;--seat-y:${y}%;--seat-mobile-x:${mobile[0]}%;--seat-mobile-y:${mobile[1]}%;--character-x:${(character % 5) * 25}%;--character-y:${Math.floor(character / 5) * 100}%;--motion-delay:${index * -1.3}s;--grip-y:${character < 5 ? 73 : 64}%;--left-arm:polygon(${ARM_CONTOURS[character][0]});--right-arm:polygon(${ARM_CONTOURS[character][1]})`;
+      const arms = side ? sideArms(character) : ARM_CONTOURS[character];
+      const style = `--seat-x:${x}%;--seat-y:${y}%;--seat-mobile-x:${mobile[0]}%;--seat-mobile-y:${mobile[1]}%;--character-x:${(character % 5) * 25}%;--character-y:${Math.floor(character / 5) * 100}%;--motion-delay:${index * -1.3}s;--grip-y:${side ? (character < 5 ? 67 : 60) : (character < 5 ? 73 : 64)}%;--side-fan-y:${character < 5 ? 52 : 46}%;--left-arm:polygon(${arms[0]});--right-arm:polygon(${arms[1]})`;
       // Body/chair sit behind the felt. This sibling crosses the table rim:
       // card backs under the hands, forearms over them. No hidden values enter it.
-      const front = own ? '' : `<div class="seat-front ${active ? 'active-seat' : ''}" data-front-player="${esc(id)}" style="${style}" aria-hidden="true"><div class="seat-grip">${cardGame ? `<div class="rival-hand">${Array.from({ length: count }, (_, i) => `<i class="card-back" style="--fan-angle:${(i - (count - 1) / 2) * Math.min(10, 65 / Math.max(1, count))}deg"><span>✦</span></i>`).join('')}</div>` : ''}<div class="player-character forearms"><div class="character-sprite arm-left"></div><div class="character-sprite arm-right"></div></div></div></div>`;
-      return `<article class="table-seat ${own ? 'own-seat' : ''} ${active ? 'active-seat' : ''}" data-position="${x<20?'left':x>80?'right':x===50?'top':'upper'}" data-player-id="${esc(id)}" style="${style}" aria-label="${esc(name(id))}, ${MASCOTS[character]}${cardGame ? `, ${count} cartas` : ''}${active ? ', turno activo' : ''}">${renderMascot(character, index)}<div class="seat-label"><strong>${esc(own ? 'Tú' : name(id))}</strong><small>${MASCOTS[character]}${gameId === 'mus' ? ` · ${team}` : ''}${cardGame ? ` · ${count} cartas` : ''}</small></div>${view.mano === id ? '<span class="mano-badge">Mano</span>' : ''}</article>${front}`;
+      const position=x<20?'left':x>80?'right':x===50?'top':'upper';
+      const front = `<div class="seat-front ${active ? 'active-seat' : ''}" data-direction="${direction}" data-position="${position}" data-front-player="${esc(id)}" style="${style}" aria-hidden="true"><div class="seat-grip">${cardGame ? `<div class="rival-hand">${Array.from({ length: count }, (_, i) => `<i class="card-back" style="--fan-angle:${(i - (count - 1) / 2) * Math.min(10, 65 / Math.max(1, count))}deg"><span>✦</span></i>`).join('')}</div>` : ''}<div class="player-character forearms"><div class="character-sprite arm-left"></div><div class="character-sprite arm-right"></div></div></div></div>`;
+      return `<article class="table-seat ${active ? 'active-seat' : ''}" data-direction="${direction}" data-position="${position}" data-player-id="${esc(id)}" style="${style}" aria-label="${esc(name(id))}, ${MASCOTS[character]}${cardGame ? `, ${count} cartas` : ''}${active ? ', turno activo' : ''}">${renderMascot(character, index)}<div class="seat-label"><strong>${esc(name(id))}</strong><small>${gameId === 'cinquillo' ? `${count} cartas` : `${MASCOTS[character]}${gameId === 'mus' ? ` · ${team}` : ''}${cardGame ? ` · ${count} cartas` : ''}`}</small></div>${view.mano === id ? '<span class="mano-badge">Mano</span>' : ''}</article>${front}`;
 
     })
     .join("");
@@ -115,12 +125,12 @@ export function renderCinquilloBoard(view) {
   return `<div class="cinquillo-board ${legacy ? "legacy-board" : "spanish-board"}">${suits
     .map((suit) => {
       const entry = view.table[suit];
-      return `<div class="suit-lane"><b class="${["corazones", "diamantes"].includes(suit) ? "card-red" : ""}" aria-label="${suitNames[suit]}">${suitArt(suit)}</b><div class="lane-cards">${ranks.map(
+      return `<div class="suit-lane" data-suit="${suit}"><b class="${["corazones", "diamantes"].includes(suit) ? "card-red" : ""}" aria-label="${suitNames[suit]}">${suitArt(suit)}<span>${suitNames[suit]}</span></b><div class="lane-cards" style="--lane-size:${entry ? entry.high-entry.low+1 : 1}">${ranks.map(
         (rank, index) => {
           const placed = entry && index >= entry.low && index <= entry.high;
-          return `<span class="board-card ${placed ? "placed" : "empty-slot"} ${rank === "5" ? "five-slot" : ""}" ${placed ? `data-table-key="${suit}:${rank}"` : ""} aria-label="${rank} de ${suit}${placed ? ", colocada" : ", pendiente"}">${placed ? cardFace({ suit, rank }) : `<span>${rank}</span>`}</span>`;
+          return `<span class="board-card ${placed ? "placed" : "empty-slot"} ${rank === "5" ? "five-slot" : ""}" data-rank="${rank}" ${placed ? `data-table-key="${suit}:${rank}"` : ""} aria-label="${rank} de ${suit}${placed ? ", colocada" : ", pendiente"}">${placed ? cardFace({ suit, rank }) : `<span>${rank}</span>`}</span>`;
         },
-      ).join("")}</div></div>`;
+      ).join("")}${entry ? '' : '<span class="unopened-suit">Sin abrir</span>'}</div></div>`;
     })
     .join("")}</div>`;
 }
