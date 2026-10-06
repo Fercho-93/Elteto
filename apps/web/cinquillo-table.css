@@ -143,7 +143,7 @@ body:has(.cinquillo-screen) { background:radial-gradient(ellipse at 50% 0,#352a3
  .cinquillo-screen .table-center { --pile-w:clamp(54px,min(calc((100cqw - 104px) / 4),calc((100cqh - var(--board-top) - 154px) / 3.068)),94px); top:max(var(--board-top),calc((100% - 24px - (var(--pile-h) + 54px) * 2 - 26px + var(--board-top)) / 2)); }
 }
 @media(min-width:600px) and (max-height:699px) {
- .game-page.cinquillo-screen { --pile-w:clamp(50px,calc((100dvh - 307px) * 208 / 319),72px); --hand-w:62px; --board-top:88px; min-height:360px; grid-template-rows:44px minmax(0,1fr) auto; }
+ .game-page.cinquillo-screen { --pile-w:clamp(50px,calc((100dvh - 307px) * 208 / 319),72px); --hand-w:62px; --board-top:76px; min-height:360px; grid-template-rows:44px minmax(0,1fr) auto; }
  .cinquillo-screen .game-table,.cinquillo-screen .game-table.seats-6 { --avatar-w:42px; }
  .cinquillo-screen .game-table .table-seat,.cinquillo-screen .game-table .seat-front { top:42px; }
  .cinquillo-screen .game-table [data-position="left"],.cinquillo-screen .game-table [data-position="right"] { top:46px; }
@@ -154,6 +154,8 @@ body:has(.cinquillo-screen) { background:radial-gradient(ellipse at 50% 0,#352a3
  .cinquillo-screen .game-table .lane-cards { flex-direction:row; justify-content:center; gap:10px; }
  .cinquillo-screen .game-table .suit-lane { grid-template-rows:16px var(--pile-h) 16px; gap:4px; }
  .cinquillo-screen .game-table .seat-label strong,.cinquillo-screen .game-table .seat-label small { font-size:10px; }
+ .cinquillo-screen .game-table .seat-label { top:calc(var(--grip-y) + 5px); }
+ .cinquillo-screen .game-table [data-direction="front"] .seat-label { top:calc(var(--grip-y) + 8px); }
  .cinquillo-screen .seat-cards-word { display:none; }
  .cinquillo-screen .game-table .suit-lane > b { font-size:11px; }
  .hand-dock { padding:5px 8px 0; grid-template-columns:230px minmax(0,1fr); grid-template-rows:44px 44px; align-content:center; min-height:calc(var(--hand-h) + 22px); }
@@ -161,7 +163,7 @@ body:has(.cinquillo-screen) { background:radial-gradient(ellipse at 50% 0,#352a3
  .hand-dock .hand-filters,.hand-dock .play-status { grid-column:1; }
 }
 @media(min-width:600px) and (max-height:380px) {
- .game-page.cinquillo-screen { --hand-w:56px; --board-top:76px; }
+ .game-page.cinquillo-screen { --hand-w:56px; --board-top:68px; }
  .cinquillo-screen .game-table,.cinquillo-screen .game-table.seats-6 { --avatar-w:36px; }
  .cinquillo-screen .game-table .table-seat,.cinquillo-screen .game-table .seat-front { top:32px; }
  .cinquillo-screen .game-table [data-position="left"],.cinquillo-screen .game-table [data-position="right"] { top:32px; }

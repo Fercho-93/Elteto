@@ -51,7 +51,7 @@ node tests/table-navegador.mjs
 TABLE_BROWSER=webkit node tests/table-navegador.mjs
 ```
 
-La matriz final contiene 225 casos por navegador: 15 tamaños entre 320 × 568 y 1280 × 800, incluidos 640 × 360 y los límites de las distribuciones; 2–6 jugadores, nombres largos y tres estados. Se comprueba la franja de mano, ausencia de scroll de página, cartas dentro del tapete, etiquetas sin colisiones, caras no tapadas y controles de al menos 44 × 44 píxeles. Los nombres largos se abrevian visualmente; el marcador y las etiquetas accesibles conservan el nombre completo.
+La matriz final contiene 300 casos por navegador: 15 tamaños entre 320 × 568 y 1280 × 800, incluidos 640 × 360 y los límites de las distribuciones; 2–6 jugadores, nombres largos y tres estados, más cinco configuraciones con márgenes seguros simulados de muesca y barra inferior. Se comprueba la franja de mano, ausencia de scroll de página, cartas dentro del tapete, etiquetas sin colisiones, caras no tapadas y controles de al menos 44 × 44 píxeles. Los nombres largos se abrevian visualmente; el marcador y las etiquetas accesibles conservan el nombre completo.
 
 La suite de mesa añade cartas dentro del borde curvo, integridad y proporciones de las barajas, privacidad, filtros sin acciones, cambio de orientación, conservación del foco y del scroll de consultas al recibir actualizaciones, cierre con Escape, siguiente mano, Mus, movimiento reducido y caché sin conexión. La prueba LAN usa varios navegadores y el servidor Java real.
 

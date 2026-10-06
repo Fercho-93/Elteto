@@ -11,16 +11,26 @@ await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await (proces
 const results=[];
 try {
  const page=await browser.newPage({serviceWorkers:'block',reducedMotion:'reduce'});const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:'+server.address().port);await page.waitForFunction(()=>window.testTable);
- for(const [width,height] of [[320,568],[360,640],[390,664],[390,844],[430,932],[699,844],[700,844],[844,390],[915,412],[1280,800],[640,360],[667,375],[700,600],[844,699],[844,700]]) {
+ for(const [width,height,insets] of [[320,568],[360,640],[390,664],[390,844],[430,932],[699,844],[700,844],[844,390],[915,412],[1280,800],[640,360],[667,375],[700,600],[844,699],[844,700],[390,664,[0,8,34,8]],[390,844,[47,8,34,8]],[844,390,[0,44,21,44]],[812,375,[0,44,21,44]],[430,932,[59,8,34,8]]]) {
   await page.setViewportSize({width,height});
   for(const count of [2,3,4,5,6])for(const phase of ['deal','middle','full']) {
    let game=cinquilloEngine.createInitialState(['a','b','c','d','e','f'].slice(0,count),17),moves=0;
    if(phase==='middle')for(let n=0;n<200&&moves<18&&!game.handWinner;n++){const id=game.players[game.turn],card=game.hands[id].find(c=>canPlaceCinquillo(game.table,c,game.ruleset));game=cinquilloEngine.applyAction(game,id,card?{type:'play',card}:{type:'pass'});if(card)moves++;}
    if(phase==='full')game.table=Object.fromEntries(['oros','copas','espadas','bastos'].map(suit=>[suit,{low:0,high:9}]));
    await page.evaluate(game=>window.testTable('cinquillo',game,game.players[game.turn],['Alejandra Fernanda','José Manuel','Cristina','Francisco Javier','María del Carmen','Sebastián']),game);
-   // WebKit resolves media and container queries over rendering frames after resize.
-   // Measure the settled presentation, without retrying until a desired result appears.
-   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+   if(insets) await page.locator('.cinquillo-screen').evaluate((el,values)=>{el.style.padding=values.map(n=>n+'px').join(' ');},insets);
+   // Container queries can need several layout passes after resizing/inset changes.
+   // Wait for stable geometry, not for the assertions below to become true.
+   await page.evaluate(async()=>{
+    let previous='',stable=0;
+    for(let frame=0;frame<30;frame++) {
+     await new Promise(requestAnimationFrame);
+     const current=JSON.stringify([...document.querySelectorAll('.hand,.table-center,.table-surface,.lane-next')].map(el=>el.getBoundingClientRect().toJSON()));
+     stable=current===previous?stable+1:0;previous=current;
+     if(stable===3)return;
+    }
+    throw Error('Responsive layout did not settle');
+   });
    const metrics=await page.evaluate(()=>{
     const rect=el=>el.getBoundingClientRect(),inside=r=>r.left>=-1&&r.right<=innerWidth+1&&r.top>=-1&&r.bottom<=innerHeight+1;
     const overlap=(a,b)=>a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5;
@@ -30,10 +40,10 @@ try {
     const facesVisible=[...document.querySelectorAll('.table-seat')].every(seat=>{const r=rect(seat),character=Number(seat.querySelector('[data-character]').dataset.character),x=r.left+r.width*(seat.dataset.direction==='left'?.35:seat.dataset.direction==='right'?.65:.5),y=r.top+r.height*(character<5?.43:.47);return document.elementFromPoint(x,y)?.closest('[data-player-id]')===seat;});
     const labels=[...document.querySelectorAll('.game-table .seat-label')].map(rect);
     const badBoard=board.filter(r=>!inside(r)||r.left<table.left+4||r.right>table.right-4||r.bottom>table.bottom-4||r.bottom>dock.top);
-    return {facesVisible,pageHeight:document.documentElement.scrollHeight,handVisible:inside(hand),minCard:endpoints.length?Math.min(...endpoints.map(r=>r.width)):0,tableFits:!badBoard.length,badBoard:badBoard.map(r=>r.toJSON()),labelFits:labels.every(inside),labelOverlap:labels.some((a,i)=>labels.slice(i+1).some(b=>overlap(a,b))),labelCoversGame:labels.some(a=>board.some(b=>overlap(a,b))),endpointOverlap:endpoints.some((a,i)=>endpoints.slice(i+1).some(b=>overlap(a,b))),minButton:Math.min(...[...document.querySelectorAll('.play-header button,.hand-dock button:not(.playing-card)')].map(el=>Math.min(rect(el).width,rect(el).height)))};
+    return {facesVisible,pageHeight:document.documentElement.scrollHeight,handVisible:inside(hand) && hand.bottom<=innerHeight-parseFloat(getComputedStyle(document.querySelector(".cinquillo-screen")).paddingBottom)+1,minCard:endpoints.length?Math.min(...endpoints.map(r=>r.width)):0,tableFits:!badBoard.length,badBoard:badBoard.map(r=>r.toJSON()),labelFits:labels.every(inside),labelOverlap:labels.some((a,i)=>labels.slice(i+1).some(b=>overlap(a,b))),labelCoversGame:labels.some(a=>board.some(b=>overlap(a,b))),endpointOverlap:endpoints.some((a,i)=>endpoints.slice(i+1).some(b=>overlap(a,b))),minButton:Math.min(...[...document.querySelectorAll('.play-header button,.hand-dock button:not(.playing-card)')].map(el=>Math.min(rect(el).width,rect(el).height)))};
    });
-   results.push({width,height,count,phase,...metrics});
-   if(phase==='middle' && [2,4,6].includes(count) && [320,390,844,1280].includes(width)) {await page.locator('img').evaluateAll(images=>Promise.all(images.map(i=>i.decode())));await page.screenshot({path:fileURLToPath(new URL(`${width}-${height}-${count}-${process.env.LAYOUT_BROWSER||'chromium'}.png`,out)),fullPage:true});}
+   results.push({width,height,insets,count,phase,...metrics});
+   if(phase==='middle' && [2,4,6].includes(count) && [320,390,844,1280].includes(width)) {await page.locator('img').evaluateAll(images=>Promise.all(images.map(i=>i.decode())));await page.screenshot({path:fileURLToPath(new URL(`${width}-${height}-${count}${insets?'-insets':''}-${process.env.LAYOUT_BROWSER||'chromium'}.png`,out)),fullPage:true});}
   }
  }
  await writeFile(new URL(`measurements-${process.env.LAYOUT_BROWSER||'chromium'}.json`,out),JSON.stringify(results,null,2));
