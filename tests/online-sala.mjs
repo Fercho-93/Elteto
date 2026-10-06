@@ -3,7 +3,7 @@
 //   npm run test:online      (necesita Java; compila antes con npm run build:web)
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, deleteApp } from "firebase/app";
 import { getAuth, connectAuthEmulator, signInAnonymously } from "firebase/auth";
 import { initializeFirestore, connectFirestoreEmulator, doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 import { initializeTestEnvironment } from "@firebase/rules-unit-testing";
@@ -146,6 +146,7 @@ try {
       const playable = view.myHand.find((card) => {
         const idx = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"].indexOf(card.rank);
         const entry = view.table[card.suit];
+        if (!Object.keys(view.table).length) return card.suit === "corazones" && card.rank === "5";
         return entry ? idx === entry.high + 1 || idx === entry.low - 1 : card.rank === "5";
       });
       const startLog = latest[mine].view.log.length;
@@ -205,10 +206,24 @@ try {
   for (const change of musViews) assert.equal(change.view.myHand.length, 4);
   assert.equal(new Set(musViews.flatMap((c) => c.view.myHand.map((card) => `${card.suit}:${card.rank}`))).size, 16);
   console.log("  ok  Mus: cuatro jugadores, cuatro cartas cada uno");
+  await mus.host.sendAction({ type: "mus", wantsMus: false });
+  await until("Mus: grande sincronizada", () => mus.events.every(e => e.last("game")?.view.phase === "grande"));
+  await mus.host.sendAction({ type: "bet", amount: 2 });
+  await until("Mus: envite visible", () => mus.events.every(e => e.last("game")?.view.betting?.pendingBet?.amount === 2));
+  const responder = mus.all.find(s => s.uid === mus.events[0].last("game").view.turnPlayer);
+  await responder.sendAction({ type: "accept" });
+  await until("Mus: chica sincronizada", () => mus.events.every(e => e.last("game")?.view.phase === "chica"));
+  for (const events of mus.events) {
+    const view = events.last("game").view;
+    assert.deepEqual(view.scores, { A: 0, B: 0 });
+    assert.equal("revealedHands" in view, false);
+  }
+  console.log("  ok  Mus: decisión, envite privado, aceptación y tanteo diferido sincronizados");
   await mus.host.exit();
 
   console.log("Salas online de punta a punta: OK");
 } finally {
   for (const session of sessions) if (!session.closed) session.teardown();
   await admin.cleanup();
+  await Promise.all(getApps().map(app => deleteApp(app)));
 }

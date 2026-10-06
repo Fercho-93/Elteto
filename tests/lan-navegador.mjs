@@ -39,9 +39,39 @@ try {
  }
  const guestCards=await guest.locator('.hand .playing-card').count();await guest.reload();
  await guest.locator('.hand .playing-card').first().waitFor();assert.equal(await guest.locator('.hand .playing-card').count(),guestCards);
- assert.equal(await host.locator('.table-players span').count(),2);
+ assert.equal(await host.locator('.table-seat').count(),2);
  await host.locator('[data-action="leave-room"]').click();
  await guest.locator('[data-action="open-join"]').waitFor();
+ // Open another LAN table using the unchanged generic transport, now choosing Mus.
+ await host.locator('[data-action="open-host"]').click();
+ await host.locator('#host-name').fill('Ana');
+ await host.locator('label.game-option:has(input[value="mus"])').click();
+ await host.locator('[data-action="create-room"]').click();
+ const musCode=(await host.locator('.room-code').textContent()).trim();
+ await guest.goto(base+'/?join='+musCode);
+ const c=await context('Cris'),d=await context('Dani');
+ await c.goto(base+'/?join='+musCode);await d.goto(base+'/?join='+musCode);
+ await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===4);
+ await host.locator('[data-action="start-game"]').click();
+ for(const p of [host,guest,c,d]) {
+  await p.locator('.hand .playing-card').first().waitFor();
+  assert.equal(await p.locator('.hand .playing-card').count(),4);
+  assert.equal(await p.locator('.rival-hand .card-back').count(),12);
+ }
+ const pages=[host,guest,c,d];
+ const actor=async action=>{
+  for(const p of pages) if(await p.locator(`[data-action="${action}"]`).count())return p;
+  throw Error('No actor for '+action);
+ };
+ await (await actor('mus-no')).locator('[data-action="mus-no"]').click();
+ await host.waitForFunction(()=>document.querySelector('.mus-phase strong').textContent==='Grande');
+ await (await actor('mus-bet')).locator('[data-action="mus-bet"]').click();
+ for(let i=0;i<50;i++) {await new Promise(r=>setTimeout(r,10));if((await Promise.all(pages.map(p=>p.locator('[data-action="mus-accept"]').count()))).some(Boolean))break;}
+ await (await actor('mus-accept')).locator('[data-action="mus-accept"]').click();
+ for(const p of pages) await p.waitForFunction(()=>document.querySelector('.mus-phase strong').textContent==='Chica');
+ await host.locator('[data-action="leave-room"]').click();
+ for(const p of [guest,c,d]) await p.locator('[data-action="open-join"]').waitFor();
  assert.deepEqual(errors,[]);
+ console.log('Mus LAN: cuatro navegadores, 16 cartas privadas, decisión de mus, envite y siguiente lance: OK');
  console.log('Navegadores separados sin recursos externos: QR, reparto, ocho turnos, recarga y cierre: OK');
 } finally {await browser?.close();server.kill();}

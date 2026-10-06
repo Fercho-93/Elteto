@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "build:web": "npx tsc -p packages/game-core/tsconfig.json && node scripts/build-web.mjs",
-    "test": "npm run build:web && node --no-warnings tests/room-code.mjs",
+    "test": "npm run build:web && node --no-warnings tests/room-code.mjs && node --no-warnings tests/game-rules.mjs",
     "test:reglas": "firebase emulators:exec --project demo-elteto --only firestore \"node tests/reglas-salas.mjs\"",
     "test:online": "firebase emulators:exec --project demo-elteto --only auth,firestore \"node --no-warnings --import ./tests/cdn-loader.mjs tests/online-sala.mjs\"",
     "test:todo": "npm test && npm run test:reglas && npm run test:online"

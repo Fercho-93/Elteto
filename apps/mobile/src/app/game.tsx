@@ -1,5 +1,5 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
-import { COLORS, SHADOW } from "../theme";
+import { COLORS } from "../theme";
 import { useRouter } from "expo-router";
 import type { MusView, CinquilloView } from "game-core";
 import { useGameSession } from "../state/GameSession";

@@ -58,6 +58,7 @@ while(!last(0).finished && turns++<160){
  const view=last(mine);
  const card=view.myHand.find(c=>{
   const entry=view.table[c.suit],n=FRENCH_RANKS.indexOf(c.rank);
+  if (!Object.keys(view.table).length) return c.suit === 'corazones' && c.rank === '5';
   return entry?n===entry.low-1||n===entry.high+1:c.rank==='5';
  });
  await (mine===0?host:guest).sendAction(card?{type:'play',card}:{type:'pass'});

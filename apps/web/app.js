@@ -1,11 +1,12 @@
-import { FRENCH_RANKS, getGame, listGames } from "./game-core/index.js";
+import { getGame, listGames } from "./game-core/index.js";
 import { LocalGuestSession, LocalHostSession } from "./local-session.js";
 import { parseRoomCode } from "./room-code.js";
+
+import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, canPlayCinquillo, animateTable } from "./table-view.js";
 
 const LAN = window.ELTETO_LAN;
 const app = document.querySelector("#app");
 const toastEl = document.querySelector("#toast");
-const SUITS = { oros: "🟡", copas: "🍷", espadas: "⚔️", bastos: "🌿", picas: "♠", corazones: "♥", diamantes: "♦", treboles: "♣" };
 const state = {
   screen: "home", role: null, name: "", roomName: "", gameId: "", playerId: null,
   players: [], view: null, host: null, guest: null, online: null, roomCode: "", offerCode: "", answerCode: "",
@@ -22,9 +23,7 @@ function flash(message) {
 function header(back = "home") {
   return `<header class="topbar"><button class="icon-btn" data-action="back" aria-label="Volver">←</button><a class="brand" href="./" data-action="home"><span aria-hidden="true">🍆</span> ELTETO <span aria-hidden="true">🍑</span></a><span class="topbar-tag">FRUTA Y PIQUE*</span></header>`;
 }
-function cardName(card) { return `${card.rank} de ${card.suit}`; }
 function playerName(id) { return state.players.find((player) => player.id === id)?.name || (id === "host" ? state.name : id); }
-function suitClass(suit) { return ["copas", "corazones", "diamantes", "oros"].includes(suit) ? "red-suit" : ""; }
 
 function renderHome() {
   state.screen = "home";
@@ -44,7 +43,7 @@ function renderHome() {
 
 function renderHostForm() {
   state.screen = "host-form";
-  const games = listGames().filter(game => !LAN || game.id === "cinquillo").map((game) => `<label class="game-option ${state.gameId === game.id ? "chosen" : ""}">
+  const games = listGames().map((game) => `<label class="game-option ${state.gameId === game.id ? "chosen" : ""}">
     <input type="radio" name="game" value="${esc(game.id)}" ${state.gameId === game.id ? "checked" : ""}>
     <span class="game-check">✦</span><span><strong>${esc(game.label)}</strong><small>${game.minPlayers === game.maxPlayers ? `${game.minPlayers} jugadores` : `${game.minPlayers}–${game.maxPlayers} jugadores`}</small></span>
   </label>`).join("");
@@ -114,69 +113,97 @@ function renderLobby() {
   }
 }
 
-function renderCard(card, key, { disabled = false, selected = false } = {}) {
-  return `<button class="playing-card ${suitClass(card.suit)} ${selected ? "selected" : ""}" data-action="play-card" data-card-key="${esc(key)}" ${disabled ? "disabled" : ""} aria-label="${esc(cardName(card))}">
-    <span>${esc(card.rank)}</span><b>${SUITS[card.suit] || esc(card.suit)}</b>
-  </button>`;
-}
-
+let previousTableKeys = null;
+let previousTurn = null;
+let renderedGame = null;
 function renderGame() {
   state.screen = "game";
-  const game = getGame(state.gameId);
-  const view = state.view;
-  if (!view) {
-    app.innerHTML = `${header()}<section class="panel"><p class="helper">Esperando el estado de la partida…</p></section>`;
-    return;
-  }
-  const winner = state.gameId === "mus" ? (view.winnerTeam ? `Gana el equipo ${view.winnerTeam}` : "") : (view.winner ? `Gana ${playerName(view.winner)}` : "");
-  const hand = (view.myHand || []).map((card) => {
-    const key = `${card.suit}:${card.rank}`;
-    if (state.gameId === "mus") return renderCard(card, key, { selected: state.selected.has(key), disabled: view.phase !== "discard" || !view.awaitingDiscardFrom.includes(state.playerId) });
-    const canPlay = view.turnPlayer === state.playerId && canPlaceCinquillo(view.table, card);
-    return renderCard(card, key, { disabled: !canPlay });
-  }).join("");
-  const controls = state.gameId === "mus" ? musControls(view) : cinquilloControls(view);
-  const table = state.gameId === "mus"
-    ? `<div class="score-strip"><span>Equipo A <b>${view.scores.A}</b></span><span>Equipo B <b>${view.scores.B}</b></span><span>Meta <b>${view.targetScore}</b></span></div><p class="phase-tag">Fase: ${esc(view.phase)}</p>`
-    : `<div class="table-cards">${Object.entries(view.table).map(([suit, entry]) => `<div class="sequence"><b class="${suitClass(suit)}">${SUITS[suit] || esc(suit)}</b><span>${FRENCH_RANKS[entry.low]} — ${FRENCH_RANKS[entry.high]}</span></div>`).join("") || "La mesa espera al primer cinco."}</div><div class="table-players">${view.players.map((id) => `<span class="${id === view.turnPlayer ? "turn-now" : ""}">${esc(playerName(id))} · ${view.handSizes[id]} cartas</span>`).join("")}</div>`;
+  const game = getGame(state.gameId), view = state.view;
+  if (!view) { app.innerHTML = `${header()}<section class="panel"><p>Esperando el estado de la partida…</p></section>`; return; }
+  const origins = new Map([...app.querySelectorAll('.hand [data-card-key]')].map(el => [el.dataset.cardKey, el.getBoundingClientRect()]));
+  const stockOrigin = app.querySelector(".table-stock")?.getBoundingClientRect();
+  const oldHandKeys = new Set(origins.keys());
+  const sourceSeat = [...app.querySelectorAll('[data-player-id]')].find(el => el.dataset.playerId === previousTurn)?.getBoundingClientRect();
+  const gameToken = `${state.gameId}:${view.players.join(',')}`;
+  if (renderedGame !== gameToken) previousTableKeys = null;
+  renderedGame = gameToken;
+  const scroll = app.querySelector('.hand')?.scrollLeft || 0;
+  const historyOpen = app.querySelector('.history')?.open || false;
+  const winner = state.gameId === 'mus' ? `Gana la pareja ${view.winnerTeam || ''}` : view.winner ? `Gana ${playerName(view.winner)}` : 'Fin de partida';
+  const myTurn = view.turnPlayer === state.playerId;
+  const selecting = state.gameId === 'mus' && view.phase === 'discard' && view.awaitingDiscardFrom.includes(state.playerId);
+  const hand = sortedHand(view.myHand).map(card => {
+    const playable = state.gameId === 'cinquillo' && !view.finished && myTurn && canPlayCinquillo(view.table, card);
+    return renderHandCard(card, {playable, selected: selecting && state.selected.has(cardKey(card)), selectable: selecting, disabled: !selecting && !playable});
+  }).join('');
+  const controls = state.gameId === 'mus' ? musControls(view) : cinquilloControls(view);
+  const table = state.gameId === 'mus' ? renderMusBoard(view) : renderCinquilloBoard(view);
+  const hint = view.finished ? winner : selecting ? 'Selecciona tu descarte' : myTurn ? 'Tu turno' : view.phase === 'discard' ? 'Esperando descartes' : `Turno de ${playerName(view.turnPlayer)}`;
   app.innerHTML = `${header()}<section class="game-page">
-    <div class="game-top"><span class="game-ribbon">🍆 ${esc(game.label)} 🍑</span><button class="text-button" data-action="leave-room">Salir</button></div>
-    ${view.finished ? `<div class="winner-banner">${esc(winner || "La partida ha terminado")}</div>` : ""}
-    <section class="game-table">${table}</section>
-    ${state.error ? `<p class="error-message">${esc(state.error)}</p>` : ""}
-    <h3>Tu mano <small>${view.myHand.length} cartas</small></h3>
-    <div class="hand">${hand || '<p class="helper">No tienes cartas.</p>'}</div>
-    <section class="game-controls">${controls}</section>
-    <details class="history"><summary>Historial de la partida</summary><ol>${(view.log || []).slice().reverse().map((line) => `<li>${esc(line)}</li>`).join("")}</ol></details>
+    <div class="game-top"><span class="game-ribbon">${esc(game.label)} · ${state.gameId === 'mus' ? '4 reyes' : '52 cartas'}</span><button class="text-button" data-action="leave-room">Salir</button></div>
+    ${view.finished ? `<div class="winner-banner" role="status">${esc(winner)}</div>` : ''}
+    <div class="turn-banner ${myTurn || selecting ? 'your-turn' : ''}" role="status">${esc(hint)}</div>
+    <section class="game-table" aria-label="Mesa de ${esc(game.label)}">
+      <div class="felt-watermark" aria-hidden="true">ELTETO <span>LA TIMBA</span></div>
+      ${renderSeats(view, state.playerId, playerName, state.gameId)}
+      <div class="table-center">${table}</div>
+    </section>
+    <p class="last-play" aria-live="polite">${esc(readableLog(view.log?.at(-1) || 'La mesa está lista.'))}</p>
+    ${state.error ? `<p class="error-message" role="alert">${esc(state.error)}</p>` : ''}
+    <h3>Tu mano <small>${view.myHand.length} cartas · desliza para verlas</small></h3>
+    <div class="hand" aria-label="Tus cartas">${hand || '<p>No tienes cartas.</p>'}</div>
+    ${controls ? `<section class="game-controls">${controls}</section>` : ""}
+    <details class="game-rules"><summary>Cómo jugar · reglas de esta mesa</summary>${state.gameId === 'cinquillo' ? '<p>Baraja francesa de 52 cartas. Salida obligatoria con el 5 de corazones. Abre los otros palos con su 5 y continúa hacia el as o el rey, sin saltos. Solo puedes pasar si no tienes jugada. Gana quien vacía su mano.</p>' : '<p>Cuatro jugadores en parejas opuestas; baraja española de 40 cartas, modalidad de 4 reyes (2 y 3 conservan su valor), a 40 tantos. Se decide si hay mus; si todos quieren, se descarta y se vuelve a preguntar. Grande, chica, pares y juego o punto. Los envites aceptados se cuentan al acabar la mano; un órdago aceptado decide la partida. No se aplica juego real ni mus corrido.</p>'}</details>
+    <details class="history" ${historyOpen ? 'open' : ''}><summary>Historial de la partida</summary><ol>${(view.log || []).slice().reverse().map(line => `<li>${esc(readableLog(line))}</li>`).join('')}</ol></details>
   </section>`;
+  app.querySelector('.hand').scrollLeft = scroll;
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const stock = stockOrigin || app.querySelector('.game-table').getBoundingClientRect();
+    for (const [index, card] of [...app.querySelectorAll('.hand [data-card-key]')].entries()) {
+      if (oldHandKeys.has(card.dataset.cardKey) || !card.animate) continue;
+      const rect = card.getBoundingClientRect();
+      card.animate([{transform:`translate(${stock.x+stock.width/2-rect.x}px,${stock.y+stock.height/2-rect.y}px) rotate(-10deg)`,opacity:0},{transform:'none',opacity:1}], {duration:350,delay:Math.min(index*25,250),easing:'cubic-bezier(.2,.8,.2,1)'});
+    }
+  }
+  previousTableKeys = animateTable(app, previousTableKeys, origins, sourceSeat);
+  previousTurn = view.turnPlayer;
+}
+function readableLog(line) {
+  for (const player of [...state.players].sort((a,b) => b.id.length - a.id.length)) {
+    const id = player.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    line = line.replace(new RegExp(`(^|[^\\w-])${id}(?=$|[^\\w-])`, 'g'), (_, prefix) => prefix + player.name);
+  }
+  return line;
 }
 
 function musControls(view) {
   if (view.finished) return "";
+  if (view.phase === "mus") {
+    if (view.turnPlayer !== state.playerId) return `<p class="helper">${esc(playerName(view.turnPlayer))} decide si hay mus.</p>`;
+    return '<p class="helper">¿Quieres cambiar cartas o empezamos los lances?</p><div class="action-row"><button class="button button-cyan" data-action="mus-yes">Mus</button><button class="button button-paper" data-action="mus-no">No hay mus</button></div>';
+  }
+  if (view.phase === "showdown" && view.mano !== state.playerId) return `<p class="helper">Cartas a la vista. ${esc(playerName(view.mano))} iniciará la siguiente mano.</p>`;
+  if (view.phase === "showdown") return '<p class="helper">Cartas a la vista. Comprueba el recuento antes de seguir.</p><button class="button button-cyan full-button" data-action="mus-next">Siguiente mano</button>';
   if (view.phase === "discard") {
     if (!view.awaitingDiscardFrom.includes(state.playerId)) return '<p class="helper">Descarte confirmado. Esperando al resto…</p>';
-    return `<p class="helper">Toca las cartas que quieras cambiar; también puedes quedártelas.</p><button class="button button-pink full-button" data-action="mus-discard">Confirmar descarte (${state.selected.size})</button>`;
+    return `<p class="helper">Toca las cartas que quieras cambiar; cambia al menos una carta tras pedir mus.</p><button class="button button-pink full-button" data-action="mus-discard" ${state.selected.size ? "" : "disabled"}>Confirmar descarte (${state.selected.size})</button>`;
   }
   const betting = view.betting;
-  if (!betting || betting.turnPlayer !== state.playerId) return `<p class="helper">Turno de ${esc(playerName(view.turnPlayer))}.</p>`;
+  if (!betting || view.turnPlayer !== state.playerId) return `<p class="helper">Turno de ${esc(playerName(view.turnPlayer))}.</p>`;
   const team = view.players.indexOf(state.playerId) % 2 === 0 ? "A" : "B";
   const responds = betting.pendingBet && betting.pendingBet.team !== team;
   const controls = responds
-    ? `<button class="button button-cyan" data-action="mus-accept">Me apunto 🍑</button><button class="button button-pink" data-action="mus-reject">Ni de fruta</button><label class="bet-control"><input id="bet-amount" type="number" min="2" value="2"><button class="button button-paper" data-action="mus-bet">Subir</button></label>`
-    : `<button class="button button-paper" data-action="mus-pass">Paso</button><label class="bet-control"><input id="bet-amount" type="number" min="2" value="2"><button class="button button-cyan" data-action="mus-bet">Envido 🍑</button></label><button class="button button-pink" data-action="mus-ordago">¡Órdago! 🍆</button>`;
+    ? `<button class="button button-cyan" data-action="mus-accept">Quiero</button><button class="button button-pink" data-action="mus-reject">No quiero</button>${betting.pendingBet?.ordago ? "" : `<label class="bet-control"><input id="bet-amount" type="number" min="${Math.max(2, (betting.pendingBet?.amount || 0) + 1)}" step="1" value="${Math.max(2, (betting.pendingBet?.amount || 0) + 2)}"><button class="button button-paper" data-action="mus-bet">Subir</button></label><button class="button button-pink" data-action="mus-ordago">¡Órdago!</button>`}`
+    : `<button class="button button-paper" data-action="mus-pass">Paso</button><label class="bet-control"><input id="bet-amount" type="number" min="${Math.max(2, (betting.pendingBet?.amount || 0) + 1)}" step="1" value="${Math.max(2, (betting.pendingBet?.amount || 0) + 2)}"><button class="button button-cyan" data-action="mus-bet">Envido 🍑</button></label><button class="button button-pink" data-action="mus-ordago">¡Órdago! 🍆</button>`;
   return `<p class="phase-tag">Te toca. ${betting.pendingBet ? `Envite: ${betting.pendingBet.amount}` : "¿Qué hacemos?"}</p><div class="action-row">${controls}</div>`;
 }
 
-function canPlaceCinquillo(table, card) {
-  const index = FRENCH_RANKS.indexOf(card.rank);
-  const sequence = table[card.suit];
-  return sequence ? index === sequence.low - 1 || index === sequence.high + 1 : card.rank === "5";
-}
 
 function cinquilloControls(view) {
   if (view.finished) return "";
   if (view.turnPlayer !== state.playerId) return `<p class="helper">Turno de ${esc(playerName(view.turnPlayer))}.</p>`;
-  return '<p class="helper">Juega una carta que continúe una escalera de la mesa. Las cartas válidas brillan.</p><button class="button button-paper" data-action="cinquillo-pass">Paso</button>';
+  const canPass = !view.myHand.some(card => canPlayCinquillo(view.table, card));
+  return `<p class="helper">Juega una carta que continúe una escalera de la mesa. Las cartas válidas brillan.</p><button class="button button-paper" data-action="cinquillo-pass" ${canPass ? "" : "disabled"}>Paso</button>`;
 }
 
 function render() {
@@ -188,6 +215,7 @@ function render() {
 }
 
 function resetToHome() {
+  previousTableKeys = null; renderedGame = null; previousTurn = null;
   Object.assign(state, { role: null, name: "", players: [], view: null, host: null, guest: null, online: null, roomCode: "", offerCode: "", answerCode: "", selected: new Set(), error: "", screen: "home" });
   renderHome();
 }
@@ -310,7 +338,10 @@ app.addEventListener("click", async (event) => {
       const cards = state.view.myHand.filter((card) => state.selected.has(`${card.suit}:${card.rank}`));
       sendAction({ type: "discard", cards });
       state.selected.clear();
-    } else if (action === "mus-pass") sendAction({ type: "pass" });
+    } else if (action === "mus-yes") sendAction({ type: "mus", wantsMus: true });
+    else if (action === "mus-no") sendAction({ type: "mus", wantsMus: false });
+    else if (action === "mus-next") sendAction({ type: "next-hand" });
+    else if (action === "mus-pass") sendAction({ type: "pass" });
     else if (action === "mus-bet") sendAction({ type: "bet", amount: Number(document.querySelector("#bet-amount")?.value) || 2 });
     else if (action === "mus-ordago") sendAction({ type: "ordago" });
     else if (action === "mus-accept") sendAction({ type: "accept" });
@@ -323,7 +354,7 @@ app.addEventListener("click", async (event) => {
   } catch (error) {
     state.error = error instanceof Error ? error.message : "Algo se torció al preparar la jugada.";
     flash(state.error);
-    if (state.role === "host") state.screen = "lobby";
+    if (state.role === "host" && state.screen !== "game") state.screen = "lobby";
     render();
   }
 });

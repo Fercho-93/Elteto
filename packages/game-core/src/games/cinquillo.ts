@@ -42,6 +42,7 @@ export type CinquilloView = {
 export type CinquilloAction = { type: "play"; card: Card } | { type: "pass" };
 
 function canPlace(table: Record<string, CinquilloTableSuit>, card: Card): boolean {
+  if (!Object.keys(table).length) return card.suit === "corazones" && card.rank === "5";
   const idx = RANK_INDEX[card.rank];
   const entry = table[card.suit];
   if (!entry) return idx === FIVE_INDEX;

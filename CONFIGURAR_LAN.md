@@ -6,7 +6,7 @@ Esta prueba añade una app Android independiente, **Elteto LAN · Prueba**. El a
 
 1. En GitHub, abre Actions → **Compilar Android LAN** → última ejecución correcta. Descarga el artefacto **Elteto-LAN-Android-prueba**, extrae el ZIP e instala `app-debug.apk` en el Android anfitrión. Es una compilación de prueba, no un lanzamiento de Play Store.
 2. Conecta los móviles a una misma Wi-Fi local o activa un hotspot en el Android y conecta los invitados. La red no necesita salida a internet.
-3. Abre Elteto LAN en Android. Pulsa **Crear partida**, indica tu nombre y crea la mesa de Cinquillo.
+3. Abre Elteto LAN en Android. Pulsa **Crear partida**, indica tu nombre y elige Cinquillo (2–6 jugadores) o Mus (4 jugadores) y crea la mesa.
 4. El anfitrión muestra un QR con una dirección local HTTP. Escanéalo con la cámara normal del iPhone o Android invitado. Si no abre, escribe una de las direcciones que aparecen arriba en la app anfitriona y utiliza el código de mesa.
 5. Espera a que aparezcan ambos jugadores e inicia la partida. Cada invitado recibe solo su mano.
 
@@ -18,7 +18,7 @@ El QR solo funciona dentro de esa red: enviarlo a alguien que está fuera no le 
 - Si un invitado pierde la señal, conserva su plaza y se pausa la aceptación de jugadas. Puede volver con el mismo navegador/pestaña: la identidad y la secuencia se guardan en sessionStorage.
 - Una pestaña nueva, otro navegador o borrar datos puede perder esa identidad. No hay sustitución de jugador ni abandono automático durante la partida.
 - Si el anfitrión cierra la app o sale de la mesa, la partida se cierra. No hay relevo ni persistencia tras reiniciar Android.
-- Esta primera prueba habilita Cinquillo. El motor existente también incluye Mus, pero no se habilita hasta validar la conexión con dos dispositivos físicos.
+- El catálogo habilita Cinquillo (2–6 jugadores) y Mus (exactamente 4). La prueba automática cubre una mesa de Mus con cuatro navegadores; queda por validar físicamente con cuatro móviles.
 - Si hay varias interfaces de red (por ejemplo VPN), el QR puede seleccionar una dirección incorrecta. Usa la dirección de la Wi-Fi/hotspot mostrada arriba; si la dirección cambió, vuelve a crear la mesa.
 - El transporte de esta prueba es HTTP/WS local sin cifrado. Utiliza una Wi-Fi/hotspot privado.
 - Los navegadores invitados cargan la web desde Android, no desde GitHub Pages. Abrir la web pública no inicia un servidor LAN.

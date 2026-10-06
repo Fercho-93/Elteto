@@ -48,7 +48,7 @@ El sitio compilado aparece en `dist/`. Para probarlo localmente, sírvelo desde 
 
 ## Nueva prueba: Android anfitrión e invitados por navegador
 
-`apps/android-host/` añade una app Android que sirve Elteto por HTTP y WebSocket en una red local. iPhone y Android invitados entran con un solo QR desde su navegador, sin Firebase ni una descarga previa de la web. La primera prueba habilita Cinquillo y requiere mantener abierta la app anfitriona. Instalación, arquitectura y límites: [CONFIGURAR_LAN.md](CONFIGURAR_LAN.md).
+`apps/android-host/` añade una app Android que sirve Elteto por HTTP y WebSocket en una red local. iPhone y Android invitados entran con un solo QR desde su navegador, sin Firebase ni una descarga previa de la web. El catálogo habilita Cinquillo y Mus y requiere mantener abierta la app anfitriona. Instalación, arquitectura y límites: [CONFIGURAR_LAN.md](CONFIGURAR_LAN.md).
 
 ## App móvil nativa
 
@@ -57,3 +57,7 @@ El sitio compilado aparece en `dist/`. Para probarlo localmente, sírvelo desde 
 ## Motor de reglas
 
 `packages/game-core/` contiene los motores puros de Mus y Cinquillo. Cada motor valida las acciones, conserva el estado completo en el anfitrión y produce una vista individual para cada jugador.
+
+## Mesa y evolución de los juegos
+
+La web y Android LAN comparten la nueva mesa con tapete, avatares animados, manos rivales boca abajo y animaciones de cartas. Las reglas implementadas, pruebas y pasos para añadir juegos se detallan en [MESA_Y_REGLAS.md](MESA_Y_REGLAS.md).

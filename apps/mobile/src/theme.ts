@@ -16,10 +16,10 @@ export const COLORS = {
 };
 
 export const SHADOW = {
-  color: COLORS.night,
-  offset: { width: 0, height: 5 },
-  opacity: 0.32,
-  radius: 0,
+  shadowColor: COLORS.night,
+  shadowOffset: { width: 0, height: 5 },
+  shadowOpacity: 0.32,
+  shadowRadius: 0,
   elevation: 6,
 };
 
