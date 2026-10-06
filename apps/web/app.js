@@ -1,5 +1,6 @@
 import { getGame, listGames, GAME_CATALOG } from "./game-core/index.js";
 import { LocalGuestSession, LocalHostSession } from "./local-session.js";
+import { arrangeCinquilloScreen } from './cinquillo-screen.js';
 import { parseRoomCode } from "./room-code.js";
 
 import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, canPlayCinquillo, animateTable, animateSeats, MASCOTS, renderMascot } from "./table-view.js";
@@ -10,7 +11,7 @@ const toastEl = document.querySelector("#toast");
 const state = {
   screen: "home", role: null, name: "", roomName: "", gameId: "", playerId: null,
   players: [], view: null, host: null, guest: null, online: null, roomCode: "", offerCode: "", answerCode: "",
-  selected: new Set(), error: "", started: false, inviteMode: "offline",
+  selected: new Set(), error: "", started: false, inviteMode: "offline", handSuit: 'all',
 };
 
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
@@ -129,13 +130,20 @@ function renderGame() {
   const actor = [...app.querySelectorAll('[data-player-id]')].find(el => el.dataset.playerId === previousTurn);
   const actorFront = [...app.querySelectorAll('[data-front-player]')].find(el => el.dataset.frontPlayer === previousTurn);
   const sourceSeat = (actorFront?.querySelector('.rival-hand') || actor)?.getBoundingClientRect();
-  const gameToken = `${state.gameId}:${view.players.join(',')}`;
-  if (renderedGame !== gameToken) { previousTableKeys = null; previousSeats = null; }
+  const gameToken = `${state.gameId}:${view.players.join(',')}:${state.playerId}:${view.handNumber}`;
+  if (renderedGame !== gameToken) { previousTableKeys = null; previousSeats = null; state.handSuit='all'; }
   renderedGame = gameToken;
   const scroll = app.querySelector('.hand')?.scrollLeft || 0;
   const historyOpen = app.querySelector('.history')?.open || false;
+  const rulesOpen = app.querySelector('.game-rules')?.open || false;
+  const focused = app.contains(document.activeElement) ? document.activeElement : null;
+  const focusAction = focused?.dataset.action;
+  const focusCard = focused?.dataset.cardKey;
+  const focusSuit = focused?.dataset.suit;
   const zoomOpen = app.querySelector('.board-zoom')?.open || false;
   const zoomScrollTop = app.querySelector('.board-zoom .zoom-scroll')?.scrollTop || 0;
+  const menuOpen = app.querySelector('.game-menu')?.open || false;
+  const menuScrollTop = app.querySelector('.game-menu-content')?.scrollTop || 0;
   const winner = state.gameId === 'mus' ? `Gana la pareja ${view.winnerTeam || ''}` : view.winner ? `Gana ${playerName(view.winner)}` : 'Fin de partida';
   const myTurn = view.turnPlayer === state.playerId;
   const selecting = state.gameId === 'mus' && view.phase === 'discard' && view.awaitingDiscardFrom.includes(state.playerId);
@@ -168,9 +176,20 @@ function renderGame() {
     <details class="history" ${historyOpen ? 'open' : ''}><summary>Historial de la partida</summary><ol>${(view.log || []).slice().reverse().map(line => `<li>${esc(readableLog(line))}</li>`).join('')}</ol></details>
     <dialog class="board-zoom" aria-label="Mesa ampliada"></dialog>
   </section>`;
-  app.querySelector('.board-zoom').addEventListener('close',event=>event.target.replaceChildren());
+  if(state.gameId==='cinquillo') state.handSuit=arrangeCinquilloScreen(app,view,state.playerId,playerName,state.handSuit);
+  app.querySelector('.game-rules').open=rulesOpen;
+  app.querySelector('.board-zoom').addEventListener('close',event=>{
+    event.target.replaceChildren();
+    app.querySelector('[data-action="open-table-zoom"]')?.focus({preventScroll:true});
+  });
+  app.querySelector('.game-menu')?.addEventListener('close',()=>app.querySelector('.game-menu-button')?.focus({preventScroll:true}));
+  if(menuOpen && state.gameId==='cinquillo') { app.querySelector('.game-menu').showModal(); app.querySelector('.game-menu-content').scrollTop=menuScrollTop; }
   if(zoomOpen) { openTableZoom(); app.querySelector('.board-zoom .zoom-scroll').scrollTop=zoomScrollTop; }
   app.querySelector('.hand').scrollLeft = scroll;
+  if(focusAction) {
+    const target=[...app.querySelectorAll('[data-action]')].find(el=>el.dataset.action===focusAction && (!focusCard||el.dataset.cardKey===focusCard) && (!focusSuit||el.dataset.suit===focusSuit));
+    if(target && !target.disabled && !target.hidden) target.focus({preventScroll:true});
+  }
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const stock = stockOrigin || app.querySelector('.game-table').getBoundingClientRect();
     for (const [index, card] of [...app.querySelectorAll('.hand [data-card-key]')].entries()) {
@@ -290,7 +309,13 @@ app.addEventListener("click", async (event) => {
   if (!button) return;
   const action = button.dataset.action;
   try {
-    if (action === "open-table-zoom") openTableZoom();
+    if (action === "open-table-zoom") { openTableZoom(); return; }
+    if (action === "open-game-menu") { app.querySelector('.game-menu')?.showModal(); return; }
+    if (action === "close-game-menu") { app.querySelector('.game-menu')?.close(); return; }
+    if (action === "hand-filter") {
+      state.handSuit=button.dataset.suit; renderGame(); app.querySelector('.hand').scrollLeft=0;
+      app.querySelector(`.hand-filters [data-suit="${state.handSuit}"]`)?.focus({preventScroll:true}); return;
+    }
     if (action === "go-to-hand") { const heading=app.querySelector('.hand-heading'); heading.focus({preventScroll:true}); heading.scrollIntoView({block:'start',behavior:'instant'}); }
     else if(action === "close-table-zoom") app.querySelector('.board-zoom')?.close();
     else if (action === "open-host") { state.screen = "host-form"; state.gameId = LAN ? "cinquillo" : state.gameId || listGames()[0]?.id || ""; render(); }

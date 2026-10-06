@@ -1,3 +1,5 @@
+import {mkdir} from 'node:fs/promises';
+await mkdir('tests/artifacts',{recursive:true});
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {once} from 'node:events';
@@ -34,12 +36,11 @@ try {
    const body=seat.getBoundingClientRect(),felt=document.querySelector('.table-surface').getBoundingClientRect();
    return body.top+body.height*.5<felt.top;
   }), 'The rival face must remain above the felt on the LAN page');
-  assert.equal(await page.locator('.table-tools').evaluate(el=>getComputedStyle(el).display),'flex');
-  assert.ok(await page.locator('.table-seat:not(.own-seat) .seat-label').evaluate(el=>el.getBoundingClientRect().top>=document.querySelector('.turn-banner').getBoundingClientRect().bottom), 'Player label stays below turn indicator');
-  await page.locator('[data-action="go-to-hand"]').click();
+  assert.equal(await page.locator('.hand-dock').evaluate(el=>getComputedStyle(el).display),'grid');
+  assert.ok(await page.locator('.game-table .seat-label').evaluate(el=>el.getBoundingClientRect().bottom<=document.querySelector('.hand-dock').getBoundingClientRect().top), 'Player label stays above the private hand');
   const hand=await page.locator('.hand .playing-card').first().boundingBox();
-  assert.ok(hand.y>=0 && hand.y+hand.height<=664, 'Hand shortcut brings full-size cards into the compact mobile viewport');
-  assert.ok(await page.locator('.hand-heading').evaluate(el=>document.activeElement===el),'Hand shortcut also moves keyboard focus');
+  assert.ok(hand.y>=0 && hand.y+hand.height<=664, 'Full-size own cards stay visible in the compact mobile viewport');
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+1),'LAN screen needs no vertical page scrolling');
   assert.ok(await page.locator('.hand .playing-card').evaluateAll(async cards=>{
    await Promise.all(cards.map(card=>card.querySelector('img').decode()));
    return cards.every(card=>{const rect=card.getBoundingClientRect();return Math.abs(rect.width/rect.height-208/319)<.02;});
@@ -49,7 +50,7 @@ try {
   await page.locator('[data-action="close-table-zoom"]').click();
   await page.evaluate(()=>scrollTo(0,0));
  }
- await guest.screenshot({path:`dist/lan-mobile-${process.env.LAN_BROWSER||'chromium'}.png`,fullPage:true});
+ await guest.screenshot({path:`tests/artifacts/lan-mobile-${process.env.LAN_BROWSER||'chromium'}.png`,fullPage:true});
  for(let i=0;i<8;i++){
   let active;
   for(const p of [host,guest])if(await p.locator('.game-controls').textContent().then(s=>s.includes('Juega una carta')))active=p;
@@ -63,6 +64,7 @@ try {
  await guest.locator('.hand .playing-card').first().waitFor();assert.equal(await guest.locator('.hand .playing-card').count(),guestCards);
  assert.equal(await host.locator('.table-seat').count(),1);
  assert.equal(await host.locator('.own-seat').count(),0);
+ await host.locator('.game-menu-button').click();
  await host.locator('[data-action="leave-room"]').click();
  await guest.locator('[data-action="open-join"]').waitFor();
  // Open another LAN table using the unchanged generic transport, now choosing Mus.

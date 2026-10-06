@@ -10,23 +10,23 @@ Cinquillo emplea un segundo atlas transparente de los mismos diez personajes, co
 
 El tapete muestra completos los dos extremos de cada escalera, sin números superpuestos ni cartas que tapen sus ilustraciones. Una escalera recién abierta muestra su cinco una sola vez. Las cartas intermedias permanecen en el estado público y se consultan con «Ver todas las cartas». Cada palo indica su cantidad y los valores que permiten continuar; se respeta el salto del siete a la sota y el orden francés de partidas antiguas. Los palos sin abrir tienen una silueta vacía, diferenciada de las cartas jugadas.
 
-En móvil se distribuyen los cuatro palos en una cuadrícula de dos por dos, con caras de unos 72 × 110 píxeles a 390 píxeles de ancho. En pantallas amplias quedan en una sola fila. Las caras mantienen sus proporciones originales y nunca se solapan. La altura del tapete permanece estable desde el reparto hasta la baraja completa. La trama fina y las sombras de papel conservan el aspecto de una mesa física, con verde profundo y borde de madera discreto. En móvil se prioriza el tamaño de las cartas y puede hacer falta desplazarse verticalmente; «Mi mano» lleva directamente a las cartas propias y mueve también el foco del teclado.
+Cinquillo ocupa el alto disponible con cabecera breve, tapete flexible y mano persistente. En móvil vertical usa cuatro columnas con dos extremos completos por palo; en horizontal los extremos quedan lado a lado. En pantallas amplias y altas utiliza cuatro zonas en dos filas. El tamaño depende del espacio real del tapete. La mano se desplaza horizontalmente y se puede filtrar por palo; turno y acción permanecen junto a ella. Marcador, reglas, historial y salida están en el menú. La comparación de alternativas y las simulaciones se documentan en [EXPERIMENTOS_MESA.md](EXPERIMENTOS_MESA.md).
 
 `cinquillo-table.css` contiene la composición y la paleta sobria de verde profundo, madera y dorado suave. Se carga tanto en la entrada web como en la entrada LAN. Ambos atlas se almacenan localmente y se incluyen en Android y en la caché sin conexión.
 
 ## Composición
 
 - Cuerpos y sillas del atlas transparente de diez mascotas, detrás del tapete.
-- Mesa ovalada de madera con borde dorado, patas y tapete verde.
+- Mesa de madera con borde fino y tapete verde. En Cinquillo el contorno deja más espacio útil para jugar.
 - Capa frontal por asiento, colocada exactamente sobre el cuerpo: abanico de dorsos bajo los recortes de manos y antebrazos. Los recortes reutilizan el mismo atlas, escala e identidad; no introducen una segunda identidad accesible.
 - Cartas jugadas y elementos de Mus sobre el tapete; huecos pendientes invisibles.
-- Mano propia accesible en primer plano; desplazamiento en pantallas pequeñas y abanico en amplias.
+- Mano propia accesible en primer plano; Cinquillo mantiene una franja de cartas completas con filtros, y Mus conserva su composición y abanico.
 
 La disposición se adapta a móvil vertical, horizontal y escritorio. Hay posiciones compartidas de 2–8 asientos para futuras vistas de tablero. Los motores actuales siguen siendo Cinquillo (2–6) y Mus (4). Las manos de tableros sin cantidades de cartas quedan vacías.
 
-La distribución toma las manos de cada personaje como punto de apoyo sobre el borde. Los rivales ocupan varios niveles alrededor del óvalo, con etiquetas escalonadas en las mesas de seis. La altura de la escena y el tamaño de los personajes se ajustan juntos para reducir espacio vacío y dejar sitio a la mano propia y sus controles. `table-layout.css` reúne estos ajustes de composición.
+La distribución toma las manos de cada personaje como punto de apoyo sobre el borde. Los rivales de Cinquillo se reparten a lo largo del borde superior, con etiquetas próximas a sus manos y espacio libre para el juego. La altura de la escena y el tamaño de los personajes se ajustan juntos para reducir espacio vacío y dejar sitio a la mano propia y sus controles. `table-layout.css` reúne estos ajustes de composición.
 
-Las dos entradas, `index.html` y `lan.html`, cargan esa misma composición. Las pruebas LAN abren el servidor Java real con Chromium y WebKit a 390 × 664: verifican que la cara del rival esté sobre el tapete, su nombre no pise el turno, el acceso a la mano muestre las cartas completas y la ampliación funcione.
+Las dos entradas, `index.html` y `lan.html`, cargan esa misma composición. Las pruebas LAN abren el servidor Java real con Chromium y WebKit a 390 × 664: verifican que la cara del rival esté sobre el tapete, su nombre no pise el turno, la mano permanezca visible sin scroll vertical y la ampliación funcione.
 
 ## Barajas
 
@@ -34,7 +34,7 @@ Las dos entradas, `index.html` y `lan.html`, cargan esa misma composición. Las 
 
 assets/decks/manifest.json conserva fuentes, licencias e integridad SHA-256. credits.html ofrece los créditos; FRENCH-LICENSE.txt y french-source.svg acompañan al material francés. El script de mantenimiento fetch-card-assets.mjs permite recuperar las caras; la compilación y el juego no descargan imágenes.
 
-Las cartas mantienen las proporciones de cada baraja, sin aplastar las figuras. En Cinquillo, «Ver todas las cartas» muestra todas las jugadas por palo, con caras de 92 píxeles de ancho y saltos de línea según el espacio disponible. Solo requiere desplazamiento vertical y mantiene «Volver» a la vista. La vista sigue actualizándose durante la partida y se cierra con «Volver» o Escape. No muestra manos ocultas. Mus conserva su ampliación de mesa.
+Las cartas mantienen las proporciones de cada baraja, sin aplastar las figuras. En Cinquillo, «Ver todas las cartas» muestra todas las jugadas por palo, con caras de 108 píxeles de ancho y saltos de línea según el espacio disponible. Solo requiere desplazamiento vertical y mantiene «Volver» a la vista. La vista sigue actualizándose durante la partida y se cierra con «Volver» o Escape. No muestra manos ocultas. Mus conserva su ampliación de mesa.
 
 ## Privacidad, movimiento y comprobación
 

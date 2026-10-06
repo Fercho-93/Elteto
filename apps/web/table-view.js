@@ -96,7 +96,7 @@ export function renderSeats(view, playerId, name, gameId) {
         own = id === playerId;
       if (own) return '';
       const [x, y] = seatPosition(n, relative);
-      const mobile = [x<20?12:x>80?88:x,y];
+      const mobile = [gameId==='cinquillo'?x:x<20?12:x>80?88:x,y];
       const character = mascotForSeat(view.players, index);
       const direction = gameId === 'cinquillo' && x !== 50 ? (x < 50 ? 'right' : 'left') : 'front';
       const side = direction !== 'front';
@@ -112,8 +112,9 @@ export function renderSeats(view, playerId, name, gameId) {
       // Body/chair sit behind the felt. This sibling crosses the table rim:
       // card backs under the hands, forearms over them. No hidden values enter it.
       const position=x<20?'left':x>80?'right':x===50?'top':'upper';
-      const front = `<div class="seat-front ${active ? 'active-seat' : ''}" data-direction="${direction}" data-position="${position}" data-front-player="${esc(id)}" style="${style}" aria-hidden="true"><div class="seat-grip">${cardGame ? `<div class="rival-hand">${Array.from({ length: count }, (_, i) => `<i class="card-back" style="--fan-angle:${(i - (count - 1) / 2) * Math.min(10, 65 / Math.max(1, count))}deg"><span>✦</span></i>`).join('')}</div>` : ''}<div class="player-character forearms"><div class="character-sprite arm-left"></div><div class="character-sprite arm-right"></div></div></div></div>`;
-      return `<article class="table-seat ${active ? 'active-seat' : ''}" data-direction="${direction}" data-position="${position}" data-player-id="${esc(id)}" style="${style}" aria-label="${esc(name(id))}, ${MASCOTS[character]}${cardGame ? `, ${count} cartas` : ''}${active ? ', turno activo' : ''}">${renderMascot(character, index)}<div class="seat-label"><strong>${esc(name(id))}</strong><small>${gameId === 'cinquillo' ? `${count} cartas` : `${MASCOTS[character]}${gameId === 'mus' ? ` · ${team}` : ''}${cardGame ? ` · ${count} cartas` : ''}`}</small></div>${view.mano === id ? '<span class="mano-badge">Mano</span>' : ''}</article>${front}`;
+      const compactLabel=gameId==='cinquillo'?`<div class="seat-label"><strong>${esc(name(id))}</strong><small>${count}<span class="seat-cards-word"> cartas</span></small></div>`:'';
+      const front = `<div class="seat-front ${active ? 'active-seat' : ''}" data-direction="${direction}" data-position="${position}" data-front-player="${esc(id)}" style="${style}" aria-hidden="true"><div class="seat-grip">${cardGame ? `<div class="rival-hand">${Array.from({ length: count }, (_, i) => `<i class="card-back" style="--fan-angle:${(i - (count - 1) / 2) * Math.min(10, 65 / Math.max(1, count))}deg"><span>✦</span></i>`).join('')}</div>` : ''}<div class="player-character forearms"><div class="character-sprite arm-left"></div><div class="character-sprite arm-right"></div></div></div>${compactLabel}</div>`;
+      return `<article class="table-seat ${active ? 'active-seat' : ''}" data-direction="${direction}" data-position="${position}" data-player-id="${esc(id)}" style="${style}" aria-label="${esc(name(id))}, ${MASCOTS[character]}${cardGame ? `, ${count} cartas` : ''}${active ? ', turno activo' : ''}">${renderMascot(character, index)}${gameId==='cinquillo'?'':`<div class="seat-label"><strong>${esc(name(id))}</strong><small>${MASCOTS[character]}${gameId === 'mus' ? ` · ${team}` : ''}${cardGame ? ` · ${count} cartas` : ''}</small></div>`}${view.mano === id ? '<span class="mano-badge">Mano</span>' : ''}</article>${front}`;
 
     })
     .join("");
@@ -126,14 +127,15 @@ export function renderCinquilloBoard(view) {
     .map((suit) => {
       const entry = view.table[suit];
       const count = entry ? entry.high - entry.low + 1 : 0;
-      const next = entry ? [ranks[entry.low - 1], ranks[entry.high + 1]].filter(Boolean) : ['5'];
+      const next = entry ? [ranks[entry.low - 1], ranks[entry.high + 1]].filter(Boolean) : canPlaceCinquillo(view.table,{suit,rank:'5'},view.ruleset)?['5']:[];
+      const continuation = entry ? next.length ? `Puedes continuar con ${next.join(' o ')}` : 'Palo completo' : next.length ? 'Abre con el 5' : 'Primero el 5 de '+(legacy?'corazones':'oros');
       return `<div class="suit-lane ${count > 2 ? 'has-stack' : ''}" data-suit="${suit}"><b class="${["corazones", "diamantes"].includes(suit) ? "card-red" : ""}" aria-label="${suitNames[suit]}">${suitArt(suit)}<span>${suitNames[suit]}</span><small>· ${count} ${count === 1 ? 'carta' : 'cartas'}</small></b><div class="lane-cards">${ranks.map(
         (rank, index) => {
           const placed = entry && index >= entry.low && index <= entry.high;
           const endpoint = placed && (index === entry.low || index === entry.high);
           return `<span class="board-card ${placed ? "placed" : "empty-slot"} ${endpoint ? 'endpoint' : ''} ${rank === "5" ? "five-slot" : ""}" data-rank="${rank}" ${placed ? `data-table-key="${suit}:${rank}"` : ""} aria-label="${rank} de ${suit}${placed ? ", colocada" : ", pendiente"}">${placed ? cardFace({ suit, rank }) : `<span>${rank}</span>`}</span>`;
         },
-      ).join("")}${entry ? '' : `<span class="unopened-suit" aria-label="${suitNames[suit]} sin abrir"><span>5</span>${suitArt(suit)}<small>Sin abrir</small></span>`}</div><span class="lane-next">${entry ? next.length ? `Sigue con ${next.join(' o ')}` : 'Palo completo' : 'Abre con el 5'}</span><span class="lane-range">${count ? `${ranks[entry.low]}${count > 1 ? '–' + ranks[entry.high] : ''} · ${count} ${count === 1 ? 'carta' : 'cartas'}` : 'Sin cartas'}</span></div>`;
+      ).join("")}${entry ? '' : `<span class="unopened-suit" aria-label="${suitNames[suit]} sin abrir"><span>5</span>${suitArt(suit)}<small>Sin abrir</small></span>`}</div><span class="lane-next" aria-label="${continuation}" title="${continuation}">${entry ? next.length ? `<span aria-hidden="true">→ </span>${next.join(' o ')}` : 'Completo' : next.length ? 'Abre el 5' : 'En espera'}</span><span class="lane-range">${count ? `${ranks[entry.low]}${count > 1 ? '–' + ranks[entry.high] : ''} · ${count} ${count === 1 ? 'carta' : 'cartas'}` : 'Sin cartas'}</span></div>`;
     })
     .join("")}</div>`;
 }

@@ -1,7 +1,7 @@
-const CACHE = "elteto-shell-v16";
+const CACHE = "elteto-shell-v17";
 const ASSETS = [
   "./table-layout.css",
-  "./cinquillo-table.css", "./assets/elteto-mascots-side-v1.png",
+  "./cinquillo-table.css", "./cinquillo-screen.js", "./assets/elteto-mascots-side-v1.png",
   "./", "./index.html", "./styles.css", "./app.js", "./table-view.js", "./card-art.js", "./assets/elteto-mascots-v1.png", "./local-session.js", "./local-transport.js",
   "./room-code.js", "./online-room.js", "./firebase-client.js", "./firebase-config.js",
   "./manifest.webmanifest", "./icon.svg", "./qrcode-generator.js", "./qr-encode.js", "./qr-scanner.js", "./jsqr.js",

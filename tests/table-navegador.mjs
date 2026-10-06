@@ -1,7 +1,8 @@
 // Test-only fixture is served from memory; production app has no testing hooks.
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { readFile } from "node:fs/promises";
+import { readFile, mkdir } from "node:fs/promises";
+await mkdir('tests/artifacts',{recursive:true});
 const { chromium, webkit } = await import(process.env.PLAYWRIGHT_MODULE || "playwright");
 import { cinquilloEngine, musEngine } from "../dist/game-core/index.js";
 import { MASCOTS, mascotForSeat, renderSeats, seatPosition } from "../dist/table-view.js";
@@ -23,9 +24,9 @@ for (const id of boardView.players) {
 }
 const fixture = `
 let testGame;
-window.testTable = (gameId, game, id) => {
+window.testTable = (gameId, game, id, names) => {
  testGame=game;
- Object.assign(state,{gameId,playerId:id,role:'host',online:null,screen:'game',selected:new Set(),error:'',players:game.players.map((id,i)=>({id,name:['Ana','Bea','Cris','Dani','Eva','Fer'][i]})),view:getGame(gameId).view(game,id)});
+ Object.assign(state,{gameId,playerId:id,role:'host',online:null,screen:'game',selected:new Set(),error:'',players:game.players.map((id,i)=>({id,name:names?.[i]||['Ana','Bea','Cris','Dani','Eva','Fer'][i]})),view:getGame(gameId).view(game,id)});
  state.host={applyLocalAction(action){testGame=getGame(state.gameId).applyAction(testGame,state.playerId,action);state.view=getGame(state.gameId).view(testGame,state.playerId);renderGame();}};
  renderGame();
 };
@@ -66,7 +67,7 @@ const deckPage=await browser.newPage();await deckPage.goto(base);
 assert.ok(await deckPage.evaluate(async files=>{await Promise.all(files.map(async file=>{const img=new Image();img.src='./assets/decks/'+file;await img.decode();if(img.naturalWidth<200)throw Error(file);}));return true;},manifest.map(card=>card.file)));
 await deckPage.close();
 try {
-  for (const [width,height] of [[320,844], [390,844], [390,664], [699,844], [700,844], [900,844], [844,390]]) {
+  for (const [width,height] of [[320,568], [390,844], [390,664], [699,844], [700,844], [900,844], [844,390]]) {
     const context = await browser.newContext({
       viewport: { width, height },
       serviceWorkers: "block",
@@ -112,11 +113,18 @@ try {
         true,
         `No page overflow: ${width}px, ${count} players`,
       );
-      await page.locator(".hand .playing-card:not([disabled])").click();
+      assert.ok(await page.locator('.hand').evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}),'Hand stays visible without page scrolling');
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+1),'Whole screen fits the available viewport');
+      await page.locator('[data-action="hand-filter"][data-suit="oros"]').click();
+      assert.deepEqual(await page.evaluate(()=>window.tableSnapshot()),game,'Filtering never sends a game action');
+      assert.ok(await page.locator('.hand .playing-card:visible').evaluateAll(cards=>cards.every(card=>card.dataset.cardKey.startsWith('oros:'))));
+      assert.equal(await page.locator('[data-action="hand-filter"][data-suit="oros"]').getAttribute('aria-pressed'),'true');
+      await page.locator(".hand .playing-card:not([disabled]):visible").click();
       await page.locator('[data-table-key="oros:5"]').waitFor({state:'attached'});
       assert.equal(await page.locator("[data-table-key]").count(), 1);
       assert.equal(await page.locator('.game-table .endpoint:visible').count(),1,'An opening five is shown once');
-      assert.equal(await page.locator('.game-table [data-suit="oros"] .lane-next').textContent(),'Sigue con 4 o 6');
+      assert.equal(await page.locator('.game-table [data-suit="oros"] .lane-next').getAttribute('aria-label'),'Puedes continuar con 4 o 6');
+      await page.locator('[data-action="hand-filter"][data-suit="all"]').click();
       assert.equal(
         await page.locator(".hand .playing-card").count(),
         game.hands[id].length - 1,
@@ -132,7 +140,7 @@ try {
       assert.ok(await page.locator(".hand .playing-card").first().isDisabled());
       assert.ok(await page.locator('.hand .playing-card').evaluateAll(async cards => {
         await Promise.all(cards.map(card=>card.querySelector('img').decode()));
-        return cards.every(card=>{const image=card.querySelector('img'),rect=image.getBoundingClientRect(); return image.naturalWidth>=200 && rect.width>60 && rect.height>90 && card.getAttribute('aria-label').includes(' de ');});
+        return cards.every(card=>{const image=card.querySelector('img'),rect=image.getBoundingClientRect(); return image.naturalWidth>=200 && rect.width>=56 && rect.height>=85 && card.getAttribute('aria-label').includes(' de ');});
       }));
       assert.equal(await page.locator('.character-sprite[data-character]').evaluateAll(els => new Set(els.map(el => el.dataset.character)).size),count-1);
       assert.ok(await page.locator('.table-seat').evaluateAll(seats=>seats.every(seat=>{
@@ -146,7 +154,8 @@ try {
       assert.equal(await page.locator('.game-table').getAttribute('data-scene'),'illustrated-2d');
       assert.equal(await page.locator('.table-canvas,.camera-controls').count(),0);
       assert.equal(await page.locator('.seat-front').count(),count-1);
-      assert.ok(await page.locator('.table-seat:not(.own-seat) .seat-label').evaluateAll(labels=>{
+      assert.equal(await page.locator('.game-table .seat-label').count(),count-1);
+      assert.ok(await page.locator('.game-table .seat-label').evaluateAll(labels=>{
         const boxes=labels.map(label=>label.getBoundingClientRect());
         const clear=boxes.every((a,i)=>a.left>=0 && a.right<=innerWidth && boxes.slice(i+1).every(b=>a.right<=b.left || b.right<=a.left || a.bottom<=b.top || b.bottom<=a.top));
         if(!clear) throw Error(JSON.stringify(boxes.map(box=>box.toJSON())));
@@ -163,11 +172,13 @@ try {
         const r=seat.getBoundingClientRect(),character=Number(seat.querySelector('[data-character]').dataset.character);
         const x=r.left+r.width*(seat.dataset.direction==='left'?.35:seat.dataset.direction==='right'?.65:.5);
         const y=r.top+r.height*(character<5?.43:.47);
-        return document.elementFromPoint(x,y)?.closest('[data-player-id]')===seat;
+        const hit=document.elementFromPoint(x,y);
+        if(hit?.closest('[data-player-id]')!==seat) throw Error(JSON.stringify({character,direction:seat.dataset.direction,x,y,hit:hit?.className,box:r.toJSON()}));
+        return true;
       })), `Rival faces stay visible above the table: ${width} × ${height}, ${count} players`);
       if (width === 390 || width === 900 || width === 844)
         await page.screenshot({
-          path: `dist/table-cinquillo-${count}-${width}-${process.env.TABLE_BROWSER||'chromium'}.png`,
+          path: `tests/artifacts/table-cinquillo-${count}-${width}-${process.env.TABLE_BROWSER||'chromium'}.png`,
           fullPage: true,
         });
     }
@@ -178,7 +189,7 @@ try {
       await page.evaluate(game=>window.testTable('cinquillo',game,'a'),full);
       assert.equal(await page.locator('[data-table-key]').count(),40);
       assert.equal(await page.locator('.game-table .endpoint:visible').count(),8);
-      assert.ok(await page.locator('.game-table .lane-next').evaluateAll(labels=>labels.every(label=>label.textContent==='Palo completo')));
+      assert.ok(await page.locator('.game-table .lane-next').evaluateAll(labels=>labels.every(label=>label.getAttribute('aria-label')==='Palo completo')));
       assert.ok(await page.locator('[data-table-key]:visible').evaluateAll(cards=>{
         const surface=document.querySelector('.table-surface'),felt=surface.getBoundingClientRect(),style=getComputedStyle(surface);
         const border=parseFloat(style.borderLeftWidth);
@@ -205,7 +216,7 @@ try {
         const rects=cards.map(card=>card.getBoundingClientRect());
         return cards.every((card,i)=>{
           const r=rects[i];
-          return r.width>=58 && ['none','normal'].includes(getComputedStyle(card,'::after').content) && rects.slice(i+1).every(b=>r.right<=b.left || b.right<=r.left || r.bottom<=b.top || b.bottom<=r.top);
+          return r.width>=54 && ['none','normal'].includes(getComputedStyle(card,'::after').content) && rects.slice(i+1).every(b=>r.right<=b.left || b.right<=r.left || r.bottom<=b.top || b.bottom<=r.top);
         });
       }), 'Both extremes show full, non-overlapping original faces without overprinted numbers');
       const fullHeight=await page.locator('.game-table').evaluate(el=>el.getBoundingClientRect().height);
@@ -237,10 +248,10 @@ try {
       assert.equal(await page.locator('.board-zoom').evaluate(dialog=>dialog.open),false);
       await page.evaluate(game=>window.testTable('cinquillo',game,'a'),{...full,table:{oros:{low:4,high:6}}});
       assert.deepEqual(await page.locator('.game-table .endpoint:visible').evaluateAll(cards=>cards.map(card=>card.dataset.tableKey)),['oros:5','oros:7']);
-      assert.equal(await page.locator('.game-table [data-suit="oros"] .lane-next').textContent(),'Sigue con 4 o 10','Spanish seven continues with the sota, not eight');
+      assert.equal(await page.locator('.game-table [data-suit="oros"] .lane-next').getAttribute('aria-label'),'Puedes continuar con 4 o 10','Spanish seven continues with the sota, not eight');
       assert.equal(await page.locator('.game-table [data-suit="oros"] b small').textContent(),'· 3 cartas');
       await page.evaluate(game=>window.testTable('cinquillo',game,'a'),full);
-      if(width === 900) await page.screenshot({path:`dist/table-full-spanish-${process.env.TABLE_BROWSER||'chromium'}.png`,fullPage:true});
+      if(width === 900) await page.screenshot({path:`tests/artifacts/table-full-spanish-${process.env.TABLE_BROWSER||'chromium'}.png`,fullPage:true});
       full.ruleset='legacy-french-52';
       full.table=Object.fromEntries(['picas','corazones','diamantes','treboles'].map(suit=>[suit,{low:4,high:6}]));
       full.hands.a=[{suit:'picas',rank:'A'},{suit:'corazones',rank:'K'},{suit:'diamantes',rank:'Q'},{suit:'treboles',rank:'J'}];
@@ -251,8 +262,38 @@ try {
       assert.ok(await page.locator('.board-card.placed:visible').evaluateAll(cards=>cards.every(card=>{
         const r=card.getBoundingClientRect();return Math.abs(r.width/r.height-169.075/244.64)<.02;
       })), 'French cards retain their printed proportions');
-      if(width === 900) await page.screenshot({path:`dist/table-french-${process.env.TABLE_BROWSER||'chromium'}.png`,fullPage:true});
+      if(width === 900) await page.screenshot({path:`tests/artifacts/table-french-${process.env.TABLE_BROWSER||'chromium'}.png`,fullPage:true});
     }
+    // Filters, keyboard focus and reading position survive live updates and rotation.
+    const browsing=cinquilloEngine.createInitialState(['a','b'],17);
+    await page.evaluate(game=>window.testTable('cinquillo',game,'a'),browsing);
+    await page.locator('[data-action="hand-filter"][data-suit="copas"]').click();
+    await page.evaluate(game=>window.testTable('cinquillo',game,'a'),browsing);
+    assert.equal(await page.evaluate(()=>document.activeElement.dataset.suit),'copas');
+    assert.equal(await page.locator('.hand-filters [aria-pressed="true"]').getAttribute('data-suit'),'copas');
+    if(width===390 && height===844) {
+      await page.setViewportSize({width:844,height:390});
+      await page.waitForFunction(()=>document.querySelector('.hand').getBoundingClientRect().bottom<=innerHeight+1);
+      assert.ok(await page.locator('.hand').evaluate(el=>el.getBoundingClientRect().bottom<=innerHeight+1));
+      await page.setViewportSize({width:390,height:664});
+      await page.waitForFunction(()=>document.querySelector('.hand').getBoundingClientRect().bottom<=innerHeight+1);
+      assert.ok(await page.locator('.hand').evaluate(el=>el.getBoundingClientRect().bottom<=innerHeight+1));
+      await page.setViewportSize({width,height});
+      assert.deepEqual(await page.evaluate(()=>window.tableSnapshot()),browsing,'Rotation and filtering do not change the game');
+    }
+    await page.locator('.game-menu-button').click();
+    await page.locator('.game-rules summary').click();
+    await page.locator('.history summary').click();
+    await page.locator('.game-menu-content').evaluate(el=>el.scrollTop=120);
+    const menuPosition=await page.locator('.game-menu-content').evaluate(el=>el.scrollTop);
+    await page.evaluate(game=>window.testTable('cinquillo',game,'a'),browsing);
+    assert.ok(await page.locator('.game-menu').evaluate(el=>el.open));
+    assert.ok(await page.locator('.game-rules').evaluate(el=>el.open));
+    assert.ok(await page.locator('.history').evaluate(el=>el.open));
+    assert.equal(await page.locator('.game-menu-content').evaluate(el=>el.scrollTop),menuPosition);
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(()=>document.activeElement.className==='game-menu-button');
+    assert.equal(await page.evaluate(()=>document.activeElement.className),'game-menu-button');
     // A completed hand exposes the cumulative score and winner-only continuation.
     let closing = cinquilloEngine.createInitialState(['a','b','c','d'],19);
     closing.hands={a:[{suit:'oros',rank:'6'}],b:[{suit:'copas',rank:'1'}],c:[{suit:'bastos',rank:'12'}],d:[{suit:'espadas',rank:'2'}]};
@@ -260,9 +301,12 @@ try {
     await page.evaluate(game=>window.testTable('cinquillo',game,'a'),closing);
     await page.locator('.legal-card').click();
     assert.ok(await page.locator('[data-action="cinquillo-next-hand"]').isVisible());
-    assert.match(await page.locator('.game-controls').textContent(),/Ana: 8/);
+    await page.locator('.game-menu-button').click();
+    assert.equal(await page.locator('.scoreboard li').first().textContent(),'Ana · tú8');
+    await page.locator('[data-action="close-game-menu"]').click();
     await page.locator('[data-action="cinquillo-next-hand"]').click();
     assert.equal((await page.evaluate(()=>window.tableSnapshot())).handNumber,2);
+    assert.equal(await page.locator('.hand-filters [aria-pressed="true"]').getAttribute('data-suit'),'all');
     const ids = ["a", "b", "c", "d"];
     let game = musEngine.createInitialState(ids, 7);
     await page.evaluate((game) => window.testTable("mus", game, "a"), game);
@@ -308,7 +352,7 @@ try {
     }),`Mus recuento remains on the felt at ${width} × ${height}`);
     await page.evaluate(() => scrollTo(0, 0));
     if (width === 390)
-      await page.screenshot({ path: `dist/table-mus-${process.env.TABLE_BROWSER||'chromium'}.png`, fullPage: true });
+      await page.screenshot({ path: `tests/artifacts/table-mus-${process.env.TABLE_BROWSER||'chromium'}.png`, fullPage: true });
     // Reduced motion prevents both CSS avatar animation and card flight.
     await page.emulateMedia({ reducedMotion: "reduce" });
     assert.equal(
@@ -352,8 +396,8 @@ try {
       return response.ok && (await response.text()).includes('.board-zoom');
     }));
     assert.ok(await page.evaluate(async()=>{
-      const style=await fetch('../../cinquillo-table.css'),art=await fetch('../../assets/elteto-mascots-side-v1.png');
-      return style.ok && (await style.text()).includes('--pile-w') && art.ok && (await art.blob()).size>10000;
+      const style=await fetch('../../cinquillo-table.css'),art=await fetch('../../assets/elteto-mascots-side-v1.png'),screen=await fetch('../../cinquillo-screen.js');
+      return style.ok && (await style.text()).includes('--pile-w') && art.ok && (await art.blob()).size>10000 && screen.ok && (await screen.text()).includes('arrangeCinquilloScreen');
     }));
     assert.ok(await page.evaluate(async()=>{
       const response=await fetch('../../assets/elteto-mascots-v1.png');
