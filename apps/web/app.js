@@ -2,7 +2,7 @@ import { getGame, listGames, GAME_CATALOG } from "./game-core/index.js";
 import { LocalGuestSession, LocalHostSession } from "./local-session.js";
 import { parseRoomCode } from "./room-code.js";
 
-import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, canPlayCinquillo, animateTable } from "./table-view.js";
+import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, canPlayCinquillo, animateTable, animateSeats, MASCOTS, renderMascot } from "./table-view.js";
 
 const LAN = window.ELTETO_LAN;
 const app = document.querySelector("#app");
@@ -38,6 +38,7 @@ function renderHome() {
       <button class="button button-cyan" data-action="open-join">Unirse a la timba 🍑</button>
     </div>
     <p><a href="./reglas_juegos/biblioteca.html">Reglas de todos los juegos</a></p><details class="game-rules"><summary>Próximos juegos</summary><ul>${GAME_CATALOG.filter(game => game.status === "planned").map(game => `<li>${esc(game.label)} · Pendiente <a href="./reglas_juegos/lectura/${game.id}.html">Reglas</a></li>`).join("")}</ul></details>
+    <details class="mascot-gallery"><summary>Los diez personajes de Elteto</summary><div>${MASCOTS.map((label,index)=>`<figure>${renderMascot(index)}<figcaption>${label}</figcaption></figure>`).join('')}</div></details>
     <p class="fineprint">*La fruta es fresca. Las intenciones, cosa vuestra. 😏</p>
   </section>`;
 }
@@ -117,6 +118,7 @@ function renderLobby() {
 let previousTableKeys = null;
 let previousTurn = null;
 let renderedGame = null;
+let previousSeats = null;
 function renderGame() {
   state.screen = "game";
   const game = getGame(state.gameId), view = state.view;
@@ -127,16 +129,16 @@ function renderGame() {
   const actor = [...app.querySelectorAll('[data-player-id]')].find(el => el.dataset.playerId === previousTurn);
   const sourceSeat = (actor?.querySelector('.rival-hand') || actor)?.getBoundingClientRect();
   const gameToken = `${state.gameId}:${view.players.join(',')}`;
-  if (renderedGame !== gameToken) previousTableKeys = null;
+  if (renderedGame !== gameToken) { previousTableKeys = null; previousSeats = null; }
   renderedGame = gameToken;
   const scroll = app.querySelector('.hand')?.scrollLeft || 0;
   const historyOpen = app.querySelector('.history')?.open || false;
   const winner = state.gameId === 'mus' ? `Gana la pareja ${view.winnerTeam || ''}` : view.winner ? `Gana ${playerName(view.winner)}` : 'Fin de partida';
   const myTurn = view.turnPlayer === state.playerId;
   const selecting = state.gameId === 'mus' && view.phase === 'discard' && view.awaitingDiscardFrom.includes(state.playerId);
-  const hand = sortedHand(view.myHand).map(card => {
+  const hand = sortedHand(view.myHand).map((card,index) => {
     const playable = state.gameId === 'cinquillo' && !view.finished && !view.handWinner && myTurn && canPlayCinquillo(view.table, card, view.ruleset);
-    return renderHandCard(card, {playable, selected: selecting && state.selected.has(cardKey(card)), selectable: selecting, disabled: !selecting && !playable});
+    return renderHandCard(card, {playable, selected: selecting && state.selected.has(cardKey(card)), selectable: selecting, disabled: !selecting && !playable, tilt:(index-(view.myHand.length-1)/2)*2.4});
   }).join('');
   const controls = state.gameId === 'mus' ? musControls(view) : cinquilloControls(view);
   const table = state.gameId === 'mus' ? renderMusBoard(view) : renderCinquilloBoard(view);
@@ -148,6 +150,7 @@ function renderGame() {
     ${state.gameId === 'mus' ? `<div class="score-strip"><span>Pareja A <b>${view.scores.A}</b></span><span>Pareja B <b>${view.scores.B}</b></span></div>` : ''}
     <div class="turn-banner ${myTurn || selecting ? 'your-turn' : ''}" role="status">${esc(hint)}</div>
     <section class="game-table seats-${view.players.length}" aria-label="Mesa de ${esc(game.label)}">
+      <div class="table-surface" aria-hidden="true"><i class="table-leg leg-left"></i><i class="table-leg leg-right"></i></div>
       <div class="felt-watermark" aria-hidden="true">ELTETO <span>LA TIMBA</span></div>
       ${renderSeats(view, state.playerId, playerName, state.gameId)}
       <div class="table-center">${table}</div>
@@ -155,7 +158,7 @@ function renderGame() {
     <p class="last-play" aria-live="polite">${esc(readableLog(view.log?.at(-1) || 'La mesa está lista.'))}</p>
     ${state.error ? `<p class="error-message" role="alert">${esc(state.error)}</p>` : ''}
     <h3>Tu mano <small>${view.myHand.length} cartas · desliza para verlas</small></h3>
-    <div class="hand" aria-label="Tus cartas">${hand || '<p>No tienes cartas.</p>'}</div>
+    <div class="hand ${view.myHand.length <= 10 ? 'hand-fan' : ''}" aria-label="Tus cartas">${hand || '<p>No tienes cartas.</p>'}</div>
     ${controls ? `<section class="game-controls">${controls}</section>` : ""}
     <details class="game-rules"><summary>Cómo jugar · reglas de esta mesa</summary>${state.gameId === 'cinquillo' ? view.ruleset === 'legacy-french-52' ? '<p>Mesa anterior: 52 cartas francesas, salida cinco de corazones, una mano.</p>' : '<p>40 cartas españolas; salida cinco de oros. Escaleras sin saltos: 1–7, sota (10), caballo (11), rey (12). Solo pasa quien no tiene jugada. Ganador de mano: 5 puntos más cartas ajenas; los demás restan sus cartas. Gana quien alcanza 30. La fuente clásica usa cuatro jugadores; las mesas de 2–6 son una ampliación de Elteto.</p>' : `<p>Cuatro jugadores por parejas; ${view.ruleset === 'eight-kings' ? '8 reyes y 8 ases: treses como reyes y doses como ases; mus corrido en la primera mano' : '4 reyes: doses y treses conservan su valor'}. Grande, chica, pares y juego o punto. Juegos a ${view.targetScore} tantos; gana quien logra ${view.targetGames ?? 1} juegos completos. El órdago aceptado decide un juego completo.</p>`}<a href="./reglas_juegos/lectura/${state.gameId}.html">Consultar reglamento completo</a></details>
     <details class="history" ${historyOpen ? 'open' : ''}><summary>Historial de la partida</summary><ol>${(view.log || []).slice().reverse().map(line => `<li>${esc(readableLog(line))}</li>`).join('')}</ol></details>
@@ -170,6 +173,8 @@ function renderGame() {
     }
   }
   previousTableKeys = animateTable(app, previousTableKeys, origins, sourceSeat);
+  animateSeats(app, previousSeats, view);
+  previousSeats = {turnPlayer:view.turnPlayer,handSizes:{...view.handSizes},log:view.log?.at(-1)};
   previousTurn = view.turnPlayer;
 }
 function readableLog(line) {
@@ -220,7 +225,7 @@ function render() {
 }
 
 function resetToHome() {
-  previousTableKeys = null; renderedGame = null; previousTurn = null;
+  previousTableKeys = null; renderedGame = null; previousTurn = null; previousSeats = null;
   Object.assign(state, { role: null, name: "", players: [], view: null, host: null, guest: null, online: null, roomCode: "", offerCode: "", answerCode: "", selected: new Set(), error: "", screen: "home" });
   renderHome();
 }

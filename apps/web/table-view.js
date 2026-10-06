@@ -55,11 +55,32 @@ export function cardFace(card) {
   return `<span class="card-face ${red ? "card-red" : ""}"><span class="card-corner">${esc(card.rank)}${symbol}</span>${center}<span class="card-corner corner-bottom">${esc(card.rank)}${symbol}</span></span>`;
 }
 export function renderHandCard(card, options = {}) {
-  return `<button class="playing-card ${options.selected ? "selected" : ""} ${options.playable ? "legal-card" : ""}" data-action="play-card" data-card-key="${esc(cardKey(card))}" ${options.disabled ? "disabled" : ""} ${options.selectable ? `aria-pressed="${Boolean(options.selected)}"` : ""} aria-label="${esc(card.rank + " de " + card.suit)}${options.playable ? ", puedes jugarla" : ""}">${cardFace(card)}<span class="hand-index ${["corazones", "diamantes"].includes(card.suit) ? "card-red" : ""}" aria-hidden="true"><b>${esc(card.rank)}</b>${suitArt(card.suit)}</span></button>`;
+  return `<button class="playing-card ${options.selected ? "selected" : ""} ${options.playable ? "legal-card" : ""}" style="--card-tilt:${Number(options.tilt) || 0}deg" data-action="play-card" data-card-key="${esc(cardKey(card))}" ${options.disabled ? "disabled" : ""} ${options.selectable ? `aria-pressed="${Boolean(options.selected)}"` : ""} aria-label="${esc(card.rank + " de " + card.suit)}${options.playable ? ", puedes jugarla" : ""}">${cardFace(card)}<span class="hand-index ${["corazones", "diamantes"].includes(card.suit) ? "card-red" : ""}" aria-hidden="true"><b>${esc(card.rank)}</b>${suitArt(card.suit)}</span></button>`;
 }
-function avatar(seat) {
-  const character = seat % 6;
-  return `<div class="player-character" aria-hidden="true"><div class="character-sprite" data-character="${character}" style="--character-x:${(character % 3) * 50}%;--character-y:${Math.floor(character / 3) * 100}%;--motion-delay:${seat * -1.3}s"></div></div>`;
+export const MASCOTS = ["Berenjena", "Melocotón", "Plátano", "Bandera", "Aguacate", "Cerdito", "Seta", "Gota", "Caca", "Castañas"];
+// A public roster gives every device the same, unique identities without sending
+// cosmetic state or touching the room protocol. Identity never depends on POV.
+export function mascotForSeat(players, seat) {
+  const hash = [...players.join("|")].reduce((value, ch) => (Math.imul(value, 31) + ch.charCodeAt(0)) >>> 0, 0);
+  return (hash + seat * 3) % MASCOTS.length;
+}
+export function renderMascot(character, seat = character) {
+  return `<div class="player-character" role="img" aria-label="${MASCOTS[character]}"><div class="character-sprite" data-character="${character}" style="--character-x:${(character % 5) * 25}%;--character-y:${Math.floor(character / 5) * 100}%;--motion-delay:${seat * -1.3}s"></div></div>`;
+}
+// Shared seating for card and board games, with the local player at the bottom.
+// These layouts do not change the supported player counts of any engine.
+export function seatPosition(count, relative) {
+  if (!relative) return [50, 93];
+  if (count === 2) return [50, 18];
+  const layouts = {
+    3: [[14, 32], [86, 32]],
+    4: [[13, 36], [50, 18], [87, 36]],
+    5: [[13, 40], [35, 20], [65, 20], [87, 40]],
+    6: [[13, 40], [28, 23], [50, 15], [72, 23], [87, 40]],
+    7: [[12, 48], [21, 30], [39, 18], [61, 18], [79, 30], [88, 48]],
+    8: [[12, 57], [12, 35], [29, 20], [50, 14], [71, 20], [88, 35], [88, 57]],
+  };
+  return layouts[count]?.[relative - 1] || [50, 18];
 }
 export function renderSeats(view, playerId, name, gameId) {
   const ownIndex = view.players.indexOf(playerId),
@@ -68,17 +89,16 @@ export function renderSeats(view, playerId, name, gameId) {
     .map((id, index) => {
       const relative = (index - ownIndex + n) % n,
         own = id === playerId;
-      const angle =
-        n === 2 ? Math.PI / 2 : (Math.PI * (relative - 1)) / (n - 2);
-      const x = own ? 50 : n === 2 ? 50 : n === 6 ? [50,14,32,50,68,86][relative] : 14 + (72 * (1 - Math.cos(angle))) / 2;
-      const y = own ? 91 : n === 2 ? 21 : n === 6 ? [91,40,24,14,24,40][relative] : 32 - 11 * Math.sin(angle);
+      const [x, y] = seatPosition(n, relative);
+      const character = mascotForSeat(view.players, index);
       const active =
         !view.finished &&
         (view.turnPlayer === id ||
-          (view.phase === "discard" && view.awaitingDiscardFrom.includes(id)));
+          (view.phase === "discard" && view.awaitingDiscardFrom?.includes(id)));
       const team = index % 2 === 0 ? "A" : "B";
-      const count = view.handSizes[id] || 0;
-      return `<article class="table-seat ${own ? "own-seat" : ""} ${active ? "active-seat" : ""}" data-player-id="${esc(id)}" style="--seat-x:${x}%;--seat-y:${y}%" aria-label="${esc(name(id))}, ${count} cartas${active ? ", turno activo" : ""}">${avatar(index)}<div class="seat-label"><strong>${esc(own ? "Tú" : name(id))}</strong><small>${gameId === "mus" ? `Pareja ${team} · ` : ""}${count} cartas</small></div>${view.mano === id ? '<span class="mano-badge">Mano</span>' : ""}${!own ? `<div class="rival-hand" aria-label="${count} cartas boca abajo">${Array.from({ length: count }, (_, i) => `<i class="card-back" style="--fan-angle:${(i - (count - 1) / 2) * Math.min(10, 65 / Math.max(1, count))}deg"><span>✦</span></i>`).join("")}</div>` : ""}</article>`;
+      const count = view.handSizes?.[id] || 0;
+      const cardGame = Boolean(view.handSizes);
+      return `<article class="table-seat ${own ? "own-seat" : ""} ${active ? "active-seat" : ""}" data-player-id="${esc(id)}" style="--seat-x:${x}%;--seat-y:${y}%" aria-label="${esc(name(id))}, ${MASCOTS[character]}${cardGame ? `, ${count} cartas` : ""}${active ? ", turno activo" : ""}">${renderMascot(character, index)}<div class="seat-label"><strong>${esc(own ? "Tú" : name(id))}</strong><small>${MASCOTS[character]}${gameId === "mus" ? ` · ${team}` : ""}${cardGame ? ` · ${count} cartas` : ""}</small></div>${view.mano === id ? '<span class="mano-badge">Mano</span>' : ""}${!own && cardGame ? `<div class="rival-hand" aria-label="${count} cartas boca abajo">${Array.from({ length: count }, (_, i) => `<i class="card-back" style="--fan-angle:${(i - (count - 1) / 2) * Math.min(10, 65 / Math.max(1, count))}deg"><span>✦</span></i>`).join("")}</div>` : ""}</article>`;
     })
     .join("");
 }
@@ -86,7 +106,7 @@ export function renderCinquilloBoard(view) {
   const legacy = view.ruleset === "legacy-french-52";
   const ranks = legacy ? FRENCH_RANKS : SPANISH_RANKS;
   const suits = legacy ? Object.keys(symbols) : SPANISH_SUITS;
-  return `<div class="cinquillo-board">${suits
+  return `<div class="cinquillo-board ${legacy ? "legacy-board" : "spanish-board"}">${suits
     .map((suit) => {
       const entry = view.table[suit];
       return `<div class="suit-lane"><b class="${["corazones", "diamantes"].includes(suit) ? "card-red" : ""}" aria-label="${suitNames[suit]}">${suitArt(suit)}</b><div class="lane-cards">${ranks.map(
@@ -158,4 +178,23 @@ export function animateTable(app, previousKeys, origins, sourceSeat) {
     );
   }
   return keys;
+}
+
+// Reactions use public counts/turns only. Selecting a private card is not a move.
+export function animateSeats(app, before, view) {
+  if (!before || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const changed = before.log !== view.log?.at(-1);
+  for (const seat of app.querySelectorAll(".table-seat")) {
+    const id = seat.dataset.playerId;
+    const sprite = seat.querySelector(".player-character");
+    if (!sprite.animate) continue;
+    const moved = before.handSizes?.[id] !== view.handSizes?.[id];
+    const acted = changed && before.turnPlayer === id;
+    const enteredTurn = before.turnPlayer !== view.turnPlayer && view.turnPlayer === id;
+    if (moved || acted) {
+      sprite.animate([{transform:"none"},{transform:"translateY(4px) rotate(-3deg)",offset:.4},{transform:"translateY(-3px) rotate(2deg)",offset:.75},{transform:"none"}], {duration:520,easing:"ease-in-out"});
+    } else if (enteredTurn) {
+      sprite.animate([{transform:"none"},{transform:"translateY(-6px) scale(1.04)"},{transform:"none"}], {duration:650,easing:"ease-out"});
+    }
+  }
 }

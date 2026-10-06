@@ -60,7 +60,7 @@ El sitio compilado aparece en `dist/`. Para probarlo localmente, sírvelo desde 
 
 ## Mesa y evolución de los juegos
 
-La web y Android LAN comparten la nueva mesa con tapete, avatares animados, manos rivales boca abajo y animaciones de cartas. Las reglas implementadas, pruebas y pasos para añadir juegos se detallan en [MESA_Y_REGLAS.md](MESA_Y_REGLAS.md).
+La web y Android LAN comparten la mesa inspirada en los mockups: diez mascotas de Elteto sentadas, tapete verde y madera con profundidad, manos rivales boca abajo y animaciones de reparto, jugada y turno. Las referencias están conservadas en `design/references/`. Las reglas implementadas, pruebas y pasos para añadir juegos se detallan en [MESA_Y_REGLAS.md](MESA_Y_REGLAS.md).
 
 ## Reglas y ampliación de juegos
 

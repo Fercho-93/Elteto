@@ -26,6 +26,10 @@ Las seña físicas, corte manual y errores de reparto no se simulan como accione
 
 ## Estructura para ampliar juegos
 
+La presentación común sigue los seis mockups conservados en `design/references/`: ambiente morado, tapete verde, borde de madera con profundidad, sillas y diez mascotas. Cinquillo y Mus la utilizan en web y Android LAN. La mano propia ocupa el primer plano (abanico en pantallas amplias y desplazamiento en móvil); las rivales muestran solo dorsos y cantidades públicas. Hay vuelo de cartas, reparto, respiración y reacciones al turno o jugada, con movimiento reducido respetado.
+
+`seatPosition` prepara posiciones para 2–8 participantes y `renderSeats` acepta vistas de tablero sin cartas. Esto no habilita todavía motores de Parchís/Oca ni amplía el límite actual de Cinquillo (2–6) o Mus (4). No se copian como reglas los tableros ni los recuentos dibujados en los mockups. Los recursos y el prompt están documentados en `apps/web/assets/README.md`; son ilustraciones animadas, no modelos 3D articulados.
+
 | Capa | Ubicación | Responsabilidad |
 |---|---|---|
 | Fuentes | `reglas_juegos/` | Copias originales, procedencia, integridad y biblioteca sin scripts |

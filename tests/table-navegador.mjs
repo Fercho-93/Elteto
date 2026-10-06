@@ -4,6 +4,23 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 const { chromium, webkit } = await import(process.env.PLAYWRIGHT_MODULE || "playwright");
 import { cinquilloEngine, musEngine } from "../dist/game-core/index.js";
+import { MASCOTS, mascotForSeat, renderSeats, seatPosition } from "../dist/table-view.js";
+assert.equal(MASCOTS.length, 10);
+const roster = Array.from({length:10},(_,i)=>`mascot-${i}`);
+assert.equal(new Set(roster.map((_,i)=>mascotForSeat(roster,i))).size,10);
+for (const count of [2,3,4,5,6,7,8]) {
+  const points=Array.from({length:count},(_,i)=>seatPosition(count,i));
+  assert.equal(new Set(points.map(point=>point.join(','))).size,count);
+  assert.ok(points.every(([x,y])=>x>0 && x<100 && y>0 && y<100));
+}
+// Same public identities from every POV; future board views have empty hands.
+const boardView={players:roster.slice(0,8),turnPlayer:roster[0]};
+for (const id of boardView.players) {
+  const html=renderSeats(boardView,id,p=>p,'oca');
+  assert.equal((html.match(/data-character=/g)||[]).length,8);
+  assert.ok(!html.includes('rival-hand'));
+  assert.ok(html.includes(`data-character="${mascotForSeat(boardView.players,0)}"`));
+}
 const fixture = `
 let testGame;
 window.testTable = (gameId, game, id) => {
@@ -42,9 +59,9 @@ const base = `http://127.0.0.1:${server.address().port}/`;
 const browser = await (process.env.TABLE_BROWSER === "webkit" ? webkit : chromium).launch();
 const errors = [];
 try {
-  for (const width of [320, 390, 900]) {
+  for (const width of [320, 390, 900, 844]) {
     const context = await browser.newContext({
-      viewport: { width, height: 844 },
+      viewport: { width, height: width === 844 ? 390 : 844 },
       serviceWorkers: "block",
     });
     await context.route("**/*", (r) =>
@@ -107,11 +124,11 @@ try {
         return face.width > 60 && face.height > 90 && badge.width > 8 && badge.height > 25 && badge.x >= face.x && badge.y >= face.y && badge.bottom <= face.bottom && rank.textContent.trim() && getComputedStyle(rank).webkitTextFillColor !== 'rgba(0, 0, 0, 0)';
       })));
       assert.equal(await page.locator('.character-sprite').evaluateAll(els => new Set(els.map(el => el.dataset.character)).size),count);
-      assert.ok(await page.evaluate(async () => { const image=new Image(); image.src='/assets/table-players-v1.png'; await image.decode(); return image.naturalWidth===1536 && image.naturalHeight===1024; }));
+      assert.ok(await page.evaluate(async () => { const image=new Image(); image.src='/assets/elteto-mascots-v1.png'; await image.decode(); return image.naturalWidth===1536 && image.naturalHeight===1024; }));
       await page.evaluate(() => scrollTo(0, 0));
-      if (width === 390)
+      if (width === 390 || width === 900 || width === 844)
         await page.screenshot({
-          path: `dist/table-cinquillo-${count}.png`,
+          path: `dist/table-cinquillo-${count}-${width}.png`,
           fullPage: true,
         });
     }
@@ -193,11 +210,15 @@ try {
       return response.ok && (await response.text()).includes('8 reyes');
     });
     assert.ok(cached);
+    assert.ok(await page.evaluate(async()=>{
+      const response=await fetch('../../assets/elteto-mascots-v1.png');
+      return response.ok && (await response.blob()).size>10000;
+    }));
     await offlineContext.close();
   }
   assert.deepEqual(errors, []);
   console.log(
-    "Tables at 320, 390 and 900px: 2/4/6 seats, hidden hands, legal moves, Mus discard/envite/ordago, reveal, no overflow, reduced motion: OK",
+    "Tables at 320/390/900px and phone landscape: ten mascots, 2/4/6 seats, future 8-seat board layouts, hidden hands, legal moves, Mus discard/envite/ordago, reveal, offline assets, no overflow, reduced motion: OK",
   );
 } finally {
   await browser.close();
