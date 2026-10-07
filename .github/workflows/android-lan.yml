@@ -30,6 +30,8 @@ jobs:
       - run: LAN_BROWSER=webkit node tests/lan-navegador.mjs
       - run: node tests/table-navegador.mjs
       - run: TABLE_BROWSER=webkit node tests/table-navegador.mjs
+      - run: node tests/qr-navegador.mjs
+      - run: QR_BROWSER=webkit node tests/qr-navegador.mjs
       - run: node tests/catalog-screen.mjs
       - run: CATALOG_BROWSER=webkit node tests/catalog-screen.mjs
       - run: node tests/cinquillo-layout.mjs

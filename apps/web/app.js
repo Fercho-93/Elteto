@@ -455,45 +455,60 @@ app.addEventListener("change", (event) => {
 });
 
 
-let activeScanner = null;
-let scanTarget = null;
+let scanSession = null;
 async function beginQrScan(target) {
+  endQrScan();
   if (!window.CONTINUUM?.QrScanner?.isSupported()) {
     flash("Este navegador no da acceso a la cámara. Puedes pegar el código a mano.");
     return;
   }
-  scanTarget = target;
+  const playerName = document.querySelector("#join-name")?.value.trim() || state.name || "Invitado";
+  if (target === "offer") state.name = playerName;
   const overlay = document.createElement("section");
   overlay.className = "scan-overlay";
-  overlay.innerHTML = `<div class="scan-panel"><div class="eyebrow">Conexión de la mesa</div><h2>Apunta al código QR</h2><video id="qr-video" playsinline muted></video><p class="helper">Centra el QR entero y sube el brillo de la pantalla que lo muestra. Dale unos segundos para enfocar.</p><button class="button button-paper full-button" data-action="stop-scan">Cancelar</button></div>`;
+  overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-modal", "true");
+  overlay.setAttribute("aria-label", "Escanear invitación");
+  overlay.innerHTML = `<div class="scan-panel"><div class="eyebrow">Conexión de la mesa</div><h2>Apunta al código QR</h2><video id="qr-video" playsinline muted></video><p class="scan-status" role="status">Abriendo cámara…</p><p class="helper">Encaja el QR entero. Si no enfoca, aleja un poco el móvil.</p><button class="button button-paper full-button" data-action="stop-scan">Cancelar</button></div>`;
   document.body.appendChild(overlay);
+  const session = { overlay, controller: new AbortController(), scanner: null };
+  scanSession = session;
+  // This overlay is outside #app, so it needs its own cancel handler.
+  const cancel = overlay.querySelector('[data-action="stop-scan"]');
+  cancel.addEventListener("click", endQrScan);
+  overlay.addEventListener("keydown", event => { if (event.key === "Escape") endQrScan(); });
+  cancel.focus({ preventScroll: true });
   try {
-    const video = overlay.querySelector("#qr-video");
-    const scanner = await window.CONTINUUM.QrScanner.start(video, (value) => {
-      if (!scanTarget) return;
-      const targetNow = scanTarget;
+    const scanner = await window.CONTINUUM.QrScanner.start(overlay.querySelector("#qr-video"), value => {
+      if (scanSession !== session) return;
       endQrScan();
-      if (targetNow === "offer") {
+      flash("QR reconocido. Entrando…");
+      if (target === "offer") {
         const roomCode = parseRoomCode(value);
-        const playerName = localStorage.getItem("elteto.playerName") || "Invitado";
         const join = roomCode ? beginOnlineJoin(roomCode, playerName) : beginOfflineGuestJoin(value, playerName);
-        join.catch((error) => { state.error = error.message || "No se pudo entrar en la sala."; flash(state.error); render(); });
-      } else if (targetNow === "answer") {
-        state.host.acceptOfflineAnswer(value).then(() => { state.answerCode = ""; renderLobby(); flash("Respuesta aceptada. Conexión directa en marcha."); }).catch((error) => { state.error = error.message || "No se pudo aceptar la respuesta."; flash(state.error); renderLobby(); });
+        join.catch(error => { state.error = error.message || "No se pudo entrar en la sala."; flash(state.error); render(); });
+      } else {
+        state.host.acceptOfflineAnswer(value).then(() => { state.answerCode = ""; renderLobby(); flash("Respuesta aceptada. Conexión directa en marcha."); }).catch(error => { state.error = error.message || "No se pudo aceptar la respuesta."; flash(state.error); renderLobby(); });
       }
-    }, (error) => console.warn("No se pudo leer el fotograma.", error));
-    activeScanner = scanner;
+    }, () => {
+      if (scanSession === session) overlay.querySelector(".scan-status").textContent = "Reintentando la lectura. Mantén el QR completo a la vista.";
+    }, { signal: session.controller.signal });
+    if (scanSession !== session) scanner.stop();
+    else { session.scanner = scanner; overlay.querySelector(".scan-status").textContent = "Buscando el QR de la sala…"; }
   } catch (error) {
+    if (scanSession !== session) return;
     endQrScan();
-    flash(error?.name === "NotAllowedError" ? "Activa el permiso de cámara para escanear el QR." : "No se pudo abrir la cámara. Puedes pegar el código.");
+    if (error?.name !== "AbortError") flash(error?.name === "NotAllowedError" ? "Activa el permiso de cámara para escanear el QR." : "No se pudo abrir la cámara. Puedes pegar el código.");
   }
 }
 function endQrScan() {
-  activeScanner?.stop();
-  activeScanner = null;
-  scanTarget = null;
-  document.querySelector(".scan-overlay")?.remove();
+  const session = scanSession;
+  scanSession = null;
+  session?.controller.abort();
+  session?.scanner?.stop();
+  session?.overlay.remove();
 }
+window.addEventListener("pagehide", endQrScan);
 
 function handleGuestChange(change) {
   if (change.kind === "lobby") { state.players = change.players || []; state.playerId = change.playerId || state.playerId; state.gameId = change.gameId || state.gameId; state.roomName = change.roomName || state.roomName; }

@@ -47,7 +47,7 @@ await collectRules(path.join(web,"assets","decks"),"./assets/decks");
 const swPath=path.join(output,"sw.js");
 const sw=await readFile(swPath,"utf8");
 // A changed menu must get a new URL even when a mobile browser retains its HTTP cache.
-const menuFiles = ['app.js', 'styles.css'];
+const menuFiles = ['app.js', 'styles.css', 'qr-scanner.js'];
 const menuHash = createHash('sha256');
 const versionFiles = [...menuFiles, 'catalog-games.js', 'catalog-games.css', 'game-core/catalog.js', 'game-core/engine.js', 'game-core/index.js', ...['shared','boards','social-cards','tricks','melds','holdem'].map(name => `game-core/games/${name}.js`)];
 for (const file of versionFiles) menuHash.update(await readFile(path.join(output, file)));

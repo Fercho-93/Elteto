@@ -7,10 +7,11 @@ import vm from 'node:vm';
 const index = await readFile('dist/index.html', 'utf8');
 const worker = await readFile('dist/sw.js', 'utf8');
 const hash = createHash('sha256');
-for (const file of ['app.js', 'styles.css', 'catalog-games.js', 'catalog-games.css', 'game-core/catalog.js', 'game-core/engine.js', 'game-core/index.js', ...['shared','boards','social-cards','tricks','melds','holdem'].map(name => `game-core/games/${name}.js`)]) hash.update(await readFile(`dist/${file}`));
+for (const file of ['app.js', 'styles.css', 'qr-scanner.js', 'catalog-games.js', 'catalog-games.css', 'game-core/catalog.js', 'game-core/engine.js', 'game-core/index.js', ...['shared','boards','social-cards','tricks','melds','holdem'].map(name => `game-core/games/${name}.js`)]) hash.update(await readFile(`dist/${file}`));
 const version = hash.digest('hex').slice(0, 12);
 assert.ok(index.includes(`./app.js?v=${version}`));
 assert.ok(index.includes(`./styles.css?v=${version}`));
+assert.ok(index.includes(`./qr-scanner.js?v=${version}`));
 assert.ok(worker.includes(`elteto-shell-v25-${version}`));
 
 const origin = 'https://example.test/Elteto/';
@@ -64,7 +65,7 @@ async function load(path) {
 assert.equal(await (await load('app.js')).text(), 'new-menu');
 assert.equal(requests.at(-1).cache, 'no-cache');
 offline = true;
-for (const path of ['./', 'index.html', 'app.js', 'styles.css', `app.js?v=${version}`, `styles.css?v=${version}`]) {
+for (const path of ['./', 'index.html', 'app.js', 'styles.css', 'qr-scanner.js', `app.js?v=${version}`, `styles.css?v=${version}`, `qr-scanner.js?v=${version}`]) {
   assert.equal(await (await load(path)).text(), 'new-menu', `${path} stays available offline`);
 }
 console.log('Menu cache: versioned URLs, stale HTTP cache bypass, old cache retirement and offline menu: OK');

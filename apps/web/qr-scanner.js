@@ -1,87 +1,107 @@
-// Lee códigos QR con la cámara del móvil, para el modo "Sin conexión": la alternativa a
-// pegar a mano el código de invitación o de respuesta cuando no hay ningún canal común
-// entre los dos móviles (por ejemplo, Android e iPhone en modo avión, sin Bluetooth
-// emparejado ni AirDrop compatible).
-//
-// `jsqr.js` (decodificador, vendorizado sin modificar — ver su cabecera) pesa unos 250 KB
-// sin comprimir: no se carga con el resto de la aplicación, solo la primera vez que se abre
-// esta pantalla. Como está en la lista de precarga del service worker, esa carga sigue
-// funcionando sin conexión igual que el resto del juego — solo se difiere para no pagar su
-// peso quien nunca escanea nada.
+// QR camera reader. Prefer the browser decoder where QR is supported; keep the
+// local jsQR decoder for Safari, offline use and native detection failures.
 (function () {
   "use strict";
   window.CONTINUUM = window.CONTINUUM || {};
   const CT = window.CONTINUUM;
-
   let loadingLibrary = null;
   function ensureLibrary() {
     if (typeof jsQR === "function") return Promise.resolve();
     if (loadingLibrary) return loadingLibrary;
     loadingLibrary = new Promise((resolve, reject) => {
       const script = document.createElement("script");
-      script.src = "jsqr.js";
-      script.onload = () => (typeof jsQR === "function" ? resolve() : reject(new Error("CAMERA_LIBRARY_UNAVAILABLE")));
+      script.src = "./jsqr.js";
+      script.onload = () => typeof jsQR === "function" ? resolve() : reject(new Error("CAMERA_LIBRARY_UNAVAILABLE"));
       script.onerror = () => reject(new Error("CAMERA_LIBRARY_UNAVAILABLE"));
       document.head.appendChild(script);
     }).catch(error => { loadingLibrary = null; throw error; });
     return loadingLibrary;
   }
-
-  function isSupported() {
-    return typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
+  function isSupported() { return !!navigator.mediaDevices?.getUserMedia; }
+  async function nativeDecoder() {
+    if (typeof BarcodeDetector !== "function") return null;
+    try {
+      if (BarcodeDetector.getSupportedFormats && !(await BarcodeDetector.getSupportedFormats()).includes("qr_code")) return null;
+      return new BarcodeDetector({ formats: ["qr_code"] });
+    } catch { return null; }
   }
 
-  // `onFrame` se llama con el texto del QR en cuanto la cámara consigue leerlo, y puede
-  // repetirse mientras el código siga a la vista — quien llama decide qué hacer con eso
-  // (aquí, aceptar la primera lectura y parar) y cuándo dejar de escuchar (`stop()`).
-  async function start(videoEl, onFrame, onError) {
+  async function start(videoEl, onFrame, onError, { signal } = {}) {
     if (!isSupported()) throw new Error("CAMERA_UNAVAILABLE");
-    await ensureLibrary();
-    // Sin pedir resolución, el navegador puede elegir una muy baja por su cuenta (varía
-    // según el móvil y el navegador) — de sobra para una videollamada, no para resolver
-    // los cuadraditos finos de un código QR denso como el de una invitación completa. Se
-    // pide la más alta que el propio móvil ofrezca, y enfoque continuo donde exista: sin
-    // esto un lado de la conversación puede leer perfectamente al otro y el otro no leer
-    // nada, según qué resolución eligiera cada navegador por defecto.
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 }, advanced: [{ focusMode: "continuous" }] },
-      audio: false
-    });
-    videoEl.srcObject = stream;
-    videoEl.setAttribute("playsinline", "true");
-    videoEl.muted = true;
-    try { await videoEl.play(); } catch { /* Algunos navegadores ya lo reproducen solos al asignar srcObject. */ }
-
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d", { willReadFrequently: true });
-    let stopped = false, frameHandle = null, lastScanAt = 0;
-
-    function tick(now) {
-      if (stopped) return;
-      if (now - lastScanAt >= 140 && videoEl.readyState >= 2 && videoEl.videoWidth) {
-        lastScanAt = now;
-        canvas.width = videoEl.videoWidth;
-        canvas.height = videoEl.videoHeight;
-        context.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
-        try {
-          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-          const result = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
-          if (result?.data) onFrame(result.data);
-        } catch (error) { onError?.(error); }
-      }
-      frameHandle = requestAnimationFrame(tick);
-    }
-    frameHandle = requestAnimationFrame(tick);
-
+    let stopped = false, stream = null, frameHandle = null, detector = null, lastScanAt = -Infinity, pass = 0;
+    const aborted = () => new DOMException("Camera scan cancelled", "AbortError");
     function stop() {
       if (stopped) return;
       stopped = true;
-      if (frameHandle) cancelAnimationFrame(frameHandle);
-      stream.getTracks().forEach(track => track.stop());
-      videoEl.srcObject = null;
+      if (frameHandle !== null) cancelAnimationFrame(frameHandle);
+      signal?.removeEventListener("abort", stop);
+      stream?.getTracks().forEach(track => track.stop());
+      if (stream && videoEl.srcObject === stream) { videoEl.pause(); videoEl.srcObject = null; }
     }
-    return { stop };
+    signal?.addEventListener("abort", stop, { once: true });
+    if (signal?.aborted) stop();
+    try {
+      detector = await nativeDecoder();
+      if (!detector) await ensureLibrary();
+      if (stopped) throw aborted();
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false
+        });
+      } catch (error) {
+        if (stopped) throw aborted();
+        if (error.name !== "OverconstrainedError") throw error;
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+      }
+      // Permissions can resolve after the user has cancelled or opened another scan.
+      if (stopped) { stream.getTracks().forEach(track => track.stop()); throw aborted(); }
+      const track = stream.getVideoTracks()[0];
+      try {
+        if (track?.getCapabilities?.().focusMode?.includes("continuous")) await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
+      } catch { /* Optional focus controls must not prevent scanning. */ }
+      if (stopped) throw aborted();
+      videoEl.setAttribute("playsinline", "true");
+      videoEl.muted = true;
+      videoEl.srcObject = stream;
+      await videoEl.play();
+      if (stopped) throw aborted();
+      const canvas = document.createElement("canvas"), context = canvas.getContext("2d", { willReadFrequently: true });
+      if (!context) throw new Error("CAMERA_CANVAS_UNAVAILABLE");
+      const fallback = () => {
+        const width = videoEl.videoWidth, height = videoEl.videoHeight;
+        // Alternate a bounded whole frame with a sharper central crop. Full-size
+        // multi-megapixel jsQR work can stall a phone's preview and controls.
+        const mode = pass++ % 3, crop = mode === 1;
+        const sw = crop ? Math.min(width, height) * .75 : width, sh = crop ? sw : height;
+        const scale = Math.min(1, (mode === 2 ? 1280 : 960) / Math.max(sw, sh));
+        const cw = Math.max(1, Math.round(sw * scale)), ch = Math.max(1, Math.round(sh * scale));
+        if (canvas.width !== cw) canvas.width = cw;
+        if (canvas.height !== ch) canvas.height = ch;
+        context.drawImage(videoEl, (width-sw)/2, (height-sh)/2, sw, sh, 0, 0, cw, ch);
+        const data = context.getImageData(0, 0, cw, ch);
+        return jsQR(data.data, cw, ch, { inversionAttempts: "attemptBoth" })?.data;
+      };
+      async function tick(now) {
+        if (stopped) return;
+        try {
+          if (now-lastScanAt >= 180 && videoEl.readyState >= 2 && videoEl.videoWidth && videoEl.videoHeight) {
+            lastScanAt = now;
+            let value;
+            if (detector) {
+              try { value = (await detector.detect(videoEl)).find(result => result.rawValue?.trim())?.rawValue; }
+              catch { detector = null; }
+            }
+            if (stopped) return;
+            if (!value) { await ensureLibrary(); if (stopped) return; value = fallback(); }
+            if (value && !stopped) onFrame(value);
+          }
+        } catch (error) { if (!stopped) onError?.(error); }
+        // Schedule only after decoding finishes: no overlapping native promises.
+        if (!stopped) frameHandle = requestAnimationFrame(tick);
+      }
+      frameHandle = requestAnimationFrame(tick);
+      return { stop };
+    } catch (error) { stop(); throw error; }
   }
-
   CT.QrScanner = { isSupported, start };
 })();

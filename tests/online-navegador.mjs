@@ -1,5 +1,5 @@
 // Recorrido de la interfaz con dos «móviles» en Chromium contra los emuladores de Auth y
-// Firestore: crear sala con internet, entrar con el código, empezar y jugar un turno.
+// Firestore: crear sala con internet, leer el QR con la cámara interna, empezar y jugar cuatro turnos.
 // No forma parte de `npm test` (necesita Playwright y Chromium). Uso:
 //   npm run build:web
 //   PLAYWRIGHT_MODULE=/ruta/a/playwright/index.mjs \
@@ -66,11 +66,21 @@ try {
   await guest.page.goto(base);
   await guest.page.click('[data-action="open-join"]');
   await guest.page.fill("#join-name", "Bea");
-  await guest.page.fill("#offer-code", code.toLowerCase());
-  await guest.page.click('[data-action="join-room"]');
+  // Feed the host's actual QR into a real video MediaStream; do not mock decoding.
+  const qrImage = await host.page.locator('canvas.invite-qr').evaluate(canvas=>canvas.toDataURL());
+  await guest.page.evaluate(async image=>{
+    const qr=new Image();qr.src=image;await qr.decode();
+    const frame=document.createElement('canvas');frame.width=1280;frame.height=720;
+    const ctx=frame.getContext('2d');const paint=()=>{ctx.fillStyle='#bbb';ctx.fillRect(0,0,1280,720);ctx.drawImage(qr,460,180,360,360);};paint();
+    window.__qrCameraTracks=[];
+    navigator.mediaDevices.getUserMedia=async()=>{const stream=frame.captureStream(8),timer=setInterval(paint,120);window.__qrCameraTracks=stream.getTracks();for(const track of stream.getTracks()){const stop=track.stop.bind(track);track.stop=()=>{clearInterval(timer);stop();};}return stream;};
+  },qrImage);
+  await guest.page.click('[data-action="scan-offer"]');
   await guest.waitText(/Conectado a la sala/);
   await host.waitText(/Bea/);
-  console.log("  ok  la invitada entra con el código y el anfitrión la ve");
+  assert.equal(await guest.page.locator('.scan-overlay').count(),0);
+  assert.ok(await guest.page.evaluate(()=>window.__qrCameraTracks.every(track=>track.readyState==='ended')));
+  console.log("  ok  la invitada escanea el QR de la sala, conserva su nombre y libera la cámara");
 
   // Entrar por el enlace de invitación (QR) con una tercera persona.
   const third = await movil("tercera");
@@ -82,8 +92,8 @@ try {
   console.log("  ok  el enlace de invitación mete en la sala y salir deja la plaza libre");
 
   await host.page.click('[data-action="start-game"]');
-  await host.waitText(/Tu mano/);
-  await guest.waitText(/Tu mano/);
+  await host.page.locator(".hand .playing-card").first().waitFor();
+  await guest.page.locator(".hand .playing-card").first().waitFor();
   const hostCards = await host.page.locator(".hand .playing-card").count();
   const guestCards = await guest.page.locator(".hand .playing-card").count();
   assert.ok(hostCards >= 20 && guestCards >= 20, `manos repartidas (${hostCards}/${guestCards})`);
@@ -94,7 +104,7 @@ try {
   for (let i = 0; i < 4; i++) {
     const jugador = await (async () => {
       for (const p of turnos) {
-        if (await p.page.locator(".hand .playing-card:not([disabled])").count() || await p.page.locator('[data-action="cinquillo-pass"]').count() && /Juega una carta/.test(await p.text())) return p;
+        if (await p.page.locator(".self-seat.active-seat").count()) return p;
       }
       return null;
     })();
@@ -107,6 +117,7 @@ try {
   }
   console.log("  ok  cuatro turnos jugados desde la interfaz");
 
+  await host.page.click('[data-action="open-game-menu"]');
   await host.page.click('[data-action="leave-room"]');
   await guest.waitText(/Elteto|Crear partida/);
   console.log("  ok  al cerrar la sala el invitado vuelve al inicio");

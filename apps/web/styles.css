@@ -148,8 +148,10 @@ button:disabled { cursor: not-allowed; opacity: .45; transform: none !important;
 .scan-overlay { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 16px; background: #09070cf2; }
 .scan-panel { width: min(100%, 500px); padding: 21px; background: #2b1e35; border: var(--edge); border-radius: 20px; box-shadow: 8px 8px 0 #000; }
 .scan-panel h2 { color: var(--citrus); margin: 8px 0 14px; font-size: 28px; }
-.scan-panel video { width: 100%; min-height: 220px; max-height: 58vh; object-fit: cover; background: #000; border: 3px solid var(--black); border-radius: 13px; }
-.scan-panel .helper { margin: 12px 0 0; }
+.scan-panel video { width: 100%; height: min(44dvh, 340px); min-height: 120px; object-fit: contain; background: #000; border: 3px solid var(--black); border-radius: 13px; }
+.scan-panel .helper { margin: 8px 0 12px; }
+.scan-panel { max-height: calc(100dvh - 32px); overflow-y: auto; }
+.scan-status { min-height: 1.4em; margin: 10px 0 0; color: var(--cyan); font-size: 14px; }
 
 /* Identidad de fruta: descarada, alegre y legible en pantallas pequeñas. */
 .brand { white-space: nowrap; letter-spacing: 1px; }
