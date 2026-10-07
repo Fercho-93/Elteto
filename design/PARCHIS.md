@@ -23,7 +23,15 @@ El documento no enumera todas las coordenadas ni todos los desempates. Esta edic
 
 Estas decisiones también aparecen en el catálogo y el menú de reglas. No se incluyen apuestas, errores manuales ni Parchís de ocho colores.
 
-## Comprobaciones
+## Dados
+
+El dado de seis caras usa puntos, caras opuestas que suman siete, sombra, giro y rebotes amortiguados de 840 ms. Es una animación visual; el anfitrión sigue calculando el resultado y todos reciben el mismo valor y número de tirada. Como referencia de separación entre presentación y azar se consultó [cómo funcionan los dados en MONOPOLY GO](https://www.monopolygo.com/news/79/so-random-how-dice-rolling-works-in-monopoly-go). No se usa su código ni sus recursos gráficos.
+
+El último resultado permanece visible aunque cambie el turno. La ronda inicial muestra las tiradas de cada participante; los empates solo los repiten los empatados. Una pulsación bloquea la acción mientras llega respuesta y termina la animación. El motor rechaza acciones con un número de tirada anterior, evitando que un reintento vuelva a tirar durante un turno extra. La preferencia de movimiento reducido elimina el giro. Entrar o recargar muestra el resultado sin repetir la animación.
+
+`tests/parchis-dice.mjs` verifica las seis caras, rebotes, respuesta retrasada, pulsaciones repetidas, resultado persistente, nueva partida y movimiento reducido en Chromium y WebKit. Las pruebas LAN y online recorren la tirada inicial y movimientos con cuatro identidades independientes.
+
+## Verificación del tablero y reglas
 
 `tests/parchis-rules.mjs` verifica las reglas, la autoridad del anfitrión, vistas sin semilla futura, inmutabilidad y 90 partidas completas deterministas. Forma parte de `npm test`.
 

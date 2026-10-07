@@ -1,3 +1,4 @@
+import {beginParchisRoll} from './parchis-dice.js';
 import { getGame, listGames, GAME_CATALOG } from "./game-core/index.js";
 import { LocalGuestSession, LocalHostSession } from "./local-session.js";
 import { arrangeCinquilloScreen } from './cinquillo-screen.js';
@@ -408,7 +409,7 @@ app.addEventListener("click", async (event) => {
     } else if (action === "mus-yes") sendAction({ type: "mus", wantsMus: true });
     else if (action === "mus-no") sendAction({ type: "mus", wantsMus: false });
     else if (action === "mus-next") sendAction({ type: "next-hand" });
-    else if (action === "parchis-roll") sendAction({ type: "roll" });
+    else if (action === "parchis-roll") { if(beginParchisRoll(app))sendAction({ type: "roll", expectedRoll:Number(button.dataset.rollSequence) }); }
     else if (action === "parchis-move") sendAction({ type: "move", piece: Number(button.dataset.piece) });
     else if (action === "mus-pass") sendAction({ type: "pass" });
     else if (action === "mus-bet") sendAction({ type: "bet", amount: Number(document.querySelector("#bet-amount")?.value) || 2 });
