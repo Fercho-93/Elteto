@@ -72,3 +72,18 @@ host.handleHostPacket({type:'guest-message',playerId:guest.playerId,message:{typ
 assert.equal(JSON.stringify(host.local.state),snapshot);
 await guest.exit();await host.exit();
 console.log('LAN: conexión, 40 cartas privadas, pausa, reconexión, partida completa y deduplicación: OK');
+
+// Android LAN also supports a solo table; bots are never marked disconnected.
+window.ELTETO_LAN.hostKey='secret';
+const aiEvents=[];
+const aiHost=await LanSession.create({gameId:'mus',hostName:'Ana',roomName:'IA'},e=>aiEvents.push(e));
+await aiHost.fillWithBots();assert.equal(aiHost.local.players().length,4);
+assert.ok(aiEvents.findLast(e=>e.kind==='lobby').players.every(p=>!p.away));
+await aiHost.removePlayer('bot-1');assert.equal(aiHost.local.players().length,3);
+await aiHost.fillWithBots();await aiHost.startGame();
+aiHost.local.botRunner.stop();aiHost.local.botRunner.delay=1;
+await aiHost.sendAction({type:'mus',wantsMus:true});
+await new Promise(r=>setTimeout(r,40));assert.notEqual(aiHost.local.state.phase,'mus');
+assert.ok(aiEvents.findLast(e=>e.kind==='game').players.every(p=>!p.away));
+await aiHost.exit();
+console.log('LAN: completar con IA, quitar IA y turnos automáticos sin invitados: OK');

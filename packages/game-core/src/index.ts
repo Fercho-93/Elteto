@@ -1,5 +1,6 @@
 export * from "./deck";
 export * from "./engine";
+export * from "./bots";
 export * from "./games/mus";
 export * from "./games/cinquillo";
 export * from "./games/parchis";

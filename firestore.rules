@@ -89,6 +89,20 @@ service cloud.firestore {
       function bumped() { return after().version == before().version + 1 && after().updatedAt == request.time; }
       function validName(name) { return name is string && name.size() >= 1 && name.size() <= 24; }
       function validPlayer(p) { return p.keys().hasOnly(['name','joinedAt']) && validName(p.name) && p.joinedAt is int; }
+      // Bots are seats controlled by the host, never authenticated participants.
+      function validBot(bots, id) { return !(id in bots) || validName(bots[id]); }
+      function validBots() {
+        let bots = after().get('bots', {});
+        return bots is map && bots.keys().hasOnly(['bot-1','bot-2','bot-3','bot-4','bot-5','bot-6','bot-7'])
+          && validBot(bots,'bot-1') && validBot(bots,'bot-2') && validBot(bots,'bot-3')
+          && validBot(bots,'bot-4') && validBot(bots,'bot-5') && validBot(bots,'bot-6') && validBot(bots,'bot-7')
+          && !after().playerOrder.hasAny(bots.keys())
+          && after().playerOrder.size() + bots.size() <= after().maxPlayers;
+      }
+      function validBotEdit() {
+        return open(before()) && isHost() && before().status == 'lobby'
+          && changed().hasOnly(['bots','version','updatedAt']) && validBots() && bumped();
+      }
 
       // Identidad de la sala: nunca cambia después de crearla.
       function identityKept() { return !changed().hasAny(['roomCode','gameId','roomName','minPlayers','maxPlayers','createdAt']); }
@@ -101,6 +115,7 @@ service cloud.firestore {
           && after().playerOrder == before().playerOrder.concat([uid()])
           && after().players.diff(before().players).affectedKeys().hasOnly([uid()])
           && validPlayer(after().players[uid()])
+          && validBots()
           && bumped();
       }
       // Marcharse del vestíbulo (el anfitrión no: cierra la sala) o expulsar a alguien.
@@ -124,7 +139,7 @@ service cloud.firestore {
       }
       function validStart() {
         return isHost() && before().status == 'lobby'
-          && before().playerOrder.size() >= before().minPlayers
+          && before().playerOrder.size() + before().get('bots', {}).size() >= before().minPlayers
           && changed().hasOnly(['status','version','updatedAt'])
           && after().status == 'playing'
           && bumped();
@@ -148,7 +163,7 @@ service cloud.firestore {
 
       allow create: if licensed()
         && roomId.matches('^[A-HJ-NP-Z2-9]{8}$')
-        && after().keys().hasOnly(['roomCode','gameId','roomName','hostUid','status','version','minPlayers','maxPlayers','playerOrder','players','createdAt','updatedAt'])
+        && after().keys().hasOnly(['roomCode','gameId','roomName','hostUid','status','version','minPlayers','maxPlayers','playerOrder','players','bots','createdAt','updatedAt'])
         && after().roomCode == roomId
         && after().gameId is string && after().gameId.matches('^[a-z][a-z0-9-]{1,23}$')
         && after().roomName is string && after().roomName.size() >= 1 && after().roomName.size() <= 40
@@ -157,13 +172,14 @@ service cloud.firestore {
         && after().hostUid == uid() && after().status == 'lobby' && after().version == 1
         && after().playerOrder == [uid()]
         && after().players.keys().hasOnly([uid()]) && validPlayer(after().players[uid()])
+        && validBots()
         && after().createdAt == request.time && after().updatedAt == request.time
         // La sala solo nace junto con su registro de cuota (una sala cada 30 s por UID).
         && getAfter(/databases/$(database)/documents/roomCreation/$(uid())).data.roomCode == roomId;
 
       allow update: if registered() && identityKept() && (
         after().hostUid == before().hostUid
-          && (validJoin() || validLeave() || validKick() || validStart() || validSync() || validClose())
+          && (validJoin() || validLeave() || validKick() || validBotEdit() || validStart() || validSync() || validClose())
       );
 
       allow delete: if false;

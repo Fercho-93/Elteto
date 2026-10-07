@@ -1,5 +1,5 @@
 import TcpSocket from "react-native-tcp-socket";
-import { AnyEngine, getGame } from "game-core";
+import { AnyEngine, getGame, fillBotSeats, BotPlayer, BotRunner, nextBotMove } from "game-core";
 import { GAME_PORT, ClientMessage, LobbyPlayer, ServerMessage, encodeMessage, makeLineBuffer } from "./protocol";
 
 type ConnectionListener = Extract<Parameters<typeof TcpSocket.createServer>[0], (...args: any[]) => any>;
@@ -18,6 +18,9 @@ export class HostServer {
   private engine: AnyEngine;
   private state: unknown = null;
   private started = false;
+  private closed = false;
+  private bots: BotPlayer[] = [];
+  private botRunner: BotRunner;
   readonly hostPlayerId: string;
 
   constructor(
@@ -28,12 +31,27 @@ export class HostServer {
   ) {
     this.engine = getGame(gameId);
     this.hostPlayerId = "host";
+    this.botRunner = new BotRunner(() => this.closed ? null : nextBotMove(this.engine, this.state, this.bots.map(p => p.id)),
+      ({playerId,action}) => { this.state = this.engine.applyAction(this.state,playerId,action); this.sendViews(); },
+      () => this.onLocalView(this.engine.view(this.state,this.hostPlayerId)));
   }
 
   private lobbyPlayers(): LobbyPlayer[] {
     const players: LobbyPlayer[] = [{ id: this.hostPlayerId, name: this.hostName, isHost: true }];
     for (const c of this.connections.values()) players.push({ id: c.id, name: c.name, isHost: false });
-    return players;
+    return [...players, ...this.bots];
+  }
+
+  fillWithBots() {
+    if (this.started || this.closed) return;
+    this.bots.push(...fillBotSeats(this.lobbyPlayers(),this.engine.maxPlayers));
+    this.broadcastLobby();
+  }
+
+  removeBot(id: string) {
+    if (this.started || this.closed) return;
+    this.bots = this.bots.filter(p => p.id !== id);
+    this.broadcastLobby();
   }
 
   private broadcastLobby() {
@@ -53,6 +71,7 @@ export class HostServer {
     for (const c of this.connections.values()) {
       c.socket.write(encodeMessage({ type: "state", view: this.engine.view(this.state, c.id) }));
     }
+    this.botRunner.schedule();
   }
 
   listen() {
@@ -72,7 +91,7 @@ export class HostServer {
             socket.end();
             return;
           }
-          if (this.started || this.connections.size + 1 >= this.engine.maxPlayers) {
+          if (this.started || this.lobbyPlayers().length >= this.engine.maxPlayers) {
             socket.write(encodeMessage({ type: "error", message: this.started ? "La partida ya ha empezado." : "La sala está completa." }));
             socket.end();
             return;
@@ -115,6 +134,7 @@ export class HostServer {
   }
 
   startGame(seed: number) {
+    if (this.started || this.closed) throw new Error('La mesa ya no admite una nueva partida.');
     const players = this.currentPlayerIds();
     if (players.length < this.engine.minPlayers) {
       throw new Error(`Se necesitan al menos ${this.engine.minPlayers} jugadores.`);
@@ -149,6 +169,8 @@ export class HostServer {
   }
 
   close() {
+    this.closed = true;
+    this.botRunner.stop();
     for (const c of this.connections.values()) c.socket.end();
     this.connections.clear();
     this.server?.close();

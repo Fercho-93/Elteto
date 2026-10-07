@@ -51,7 +51,7 @@ const sw=await readFile(swPath,"utf8");
 // A changed menu must get a new URL even when a mobile browser retains its HTTP cache.
 const menuFiles = ['app.js', 'styles.css', 'qr-scanner.js'];
 const menuHash = createHash('sha256');
-const versionFiles = [...menuFiles, 'firebase-sdk.js', 'host-access.js', 'activation-code.js', 'online-room.js', 'room-code.js', 'distribution-config.js', 'guest.html', 'catalog-games.js', 'catalog-games.css', 'game-core/catalog.js', 'game-core/engine.js', 'game-core/index.js', ...['shared','boards','social-cards','tricks','melds','holdem'].map(name => `game-core/games/${name}.js`)];
+const versionFiles = [...menuFiles, 'firebase-sdk.js', 'host-access.js', 'activation-code.js', 'online-room.js', 'room-code.js', 'distribution-config.js', 'guest.html', 'catalog-games.js', 'catalog-games.css', 'game-core/catalog.js', 'game-core/engine.js', 'game-core/index.js', 'game-core/bots.js', 'local-session.js', 'lan-session.js', ...['shared','boards','social-cards','tricks','melds','holdem'].map(name => `game-core/games/${name}.js`)];
 for (const file of versionFiles) menuHash.update(await readFile(path.join(output, file)));
 const menuVersion = menuHash.digest('hex').slice(0, 12);
 const indexPath = path.join(output, 'index.html');

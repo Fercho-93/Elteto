@@ -2,19 +2,19 @@ import { useEffect } from "react";
 import { COLORS, SHADOW } from "../theme";
 import { View, Text, Pressable, StyleSheet, FlatList } from "react-native";
 import { useRouter } from "expo-router";
-import { getGame } from "game-core";
+import { getGame, getGamePlan } from "game-core";
 import { useGameSession } from "../state/GameSession";
 
 export default function LobbyScreen() {
   const router = useRouter();
-  const { role, gameId, players, started, error, hostAddress, roomName, startGame, leave } = useGameSession();
+  const { role, gameId, players, started, error, hostAddress, roomName, startGame, fillWithBots, removeBot, leave } = useGameSession();
 
   useEffect(() => {
     if (started) router.replace("/game");
   }, [started, router]);
 
   const engine = gameId ? getGame(gameId) : null;
-  const enoughPlayers = engine ? players.length >= engine.minPlayers : false;
+  const enoughPlayers = engine ? getGamePlan(engine.id).players.includes(players.length) : false;
   const roomFull = engine ? players.length >= engine.maxPlayers : false;
 
   return (
@@ -39,12 +39,15 @@ export default function LobbyScreen() {
           <View style={styles.playerRow}>
             <Text style={styles.playerName}>{item.name}</Text>
             {item.isHost && <Text style={styles.hostBadge}>Anfitrión</Text>}
+            {item.isBot && (role === 'host' ? <Pressable accessibilityLabel={`Quitar a ${item.name}`} onPress={() => removeBot(item.id)}><Text style={styles.hostBadge}>IA · Quitar</Text></Pressable> : <Text style={styles.hostBadge}>IA</Text>)}
           </View>
         )}
         contentContainerStyle={{ gap: 8, marginTop: 16 }}
       />
 
       {error && <Text style={styles.error}>{error}</Text>}
+
+      {role === 'host' && !roomFull && <Pressable style={styles.button} onPress={fillWithBots}><Text style={styles.buttonText}>Completar mesa con IA</Text></Pressable>}
 
       {role === "host" && (
         <Pressable disabled={!enoughPlayers} style={[styles.button, !enoughPlayers && styles.buttonDisabled]} onPress={startGame}>

@@ -1,4 +1,4 @@
-import { getGame } from "./game-core/index.js";
+import { getGame, fillBotSeats, BotRunner, nextBotMove } from "./game-core/index.js";
 import { acceptOffer, decodeSignal, makeOffer } from "./local-transport.js";
 
 const HOST_ID = "host";
@@ -15,6 +15,10 @@ export class LocalHostSession {
     this.state = null;
     this.started = false;
     this.closed = false;
+    this.bots = [];
+    this.botRunner = new BotRunner(() => this.closed || this.canRunBots?.() === false ? null : nextBotMove(this.engine, this.state, this.bots.map(p => p.id)),
+      ({playerId, action}) => { this.state = this.engine.applyAction(this.state, playerId, action); this.sendViews(); },
+      error => this.onChange({kind: 'error', message: String(error.message || error)}));
     this.publishLobby();
   }
 
@@ -22,6 +26,7 @@ export class LocalHostSession {
     return [
       { id: HOST_ID, name: this.hostName, isHost: true },
       ...[...this.connections.values()].map(({ id, name }) => ({ id, name, isHost: false })),
+      ...this.bots,
     ];
   }
 
@@ -31,10 +36,22 @@ export class LocalHostSession {
     this.broadcast(say("lobby", { players, gameId: this.engine.id, roomName: this.roomName }));
   }
 
+  fillWithBots() {
+    if (this.closed || this.started) throw new Error('La mesa ya no admite jugadores.');
+    this.bots.push(...fillBotSeats(this.players(), this.engine.maxPlayers));
+    this.publishLobby();
+  }
+
+  removePlayer(id) {
+    if (this.started || !this.bots.some(p => p.id === id)) return;
+    this.bots = this.bots.filter(p => p.id !== id);
+    this.publishLobby();
+  }
+
   async createOfflineInvite() {
     if (this.closed) throw new Error("La sala está cerrada.");
     if (this.started) throw new Error("La partida ya ha empezado.");
-    if (this.connections.size + 1 >= this.engine.maxPlayers) throw new Error("La sala está completa.");
+    if (this.players().length >= this.engine.maxPlayers) throw new Error("La sala está completa.");
     const peer = await makeOffer(
       (message) => this.handleMessage(peer.peerId, message),
       () => {},
@@ -61,7 +78,7 @@ export class LocalHostSession {
         this.peers.get(peerId)?.send(say("error", { message: "Indica tu nombre para entrar." }));
         return;
       }
-      if (this.started || this.connections.size + 1 >= this.engine.maxPlayers) {
+      if (this.started || this.players().length >= this.engine.maxPlayers) {
         this.peers.get(peerId)?.send(say("error", { message: this.started ? "La partida ya ha empezado." : "La sala está completa." }));
         this.peers.get(peerId)?.close();
         this.peers.delete(peerId);
@@ -88,6 +105,7 @@ export class LocalHostSession {
   }
 
   startGame(seed = Date.now() >>> 0) {
+    if (this.closed || this.started) throw new Error('La partida ya ha empezado o la sala está cerrada.');
     const players = this.players().map((player) => player.id);
     if (players.length < this.engine.minPlayers) throw new Error("Se necesitan al menos " + this.engine.minPlayers + " jugadores.");
     if (players.length > this.engine.maxPlayers) throw new Error("Este juego admite como máximo " + this.engine.maxPlayers + " jugadores.");
@@ -106,10 +124,12 @@ export class LocalHostSession {
     if (!this.state) return;
     const players = this.players();
     for (const player of players) {
+      if (player.isBot) continue;
       const view = this.engine.view(this.state, player.id);
       if (player.id === HOST_ID) this.onChange({ kind: "game", players, gameId: this.engine.id, view });
       else this.connections.get(player.id)?.peer.send(say("state", { view }));
     }
+    this.botRunner.schedule();
   }
 
   applyLocalAction(action) {
@@ -129,6 +149,7 @@ export class LocalHostSession {
 
   close() {
     this.closed = true;
+    this.botRunner.stop();
     this.broadcast(say('closed', { message: 'El anfitrión ha cerrado la sala.' }));
     for (const peer of this.peers.values()) peer.close();
     this.peers.clear();

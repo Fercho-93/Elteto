@@ -12,7 +12,7 @@ globalThis.location = new URL("https://fercho-93.github.io/Elteto/");
 globalThis.document = { visibilityState: "visible", addEventListener() {}, removeEventListener() {} };
 
 const { OnlineSession } = await import("../dist/online-room.js");
-const { getGame, listGames, captures15 } = await import("../dist/game-core/index.js");
+const { getGame, listGames, captures15, chooseBotAction } = await import("../dist/game-core/index.js");
 
 const PROJECT = "demo-elteto";
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -222,6 +222,51 @@ try {
   assert.notEqual(board.events[0].last("game").view.phase,"start");
   console.log("  ok  Parchís: cuatro usuarios, tirada inicial, resultados y movimientos sincronizados");
   await board.host.exit();
+
+  // Solo online: one human completes an entire Mus match with three AI seats.
+  const solo = await open('mus',['Ana']);
+  await solo.host.fillWithBots();
+  await until('tres IA en el vestíbulo',()=>solo.events[0].last('lobby').players.length===4);
+  assert.equal(solo.host.room.playerOrder.length,1);
+  await solo.host.removePlayer('bot-3');
+  await until('quitar IA',()=>solo.host.players().length===3);
+  await solo.host.fillWithBots();await until('completar otra vez',()=>solo.host.players().length===4);
+  solo.host.botRunner.delay=1;
+  await solo.host.startGame(77);
+  const soloEngine=getGame('mus');
+  for(let step=0;step<2000&&!solo.host.state.finished;step++) {
+    const view=soloEngine.view(solo.host.state,solo.host.uid);
+    const action=chooseBotAction(soloEngine,view,solo.host.uid);
+    if(action){await solo.host.sendAction(action);await solo.host.queue;}
+    else await sleep(5);
+  }
+  assert.ok(solo.host.state.finished,'online solo match completes');
+  assert.equal(solo.events[0].last('game').view.hands,undefined);
+  await solo.host.exit();
+  console.log('  ok  Mus online: una persona, tres IA y partida completa');
+
+  // The same authorized host resumes saved AI turns after reloading.
+  const mixed=await open('mus',['Ana','Bea']);
+  await mixed.host.fillWithBots();await until('mesa mixta llena',()=>mixed.host.players().length===4);
+  await mixed.host.startGame(99);
+  await mixed.host.sendAction({type:'mus',wantsMus:false});await mixed.host.queue;
+  await mixed.host.sendAction({type:'pass'});await mixed.host.queue;
+  await until('turno de Bea',()=>mixed.events[1].last('game')?.view.turnPlayer===mixed.guests[0].uid);
+  await mixed.guests[0].sendAction({type:'pass'});
+  await until('turno de IA',()=>mixed.host.state?.players[mixed.host.state.betting?.turnSeat]?.startsWith('bot-'));
+  mixed.host.botRunner.stop();
+  const oldRevision=mixed.host.rev;
+  mixed.host.teardown();
+  await assert.rejects(mixed.guests[0].claimHost(), /invitados/);
+  const resumedEvents=listener();
+  const resumed=track(new OnlineSession({db:mixed.conns[0].db,uid:mixed.conns[0].uid,code:mixed.host.roomCode,onChange:resumedEvents.onChange}).start());
+  await until('anfitrión recupera mesa con IA',()=>resumed.isHost&&resumed.state);
+  resumed.botRunner.delay=1;
+  await until('IA continúa tras recargar',()=>resumed.rev>oldRevision);
+  assert.equal(resumed.players().filter(p=>p.isBot).length,2);
+  assert.equal(mixed.events[1].last('game').view.hands,undefined);
+  await resumed.exit();
+  console.log('  ok  mesa mixta: IA conservada tras recargar; invitados sin permisos de anfitrión');
 
   // Every new game creates a valid room ID and syncs only its player's view.
   for (const engine of listGames().filter(g=>!['cinquillo','mus','parchis'].includes(g.id))) {
