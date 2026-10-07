@@ -6,10 +6,16 @@ import { arrangeCinquilloScreen } from './cinquillo-screen.js';
 import { arrangeMusScreen } from './mus-screen.js';
 import { renderParchisScreen } from './parchis-board.js';
 import { parseRoomCode } from "./room-code.js";
+import { activateHost, requireHostAccess, recoverHostPassword, leaveHostAccount, cachedHostAccess } from './host-access.js';
+import { distributionConfig } from './distribution-config.js';
 
 import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, canPlayCinquillo, animateTable, animateSeats } from "./table-view.js";
 
 const LAN = window.ELTETO_LAN;
+const GUEST = Boolean(window.ELTETO_GUEST || (LAN && !LAN.hostKey) || parseRoomCode(location.search));
+let accessLogin = false, accessBusy = false;
+let activationCode = new URLSearchParams(location.hash.slice(1)).get('activate') || '';
+if (activationCode) history.replaceState(null, '', location.pathname + location.search);
 const app = document.querySelector("#app");
 const toastEl = document.querySelector("#toast");
 const state = {
@@ -31,6 +37,7 @@ function header(back = "home") {
 function playerName(id) { return state.players.find((player) => player.id === id)?.name || (id === "host" ? state.name : id); }
 
 function renderHome() {
+  if (GUEST) { renderJoinForm(); return; }
   state.screen = "home";
   app.innerHTML = `<section class="menu-shell menu-home">
     <div class="menu-wrap">
@@ -45,18 +52,53 @@ function renderHome() {
   </section>`;
 }
 
+function renderAccess() {
+  state.screen = 'access';
+  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="back">← <span>Volver</span></button><span class="menu-brand">ELTETO<span>✦</span></span></header><section class="menu-setup access-panel">
+    <p class="menu-kicker">TU INVITACIÓN</p><h1>${accessLogin ? 'Vuelve a tu mesa' : 'Activa Elteto'}<span>.</span></h1>
+    <form id="access-form"><label class="field-label" for="access-email">Correo</label><input class="text-field" id="access-email" type="email" autocomplete="username" required value="${esc(cachedHostAccess()?.email || '')}">
+    <label class="field-label" for="access-password">Contraseña</label><input class="text-field" id="access-password" type="password" minlength="${accessLogin ? 6 : 8}" autocomplete="${accessLogin ? 'current-password' : 'new-password'}" required>
+    ${accessLogin ? '' : `<label class="field-label" for="activation-code">Código de invitación</label><input class="text-field activation-input" id="activation-code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="200" required placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" value="${esc(activationCode)}">`}
+    <p class="error-message" id="access-error" role="alert"></p><button type="submit" class="menu-button menu-primary menu-create">${accessLogin ? 'Entrar' : 'Activar acceso'} <span aria-hidden="true">↗</span></button></form>
+    <button class="text-button access-switch" data-action="access-switch">${accessLogin ? 'Tengo un código' : 'Ya tengo acceso'}</button>
+    ${accessLogin ? '<button class="text-button access-switch" data-action="access-recover">Recuperar contraseña</button>' : '<p class="helper">Una invitación, una cuenta. Guarda tu acceso para cambiar de móvil.</p>'}
+  </section></div></section>`;
+}
+function renderInstallation() {
+  state.screen = 'installation';
+  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><span class="menu-brand">ELTETO<span>✦</span></span><button class="text-button" data-action="access-logout">Cerrar sesión</button></header><section class="menu-setup access-panel">
+    <p class="menu-kicker">YA ESTÁS DENTRO</p><h1>Tu mesa está lista<span>.</span></h1>
+    <button class="menu-button menu-primary" data-action="open-host">Crear partida <span aria-hidden="true">↗</span></button>
+    ${LAN ? '<p class="helper">Este Android ya está activado. Puedes abrir mesas locales sin internet.</p>' : `<div class="install-options"><h2>En tu móvil</h2>
+    ${distributionConfig.androidDownloadUrl ? `<a class="menu-button menu-secondary" href="${esc(distributionConfig.androidDownloadUrl)}">Descargar Android <span aria-hidden="true">↓</span></a>` : '<p class="helper">Android: usa la web o la APK que te entregue quien te invitó. En la APK, entra con esta misma cuenta.</p>'}
+    <p class="helper">iPhone: abre esta web en Safari → Compartir → Añadir a pantalla de inicio. Si te pide entrar, usa esta misma cuenta.</p></div>`}
+  </section></div></section>`;
+}
+function endGuestRoom(message = 'La sala ha terminado.') {
+  const session = state.online, guest = state.guest;
+  Object.assign(state, { screen: 'guest-ended', view: null, players: [], host: null, guest: null, online: null, selected: new Set(), offerCode: '', answerCode: '', roomCode: '' });
+  session?.teardown?.();
+  if (guest !== session) guest?.leave?.();
+  history.replaceState(null, '', location.pathname);
+  renderGuestEnded(message);
+}
+function renderGuestEnded(message = 'La sala ha terminado.') {
+  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><section class="menu-setup access-panel"><p class="menu-kicker">MESA CERRADA</p><h1>Hasta la próxima<span>.</span></h1><p class="helper">${esc(message)}</p><p class="helper">Puedes cerrar esta pestaña. Para volver a jugar, pide una nueva invitación al anfitrión.</p></section></div></section>`;
+}
+
 function playerCountLabel(game) {
   const counts=getGamePlan(game.id).players.filter(n=>n<=game.maxPlayers);
   return counts.length===1?String(counts[0]):counts.at(-1)-counts[0]+1===counts.length?`${counts[0]}–${counts.at(-1)}`:counts.join(', ');
 }
 
 function renderHostForm() {
+  if (GUEST) return renderJoinForm();
   state.screen = "host-form";
   const games = listGames().map((game) => `<label class="game-option ${state.gameId === game.id ? "chosen" : ""}">
     <input type="radio" name="game" value="${esc(game.id)}" ${state.gameId === game.id ? "checked" : ""}>
     <span class="game-check" aria-hidden="true">✓</span><span><strong>${esc(game.label)}</strong><small>${playerCountLabel(game)} jugadores</small></span>
   </label>`).join("");
-  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="back">← <span>Volver</span></button><a class="menu-brand" href="./" data-action="home">ELTETO<span>✦</span></a></header><section class="menu-setup" aria-labelledby="setup-title">
+  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="back">← <span>Volver</span></button><button class="text-button" data-action="access-install">Mi acceso</button></header><section class="menu-setup" aria-labelledby="setup-title">
     <p class="menu-kicker">TÚ PONES LA MESA</p><h1 id="setup-title">Crear partida<span>.</span></h1>
     <div class="menu-fields"><div><label class="field-label" for="host-name">Tu nombre</label><input class="text-field" id="host-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}"></div>
     <div><label class="field-label" for="room-name">Nombre de la sala <span>opcional</span></label><input class="text-field" id="room-name" maxlength="30" placeholder="La de siempre" value="${esc(state.roomName)}"></div></div>
@@ -69,9 +111,10 @@ function renderJoinForm() {
   state.screen = "join-form";
   app.innerHTML = `${header()}<section class="panel">
     <div class="eyebrow">Te guardaron sitio… y fruta 🍑</div><h2>Busca tu mesa</h2>
-    <p class="helper">Con internet, escanea el enlace del anfitrión o escribe el código de la sala. Sin internet, abre Elteto en ambos móviles, conéctalos a la misma Wi-Fi o hotspot y escanea aquí el QR de invitación; luego el anfitrión escanea tu respuesta.</p>
+    <p class="helper">Abre el enlace o escanea el QR del anfitrión. Entras como invitado, sin instalar nada.</p>
     <label class="field-label" for="join-name">Tu nombre</label><input class="text-field" id="join-name" maxlength="24" placeholder="Donde las dan, las toman" value="${esc(state.name)}">
     <label class="field-label" for="offer-code">Enlace online o código offline</label><div class="scan-row"><button class="button button-paper" data-action="scan-offer">Abrir cámara</button><span>o pega el enlace</span></div><textarea class="code-field" id="offer-code" rows="3" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Código de sala (ABCD2345) o enlace https://fercho-93.github.io/Elteto/?join=…">${esc(state.offerCode)}</textarea>
+    ${state.error ? `<p class="error-message" role="alert">${esc(state.error)}</p>` : ''}
     <button class="button button-cyan full-button" data-action="join-room">Entrar en la sala 🍑</button>
     <p class="fineprint">El QR abre este juego y te mete directamente en la sala.</p>
   </section>`;
@@ -274,7 +317,10 @@ function cinquilloControls(view) {
 }
 
 function render() {
-  if (state.screen === "host-form") renderHostForm();
+  if (state.screen === 'access') renderAccess();
+  else if (state.screen === 'installation') renderInstallation();
+  else if (state.screen === 'guest-ended') renderGuestEnded();
+  else if (state.screen === "host-form") renderHostForm();
   else if (state.screen === "join-form") renderJoinForm();
   else if (state.screen === "lobby") renderLobby();
   else if (state.screen === "game") renderGame();
@@ -282,6 +328,7 @@ function render() {
 }
 
 function resetToHome() {
+  if (GUEST) { endGuestRoom(); return; }
   previousTableKeys = null; renderedGame = null; previousTurn = null; previousSeats = null; shownResult = null;
   Object.assign(state, { role: null, name: "", players: [], view: null, host: null, guest: null, online: null, roomCode: "", offerCode: "", answerCode: "", selected: new Set(), error: "", screen: "home" });
   renderHome();
@@ -347,10 +394,24 @@ app.addEventListener("click", async (event) => {
     }
     if (action === "go-to-hand") { const heading=app.querySelector('.hand-heading'); heading.focus({preventScroll:true}); heading.scrollIntoView({block:'start',behavior:'instant'}); }
     else if(action === "close-table-zoom") app.querySelector('.board-zoom')?.close();
-    else if (action === "open-host") { state.screen = "host-form"; state.gameId = LAN ? "cinquillo" : state.gameId || listGames()[0]?.id || ""; render(); }
+    else if (action === 'access-switch') { accessLogin = !accessLogin; renderAccess(); }
+    else if (action === 'access-install') { renderInstallation(); }
+    else if (action === 'access-logout') { await leaveHostAccount(); renderHome(); }
+    else if (action === 'access-recover') { const email = app.querySelector('#access-email').value; if (!email) throw new Error('Escribe tu correo.'); await recoverHostPassword(email); flash('Si tienes cuenta, recibirás un correo para recuperar el acceso.'); }
+    else if (action === "open-host") {
+      if (GUEST) throw new Error('Esta invitación solo permite entrar en la sala.');
+      try { await requireHostAccess(); } catch { renderAccess(); return; }
+      state.screen = "host-form"; state.gameId = LAN ? "cinquillo" : state.gameId || listGames()[0]?.id || ""; render();
+    }
     else if (action === "open-join") { state.screen = "join-form"; render(); }
-    else if (action === "home" || action === "back") { renderHome(); }
+    else if (action === "home" || action === "back") {
+      event.preventDefault();
+      if (state.online) await state.online.exit(); else { state.host?.close(); state.guest?.leave(); }
+      if (GUEST && state.role === 'client') endGuestRoom(); else resetToHome();
+    }
     else if (action === "create-room") {
+      if (GUEST) throw new Error('Esta invitación solo permite entrar en la sala.');
+      await requireHostAccess();
       const gameId = document.querySelector('input[name="game"]:checked')?.value;
       const name = document.querySelector("#host-name")?.value.trim();
       const roomName = document.querySelector("#room-name")?.value.trim();
@@ -434,7 +495,7 @@ app.addEventListener("click", async (event) => {
     else if (action === "cinquillo-next-hand") sendAction({ type: "next-hand" });
     else if (action === "cinquillo-pass") sendAction({ type: "pass" });
     else if (action === "leave-room") {
-      if (state.online) void state.online.exit(); else { state.host?.close(); state.guest?.leave(); }
+      if (state.online) await state.online.exit(); else { state.host?.close(); state.guest?.leave(); }
       resetToHome();
     }
   } catch (error) {
@@ -514,6 +575,7 @@ function endQrScan() {
 window.addEventListener("pagehide", endQrScan);
 
 function handleGuestChange(change) {
+  if (change.kind === 'disconnected') { endGuestRoom(change.message); return; }
   if (change.kind === "lobby") { state.players = change.players || []; state.playerId = change.playerId || state.playerId; state.gameId = change.gameId || state.gameId; state.roomName = change.roomName || state.roomName; }
   else if (change.kind === "game") { state.players = change.players || state.players; state.playerId = change.playerId || state.playerId; state.view = change.view; state.gameId = change.gameId || state.gameId; state.screen = "game"; }
   else if (change.kind === "started") state.error = "";
@@ -543,7 +605,7 @@ function onOnlineChange(change) {
     flash(change.message);
   } else if (change.kind === "disconnected") {
     flash(change.message);
-    resetToHome();
+    if (state.role === 'client' || GUEST) endGuestRoom(change.message); else resetToHome();
     return;
   }
   render();
@@ -595,6 +657,26 @@ const incomingRoom = parseRoomCode(location.search);
 if (incomingRoom) {
   beginOnlineJoin(incomingRoom, localStorage.getItem("elteto.playerName") || "Invitado").catch((error) => { state.error = error.message || "No se pudo entrar en la sala."; renderJoinForm(); flash(state.error); });
 } else renderHome();
-if (!LAN && "serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
+if (!LAN && !GUEST && "serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
+if (GUEST) document.querySelector('link[rel="manifest"]')?.remove();
+if (activationCode && !GUEST) renderAccess();
+
+app.addEventListener('submit', async event => {
+  if (event.target.id !== 'access-form') return;
+  event.preventDefault();
+  if (accessBusy) return;
+  accessBusy = true;
+  const submit = event.target.querySelector('[type="submit"]');
+  submit.disabled = true;
+  const errorEl = app.querySelector('#access-error');
+  errorEl.textContent = '';
+  try {
+    activationCode = app.querySelector('#activation-code')?.value || activationCode;
+    await activateHost({ email: app.querySelector('#access-email').value, password: app.querySelector('#access-password').value, code: activationCode, login: accessLogin });
+    activationCode = '';
+    renderInstallation();
+  } catch (error) { errorEl.textContent = error.message; submit.disabled = false; }
+  finally { accessBusy = false; }
+});
 
 app.addEventListener("input",event=>{if(event.target.id!=="game-search")return;const query=event.target.value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();for(const option of app.querySelectorAll(".game-option"))option.hidden=!option.textContent.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().includes(query);});

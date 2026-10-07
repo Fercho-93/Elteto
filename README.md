@@ -8,9 +8,14 @@ Veinte juegos de cartas y tablero para jugar desde móviles, con una mesa gamber
 
 Con internet, el anfitrión crea una sala y la web muestra un código, un enlace y un QR. Cada invitado escanea el QR con la cámara normal del móvil, abre el enlace o escribe el código; si ya había usado Elteto, se recuerda su nombre.
 
-Las salas viven en Firestore, con invitados anónimos de Firebase Authentication y reglas de seguridad, igual que el juego online de Timeline. El anfitrión conserva la autoridad de las reglas del juego y publica una vista privada por jugador, de modo que cada persona solo recibe sus propias cartas. Si el anfitrión desaparece, otra persona toma el relevo y continúa la partida guardada. No hay un servidor de juego propio.
+Las salas viven en Firestore, con invitados anónimos de Firebase Authentication y reglas de seguridad. El anfitrión activado conserva la autoridad de las reglas del juego y publica una vista privada por jugador, de modo que cada persona solo recibe sus propias cartas. Los invitados no toman el relevo del anfitrión ni pueden crear salas. No hay un servidor de juego propio.
 
 Arquitectura, modelo de datos, reglas, configuración de Firebase y pruebas: [CONFIGURAR_ONLINE.md](CONFIGURAR_ONLINE.md).
+
+El anfitrión se activa con una invitación de un solo uso y una cuenta recuperable.
+Los invitados entran por navegador, sin instalación ni código de activación, y su
+acceso termina con la sala. Flujo, administración, configuración y límites
+offline: [Distribución y acceso](DISTRIBUCION_Y_ACCESO.md).
 
 Para probarlo, abre [Elteto en GitHub Pages](https://fercho-93.github.io/Elteto/) en ambos teléfonos, crea la partida en uno, pulsa **Invitar con internet** y entra desde el otro con el QR o el código.
 
@@ -20,7 +25,7 @@ Cinquillo admite de dos a seis participantes. Mus necesita cuatro. Parchís admi
 
 En el vestíbulo de cualquiera de los veinte juegos, el anfitrión puede pulsar **Completar mesa con IA** para ocupar todas las plazas libres. Puedes empezar tú solo o mezclar personas e IA, y quitar una IA antes de empezar para dejar sitio a alguien. Los nombres «IA 1», «IA 2», etc. las identifican durante la partida.
 
-Los jugadores de IA deciden en el dispositivo anfitrión, sin servicios externos ni claves de API, usando únicamente su vista del juego. Sus jugadas pasan por los mismos motores de reglas y avanzan automáticamente. Funciona en la web, sin internet y en Android LAN; el cliente nativo también comparte estos controles. En las salas online, la IA continúa cuando otra persona toma el relevo del anfitrión. Las reglas actualizadas de `firestore.rules` deben estar publicadas para añadir plazas de IA online.
+Los jugadores de IA deciden en el dispositivo anfitrión, sin servicios externos ni claves de API, usando únicamente su vista del juego. Sus jugadas pasan por los mismos motores de reglas y avanzan automáticamente. Funciona en la web, sin internet y en Android LAN; el cliente nativo también comparte estos controles. En las salas online, la IA retoma la partida guardada cuando el mismo anfitrión vuelve a abrir la sala. Las reglas actualizadas de `firestore.rules` deben estar publicadas para añadir plazas de IA online.
 
 ### Jugar sin internet entre iPhone y Android
 

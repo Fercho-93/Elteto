@@ -19,7 +19,7 @@ export function parseRoomCode(value) {
 }
 
 export function inviteUrlFor(code) {
-  const url = new URL(globalThis.location.pathname, globalThis.location.origin);
+  const url = new URL('./guest.html', globalThis.location.href);
   url.searchParams.set("join", code);
   return url.toString();
 }

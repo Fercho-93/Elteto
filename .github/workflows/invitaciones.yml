@@ -1,0 +1,35 @@
+name: Preparar invitaciones
+on:
+  workflow_dispatch:
+    inputs:
+      huellas:
+        description: Huellas SHA-256 generadas localmente, separadas por comas. Nunca codigos completos.
+        required: true
+permissions:
+  contents: read
+jobs:
+  preparar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Preparar credencial existente
+        env:
+          CUENTA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          test -n "$CUENTA"
+          printf '%s' "$CUENTA" > "$RUNNER_TEMP/firebase.json"
+      - name: Habilitar acceso y registrar huellas
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase.json
+          ELTETO_INVITATION_HASHES: ${{ inputs.huellas }}
+        run: |
+          node scripts/setup-host-access.mjs
+          node scripts/manage-invitations.mjs register-hashes
+      - name: Borrar credencial del runner
+        if: always()
+        run: rm -f "$RUNNER_TEMP/firebase.json"

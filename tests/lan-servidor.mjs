@@ -40,5 +40,15 @@ try {
  const back=await connect(wsBase+'?code='+config.roomCode+'&resume='+'a'.repeat(48));await back.wait('connected');
  back.ws.send(JSON.stringify({type:'hello'}));assert.equal((await host.wait('guest-message')).playerId,playerId);
  host.ws.close();assert.match((await g2.wait('fatal')).message,/cerrado/);assert.match((await back.wait('fatal')).message,/cerrado/);
+ const nextConfig=await fetch(base+'/lan-config').then(r=>r.json());
+ assert.notEqual(nextConfig.roomCode,config.roomCode);
+ const stale=await connect(wsBase+'?code='+config.roomCode+'&resume='+'c'.repeat(48));
+ assert.match((await stale.wait('fatal')).message,/no válida/);
+ const lockedServer=spawn('java',['-cp',cp,'LanServerMain','dist','0'],{env:{...process.env,ELTETO_TEST_LICENSE:'locked'}});
+ try {
+  const [line]=await once(lockedServer.stdout,'data');const lockedUrl=new URL(String(line).trim());
+  const denied=await connect(lockedUrl.origin.replace('http:','ws:')+'/socket?host='+new URLSearchParams(lockedUrl.hash.slice(1)).get('host'));
+  assert.match((await denied.wait('fatal')).message,/Activa tu invitación/,'el servidor impide alojar partidas sin licencia nativa');
+ } finally {lockedServer.kill();}
  console.log('Servidor Java real: HTTP offline, autorización, rutas privadas, reconexión y cierre: OK');
 } finally {clearTimeout(timeout);server.kill();}

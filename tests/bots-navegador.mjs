@@ -19,6 +19,8 @@ const errors=[];
 try {
   const page=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block',reducedMotion:'reduce'});
   page.on('pageerror',e=>errors.push(e.message));
+  // Exercise the already-activated offline host path; activation has its own emulator suite.
+  await page.addInitScript(()=>localStorage.setItem('elteto.hostAccess.v1',JSON.stringify({uid:'test-host',active:true})));
   for(const engine of listGames()) {
     await page.goto(`http://127.0.0.1:${server.address().port}`);
     await page.locator('[data-action="open-host"]').click();

@@ -3,10 +3,10 @@ import { connectFirebase } from "./firebase-client.js";
 import { createRoomCode, inviteUrlFor } from "./room-code.js";
 import {
   collection, deleteDoc, doc, getDoc, getDocFromServer, onSnapshot, runTransaction, serverTimestamp, setDoc, writeBatch,
-} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+} from './firebase-sdk.js';
 
 // Salas online de Elteto: el mismo modelo que las salas de Timeline (Firestore + invitados
-// anónimos + reglas de seguridad + latido de presencia + relevo de anfitrión), con una
+// anónimos + reglas de seguridad + latido de presencia + anfitrión activado), con una
 // diferencia que exigen las cartas ocultas. El anfitrión sigue siendo la autoridad de las
 // reglas del juego —tiene el estado completo y valida cada jugada con el motor—, pero en
 // vez de hablar con cada móvil por WebRTC lo hace a través de Firestore:
@@ -16,7 +16,7 @@ import {
 //   rooms/{code}/actions/{uid}   última jugada de cada participante → la lee el anfitrión
 //   rooms/{code}/views/{uid}     vista privada de cada participante → la escribe el anfitrión
 //   rooms/{code}/secret/state    estado completo; solo lo lee el anfitrión, y por eso quien
-//                                toma el relevo puede continuar la partida
+//                                abre la sala conserva la partida
 //
 // Ver CONFIGURAR_ONLINE.md y firestore.rules.
 
@@ -52,6 +52,8 @@ export class OnlineSession {
       if (!validName(name)) throw new Error("Indica tu nombre para abrir la sala.");
       const engine = getGame(gameId);
       const { db, uid } = await connection;
+      const access = (await getDocFromServer(doc(db, 'hostAccess', uid))).data();
+      if (access?.status !== 'active') throw new Error('Activa tu invitación para crear partidas.');
       const code = createRoomCode();
       const batch = writeBatch(db);
       batch.set(doc(db, "roomCreation", uid), { lastCreatedAt: serverTimestamp(), roomCode: code });
@@ -79,8 +81,9 @@ export class OnlineSession {
         if (!snapshot.exists()) throw new Error("ROOM_NOT_FOUND");
         const data = snapshot.data();
         try { getGame(data.gameId); } catch { throw new Error("UNKNOWN_GAME"); }
-        if (data.playerOrder.includes(uid)) return;
         if (data.status === "ended") throw new Error("ROOM_ENDED");
+        if (millis(data.createdAt) + 6 * 60 * 60 * 1000 <= Date.now()) throw new Error('ROOM_ENDED');
+        if (data.playerOrder.includes(uid)) return;
         if (data.status !== "lobby") throw new Error("ALREADY_STARTED");
         if (data.playerOrder.length + Object.keys(data.bots || {}).length >= data.maxPlayers) throw new Error("ROOM_FULL");
         transaction.update(reference, {
@@ -224,24 +227,14 @@ export class OnlineSession {
   // relevo. Las reglas solo lo permiten con el anfitrión ausente y la transacción impide
   // que lo tomen dos a la vez.
   watchHost() {
-    if (this.closed || this.claiming || !this.hostIsStale()) return;
-    const candidate = this.room.playerOrder.find((uid) => uid !== this.room.hostUid && (uid === this.uid || (this.presence.has(uid) && !this.isAway(uid))));
-    if (candidate === this.uid) void this.claimHost();
+    if (this.closed || !this.room) return;
+    if (millis(this.room.createdAt) + 6 * 60 * 60 * 1000 <= this.serverNow()) {
+      this.disconnect('La sala ha terminado. Pide una nueva invitación al anfitrión.');
+    }
   }
 
   async claimHost() {
-    this.claiming = true;
-    const previous = this.room.hostUid;
-    try {
-      await runTransaction(this.db, async (transaction) => {
-        const current = (await transaction.get(this.roomRef)).data();
-        if (!current.playerOrder.includes(this.uid) || current.status === "ended") throw new Error("ROOM_ENDED");
-        if (current.hostUid !== previous) throw new Error("ALREADY_CLAIMED");
-        transaction.update(this.roomRef, { hostUid: this.uid, version: current.version + 1, updatedAt: serverTimestamp() });
-      });
-      this.onChange({ kind: "notice", message: "Quien llevaba la mesa se ha ido: ahora la llevas tú." });
-    } catch { /* otra persona se adelantó o el anfitrión ha vuelto */ }
-    finally { this.claiming = false; }
+    throw new Error('Los invitados no pueden convertirse en anfitriones.');
   }
 
   // --- Documento de la sala ----------------------------------------------------------

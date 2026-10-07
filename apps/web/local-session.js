@@ -150,6 +150,7 @@ export class LocalHostSession {
   close() {
     this.closed = true;
     this.botRunner.stop();
+    this.broadcast(say('closed', { message: 'El anfitrión ha cerrado la sala.' }));
     for (const peer of this.peers.values()) peer.close();
     this.peers.clear();
     this.connections.clear();
@@ -181,8 +182,13 @@ export class LocalGuestSession {
   }
 
   handleMessage(message) {
+    if (this.closed) return;
     if (!message || typeof message.type !== "string") return;
-    if (message.type === "welcome") {
+    if (message.type === 'closed') {
+      this.closed = true;
+      this.onChange({ kind: 'disconnected', message: message.data?.message || 'La sala ha terminado.' });
+      this.peer?.close();
+    } else if (message.type === "welcome") {
       this.playerId = message.data.playerId;
       this.gameId = message.data.gameId;
       this.onChange({ kind: "lobby", playerId: this.playerId, players: this.players, gameId: this.gameId, roomName: this.roomName, connected: true });

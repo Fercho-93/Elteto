@@ -1,6 +1,5 @@
-import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-import { getAuth, signInAnonymously, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import { getFirestore, initializeFirestore, connectFirestoreEmulator } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { initializeApp, getApps, getApp, getAuth, signInAnonymously, connectAuthEmulator,
+  getFirestore, initializeFirestore, connectFirestoreEmulator } from './firebase-sdk.js';
 import { firebaseConfig } from "./firebase-config.js";
 
 // Una sola conexión por pestaña. Los invitados son anónimos: Firebase conserva el UID en el
@@ -15,9 +14,8 @@ function openDb(app) {
   catch { return getFirestore(app); }
 }
 
-export function connectFirebase() {
-  if (connection) return connection;
-  connection = (async () => {
+export async function connectFirebase() {
+  connection ||= (async () => {
     const required = ["apiKey", "authDomain", "projectId", "appId"];
     if (required.some((key) => !firebaseConfig[key])) {
       throw new Error("Falta enlazar el proyecto Firebase de Elteto. Las salas con internet aún no están configuradas.");
@@ -34,8 +32,7 @@ export function connectFirebase() {
     }
     auth.languageCode = "es";
     await auth.authStateReady();
-    const credential = auth.currentUser ? { user: auth.currentUser } : await signInAnonymously(auth);
-    return { app, auth, db, uid: credential.user.uid };
+    return { app, auth, db };
   })().catch((error) => {
     connection = null;
     if (error?.code === "auth/operation-not-allowed") {
@@ -43,5 +40,7 @@ export function connectFirebase() {
     }
     throw error;
   });
-  return connection;
+  const result = await connection;
+  const user = result.auth.currentUser || (await signInAnonymously(result.auth)).user;
+  return { ...result, uid: user.uid };
 }

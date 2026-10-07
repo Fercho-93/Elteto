@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.view.WindowManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.JavascriptInterface;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.content.Intent;
@@ -26,15 +27,30 @@ public class MainActivity extends Activity {
         TextView network=new TextView(this);network.setText("Abrir ajustes Wi-Fi / hotspot · Mantén esta app abierta");network.setPadding(18,12,18,12);
         network.setOnClickListener(v->startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS)));layout.addView(network);
         web=new WebView(this);web.getSettings().setJavaScriptEnabled(true);web.getSettings().setDomStorageEnabled(true);
-        web.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView v,String url){return !url.startsWith("http://127.0.0.1:");}});
+        web.getSettings().setAllowFileAccess(false);web.getSettings().setAllowContentAccess(false);
+        web.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView v,String url){return server==null || !"127.0.0.1".equals(android.net.Uri.parse(url).getHost()) || android.net.Uri.parse(url).getPort()!=server.getListeningPort();}});
+        web.addJavascriptInterface(new ActivationBridge(), "EltetoActivation");
         layout.addView(web,new LinearLayout.LayoutParams(-1,0,1));setContentView(layout);
         new Thread(()->{
             try {
                 File root=new File(getFilesDir(),"web");copyAssets("",root);
-                server=new LanServer(root,3000);server.start(0,false);
+                server=new LanServer(root,3000);server.setHostAuthorized(getPreferences(MODE_PRIVATE).getBoolean("activated",false));server.start(0,false);
                 runOnUiThread(()->{showAddresses();web.loadUrl(server.hostUrl());});
             }catch(Exception e){runOnUiThread(()->addresses.setText("No se pudo iniciar el servidor: "+e.getMessage()));}
         }).start();
+    }
+    public class ActivationBridge {
+        @JavascriptInterface public boolean isActivated() { return getPreferences(MODE_PRIVATE).getBoolean("activated",false); }
+        @JavascriptInterface public String activate(String token) {
+            com.google.gson.JsonObject result=new com.google.gson.JsonObject();
+            try {
+                String uid=FirebaseLicenseVerifier.verify(token);
+                getPreferences(MODE_PRIVATE).edit().putBoolean("activated",true).putString("uid",uid).commit();
+                server.setHostAuthorized(true);result.addProperty("ok",true);
+            } catch(Exception e) { result.addProperty("ok",false);result.addProperty("message","No se pudo verificar el acceso. Comprueba internet y vuelve a entrar."); }
+            return result.toString();
+        }
+        @JavascriptInterface public void deactivate() { getPreferences(MODE_PRIVATE).edit().clear().commit();server.setHostAuthorized(false); }
     }
     private void showAddresses(){
         if(server==null)return;

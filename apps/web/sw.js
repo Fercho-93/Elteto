@@ -1,5 +1,6 @@
 const CACHE = "elteto-shell-v25";
 const ASSETS = [
+  './guest.html', './activation-code.js', './host-access.js', './distribution-config.js', './firebase-sdk.js',
   "./catalog-games.js", "./catalog-games.css", "./game-core/games/shared.js", "./game-core/games/boards.js", "./game-core/games/social-cards.js", "./game-core/games/tricks.js", "./game-core/games/melds.js", "./game-core/games/holdem.js",
   "./assets/elteto-cover-balanced-v5.png",
   "./avatar-art.js", "./assets/elteto-logo-neon-v3.png", "./assets/elteto-avatars-v3.png",
@@ -26,6 +27,9 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET" || new URL(request.url).origin !== self.location.origin) return;
+  // Nunca conservar invitaciones de sala, enlaces de activación ni respuestas de API.
+  const url = new URL(request.url);
+  if (url.searchParams.has('join') || url.pathname.endsWith('/lan-config')) return;
   // Network-first must also revalidate the browser's HTTP cache after a deployment.
   event.respondWith(fetch(request, {cache: "no-cache"}).then((response) => {
     const copy = response.clone();

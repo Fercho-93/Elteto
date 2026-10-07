@@ -142,7 +142,7 @@ export function nextBotMove(engine: AnyEngine, state: any, botIds: string[], ran
   return null;
 }
 
-// One delayed move at a time. A new host can resume from the saved state.
+// One delayed move at a time. The host can resume from the saved state.
 export class BotRunner {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private generation = 0;

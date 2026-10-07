@@ -11,6 +11,9 @@ function randomToken() {
 export class LanSession {
   static async create(options, onChange) {
     if (!window.ELTETO_LAN?.hostKey) throw new Error('La mesa se crea desde la app Android anfitriona.');
+    // Cada cierre rota el código en el servidor. Un enlace anterior nunca abre la
+    // siguiente mesa, aunque siga abierta la misma app anfitriona.
+    Object.assign(window.ELTETO_LAN, await fetch('./lan-config', { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error('No se pudo abrir la mesa.'); return r.json(); }));
     const session = new LanSession(onChange, true);
     session.local = new LocalHostSession(options.gameId, options.hostName, options.roomName, change => session.emitHost(change));
     session.local.canRunBots = () => [...session.local.connections.values()].every(c => c.peer.connected);
@@ -132,8 +135,12 @@ export class LanSession {
     if ([...this.local.connections.values()].some(c => !c.peer.connected)) throw new Error('Partida en pausa: falta un jugador. Puede volver a entrar con el mismo navegador.');
   }
   handleGuestPacket(message) {
+    if (this.closed) return;
     const data = message.data || {};
-    if (message.type === 'welcome') {
+    if (message.type === 'closed') {
+      this.closed = true; clearTimeout(this.timer); this.ws?.close();
+      this.onChange({kind:'disconnected',message:data.message || 'La sala ha terminado.'});
+    } else if (message.type === 'welcome') {
       this.playerId = data.playerId; this.gameId = data.gameId;
     } else if (message.type === 'lobby') {
       this.players = data.players; this.gameId = data.gameId; this.roomName = data.roomName;

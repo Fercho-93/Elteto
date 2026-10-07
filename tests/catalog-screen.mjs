@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {listGames,getGame,buildCardMaterial,captures15} from '../dist/game-core/index.js';
-import {chromium,webkit} from 'playwright';
-const fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1];
+const {chromium,webkit}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1]+'\nwindow.testHostForm = () => renderHostForm();';
 const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://localhost').pathname.slice(1)||'index.html';let body=await readFile('dist/'+file);if(file==='app.js')body=Buffer.from(body+fixture);res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':file.endsWith('.svg')?'image/svg+xml':'text/html');res.end(body);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const kind=process.env.CATALOG_BROWSER||'chromium',browser=await (kind==='webkit'?webkit:chromium).launch();
@@ -13,7 +13,7 @@ const errors=[],results=[],names=['Ana María de la Mesa','Beatriz','Cristina','
 try{
  const page=await browser.newPage({serviceWorkers:'block',reducedMotion:'reduce'});page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:'+server.address().port);await page.waitForFunction(()=>window.testTable);
- await page.locator('[data-action="open-host"]').click();assert.equal(await page.locator('.game-option').count(),20);
+ await page.evaluate(()=>window.testHostForm());assert.equal(await page.locator('.game-option').count(),20);
  await page.locator('#game-search').fill('domino');assert.equal(await page.locator('.game-option:not([hidden])').count(),1);
  await page.locator('#game-search').fill('');
  for(const engine of listGames().filter(g=>!['cinquillo','mus','parchis'].includes(g.id))){

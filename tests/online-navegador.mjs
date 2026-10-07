@@ -9,6 +9,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import assert from "node:assert/strict";
+import { initializeTestEnvironment } from '@firebase/rules-unit-testing';
+import { doc, setDoc, Timestamp } from 'firebase/firestore';
+import { createActivationCode, activationCodeHash } from '../apps/web/activation-code.js';
 
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : "playwright");
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -19,7 +22,8 @@ const server = createServer(async (req, res) => {
   try {
     const pathname = decodeURIComponent(new URL(req.url, "http://x").pathname);
     const file = path.join(dist, pathname === "/" ? "index.html" : pathname);
-    const body = await fs.readFile(file);
+    let body = await fs.readFile(file);
+    if (pathname === '/firebase-config.js') body = Buffer.from(body.toString().replaceAll('elteto-fercho93', 'demo-elteto'));
     res.setHeader("Content-Type", TYPES[path.extname(file)] || "application/octet-stream");
     res.end(body);
   } catch { res.writeHead(404); res.end(); }
@@ -47,8 +51,25 @@ async function movil(label) {
 }
 
 try {
+  const env=await initializeTestEnvironment({projectId:'demo-elteto',firestore:{host:'127.0.0.1',port:8080}});
+  const invitation=createActivationCode(),hash=await activationCodeHash(invitation);
+  await env.withSecurityRulesDisabled(ctx=>setDoc(doc(ctx.firestore(),'activationCodes',hash),{status:'unused',createdAt:Timestamp.now(),expiresAt:null,usedBy:null,usedAt:null}));
+  await env.cleanup();
   const host = await movil("anfitrión");
   await host.page.goto(base);
+  await host.page.click('[data-action="open-host"]');
+  await fs.mkdir(path.join(root,'tests/artifacts/access'),{recursive:true});
+  for(const width of [320,390,768]) {
+    await host.page.setViewportSize({width,height:844});
+    assert.ok(await host.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'formulario de acceso sin desplazamiento horizontal');
+    await host.page.screenshot({path:path.join(root,`tests/artifacts/access/activar-${width}.png`),fullPage:true});
+  }
+  await host.page.setViewportSize({width:390,height:844});
+  await host.page.fill('#access-email',`browser-${Date.now()}@elteto.test`);
+  await host.page.fill('#access-password','Prueba-12345');
+  await host.page.fill('#activation-code',invitation);
+  await host.page.locator('#access-form [type="submit"]').click();
+  await host.waitText(/Tu mesa está lista/);
   await host.page.click('[data-action="open-host"]');
   await host.page.fill("#host-name", "Ana");
   await host.page.fill("#room-name", "Mesa online");
@@ -119,8 +140,9 @@ try {
 
   await host.page.click('[data-action="open-game-menu"]');
   await host.page.click('[data-action="leave-room"]');
-  await guest.waitText(/Elteto|Crear partida/);
-  console.log("  ok  al cerrar la sala el invitado vuelve al inicio");
+  await guest.waitText(/Hasta la próxima/);
+  assert.equal(await guest.page.locator('[data-action="open-host"]').count(),0);
+  console.log("  ok  al cerrar la sala el invitado pierde el acceso a la partida");
   for (const p of [host, guest, third]) assert.deepEqual(p.log.filter((line) => !/favicon|Failed to load resource/.test(line)), [], `${p.label}: errores en consola`);
   console.log("Interfaz de salas online: OK");
 } finally {

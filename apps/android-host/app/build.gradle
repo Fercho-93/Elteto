@@ -2,8 +2,19 @@ plugins { id 'com.android.application' }
 android {
     namespace 'es.elteto.lan'
     compileSdk 35
-    defaultConfig { applicationId 'es.elteto.lan'; minSdk 26; targetSdk 35; versionCode 9; versionName '0.1.8' }
+    defaultConfig { applicationId 'es.elteto.lan'; minSdk 26; targetSdk 35; versionCode 10; versionName '0.2.0' }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    signingConfigs {
+        release {
+            if (System.getenv('ELTETO_KEYSTORE')) {
+                storeFile file(System.getenv('ELTETO_KEYSTORE'))
+                storePassword System.getenv('ELTETO_STORE_PASSWORD')
+                keyAlias 'elteto'
+                keyPassword System.getenv('ELTETO_STORE_PASSWORD')
+            }
+        }
+    }
+    buildTypes { release { signingConfig signingConfigs.release } }
     sourceSets { main.assets.srcDirs += ['../../../dist'] }
 }
 dependencies {

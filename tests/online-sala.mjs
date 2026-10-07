@@ -55,6 +55,7 @@ const track = (session) => { sessions.push(session); return session; };
 async function open(gameId, names) {
   const conns = await Promise.all(names.map(() => connect()));
   const events = names.map(() => listener());
+  await admin.withSecurityRulesDisabled(ctx => setDoc(doc(ctx.firestore(), 'hostAccess', conns[0].uid), {status:'active'}));
   const host = track(await OnlineSession.create({ gameId, roomName: "Mesa de prueba", hostName: names[0] }, events[0].onChange, conns[0]));
   const guests = [];
   for (let i = 1; i < names.length; i++) guests.push(track(await OnlineSession.join(host.roomCode, names[i], events[i].onChange, conns[i])));
@@ -169,40 +170,14 @@ try {
   assert.equal(Object.keys(handSizes).length, 3);
   console.log("  ok  seis turnos jugados con las tres manos sincronizadas");
 
-  // --- Relevo del anfitrión ---------------------------------------------------------------
-  // El anfitrión desaparece: sin cerrar la sala, sin más latidos y con su último latido
-  // antiguo. La primera persona que sigue conectada toma el relevo y retoma el estado guardado.
-  const snapshotBefore = JSON.stringify(events[1].last("game").view);
-  host.teardown();
-  await admin.withSecurityRulesDisabled(async (c) => setDoc(doc(c.firestore(), "rooms", host.roomCode, "presence", host.uid), { seenAt: Timestamp.fromMillis(Date.now() - 120000), visible: true }));
-  await until("Bea toma el relevo", () => guests[0].isHost, 30000);
-  assert.ok(events[1].changes.some((c) => c.kind === "notice" && /llevas tú/.test(c.message)));
-  await until("Cris sabe quién lleva la mesa", () => players[2].room.hostUid === guests[0].uid);
-  const resumed = await until("Bea recupera la partida", () => events[1].last("game")?.isHost && events[1].last("game"));
-  assert.equal(JSON.stringify(resumed.view.table), JSON.stringify(JSON.parse(snapshotBefore).table), "el estado se recupera tal cual");
-  console.log("  ok  relevo: Bea toma la mesa y recupera la partida guardada");
-
-  // La partida sigue con quien queda: Bea (nueva anfitriona) y Cris.
-  const newGroup = [{ session: guests[0], events: events[1] }, { session: cris2, events: events[2] }];
-  // El turno puede ser del anfitrión que se fue: la jugada no se puede resolver. Si es de las
-  // personas que quedan, se juega.
-  const turnNow = events[1].last("game").view.turnPlayer;
-  if (turnNow !== host.uid) {
-    const mine = newGroup.findIndex((p) => p.session.uid === turnNow);
-    const view = newGroup[mine].events.last("game").view;
-    const startLog = view.log.length;
-    await newGroup[mine].session.sendAction({ type: "pass" }).catch(() => {});
-    await until("jugada tras el relevo", () => newGroup[mine].events.last("game").view.log.length > startLog || newGroup[mine].events.last("error"), 15000);
-    console.log("  ok  la partida continúa tras el relevo");
-  } else {
-    console.log("  ok  (el turno era del anfitrión ausente; se omite la jugada posterior)");
-  }
-
-  // La nueva anfitriona cierra la sala y los demás lo saben.
-  await guests[0].exit();
+  // Los invitados conservan su rol aunque el anfitrión esté ausente.
+  await assert.rejects(guests[0].claimHost(), /invitados/);
+  assert.equal(guests[0].isHost, false);
+  await host.exit();
   await until("Cris ve la sala cerrada", () => events[2].last("disconnected"));
   assert.match(events[2].last("disconnected").message, /cerrado/);
-  console.log("  ok  cerrar la sala avisa al resto");
+  await assert.rejects(OnlineSession.join(host.roomCode, 'Bea', () => {}, conns[1]), /cerrado|cerrada/);
+  console.log('  ok  invitados sin relevo, cierre definitivo y enlace antiguo bloqueado');
 
   // --- Mus: cuatro manos de cuatro cartas -----------------------------------------------
   const mus = await open("mus", ["Ana", "Bea", "Cris", "Dani"]);
@@ -270,7 +245,7 @@ try {
   await solo.host.exit();
   console.log('  ok  Mus online: una persona, tres IA y partida completa');
 
-  // Bots survive host handoff and never receive private view documents or presence.
+  // The same authorized host resumes saved AI turns after reloading.
   const mixed=await open('mus',['Ana','Bea']);
   await mixed.host.fillWithBots();await until('mesa mixta llena',()=>mixed.host.players().length===4);
   await mixed.host.startGame(99);
@@ -282,15 +257,16 @@ try {
   mixed.host.botRunner.stop();
   const oldRevision=mixed.host.rev;
   mixed.host.teardown();
-  await admin.withSecurityRulesDisabled(async c=>setDoc(doc(c.firestore(),'rooms',mixed.host.roomCode,'presence',mixed.host.uid),{seenAt:Timestamp.fromMillis(Date.now()-120000),visible:true}));
-  await mixed.guests[0].claimHost();
-  await until('relevo con IA',()=>mixed.guests[0].isHost&&mixed.guests[0].state);
-  mixed.guests[0].botRunner.delay=1;
-  await until('IA continúa tras relevo',()=>mixed.guests[0].rev>oldRevision);
-  assert.equal(mixed.guests[0].players().filter(p=>p.isBot).length,2);
+  await assert.rejects(mixed.guests[0].claimHost(), /invitados/);
+  const resumedEvents=listener();
+  const resumed=track(new OnlineSession({db:mixed.conns[0].db,uid:mixed.conns[0].uid,code:mixed.host.roomCode,onChange:resumedEvents.onChange}).start());
+  await until('anfitrión recupera mesa con IA',()=>resumed.isHost&&resumed.state);
+  resumed.botRunner.delay=1;
+  await until('IA continúa tras recargar',()=>resumed.rev>oldRevision);
+  assert.equal(resumed.players().filter(p=>p.isBot).length,2);
   assert.equal(mixed.events[1].last('game').view.hands,undefined);
-  await mixed.guests[0].exit();
-  console.log('  ok  mesa mixta: IA conservada y activa después del relevo');
+  await resumed.exit();
+  console.log('  ok  mesa mixta: IA conservada tras recargar; invitados sin permisos de anfitrión');
 
   // Every new game creates a valid room ID and syncs only its player's view.
   for (const engine of listGames().filter(g=>!['cinquillo','mus','parchis'].includes(g.id))) {

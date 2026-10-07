@@ -41,3 +41,4 @@ jobs:
       - run: npm run build:web
       - run: npm run test:reglas
       - run: npm run test:online
+      - run: npm run test:acceso

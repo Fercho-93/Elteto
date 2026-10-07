@@ -13,13 +13,21 @@ import java.util.*;
 public class LanServer extends NanoWSD {
     private final File root;
     private final String hostKey = UUID.randomUUID().toString();
-    private final String roomCode;
+    private String roomCode;
+    private volatile boolean hostAuthorized;
     private final Map<String, Peer> guests = new HashMap<>();
     private final Map<String, String> guestIds = new HashMap<>();
     private Peer host;
     public LanServer(File root, int port) {
         super("0.0.0.0", port);
         this.root = root;
+        rotateRoomCode();
+    }
+    public synchronized void setHostAuthorized(boolean value) {
+        hostAuthorized = value;
+        if (!value && host != null) host.fatal("Se ha cerrado el acceso del anfitrión.");
+    }
+    private void rotateRoomCode() {
         String alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
         SecureRandom random = new SecureRandom();
         StringBuilder code = new StringBuilder();
@@ -58,6 +66,9 @@ public class LanServer extends NanoWSD {
             response.addHeader("Cache-Control","no-store"); return response;
         }
         if (uri.equals("/")) uri = "/lan.html";
+        if (!session.getRemoteIpAddress().equals("127.0.0.1") && (uri.equals("/manifest.webmanifest") || uri.equals("/sw.js"))) {
+            return newFixedLengthResponse(Response.Status.NOT_FOUND,"text/plain","Solo acceso como invitado");
+        }
         try {
             File file = new File(root, uri.substring(1)).getCanonicalFile();
             if (!file.toPath().startsWith(root.getCanonicalFile().toPath()) || !file.isFile()) return newFixedLengthResponse(Response.Status.NOT_FOUND,"text/plain","No encontrado");
@@ -92,11 +103,12 @@ public class LanServer extends NanoWSD {
             synchronized(LanServer.this) {
                 if (!valid) { fatal("Invitación local no válida.");return; }
                 if (wantsHost) {
+                    if (!hostAuthorized) { fatal("Activa tu invitación en la app anfitriona.");return; }
                     if (host!=null) { fatal("Ya hay un anfitrión conectado.");return; }
                     host=this;
                 } else {
                     if (host==null) { fatal("El anfitrión aún no ha abierto la mesa.");return; }
-                    if (guests.size()>=5 && !guests.containsKey(id)) { fatal("La mesa está completa.");return; }
+                    if (guests.size()>=7 && !guests.containsKey(id)) { fatal("La mesa está completa.");return; }
                     Peer old=guests.put(id,this);
                     if(old!=null && old!=this)old.terminate();
                 }
@@ -127,6 +139,7 @@ public class LanServer extends NanoWSD {
             synchronized(LanServer.this) {
                 if(host==this) {
                     host=null;
+                    rotateRoomCode();
                     List<Peer> remaining=new ArrayList<>(guests.values());guests.clear();guestIds.clear();
                     for(Peer peer:remaining)peer.fatal("El anfitrión ha cerrado la mesa. Abre una nueva partida.");
                 } else if(guests.get(id)==this) {
