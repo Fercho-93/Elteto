@@ -1,0 +1,33 @@
+name: Acceso de desarrollo en Pages
+on:
+  workflow_dispatch:
+    inputs:
+      enabled:
+        description: Permitir entrar sin contraseña mientras no se distribuye.
+        type: boolean
+        required: true
+        default: false
+permissions:
+  contents: read
+jobs:
+  configurar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Configurar acceso temporal
+        env:
+          CUENTA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-development.json
+          ELTETO_PUBLIC_DEVELOPMENT: ${{ inputs.enabled }}
+        run: |
+          test -n "$CUENTA"
+          printf '%s' "$CUENTA" > "$GOOGLE_APPLICATION_CREDENTIALS"
+          node scripts/set-development-access.mjs
+      - name: Borrar credencial
+        if: always()
+        run: rm -f "$RUNNER_TEMP/firebase-development.json"

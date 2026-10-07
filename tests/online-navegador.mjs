@@ -70,6 +70,17 @@ try {
   assert.equal(await developer.page.locator('input[type="password"]').count(),0);
   await developer.context.close();
   console.log('  ok  administrador sin contraseña, enlace retirado y acceso conservado tras recargar');
+  const settings=await initializeTestEnvironment({projectId:'demo-elteto',firestore:{host:'127.0.0.1',port:8080}});
+  await settings.withSecurityRulesDisabled(ctx=>setDoc(doc(ctx.firestore(),'configuration','development'),{enabled:true}));
+  const publicAdmin=await movil('administrador Pages');
+  await publicAdmin.page.goto(base);
+  await publicAdmin.page.locator('[data-action="development-admin"]').click();
+  await publicAdmin.page.locator('#host-name').waitFor();
+  assert.equal(await publicAdmin.page.locator('input[type="password"]').count(),0);
+  await publicAdmin.context.close();
+  await settings.withSecurityRulesDisabled(ctx=>setDoc(doc(ctx.firestore(),'configuration','development'),{enabled:false}));
+  await settings.cleanup();
+  console.log('  ok  botón de administrador en Pages abre crear partida sin contraseña');
   const host = await movil("anfitrión");
   await host.page.goto(base);
   await host.page.click('[data-action="open-host"]');

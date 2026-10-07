@@ -1,16 +1,17 @@
 import { connectFirebase } from './firebase-client.js';
 import { activationCodeHash } from './activation-code.js';
+import { distributionConfig } from './distribution-config.js';
 import { doc, getDocFromServer, runTransaction, serverTimestamp, EmailAuthProvider,
   linkWithCredential, signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from './firebase-sdk.js';
 
 const CACHE_KEY = 'elteto.hostAccess.v1';
 function remember(user, grant) {
-  const value = { uid: user.uid, email: user.email, active: grant?.status === 'active' };
+  const value = { uid: user.uid, email: user.email, mode: grant?.mode, active: grant?.status === 'active' };
   try { localStorage.setItem(CACHE_KEY, JSON.stringify(value)); } catch {}
   return value;
 }
 export function cachedHostAccess() {
-  try { const value = JSON.parse(localStorage.getItem(CACHE_KEY)); return value?.active && value?.uid ? value : null; }
+  try { const value = JSON.parse(localStorage.getItem(CACHE_KEY)); return value?.active && value?.uid && (value.mode !== 'development' || distributionConfig.developmentAdminEnabled) ? value : null; }
   catch { return null; }
 }
 export function accessError(error) {
@@ -94,6 +95,27 @@ export async function activateDevelopmentAdmin(code) {
     }
     return access;
   } catch (error) { throw accessError(error); }
+}
+export async function activatePublicDevelopmentAdmin(connection = connectFirebase()) {
+  if (!distributionConfig.developmentAdminEnabled) throw new Error('El acceso de desarrollo está desactivado.');
+  const { db, auth, uid } = await connection;
+  const setting = doc(db, 'configuration', 'development'), access = doc(db, 'hostAccess', uid);
+  await runTransaction(db, async tx => {
+    const [config, grant] = await Promise.all([tx.get(setting), tx.get(access)]);
+    if (config.data()?.enabled !== true) throw new Error('El acceso de desarrollo está desactivado.');
+    if (grant.exists()) {
+      if (grant.data().status !== 'active') throw new Error('Este acceso está revocado.');
+      return;
+    }
+    tx.set(access, { status: 'active', mode: 'development', redeemedAt: serverTimestamp() });
+  });
+  const grant = (await getDocFromServer(access)).data();
+  const result = remember(auth.currentUser, grant);
+  if (globalThis.window?.EltetoActivation) {
+    const native = JSON.parse(window.EltetoActivation.activate(await auth.currentUser.getIdToken(true)));
+    if (!native.ok) throw new Error(native.message || 'No se pudo activar este Android.');
+  }
+  return result;
 }
 export async function recoverHostPassword(email) {
   try { const { auth } = await connectFirebase(); await sendPasswordResetEmail(auth, email.trim()); }
