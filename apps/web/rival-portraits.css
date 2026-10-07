@@ -1,6 +1,6 @@
 /* Quiet public-player information, outside the felt and separate from each portrait. */
 .rival-roster {--token-size:32px;position:absolute;z-index:3;top:6px;left:10px;right:10px;display:grid;grid-template-columns:repeat(var(--rival-count),minmax(0,1fr));gap:8px;max-width:calc(var(--rival-count) * 144px);margin:0;padding:0;background:none;border:0;box-shadow:none;}
-.cinquillo-screen .game-table .table-seat.rival-seat {position:static;inset:auto;transform:none;width:auto;height:auto;z-index:auto;min-width:0;display:flex;align-items:center;gap:6px;text-align:left;color:#e5ded0;font-family:system-ui,sans-serif;}
+:is(.cinquillo-screen,.mus-screen) .game-table .table-seat.rival-seat {position:static;inset:auto;transform:none;width:auto;height:auto;z-index:auto;min-width:0;display:flex;align-items:center;gap:6px;text-align:left;color:#e5ded0;font-family:system-ui,sans-serif;}
 .rival-token {position:relative;flex:none;width:var(--token-size);height:var(--token-size);}
 .rival-original {width:100%;height:100%;border:1px solid #a2957955;border-radius:50%;overflow:hidden;background:#39243f;}
 .rival-original svg {display:block;width:100%;height:100%;}
@@ -11,7 +11,7 @@
 .rival-count-word {display:none;}
 .rival-roster .active-seat .rival-original {border-color:#e0c68c;outline:1px solid #e0c68c44;outline-offset:1px;}
 .rival-roster .active-seat .rival-name,.rival-count.last-card {color:#e6cd91;}
-@media(max-width:519px){.rival-roster[data-count="4"],.rival-roster[data-count="5"]{--token-size:28px;gap:6px;}.cinquillo-screen .game-table .table-seat.rival-seat{gap:5px;}}
+@media(max-width:519px){.rival-roster[data-count="4"],.rival-roster[data-count="5"]{--token-size:28px;gap:6px;}:is(.cinquillo-screen,.mus-screen) .game-table .table-seat.rival-seat{gap:5px;}}
 @media(max-width:359px){.rival-roster{--token-size:24px;gap:5px;}.rival-roster[data-count]{--token-size:24px;}.rival-roster .rival-name{font-size:10px;}}
 @media(min-width:520px){.rival-count-word{display:inline;}}
 @media(min-width:700px) and (min-height:700px){.rival-roster{--token-size:36px;top:10px;}.rival-roster .rival-name{font-size:12px;line-height:16px;}.rival-count{font-size:11px;line-height:14px;}}

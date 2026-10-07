@@ -10,7 +10,7 @@ Solo Mus y Cinquillo tienen motor y mesa jugables. Los otros 18 tienen ficha de 
 
 Baraja española de 40 cartas: oros, copas, espadas y bastos, índices 1–7 y 10–12. Sale el cinco de oros. Se abren palos con cinco y se continúa sin saltos por el orden de la baraja; siete seguido de sota. Solo se pasa sin jugada.
 
-La mano termina al vaciar una mano. Su ganador suma cinco más el número de cartas restantes de todos los demás; los demás restan una por carta restante. La partida acaba cuando el ganador llega a 30 puntos. El ganador confirma la siguiente mano, conservando puntuación y repartiendo de nuevo. Se muestran puntos, mano y meta.
+La mano termina al vaciar una mano. Su ganador suma cinco más el número de cartas restantes de todos los demás; los demás restan una por carta restante. La partida acaba cuando el ganador llega a 30 puntos. El ganador confirma la siguiente mano, conservando puntuación y repartiendo de nuevo. Se muestran puntos, mano y meta. Un resumen al terminar cada mano explica las variaciones y los totales; solo el ganador puede iniciar el siguiente reparto. Puede cerrarse para consultar la mesa y abrirse de nuevo desde el menú. El final de partida tiene su propio resultado. Las mesas francesas antiguas conservan su final sin puntuación española.
 
 La fuente clásica de Ludoteka juega entre cuatro. Se conservan mesas de dos a seis como ampliación explícita de Elteto con las mismas reglas. Las salas guardadas de la versión anterior mantienen su baraja francesa y su final de una mano; no se convierten índices de una baraja a la otra.
 
@@ -26,7 +26,7 @@ Las seña físicas, corte manual y errores de reparto no se simulan como accione
 
 ## Estructura para ampliar juegos
 
-La presentación común sigue los seis mockups conservados en `design/references/`, con ilustraciones 2D: mesa ovalada de madera y tapete verde, diez mascotas sentadas detrás, brazos superpuestos al borde y abanicos de dorsos entre las manos. Cinquillo y Mus la utilizan en web y Android LAN. Las caras españolas y francesas son imágenes tradicionales originales almacenadas en `apps/web/assets/decks/`, con licencia y procedencia de cada carta. La mano propia conserva botones accesibles; las rivales solo reciben cantidades públicas. Hay vuelo de cartas, respiración y reacciones, con movimiento reducido respetado. Los huecos de cartas pendientes permanecen invisibles.
+La presentación común utiliza ilustraciones 2D, mesa de madera y tapete verde. Cinquillo y Mus muestran los diez retratos originales en una fila discreta fuera del tapete. Los nombres y cantidades públicas de cartas quedan al lado; Mus indica compañero y parejas A/B. La mano privada y los controles permanecen visibles en web y Android LAN. Las caras españolas y francesas son imágenes tradicionales originales almacenadas en `apps/web/assets/decks/`, con licencia y procedencia de cada carta. La mano propia conserva botones accesibles; las rivales solo reciben cantidades públicas. Hay vuelo de cartas y reacciones breves, con movimiento reducido respetado. Los huecos de cartas pendientes permanecen invisibles.
 
 `seatPosition` prepara posiciones para 2–8 participantes y `renderSeats` acepta vistas de tablero sin cartas. Esto no habilita motores de Parchís/Oca ni amplía el límite actual de Cinquillo (2–6) o Mus (4). No se copian como reglas los tableros ni los recuentos dibujados en los mockups. La composición, sus capas y los recursos están documentados en `design/MESA_2D.md`. No se utiliza WebGL ni modelos 3D.
 

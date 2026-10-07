@@ -35,7 +35,7 @@ Se revisó material público, sin crear cuentas ni jugar partidas en estos servi
 
 ## Alcance y pruebas
 
-`rival-portraits.js` y `rival-portraits.css` contienen el componente. `table-view.js` lo usa en Cinquillo; Mus mantiene su presentación. No cambian `cinquillo-table.css`, `cinquillo-screen.js`, motores, reglas, transportes, servidor, protocolo ni lógica de conexión.
+`rival-portraits.js` y `rival-portraits.css` contienen el componente. Desde 0.1.7, `table-view.js` lo usa también en Mus: tres rivales en orden de turno, uno identificado como compañero, parejas A/B y cantidades públicas. Se mantienen las diez identidades originales y se elimina la composición de cuerpos y sillas de Mus. La geometría de Cinquillo, los motores, las reglas, los transportes y la conexión se conservan. El cierre de Cinquillo y la pantalla adaptada de Mus se documentan en [MESA_2D.md](MESA_2D.md).
 
 `tests/rival-portraits.mjs` comprueba diez identidades desde tres puntos de vista y tres pantallas: 90 casos por navegador, además de cantidades 0/1/5/20 y 15 comparaciones con la geometría de 0.1.4 (`877cdaa`). La referencia conserva las medidas de tapete, cartas y mano; tolerancia entre motores inferior a un píxel.
 

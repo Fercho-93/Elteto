@@ -289,11 +289,14 @@ try {
     closing.table={oros:{low:4,high:4}};closing.turn=0;
     await page.evaluate(game=>window.testTable('cinquillo',game,'a'),closing);
     await page.locator('.legal-card').click();
-    assert.ok(await page.locator('[data-action="cinquillo-next-hand"]').isVisible());
+    assert.ok(await page.locator('.hand-result').evaluate(el=>el.open));
+    assert.equal(await page.locator('.result-scores tbody tr').first().textContent(),'Ana · tú+88');
+    await page.locator('[data-action="close-hand-result"]').click();
+    assert.ok(await page.locator('.turn-action [data-action="cinquillo-next-hand"]').isVisible());
     await page.locator('.game-menu-button').click();
     assert.equal(await page.locator('.scoreboard li').first().textContent(),'Ana · tú8');
     await page.locator('[data-action="close-game-menu"]').click();
-    await page.locator('[data-action="cinquillo-next-hand"]').click();
+    await page.locator('.turn-action [data-action="cinquillo-next-hand"]').click();
     assert.equal((await page.evaluate(()=>window.tableSnapshot())).handNumber,2);
     assert.equal(await page.locator('.hand-filters [aria-pressed="true"]').getAttribute('data-suit'),'all');
     const ids = ["a", "b", "c", "d"];
@@ -346,7 +349,7 @@ try {
     await page.emulateMedia({ reducedMotion: "reduce" });
     assert.equal(
       await page
-        .locator(".character-sprite")
+        .locator(".rival-roster")
         .first()
         .evaluate((el) => getComputedStyle(el).animationName),
       "none",

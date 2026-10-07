@@ -1,6 +1,7 @@
 import { getGame, listGames, GAME_CATALOG } from "./game-core/index.js";
 import { LocalGuestSession, LocalHostSession } from "./local-session.js";
 import { arrangeCinquilloScreen } from './cinquillo-screen.js';
+import { arrangeMusScreen } from './mus-screen.js';
 import { parseRoomCode } from "./room-code.js";
 
 import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, canPlayCinquillo, animateTable, animateSeats, MASCOTS, renderMascot } from "./table-view.js";
@@ -120,6 +121,7 @@ let previousTableKeys = null;
 let previousTurn = null;
 let renderedGame = null;
 let previousSeats = null;
+let shownResult = null;
 function renderGame() {
   state.screen = "game";
   const game = getGame(state.gameId), view = state.view;
@@ -143,6 +145,7 @@ function renderGame() {
   const zoomOpen = app.querySelector('.board-zoom')?.open || false;
   const zoomScrollTop = app.querySelector('.board-zoom .zoom-scroll')?.scrollTop || 0;
   const menuOpen = app.querySelector('.game-menu')?.open || false;
+  const resultOpen = app.querySelector('.hand-result')?.open || false;
   const menuScrollTop = app.querySelector('.game-menu-content')?.scrollTop || 0;
   const winner = state.gameId === 'mus' ? `Gana la pareja ${view.winnerTeam || ''}` : view.winner ? `Gana ${playerName(view.winner)}` : 'Fin de partida';
   const myTurn = view.turnPlayer === state.playerId;
@@ -177,14 +180,20 @@ function renderGame() {
     <dialog class="board-zoom" aria-label="Mesa ampliada"></dialog>
   </section>`;
   if(state.gameId==='cinquillo') state.handSuit=arrangeCinquilloScreen(app,view,state.playerId,playerName,state.handSuit);
+  else if(state.gameId==='mus') arrangeMusScreen(app,view,state.playerId,playerName);
   app.querySelector('.game-rules').open=rulesOpen;
   app.querySelector('.board-zoom').addEventListener('close',event=>{
     event.target.replaceChildren();
     app.querySelector('[data-action="open-table-zoom"]')?.focus({preventScroll:true});
   });
   app.querySelector('.game-menu')?.addEventListener('close',()=>app.querySelector('.game-menu-button')?.focus({preventScroll:true}));
-  if(menuOpen && state.gameId==='cinquillo') { app.querySelector('.game-menu').showModal(); app.querySelector('.game-menu-content').scrollTop=menuScrollTop; }
+  if(menuOpen) { app.querySelector('.game-menu').showModal(); app.querySelector('.game-menu-content').scrollTop=menuScrollTop; }
   if(zoomOpen) { openTableZoom(); app.querySelector('.board-zoom .zoom-scroll').scrollTop=zoomScrollTop; }
+  const result=app.querySelector('.hand-result'),resultKey=`${gameToken}:${view.handWinner}:${view.finished}`;
+  if(result && (resultOpen || shownResult!==resultKey && !menuOpen && !zoomOpen)) {
+    shownResult=resultKey;result.showModal();
+  }
+  result?.addEventListener('close',()=>app.querySelector('[data-action="open-hand-result"], [data-action="cinquillo-next-hand"]')?.focus({preventScroll:true}));
   app.querySelector('.hand').scrollLeft = scroll;
   if(focusAction) {
     const target=[...app.querySelectorAll('[data-action]')].find(el=>el.dataset.action===focusAction && (!focusCard||el.dataset.cardKey===focusCard) && (!focusSuit||el.dataset.suit===focusSuit));
@@ -258,7 +267,7 @@ function render() {
 }
 
 function resetToHome() {
-  previousTableKeys = null; renderedGame = null; previousTurn = null; previousSeats = null;
+  previousTableKeys = null; renderedGame = null; previousTurn = null; previousSeats = null; shownResult = null;
   Object.assign(state, { role: null, name: "", players: [], view: null, host: null, guest: null, online: null, roomCode: "", offerCode: "", answerCode: "", selected: new Set(), error: "", screen: "home" });
   renderHome();
 }
@@ -311,6 +320,8 @@ app.addEventListener("click", async (event) => {
   try {
     if (action === "open-table-zoom") { openTableZoom(); return; }
     if (action === "open-game-menu") { app.querySelector('.game-menu')?.showModal(); return; }
+    if (action === "open-hand-result") { app.querySelector('.game-menu')?.close(); app.querySelector('.hand-result')?.showModal(); return; }
+    if (action === "close-hand-result") { app.querySelector('.hand-result')?.close(); return; }
     if (action === "close-game-menu") { app.querySelector('.game-menu')?.close(); return; }
     if (action === "hand-filter") {
       state.handSuit=button.dataset.suit; renderGame(); app.querySelector('.hand').scrollLeft=0;

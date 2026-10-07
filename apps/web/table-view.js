@@ -89,11 +89,12 @@ export function seatPosition(count, relative) {
   return layouts[count]?.[relative - 1] || [50, 18];
 }
 export function renderSeats(view, playerId, name, gameId) {
-  if(gameId==='cinquillo') {
+  if(gameId==='cinquillo' || gameId==='mus') {
     const own=view.players.indexOf(playerId),n=view.players.length;
     const players=Array.from({length:n-1},(_,offset)=>{
       const index=(own+offset+1)%n,id=view.players[index],character=mascotForSeat(view.players,index);
-      return {id,character,mascot:MASCOTS[character],name:name(id),count:view.handSizes?.[id]||0,active:!view.finished&&!view.handWinner&&view.turnPlayer===id};
+      const isMus=gameId==='mus',team=index%2?'B':'A',partner=isMus&&index%2===own%2;
+      return {id,character,mascot:MASCOTS[character],name:name(id),count:view.handSizes?.[id]||0,teamLabel:isMus?`${team} · ${partner?'Compi':'Rival'}`:'',active:!view.finished&&!view.handWinner&&(view.turnPlayer===id||isMus&&view.phase==='discard'&&view.awaitingDiscardFrom?.includes(id))};
     });
     return renderRivalRoster(players,esc);
   }

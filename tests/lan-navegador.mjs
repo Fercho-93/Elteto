@@ -82,7 +82,8 @@ try {
  for(const p of [host,guest,c,d]) {
   await p.locator('.hand .playing-card').first().waitFor();
   assert.equal(await p.locator('.hand .playing-card').count(),4);
-  assert.equal(await p.locator('.rival-hand .card-back').count(),12);
+  assert.equal(await p.locator('.rival-original').count(),3);
+  assert.equal(await p.locator('.rival-count').evaluateAll(els=>els.reduce((sum,el)=>sum+Number(el.dataset.count),0)),12);
  }
  const pages=[host,guest,c,d];
  const actor=async action=>{
@@ -95,6 +96,7 @@ try {
  for(let i=0;i<50;i++) {await new Promise(r=>setTimeout(r,10));if((await Promise.all(pages.map(p=>p.locator('[data-action="mus-accept"]').count()))).some(Boolean))break;}
  await (await actor('mus-accept')).locator('[data-action="mus-accept"]').click();
  for(const p of pages) await p.waitForFunction(()=>document.querySelector('.mus-phase strong').textContent==='Chica');
+ await host.locator('.game-menu-button').click();
  await host.locator('[data-action="leave-room"]').click();
  for(const p of [guest,c,d]) await p.locator('[data-action="open-join"]').waitFor();
  assert.deepEqual(errors,[]);
