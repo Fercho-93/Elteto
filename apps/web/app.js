@@ -29,20 +29,27 @@ function header(back = "home") {
 }
 function playerName(id) { return state.players.find((player) => player.id === id)?.name || (id === "host" ? state.name : id); }
 
+// Supplied artwork is framed with CSS, leaving the original images untouched.
+function menuAvatar(index) {
+  const x = [0,260,518,774,1032][index % 5];
+  const y = index < 5 ? 0 : 415;
+  return `<span class="menu-avatar" role="img" aria-label="${esc(MASCOTS[index])}" style="--avatar-x:${x / 1032 * 100}%;--avatar-y:${y / 446 * 100}%"></span>`;
+}
 function renderHome() {
   state.screen = "home";
   app.innerHTML = `<section class="menu-shell">
     <div class="menu-wrap">
-      <header class="menu-header"><a class="menu-brand" href="./" aria-label="Elteto, inicio">elteto<span>.</span></a><nav aria-label="Menú principal"><a href="#menu-games">Juegos</a><a href="./reglas_juegos/biblioteca.html">Reglas <span aria-hidden="true">↗</span></a></nav></header>
+      <header class="menu-header"><a class="menu-brand" href="./" aria-label="Elteto, inicio">ELTETO<span>✦</span></a><nav aria-label="Menú principal"><a href="#menu-games">Juegos</a><a href="./reglas_juegos/biblioteca.html">Reglas ↗</a></nav></header>
       <div class="menu-hero">
-        <div class="menu-intro"><span class="menu-mobile-spark" aria-hidden="true">✳</span><p class="menu-kicker">CARTAS, TABLERO Y PIQUE</p><h1>Una más.<br><span>Y nos vamos.</span></h1><p class="menu-copy">Los de siempre. Con los tuyos.</p>
-          <div class="menu-actions">${!LAN || LAN.hostKey ? '<button class="menu-button menu-primary" data-action="open-host">Crear partida <span aria-hidden="true">↗</span></button>' : ''}<button class="menu-button menu-secondary" data-action="open-join">Unirse <span aria-hidden="true">→</span></button></div>
+        <div class="menu-art"><div class="menu-logo" role="img" aria-label="Elteto: berenjena y melocotón con gafas bajo un arco de neón"></div></div>
+        <div class="menu-intro"><p class="menu-kicker">CARTAS · DADOS · PIQUE</p><h1>Se viene<br> <span>pique.</span></h1><p class="menu-copy">Los de siempre. Con los tuyos.</p>
+          <div class="menu-actions">${!LAN || LAN.hostKey ? '<button class="menu-button menu-primary" data-action="open-host">Crear partida <span aria-hidden="true">↗</span></button>' : ''}<button class="menu-button menu-secondary" data-action="open-join">Unirse a la mesa <span aria-hidden="true">→</span></button></div>
           ${LAN ? '<p class="menu-network-note">Mesa local sin internet. Conecta todos los móviles a la misma Wi-Fi o hotspot.</p>' : ''}
         </div>
-        <div class="menu-art" aria-hidden="true"><div class="menu-orbit"></div><div class="menu-wordmark"><span>el</span><span>teto<span class="menu-dot">.</span></span></div><span class="menu-art-label">CARTAS & TABLERO</span><span class="menu-spark">✳</span></div>
       </div>
-      <section class="menu-games" id="menu-games" aria-labelledby="menu-games-title"><div class="menu-section-heading"><h2 id="menu-games-title">Sobre la mesa</h2><span>${String(listGames().length).padStart(2, '0')} JUEGOS</span></div><div class="menu-game-grid">${listGames().map((game, index) => `<a class="menu-game" href="./reglas_juegos/lectura/${game.id}.html"><span class="menu-game-number">0${index + 1}</span><div><h3>${esc(game.label)}</h3><p>${game.minPlayers === game.maxPlayers ? game.minPlayers : `${game.minPlayers}–${game.maxPlayers}`} jugadores</p></div><span class="menu-game-link">Reglas <span aria-hidden="true">↗</span></span></a>`).join('')}</div></section>
-      <footer class="menu-footer"><span>Elteto · Hecho para jugar</span><details class="menu-extras"><summary>Extras <span aria-hidden="true">+</span></summary><div class="menu-extra-content"><a href="./reglas_juegos/biblioteca.html#proximos">Próximos juegos <span>${GAME_CATALOG.filter(game => game.status === 'planned').length}</span></a><a href="./assets/decks/credits.html">Créditos de las barajas <span aria-hidden="true">↗</span></a><details class="menu-characters"><summary>Personajes <span>${MASCOTS.length}</span></summary><div class="menu-character-grid">${MASCOTS.map((label,index)=>`<figure>${renderMascot(index)}<figcaption>${esc(label)}</figcaption></figure>`).join('')}</div></details></div></details></footer>
+      <section class="menu-games" id="menu-games" aria-labelledby="menu-games-title"><div class="menu-section-heading"><h2 id="menu-games-title">¿A qué le damos?</h2><a href="./reglas_juegos/biblioteca.html">Ver reglas ↗</a></div><div class="menu-game-grid">${listGames().map((game, index) => `<a class="menu-game" href="./reglas_juegos/lectura/${game.id}.html"><span class="menu-game-symbol" aria-hidden="true">${['♠','♣','⚄'][index]}</span><div><h3>${esc(game.label)}</h3><p>${game.minPlayers === game.maxPlayers ? game.minPlayers : `${game.minPlayers}–${game.maxPlayers}`} jugadores</p></div><span class="menu-game-link" aria-label="Reglas de ${esc(game.label)}">↗</span></a>`).join('')}</div></section>
+      <section class="menu-cast"><details class="menu-characters"><summary>La peña <span>${MASCOTS.length} avatares <b aria-hidden="true">+</b></span></summary><div class="menu-character-grid">${MASCOTS.map((label,index)=>`<figure>${menuAvatar(index)}<figcaption>${esc(label)}</figcaption></figure>`).join('')}</div></details></section>
+      <footer class="menu-footer"><span>ELTETO · Luego no llores.</span><details class="menu-extras"><summary>Extras <span aria-hidden="true">+</span></summary><div class="menu-extra-content"><a href="./reglas_juegos/biblioteca.html#proximos">Próximos juegos <span>${GAME_CATALOG.filter(game => game.status === 'planned').length}</span></a><a href="./assets/decks/credits.html">Créditos de las barajas ↗</a></div></details></footer>
     </div>
   </section>`;
 }
@@ -53,7 +60,7 @@ function renderHostForm() {
     <input type="radio" name="game" value="${esc(game.id)}" ${state.gameId === game.id ? "checked" : ""}>
     <span class="game-check" aria-hidden="true">✓</span><span><strong>${esc(game.label)}</strong><small>${game.minPlayers === game.maxPlayers ? `${game.minPlayers} jugadores` : `${game.minPlayers}–${game.maxPlayers} jugadores`}</small></span>
   </label>`).join("");
-  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="back">← <span>Volver</span></button><a class="menu-brand" href="./" data-action="home">elteto<span>.</span></a></header><section class="menu-setup" aria-labelledby="setup-title">
+  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="back">← <span>Volver</span></button><a class="menu-brand" href="./" data-action="home">ELTETO<span>✦</span></a></header><section class="menu-setup" aria-labelledby="setup-title">
     <p class="menu-kicker">TÚ PONES LA MESA</p><h1 id="setup-title">Crear partida<span>.</span></h1>
     <div class="menu-fields"><div><label class="field-label" for="host-name">Tu nombre</label><input class="text-field" id="host-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}"></div>
     <div><label class="field-label" for="room-name">Nombre de la sala <span>opcional</span></label><input class="text-field" id="room-name" maxlength="30" placeholder="La de siempre" value="${esc(state.roomName)}"></div></div>

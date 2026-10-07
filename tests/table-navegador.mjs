@@ -377,7 +377,7 @@ try {
     await page.goto(base+'reglas_juegos/biblioteca.html');
     assert.equal(await page.locator('li a').count(),20);
     await page.goto(base+'reglas_juegos/lectura/cinquillo.html');
-    assert.match(await page.locator('pre').textContent(),/cinco de oros/);
+    assert.match(await page.locator('.rules-steps').textContent(),/cinco de oros/);
     const cached = await page.evaluate(async()=>{
       const response=await fetch('../mus.html');
       return response.ok && (await response.text()).includes('8 reyes');
