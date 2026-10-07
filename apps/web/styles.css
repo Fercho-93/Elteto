@@ -554,6 +554,45 @@ body:has(.game-page) {
 .menu-shell .game-option.chosen .game-check { opacity:1; }
 .menu-shell .game-option small { font-size:11px; color:var(--menu-muted); opacity:1; }
 .menu-create { width:100%; }
+.menu-lobby { width:min(100%,900px); }
+.menu-lobby h1 { margin-bottom:12px; overflow-wrap:anywhere; }
+.lobby-game { margin:0 0 30px; color:var(--cyan); font-size:14px; font-weight:750; }
+.lobby-game span { color:var(--menu-muted); font-weight:400; }
+.lobby-grid { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:24px; align-items:start; }
+.lobby-invite,.lobby-players { min-width:0; padding:24px; border:1px solid var(--menu-line); border-radius:16px; background:#25192e80; }
+.menu-lobby h2 { margin:0 0 16px; color:var(--menu-text); font-size:18px; font-weight:850; letter-spacing:-.3px; }
+.menu-lobby .helper { margin:0 0 20px; color:var(--menu-muted); font-size:13px; line-height:1.6; }
+.menu-lobby .connection-box { padding:0; border:0; background:none; border-radius:0; }
+.menu-lobby .invite-grid { gap:14px; }
+.menu-lobby .button { min-height:46px; border:1px solid #ffffff30; border-radius:10px; box-shadow:0 3px 0 #160d2640; font-size:13px; }
+.menu-lobby .button-dark { background:#ffffff08; }
+.menu-lobby .button-paper { background:#fff8e812; color:var(--menu-text); }
+.menu-lobby .code-card { margin:0; padding:16px; background:#1d142580; border:1px solid var(--menu-line); border-radius:12px; }
+.menu-lobby .code-head { align-items:flex-start; margin-bottom:16px; }
+.menu-lobby .code-badge { background:#69e5e21a; color:var(--cyan); font-size:12px; }
+.menu-lobby .code-head strong { font-size:13px; line-height:1.45; }
+.menu-lobby .code-head small { color:var(--menu-muted); font-size:11px; line-height:1.5; }
+.menu-lobby .invite-qr { width:min(100%,260px); border-radius:8px; margin:0 auto 16px; }
+.menu-lobby .code-field { min-height:72px; background:#25192e; color:var(--menu-text); border:1px solid #ffffff30; font-size:12px; font-weight:400; line-height:1.5; }
+.menu-lobby .code-actions { gap:8px; }
+.menu-lobby .code-actions .button { padding:10px; }
+.menu-lobby .room-code { display:block; width:fit-content; margin-top:8px; color:var(--citrus); font-size:25px; letter-spacing:.14em; }
+.menu-lobby .players-head { margin:0 0 18px; align-items:center; color:var(--menu-muted); font-size:13px; letter-spacing:0; }
+.menu-lobby .players-head h2 { margin:0; }
+.menu-lobby .player-list { gap:10px; }
+.menu-lobby .player-row { padding:12px; background:#25192e; border:1px solid var(--menu-line); border-radius:10px; gap:10px; }
+.menu-lobby .player-row strong { min-width:0; font-size:14px; }
+.menu-lobby .host-pill,.menu-lobby .ready-pill { padding:5px 7px; font-size:8px; background:#69e5e219; color:var(--cyan); }
+.menu-lobby .host-pill { background:#dcfb5219; color:var(--citrus); }
+.menu-lobby .menu-create { margin-top:22px; font-size:15px; justify-content:space-between; }
+.menu-lobby .scan-row { flex-wrap:wrap; margin:0; gap:8px; }
+.menu-lobby .connection-status { margin:0; font-size:13px; line-height:1.6; }
+@media(max-width:700px) {
+ .lobby-grid { grid-template-columns:minmax(0,1fr); gap:18px; }
+ .lobby-invite,.lobby-players { padding:20px; }
+ .menu-lobby .code-actions { flex-direction:row; }
+ .menu-lobby .code-card { padding:14px; }
+}
 .menu-library { padding:40px 0 55px; }
 .menu-library h1 { margin-bottom:18px; }
 .menu-library > p:not(.menu-kicker) { color:var(--menu-muted); font-size:14px; line-height:1.6; }
