@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['apps/android-host/**', 'apps/web/**', 'packages/game-core/**', '.github/workflows/android-lan.yml']
+    paths: ['apps/android-host/**', 'apps/web/**', 'packages/game-core/**', 'tests/table-navegador.mjs', '.github/workflows/android-lan.yml']
 permissions:
   contents: read
 jobs:
