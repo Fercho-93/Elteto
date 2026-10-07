@@ -455,6 +455,40 @@ body:has(.game-page) {
 @media(prefers-reduced-motion:reduce) { .seat-front .rival-hand { animation:none; } }
 
 /* Menu identity is scoped so the playing tables keep their own graphics. */
+/* Parchís: public turn information above the board, dice controls below it. */
+.parchis-screen.parchis-screen { grid-template-rows:48px auto minmax(0,1fr) auto; }
+.parchis-info { min-width:0; padding:6px 10px 4px; display:grid; gap:6px; }
+.parchis-screen .parchis-info .rival-roster { --token-size:64px; position:static; inset:auto; max-width:none; gap:10px; }
+.parchis-info .rival-original { border-color:#69e5e266; box-shadow:0 0 12px #69e5e215; }
+.parchis-info .rival-count { flex-wrap:wrap; gap:2px; white-space:normal; }
+.parchis-info .rival-roster[data-count="3"] .rival-team { flex-basis:100%; }
+.parchis-info .active-seat .rival-original { border-color:var(--pink); outline-color:#f3488d55; box-shadow:0 0 14px #f3488d30; }
+.parchis-screen .parchis-info .parchis-status strong { color:var(--cyan); font-weight:750; }
+.parchis-info .parchis-status p { margin-top:2px; font-size:11px; }
+.parchis-info .parchis-last { white-space:nowrap; text-overflow:ellipsis; font-size:10px; }
+.parchis-info .parchis-starting-rolls { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.parchis-info .parchis-starting-rolls .is-next { border-color:#69e5e266; background:#69e5e20a; }
+.parchis-info .parchis-starting-rolls strong { color:var(--cyan); }
+.parchis-screen .parchis-table { padding-top:4px; padding-bottom:4px; }
+.parchis-screen .parchis-dock { padding:10px 12px max(10px,env(safe-area-inset-bottom)); gap:8px; border-top:1px solid #69e5e22b; background:linear-gradient(180deg,#38234235,#21172b99); }
+.parchis-actions { display:flex; align-items:center; justify-content:center; gap:22px; min-height:66px; }
+.parchis-screen .parchis-actions button { min-width:150px; min-height:48px; color:#291333; background:linear-gradient(180deg,#f65b99,#f3488d); border:1px solid #ff9bc480; box-shadow:inset 0 1px 0 #ffffff35,0 3px 0 #160d2660,0 0 12px #f3488d18; font-weight:800; transition:filter .15s,transform .15s; }
+.parchis-actions button:hover:not(:disabled) { filter:brightness(1.06); }
+.parchis-actions button:active:not(:disabled) { transform:translateY(2px); }
+.parchis-info .active-seat .rival-token { animation:parchis-turn-glow .4s ease-out; }
+@keyframes parchis-turn-glow { from { filter:brightness(1.25); transform:scale(.94); } to { filter:brightness(1); transform:scale(1); } }
+@media(min-width:700px) and (min-height:700px) { .parchis-screen .parchis-info .rival-roster { --token-size:76px; } }
+@media(max-height:620px) { .parchis-screen .parchis-info .rival-roster { --token-size:48px; } .parchis-info { gap:3px; padding-block:2px; } }
+@media(min-width:600px) and (max-height:699px) {
+ .parchis-screen.parchis-screen { grid-template-columns:minmax(0,1fr) 230px; grid-template-rows:44px auto minmax(0,1fr); }
+ .parchis-info { grid-column:2; grid-row:2; }
+ .parchis-screen .parchis-table { grid-column:1; grid-row:2 / 4; }
+ .parchis-screen .parchis-dock { grid-column:2; grid-row:3; align-self:end; }
+ .parchis-screen .parchis-info .rival-roster { --token-size:44px; }
+ .parchis-actions { gap:10px; flex-wrap:wrap; }
+ .parchis-actions button { min-width:130px; }
+}
+@media(prefers-reduced-motion:reduce) { .parchis-info .active-seat .rival-token { animation:none; } }
 .menu-shell { --menu-bg:#382342; --menu-text:#fff8e8; --menu-muted:#d7c9dc; --menu-accent:#dcfb52; --menu-line:#ffffff24; min-height:100svh; color:var(--menu-text); background:radial-gradient(ellipse at 12% 10%,#63336f 0,transparent 55%),radial-gradient(ellipse at 90% 65%,#432d65 0,transparent 50%),#382342; padding:0 max(20px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(20px,env(safe-area-inset-left)); isolation:isolate; overflow:clip; }
 .menu-wrap { width:min(100%,1050px); margin:auto; }
 .menu-shell a { color:inherit; text-decoration:none; }
