@@ -468,7 +468,7 @@ body:has(.game-page) {
 .menu-hero { display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:70px; padding:48px 25px 52px; }
 .menu-art { position:relative; width:min(100%,520px); margin:auto; }
 .menu-art::before { content:""; position:absolute; inset:8% -12% 0; z-index:-1; background:radial-gradient(ellipse at 32% 48%,#69e5e227,transparent 58%),radial-gradient(ellipse at 75% 52%,#f3488d35,transparent 60%); filter:blur(18px); }
-.menu-logo { aspect-ratio:1402 / 1122; background:url('./assets/elteto-cover-palms-v4.png') center / contain no-repeat; filter:drop-shadow(0 5px 2px #150b2475) drop-shadow(0 11px 14px #150b2470); animation:menu-logo-in .55s cubic-bezier(.2,.8,.3,1) both; }
+.menu-logo { aspect-ratio:1402 / 1122; background:url('./assets/elteto-cover-balanced-v5.png') center / contain no-repeat; filter:drop-shadow(0 4px 5px #150b2440); animation:menu-logo-in .55s cubic-bezier(.2,.8,.3,1) both; }
 
 .menu-kicker { font-size:10px; font-weight:850; color:var(--cyan); letter-spacing:1.8px; margin:0 0 18px; text-transform:uppercase; }
 .menu-intro h1 { margin:0; font-size:clamp(48px,5.5vw,76px); line-height:.98; font-weight:1000; letter-spacing:-3px; }
@@ -612,7 +612,7 @@ body:has(.game-page) {
  .menu-rulebook { padding-top:32px; }
  .rules-steps li { padding:17px 15px; gap:12px; }
 }
-@media(max-width:360px) { .menu-rule-list { grid-template-columns:1fr; } .menu-art { width:220px; } }
+@media(max-width:360px) { .menu-rule-list { grid-template-columns:1fr; } }
 @media(prefers-reduced-motion:reduce) { .menu-shell *, .menu-shell *::before, .menu-shell *::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
 /* Larger Cinquillo portraits fit in the existing space above the table rim. */
 @media(max-width:599px) and (min-height:621px), (min-height:700px){
