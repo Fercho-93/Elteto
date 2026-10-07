@@ -1,6 +1,7 @@
 import { cp, mkdir, readdir, readFile, writeFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const output = path.join(root, "dist");
@@ -45,4 +46,17 @@ await collectRules(path.join(root,"reglas_juegos"));
 await collectRules(path.join(web,"assets","decks"),"./assets/decks");
 const swPath=path.join(output,"sw.js");
 const sw=await readFile(swPath,"utf8");
-await writeFile(swPath,sw.replace('const ASSETS = [',`const ASSETS = [...${JSON.stringify(rulesFiles)},`));
+// A changed menu must get a new URL even when a mobile browser retains its HTTP cache.
+const menuFiles = ['app.js', 'styles.css'];
+const menuHash = createHash('sha256');
+for (const file of menuFiles) menuHash.update(await readFile(path.join(output, file)));
+const menuVersion = menuHash.digest('hex').slice(0, 12);
+const indexPath = path.join(output, 'index.html');
+let index = await readFile(indexPath, 'utf8');
+for (const file of menuFiles) index = index.replaceAll(`./${file}"`, `./${file}?v=${menuVersion}"`);
+await writeFile(indexPath, index);
+// Cache both URLs so an installed app still opens offline, including on its first install.
+const versionedMenu = menuFiles.map(file => `./${file}?v=${menuVersion}`);
+await writeFile(swPath, sw
+  .replace('elteto-shell-v25', `elteto-shell-v25-${menuVersion}`)
+  .replace('const ASSETS = [', `const ASSETS = [...${JSON.stringify([...rulesFiles, ...versionedMenu])},`));

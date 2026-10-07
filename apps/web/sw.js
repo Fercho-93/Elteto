@@ -1,4 +1,4 @@
-const CACHE = "elteto-shell-v24";
+const CACHE = "elteto-shell-v25";
 const ASSETS = [
   "./parchis-dice.js", "./parchis-dice.css",
   "./parchis-board.js", "./parchis-board.css", "./game-core/games/parchis.js",
@@ -13,7 +13,7 @@ const ASSETS = [
   "./game-core/games/mus.js", "./game-core/games/cinquillo.js"
 ];
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS.map((path) => new URL(path, self.registration.scope)))));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS.map((path) => new Request(new URL(path, self.registration.scope), {cache: "reload"})))));
   self.skipWaiting();
 });
 self.addEventListener("activate", (event) => {
@@ -23,7 +23,8 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET" || new URL(request.url).origin !== self.location.origin) return;
-  event.respondWith(fetch(request).then((response) => {
+  // Network-first must also revalidate the browser's HTTP cache after a deployment.
+  event.respondWith(fetch(request, {cache: "no-cache"}).then((response) => {
     const copy = response.clone();
     caches.open(CACHE).then((cache) => cache.put(request, copy));
     return response;
