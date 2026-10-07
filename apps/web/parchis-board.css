@@ -1,3 +1,4 @@
+@import "./parchis-dice.css";
 html:has(.parchis-screen),body:has(.parchis-screen),body:has(.parchis-screen) #app{height:100%;min-height:0;}
 body:has(.parchis-screen){background:radial-gradient(ellipse at 50% 0,#352a3b,#17171e 80%);}
 .parchis-screen{width:min(100%,1280px);height:100svh;height:100dvh;min-height:568px;margin:auto;padding:env(safe-area-inset-top,0px) max(2px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(2px,env(safe-area-inset-left,0px));display:grid;grid-template-rows:48px minmax(0,1fr) 160px;gap:0;}

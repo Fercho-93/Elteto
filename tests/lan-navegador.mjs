@@ -102,23 +102,24 @@ try {
  // The same room, QR, messages and reconnection path also carry a public board game.
  await host.locator('[data-action="open-host"]').click();await host.locator('#host-name').fill('Ana');
  await host.locator('label.game-option:has(input[value="parchis"])').click();await host.locator('[data-action="create-room"]').click();
- const boardCode=(await host.locator('.room-code').textContent()).trim();await guest.goto(base+'/?join='+boardCode);
- await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===2);await host.locator('[data-action="start-game"]').click();
- for(const p of [host,guest]){await p.locator('.parchis-table [data-pawn]').first().waitFor();assert.equal(await p.locator('.parchis-table [data-pawn]').count(),8);}
+ const boardCode=(await host.locator('.room-code').textContent()).trim();await guest.goto(base+'/?join='+boardCode);await c.goto(base+'/?join='+boardCode);await d.goto(base+'/?join='+boardCode);
+ await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===4);await host.locator('[data-action="start-game"]').click();
+ for(const p of [host,guest,c,d]){await p.locator('.parchis-table [data-pawn]').first().waitFor();assert.equal(await p.locator('.parchis-table [data-pawn]').count(),16);}
  let moved=0;
  for(let step=0;step<100&&(step<16||moved<2);step++){
   // Consecutive blocked rolls can legitimately have identical public text.
   // Observe the received render instead of requiring a different log message.
-  for(const p of [host,guest])await p.evaluate(()=>{window.parchisUpdated=false;window.parchisObserver?.disconnect();window.parchisObserver=new MutationObserver(()=>{window.parchisUpdated=true;window.parchisObserver.disconnect();});window.parchisObserver.observe(document.querySelector('#app'),{childList:true});});
+  for(const p of [host,guest,c,d])await p.evaluate(()=>{window.parchisUpdated=false;window.parchisObserver?.disconnect();window.parchisObserver=new MutationObserver(()=>{window.parchisUpdated=true;window.parchisObserver.disconnect();});window.parchisObserver.observe(document.querySelector('#app'),{childList:true});});
   let acted=false;
-  for(const p of [host,guest]){
+  for(const p of [host,guest,c,d]){
    const roll=p.locator('[data-action="parchis-roll"]:not([disabled])'),move=p.locator('.parchis-piece-choices button:not([disabled])');
    if(await roll.count()){await roll.click();acted=true;break;}
    if(await move.count()){await move.first().click();moved++;acted=true;break;}
   }
   assert.ok(acted,'Exactly the active player can roll or choose a legal piece');
-  for(const p of [host,guest])await p.waitForFunction(()=>window.parchisUpdated);
-  assert.equal(await host.locator('.parchis-die').textContent(),await guest.locator('.parchis-die').textContent());
+  for(const p of [host,guest,c,d])await p.waitForFunction(()=>window.parchisUpdated);
+  for(const p of [guest,c,d])assert.equal(await host.locator('.parchis-die').getAttribute('data-roll-id'),await p.locator('.parchis-die').getAttribute('data-roll-id'));
+  for(const p of [guest,c,d])assert.equal(await host.locator('.parchis-die').getAttribute('data-result'),await p.locator('.parchis-die').getAttribute('data-result'));
  }
  assert.ok(moved>=2);
  const before=await guest.locator('.parchis-table [data-pawn]').evaluateAll(els=>els.map(el=>[el.dataset.pawn,el.style.left,el.style.top]));

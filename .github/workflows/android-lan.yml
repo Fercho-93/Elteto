@@ -38,6 +38,8 @@ jobs:
       - run: FLOW_BROWSER=webkit node tests/game-screen-flow.mjs
       - run: node tests/parchis-screen.mjs
       - run: PARCHIS_BROWSER=webkit node tests/parchis-screen.mjs
+      - run: node tests/parchis-dice.mjs
+      - run: PARCHIS_BROWSER=webkit node tests/parchis-dice.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

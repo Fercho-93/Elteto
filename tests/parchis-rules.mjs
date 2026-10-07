@@ -29,6 +29,34 @@ s={...base(),die:1,pieces:{a:[70,71,71,71],b:[-1,-1,-1,-1]}};next=engine.applyAc
 // The supplied rule has no exception for the latest piece reaching home before a third six.
 s=dieState({...base(),phase:'roll',sixes:2,lastPiece:0,pieces:{a:[71,1,2,3],b:[-1,-1,-1,-1]}},6);next=engine.applyAction(s,'a',{type:'roll'});assert.equal(next.pieces.a[0],-1);assert.equal(next.turn,1);assert.equal(next.sixes,0);
 s=dieState(engine.createInitialState(['a','b','c'],1),4);s=engine.applyAction(s,'a',{type:'roll'});s=dieState(s,4);s=engine.applyAction(s,'b',{type:'roll'});s=dieState(s,2);s=engine.applyAction(s,'c',{type:'roll'});assert.deepEqual(s.candidates,['a','b']);assert.equal(s.phase,'start');s=dieState(s,5);s=engine.applyAction(s,'a',{type:'roll'});s=dieState(s,3);s=engine.applyAction(s,'b',{type:'roll'});assert.equal(s.turn,0);assert.equal(s.phase,'roll');
+// Each player has exactly one opening roll; only tied players reroll. Results survive transitions.
+for(const count of [2,3,4]){
+ let opening=engine.createInitialState(['a','b','c','d'].slice(0,count),18);
+ for(let i=0;i<count;i++){
+  const id=opening.players[opening.turn];opening=dieState(opening,i+1);
+  const before=opening.lastRoll?.sequence??0;
+  opening=engine.applyAction(opening,id,{type:'roll',expectedRoll:before});
+  assert.equal(opening.lastRoll.player,id);assert.equal(opening.lastRoll.value,i+1);
+  for(const viewer of opening.players)assert.deepEqual(engine.view(opening,viewer).lastRoll,opening.lastRoll);
+ }
+ assert.equal(opening.phase,'roll');assert.equal(opening.turn,count-1);assert.equal(opening.die,null);
+ assert.equal(opening.lastRoll.value,count);
+ assert.throws(()=>engine.applyAction(opening,opening.players[opening.turn],{type:'roll',expectedRoll:opening.lastRoll.sequence-1}),/ya fue procesada/);
+ const copy=engine.view(opening,opening.players[0]);copy.lastRoll.value=99;copy.startingCandidates.length=0;assert.equal(opening.lastRoll.value,count);assert.equal(opening.candidates.length,count);
+}
+s=engine.createInitialState(['a','b','c','d'],6);
+for(const value of [6,6,2,1]){const id=s.players[s.turn];s=engine.applyAction(dieState(s,value),id,{type:'roll'});}
+assert.equal(s.initialRound,2);assert.deepEqual(engine.view(s,'c').startingCandidates,['a','b']);assert.equal(s.lastRoll.value,1);assert.equal(s.die,null);
+assert.throws(()=>engine.applyAction(s,'c',{type:'roll'}),/turno/);
+for(const value of [4,4])s=engine.applyAction(dieState(s,value),s.players[s.turn],{type:'roll'});
+assert.equal(s.initialRound,3);assert.deepEqual(s.candidates,['a','b']);
+s=engine.applyAction(dieState(s,3),'a',{type:'roll'});s=engine.applyAction(dieState(s,5),'b',{type:'roll'});assert.equal(s.turn,1);assert.equal(s.phase,'roll');assert.equal(s.lastRoll.value,5);
+// Consecutive equal results have different IDs. Skipped turns and third six keep the landed result.
+s=dieState({...base(),phase:'roll',pieces:{a:[-1,-1,-1,-1],b:[-1,-1,-1,-1]}},2);s=engine.applyAction(s,'a',{type:'roll'});assert.equal(s.turn,1);assert.equal(s.die,null);assert.equal(s.lastRoll.value,2);
+const previous=s.lastRoll.sequence;s=engine.applyAction(dieState(s,2),'b',{type:'roll',expectedRoll:previous});assert.equal(s.lastRoll.value,2);assert.equal(s.lastRoll.sequence,previous+1);
+s=engine.applyAction(dieState({...base(),phase:'roll',sixes:2,lastPiece:0},6),'a',{type:'roll'});assert.equal(s.lastRoll.value,6);assert.equal(s.turn,1);
+// Old saved states without visual metadata can still roll.
+s=engine.createInitialState(['a','b'],1);delete s.lastRoll;delete s.initialRound;s=engine.applyAction(s,'a',{type:'roll',expectedRoll:0});assert.equal(s.lastRoll.round,1);
 // Full deterministic games also verify input immutability, view isolation and color assignment.
 for(let seed=1;seed<=90;seed++){
  const count=2+seed%3,ids=['a','b','c','d'].slice(0,count);let game=engine.createInitialState(ids,seed);

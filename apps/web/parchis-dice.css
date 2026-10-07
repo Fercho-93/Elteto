@@ -1,0 +1,15 @@
+.parchis-die{flex:none;width:66px;text-align:center;color:#eee3ca;font:400 10px/12px system-ui,sans-serif;}
+.parchis-die small{display:block;max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:500 9px/12px system-ui,sans-serif;}
+.die-stage{position:relative;width:66px;height:54px;perspective:380px;overflow:visible;}
+.die-flight{position:absolute;left:13px;top:5px;width:40px;height:40px;z-index:4;}
+.die-cube{position:relative;width:40px;height:40px;transform-style:preserve-3d;}
+.die-face{position:absolute;inset:0;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:7px;gap:2px;border:1px solid #cabb9c;border-radius:7px;background:linear-gradient(135deg,#fffdf4,#e8dec7);box-shadow:inset 0 1px 3px #fff;backface-visibility:hidden;}
+.die-face i{border-radius:50%;background:#302a24;box-shadow:inset 0 1px 1px #000;}
+.face-1{transform:translateZ(20px);}.face-2{transform:rotateX(-90deg) translateZ(20px);}.face-3{transform:rotateY(90deg) translateZ(20px);}.face-4{transform:rotateY(-90deg) translateZ(20px);}.face-5{transform:rotateX(90deg) translateZ(20px);}.face-6{transform:rotateY(180deg) translateZ(20px);}
+.die-shadow{position:absolute;left:9px;bottom:0;width:48px;height:9px;border-radius:50%;background:#000;filter:blur(3px);opacity:.4;}
+.parchis-starting-rolls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;}
+.parchis-starting-rolls>span{display:flex;align-items:center;gap:5px;min-width:0;padding:4px 6px;border:1px solid #ffffff14;border-radius:6px;color:#bfb6ad;}
+.parchis-starting-rolls b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:500 10px/14px system-ui,sans-serif;}.parchis-starting-rolls strong{margin-left:auto;font:700 14px/18px system-ui,sans-serif;color:#e7d3a0;}.parchis-starting-rolls .is-next{border-color:#d9c28577;}
+.parchis-screen .parchis-die{width:66px;font:400 10px/12px system-ui,sans-serif;}
+@media(min-width:600px) and (max-height:699px){.parchis-starting-rolls{grid-template-columns:repeat(2,minmax(0,1fr));}}
+

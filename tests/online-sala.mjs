@@ -226,6 +226,28 @@ try {
   console.log("  ok  Mus: decisión, envite privado, aceptación y tanteo diferido sincronizados");
   await mus.host.exit();
 
+  // Four independent online identities roll in order, including the opening round.
+  const board = await open("parchis", ["Ana", "Bea", "Cris", "Dani"]);
+  await board.host.startGame(17);
+  await until("Parchís listo", () => board.events.every(e => e.last("game")?.view.phase === "start"));
+  let moves=0;
+  for(let step=0;step<80&&(step<16||moves<2);step++) {
+    const view=board.events[0].last("game").view;
+    const index=board.all.findIndex(s=>s.uid===view.turnPlayer);
+    const before=board.events[index].last("game");
+    const sequence=before.view.lastRoll?.sequence??0;
+    const legal=before.view.legalMoves;
+    await board.all[index].sendAction(legal.length?{type:"move",piece:legal[0].piece}:{type:"roll",expectedRoll:sequence});
+    if(legal.length)moves++;
+    await until("Parchís acción recibida",()=>{const next=board.events[index].last("game").view;return legal.length?JSON.stringify(next.pieces)!==JSON.stringify(before.view.pieces):(next.lastRoll?.sequence??0)>sequence;});
+    const expected=board.events[index].last("game").view;
+    await until("Parchís dado sincronizado",()=>board.events.every(e=>JSON.stringify(e.last("game").view.lastRoll)===JSON.stringify(expected.lastRoll)&&JSON.stringify(e.last("game").view.pieces)===JSON.stringify(expected.pieces)&&e.last("game").view.turnPlayer===expected.turnPlayer));
+  }
+  assert.ok(moves>=2);
+  assert.notEqual(board.events[0].last("game").view.phase,"start");
+  console.log("  ok  Parchís: cuatro usuarios, tirada inicial, resultados y movimientos sincronizados");
+  await board.host.exit();
+
   console.log("Salas online de punta a punta: OK");
 } finally {
   for (const session of sessions) if (!session.closed) session.teardown();
