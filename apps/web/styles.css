@@ -614,3 +614,13 @@ body:has(.game-page) {
 }
 @media(max-width:360px) { .menu-rule-list { grid-template-columns:1fr; } .menu-art { width:220px; } }
 @media(prefers-reduced-motion:reduce) { .menu-shell *, .menu-shell *::before, .menu-shell *::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
+/* Larger Cinquillo portraits fit in the existing space above the table rim. */
+@media(max-width:599px) and (min-height:621px), (min-height:700px){
+ .cinquillo-screen .rival-roster{--token-size:44px;}
+}
+@media(max-width:519px) and (min-height:621px){
+ .cinquillo-screen .rival-roster:is([data-count="4"],[data-count="5"]){--token-size:36px;}
+}
+@media(max-width:359px) and (min-height:621px){
+ .cinquillo-screen .rival-roster[data-count]{--token-size:32px;}
+}
