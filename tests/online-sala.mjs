@@ -12,7 +12,7 @@ globalThis.location = new URL("https://fercho-93.github.io/Elteto/");
 globalThis.document = { visibilityState: "visible", addEventListener() {}, removeEventListener() {} };
 
 const { OnlineSession } = await import("../dist/online-room.js");
-const { getGame } = await import("../dist/game-core/index.js");
+const { getGame, listGames, captures15 } = await import("../dist/game-core/index.js");
 
 const PROJECT = "demo-elteto";
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -247,6 +247,28 @@ try {
   assert.notEqual(board.events[0].last("game").view.phase,"start");
   console.log("  ok  Parchís: cuatro usuarios, tirada inicial, resultados y movimientos sincronizados");
   await board.host.exit();
+
+  // Every new game creates a valid room ID and syncs only its player's view.
+  for (const engine of listGames().filter(g=>!['cinquillo','mus','parchis'].includes(g.id))) {
+    const room=await open(engine.id,Array.from({length:engine.minPlayers},(_,i)=>`Persona ${i+1}`));
+    await room.host.startGame(91);
+    await until(`${engine.id}: reparto`,()=>room.events.every(e=>e.last('game')));
+    for(let step=0;step<5&&!room.host.state.finished;step++) {
+      const game=room.host.state,p=game.players[game.turn],view=engine.view(game,p);let action;
+      if(view.validCards?.length)action={type:'play',card:view.validCards[0]};
+      else if(view.moves?.length)action={type:'move',path:view.moves[0].path};
+      else if(game.id==='escoba'&&game.phase==='play'){const c=view.myHand[0],v=Number(c.rank)>7?Number(c.rank)-2:Number(c.rank);action={type:'capture',card:c.id,table:captures15(view.table,15-v)[0]||[]};}
+      else if(game.id==='mentiroso'&&game.phase==='play')action={type:'play-facedown',cards:[view.myHand[0].id],rank:view.rankOptions[0]};
+      else if(game.phase==='discard'&&['julepe','chinchon','remigio','continental'].includes(game.id))action=game.id==='julepe'?{type:'discard',cards:view.myHand.slice(5).map(c=>c.id)}:{type:'discard',card:view.myHand[0].id};
+      else action=view.options.find(o=>!o.action.selection&&!o.action.singleCard&&!o.action.amountInput)?.action;
+      assert.ok(action,`${engine.id}: action available`);
+      const expected=engine.applyAction(game,p,action);
+      await room.all.find(s=>s.uid===p).sendAction(action);
+      await until(`${engine.id}: vistas sincronizadas`,()=>room.all.every((session,i)=>JSON.stringify(room.events[i].last('game')?.view)===JSON.stringify(engine.view(expected,session.uid))));
+      for(const events of room.events){const v=events.last('game').view;assert.equal(v.hands,undefined);assert.equal(v.stock,undefined);assert.equal(v.seed,undefined);}
+    }
+    await room.host.exit();console.log(`  ok  ${engine.label}: sala, acciones y vistas privadas`);
+  }
 
   console.log("Salas online de punta a punta: OK");
 } finally {

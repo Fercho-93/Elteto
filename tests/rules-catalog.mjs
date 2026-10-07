@@ -11,12 +11,12 @@ for (const source of provenance) {
   const bytes=await readFile(`reglas_juegos/${source.archivo}`);
   assert.equal(bytes.length,source.bytes);
   assert.equal(createHash('sha256').update(bytes).digest('hex'),source.sha256);
-  const plan=GAME_CATALOG.find(g=>g.id===source.slug);
+  const plan=GAME_CATALOG.find(g=>g.id.replace(/-/g,"_")===source.slug);
   assert.equal(plan.rules.sha256,source.sha256);
   assert.equal((await stat(`dist/${plan.rules.file}`)).size,source.bytes);
   assert.ok(plan.phases.length && plan.actions.length && plan.acceptance.length);
   if(plan.status==='planned') assert.throws(()=>getGame(plan.id));
-  const inert=await readFile(`dist/reglas_juegos/lectura/${plan.id}.html`,'utf8');
+  const inert=await readFile(`dist/reglas_juegos/lectura/${plan.id.replace(/-/g,"_")}.html`,'utf8');
   assert.doesNotMatch(inert,/<script|<iframe|<form/i);
 }
 const sw=await readFile('dist/sw.js','utf8');
@@ -88,4 +88,4 @@ for(const id of ids) m=musEngine.applyAction(m,id,{type:'discard',cards:id==='d'
 assert.ok(m.hands.d.every(c=>!removed.some(d=>d.suit===c.suit && d.rank===c.rank)));
 const all=[...Object.values(m.hands).flat(),...m.stock,...m.discarded];
 assert.equal(all.length,40);assert.equal(new Set(all.map(c=>`${c.suit}:${c.rank}`)).size,40);
-console.log('20 rules, byte preservation, offline archive, planned game isolation, materials, Spanish scoring and Mus matches: OK');
+console.log('20 rules, byte preservation, offline archive, 20 playable engines, materials, Spanish scoring and Mus matches: OK');

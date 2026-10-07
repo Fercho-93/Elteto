@@ -90,10 +90,10 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     ]
   },
   {
-    "id": "texas_holdem",
+    "id": "texas-holdem",
     "label": "Póker Texas Hold’em",
     "family": "betting",
-    "status": "planned",
+    "status": "playable",
     "players": [
       2,
       3,
@@ -110,7 +110,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "0391b861c37a8d01e4deaf379e3077c3fbb437f3bd55d63e3917a92ab44db220"
     },
     "summary": "Dos privadas y cinco comunitarias; mejor combinación de cinco; apuestas en fichas.",
-    "implementationNotes": "Elegir límite, sin límite o pot-limit. Definir fichas, ciegas y final de sesión; la fuente no completa todos los casos de all-in.",
+    "implementationNotes": "Sin límite. 500 fichas por jugador, ciegas 5/10 y botes laterales. Gana quien reúne todas las fichas. Sin dinero real.",
     "phases": [
       "ciegas",
       "preflop",
@@ -171,10 +171,10 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     ]
   },
   {
-    "id": "damas_espanolas",
+    "id": "damas-espanolas",
     "label": "Damas españolas",
     "family": "checkers",
-    "status": "planned",
+    "status": "playable",
     "players": [
       2
     ],
@@ -186,7 +186,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "356e6ec051836ef535c8a94a89e8577d90957b4e34e06b410b0a3c134a270bdc"
     },
     "summary": "12 piezas por bando; blancas empiezan; peones hacia delante; damas voladoras; captura por cantidad y calidad.",
-    "implementationNotes": "Partida única; no mezclar con damas internacionales ni ganapierde.",
+    "implementationNotes": "Una partida. Captura obligatoria: primero el máximo de piezas y, en empate, de damas. Tablas por acuerdo, repetición o falta de progreso.",
     "phases": [
       "mover",
       "capturar",
@@ -210,7 +210,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     "id": "oca",
     "label": "Juego de la oca",
     "family": "race",
-    "status": "planned",
+    "status": "playable",
     "players": [
       2,
       3,
@@ -224,7 +224,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "9da0456ca10c6fbb7acbc9652015799e067996384bf5b698445889e83a6dfe04"
     },
     "summary": "Ocas avanzan a siguiente oca y repiten; 6→12; 26↔53; 19/31/42 pierden 2 turnos; 52 espera relevo; 58→1; llegada exacta con rebote en 63.",
-    "implementationNotes": "Usar exclusivamente texto español del PDF; las traducciones difieren. Definir coordenadas de ocas y tablero de esta edición.",
+    "implementationNotes": "Un dado y salida en la casilla 1. Solo las ocas repiten tirada. Si ocupas una casilla con rival, lo envías a la que has dejado.",
     "phases": [
       "tirar",
       "resolver-casilla",
@@ -244,7 +244,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     "id": "brisca",
     "label": "Brisca",
     "family": "tricks",
-    "status": "planned",
+    "status": "playable",
     "players": [
       2,
       3,
@@ -259,7 +259,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "e09b1e771ab8077894de2f0987319e616aa31f6c000f5e2a8396ee04e742f267"
     },
     "summary": "Tres cartas por mano; sin obligación de asistir; gana triunfo o palo de salida; as 11, tres 10, rey 4, caballo 3, sota 2.",
-    "implementationNotes": "Acordar número de juegos y formato individual o por equipos.",
+    "implementationNotes": "Gana quien consigue tres juegos. Parejas alternas con cuatro y equipos alternos con seis. Con tres se retira el dos de oros; con seis, los cuatro doses.",
     "phases": [
       "reparto",
       "baza",
@@ -283,7 +283,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     "id": "tute",
     "label": "Tute",
     "family": "tricks",
-    "status": "planned",
+    "status": "playable",
     "players": [
       2,
       3,
@@ -297,7 +297,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "40df75b8d2afba12757945224a4173decb6a17c48ff33c282826fa19cfeb534a"
     },
     "summary": "Por parejas: diez cartas; asistir, montar, fallar y pisar; cánticos 20/40, diez últimas, tute de reyes o caballos.",
-    "implementationNotes": "Motores o perfiles diferentes para 2, 3 y 4. No aplicar 101 tantos ni capote de dos a parejas de cuatro.",
+    "implementationNotes": "Gana quien consigue tres juegos. Dos: ocho cartas, baceta, 101 tantos y capote. Tres: trece cartas y cambio inicial de pinta. Cuatro: parejas, diez cartas y diez últimas.",
     "phases": [
       "reparto",
       "baza",
@@ -323,7 +323,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     "id": "chinchon",
     "label": "Chinchón",
     "family": "melds",
-    "status": "planned",
+    "status": "playable",
     "players": [
       2,
       3,
@@ -341,7 +341,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "9059310781bde180a5ea31040bb7e2decd2d2deede49b55e0167a1d3aa092162"
     },
     "summary": "Siete cartas; grupos de tres o más y escaleras; as bajo; chinchón de siete cartas.",
-    "implementationNotes": "Definir 40/48, puntos de eliminación y reenganches antes de empezar; más de cuatro jugadores usan dos barajas.",
+    "implementationNotes": "Baraja de 40, sin comodines. Cierre con cinco puntos o menos; todo combinado resta diez. Eliminación al superar 100, sin reenganches. Dos barajas a partir de cinco jugadores.",
     "phases": [
       "robar",
       "descartar",
@@ -355,18 +355,17 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "next-hand"
     ],
     "acceptance": [
-      "Cierre válido",
-      "Valor figuras 8/9/10 con 40",
-      "Valor nominal con 48",
+      "Cierre con cinco o menos",
+      "Puntos 8/9/10 de figuras",
       "Dos barajas y cartas duplicadas",
-      "Reenganche"
+      "Eliminación sin reenganches"
     ]
   },
   {
     "id": "escoba",
     "label": "Escoba de quince",
     "family": "capture",
-    "status": "planned",
+    "status": "playable",
     "players": [
       2,
       3,
@@ -381,7 +380,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "9b47d29f58495b8a787b89313ef6895953cad53eac8ba3dbdca6608f1cf65897"
     },
     "summary": "Tres cartas por jugador y cuatro en mesa; capturar sumando 15; sota 8, caballo 9, rey 10; objetivos 21/31.",
-    "implementationNotes": "Distinguir penalizaciones de juego manual de validación digital; definir meta 21 o 31 y equipos.",
+    "implementationNotes": "Meta: 21 puntos. Individual con dos o tres; equipos alternos con cuatro o seis. Las capturas y los recuentos se comprueban automáticamente.",
     "phases": [
       "reparto",
       "capturar",
@@ -404,7 +403,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     "id": "pocha",
     "label": "Pocha",
     "family": "tricks",
-    "status": "planned",
+    "status": "playable",
     "players": [
       3,
       4,
@@ -418,7 +417,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "9a016e87ca0805ace96164884092c7a73726a719933ae385fdc5417c8f3a2fdd"
     },
     "summary": "Predecir bazas; dador no puede completar suma total; acertar +10+5 por baza, fallar -5 por diferencia.",
-    "implementationNotes": "La fuente admite número variable; empezar por 3–5, con calendario de manos explícito.",
+    "implementationNotes": "De una carta al máximo; el máximo se repite una vez por jugador y se baja hasta una. Empates: otra mano de una carta. Con tres se quitan los doses.",
     "phases": [
       "reparto",
       "prevision",
@@ -441,8 +440,12 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     "id": "julepe",
     "label": "Julepe",
     "family": "tricks",
-    "status": "planned",
-    "players": [5,6,7],
+    "status": "playable",
+    "players": [
+      5,
+      6,
+      7
+    ],
     "material": "spanish-40",
     "defaultVariant": "seis-jugadores",
     "rules": {
@@ -451,7 +454,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "b7aab3c6995fadf36ff582617dc327720966ce20fd2b4ccc109b8567ffe35284"
     },
     "summary": "Cinco cartas; decisión de jugar; hacer al menos dos bazas para evitar julepe.",
-    "implementationNotes": "Revisar las condiciones de triunfo, participación y pagos de la fuente antes de implementar.",
+    "implementationNotes": "Diez manos con puntos de partida. El dador juega; con siete, uno descansa por turno. Tomar la pinta dobla el riesgo del dador. Sin dinero real.",
     "phases": [
       "reparto",
       "participar",
@@ -477,7 +480,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     "id": "guinote",
     "label": "Guiñote",
     "family": "tricks",
-    "status": "planned",
+    "status": "playable",
     "players": [
       4
     ],
@@ -489,7 +492,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "dd2c0bf353aa4154edc5a13da80bd40bc044baf008593cebaebdd0b3c77c09e8"
     },
     "summary": "Parejas de cuatro; reparto completo de diez cartas; sota supera caballo; cantos sota-rey, diez últimas y tute de sotas/reyes; llegar a 101.",
-    "implementationNotes": "La fuente aportada reparte toda la baraja, sin baceta. Concretar juegos de la partida; no mezclar con la variante regional de seis cartas.",
+    "implementationNotes": "Variante de la fuente: diez cartas por jugador, sin baceta. Parejas alternas, 101 tantos por juego y partida a tres juegos. Cantos con sota y rey.",
     "phases": [
       "reparto",
       "baza",
@@ -514,7 +517,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     "id": "butifarra",
     "label": "Butifarra",
     "family": "tricks",
-    "status": "planned",
+    "status": "playable",
     "players": [
       4
     ],
@@ -526,7 +529,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "30eadd3ffa546202c92d229cc7505a75f5ef9b94c4f4a29609003332f732ab0d"
     },
     "summary": "12 cartas por jugador; nueve más alto; sin triunfo duplica; contrar y recontrar; meta 100.",
-    "implementationNotes": "Baraja catalana de 48; no usar jerarquía ni valores de brisca.",
+    "implementationNotes": "Parejas alternas y baraja de 48. Meta: 100 puntos. Cada baza vale uno; se puntúa el exceso sobre 36, multiplicado por los dobles.",
     "phases": [
       "reparto",
       "elegir-triunfo",
@@ -553,8 +556,16 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     "id": "remigio",
     "label": "Remigio",
     "family": "melds",
-    "status": "planned",
-    "players": [2,3,4,5,6,7,8,9,10],
+    "status": "playable",
+    "players": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
     "material": "spanish-poker-54",
     "defaultVariant": "fournier",
     "rules": {
@@ -563,7 +574,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "b28b157bead606ea319108c15b9c4c6231fafe223b798ac7835da4a819ab53c9"
     },
     "summary": "Diez cartas; combinaciones de iguales y escaleras; figuras 10, as 1, comodín 20.",
-    "implementationNotes": "Póker español 52+2 por baraja; confirmar número de barajas y objetivo según participantes.",
+    "implementationNotes": "Variante Elteto: seis manos; gana la menor suma. Dos barajas de póker español con comodines, tres con siete u ocho jugadores. As: 1; figuras: 10; comodín: 20.",
     "phases": [
       "robar",
       "descartar",
@@ -586,7 +597,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     "id": "continental",
     "label": "Continental",
     "family": "melds",
-    "status": "planned",
+    "status": "playable",
     "players": [
       2,
       3,
@@ -604,7 +615,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "b1b895bbc2c151d4fa7f0eac9135da057a6a1eeb8fad14f01206a3a17c311e42"
     },
     "summary": "Contratos 6:2 tríos, 7:trío+escalera, 8:2 escaleras, 9:3 tríos, 10:2 tríos+escalera, 11:trío+2 escaleras, 12:3 escaleras.",
-    "implementationNotes": "Dos comodines por baraja. Para cuatro: comenzar con dos y terminar con tres barajas. Para cinco a ocho: empezar con dos, añadir una tras mano 2 y otra tras mano 4; ampliación a 16 cartas opcional.",
+    "implementationNotes": "Siete manos, de seis a doce cartas. Escaleras de cuatro como mínimo. Coger un descarte fuera de turno añade una carta de castigo. Gana la menor suma.",
     "phases": [
       "robar",
       "exponer",
@@ -630,10 +641,10 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     ]
   },
   {
-    "id": "siete_y_medio",
+    "id": "siete-y-medio",
     "label": "Siete y medio",
     "family": "banking",
-    "status": "planned",
+    "status": "playable",
     "players": [
       2,
       3,
@@ -651,7 +662,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "22c47266a7a0a495f0b4706dac5b66f324ad3bb068afe8a99939d7edf091d3fd"
     },
     "summary": "Figuras medio punto; una carta oculta por jugador; banca gana empates; siete y medio cobra doble y toma banca.",
-    "implementationNotes": "Solo fichas. Acordar capital y fin de sesión; variante de 15/30 manos de Ludoteka separada.",
+    "implementationNotes": "Variante Elteto: 15 manos y 100 fichas iniciales, sin dinero. Apuestas de 1 a 10 según la banca. Siete y medio cobra doble y toma la banca. Si la banca no puede cubrir, pasa al jugador con más fichas; sin compra de banca.",
     "phases": [
       "apostar",
       "pedir",
@@ -677,7 +688,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     "id": "burro",
     "label": "Burro",
     "family": "matching",
-    "status": "planned",
+    "status": "playable",
     "players": [
       3,
       4
@@ -690,7 +701,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "1a9143e40dcf6a61bbdf8a7dbb75116d45693181733cd9a4f29c4e0ead856f5f"
     },
     "summary": "Retirar caballo de bastos; repartir 39; descartar parejas; perder una letra; cinco derrotas completan BURRO.",
-    "implementationNotes": "Usar este PDF, no burro de pasar cartas simultáneamente. Definir de forma inequívoca el doble intercambio por turno descrito.",
+    "implementationNotes": "Variante de parejas de la fuente: se retira el caballo de bastos. Último con cartas: una letra de BURRO. Cinco letras y termina la partida.",
     "phases": [
       "retirar-carta",
       "parejas",
@@ -713,7 +724,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     "id": "mentiroso",
     "label": "Mentiroso",
     "family": "bluff",
-    "status": "planned",
+    "status": "playable",
     "players": [
       3,
       4,
@@ -728,7 +739,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "a817fd9e5c6883ad1c335b3d78c48e1180a1ee2913ed2637eb5bc4dbcecd4a6d"
     },
     "summary": "Ases comodines; cantidad declarada verdadera; valor puede ser falso; desafío recoge montón; pierde último con cartas.",
-    "implementationNotes": "El objetivo inicial habla de primero sin cartas, pero el final define último perdedor. Adoptar final explícito del PDF y fijar turno tras desafío.",
+    "implementationNotes": "Baraja de 40 y ases comodín. Se mantiene el valor declarado hasta una acusación. Los jugadores sin cartas salen de la mano; pierde el último con cartas.",
     "phases": [
       "declarar",
       "responder",
@@ -750,7 +761,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     "id": "domino",
     "label": "Dominó",
     "family": "tiles",
-    "status": "planned",
+    "status": "playable",
     "players": [
       4
     ],
@@ -762,7 +773,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "28b68f8c6a3aa7b73020069cb3c07001985a3d094519137e2fafa1f702b6da20"
     },
     "summary": "28 fichas, siete por jugador; parejas alternas; salida libre rotatoria; tranca gana pareja con menos puntos; meta 150.",
-    "implementationNotes": "Usar parejas español; la fuente contiene otras variantes. Fijar criterio de empate de tranca antes de implementar.",
+    "implementationNotes": "Cuatro jugadores por parejas alternas, doble seis y siete fichas por jugador. Salida rotatoria, sin obligación de doble seis. Primera pareja en llegar a 150.",
     "phases": [
       "reparto",
       "colocar",
@@ -783,7 +794,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
   }
 ];
 export function getGamePlan(id: string): GamePlan {
- const plan = GAME_CATALOG.find(game => game.id === id);
+ const plan = GAME_CATALOG.find(game => game.id.replace(/-/g,"_") === id.replace(/-/g,"_"));
  if (!plan) throw new Error(`Juego sin ficha de reglas: ${id}`);
  return plan;
 }

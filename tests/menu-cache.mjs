@@ -7,7 +7,7 @@ import vm from 'node:vm';
 const index = await readFile('dist/index.html', 'utf8');
 const worker = await readFile('dist/sw.js', 'utf8');
 const hash = createHash('sha256');
-for (const file of ['app.js', 'styles.css']) hash.update(await readFile(`dist/${file}`));
+for (const file of ['app.js', 'styles.css', 'catalog-games.js', 'catalog-games.css', 'game-core/catalog.js', 'game-core/engine.js', 'game-core/index.js', ...['shared','boards','social-cards','tricks','melds','holdem'].map(name => `game-core/games/${name}.js`)]) hash.update(await readFile(`dist/${file}`));
 const version = hash.digest('hex').slice(0, 12);
 assert.ok(index.includes(`./app.js?v=${version}`));
 assert.ok(index.includes(`./styles.css?v=${version}`));

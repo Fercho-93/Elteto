@@ -1,5 +1,6 @@
+import {renderCatalogGame,handleCatalogAction} from './catalog-games.js';
 import {beginParchisRoll} from './parchis-dice.js';
-import { getGame, listGames } from "./game-core/index.js";
+import { getGame, listGames, getGamePlan } from "./game-core/index.js";
 import { LocalGuestSession, LocalHostSession } from "./local-session.js";
 import { arrangeCinquilloScreen } from './cinquillo-screen.js';
 import { arrangeMusScreen } from './mus-screen.js';
@@ -44,17 +45,22 @@ function renderHome() {
   </section>`;
 }
 
+function playerCountLabel(game) {
+  const counts=getGamePlan(game.id).players.filter(n=>n<=game.maxPlayers);
+  return counts.length===1?String(counts[0]):counts.at(-1)-counts[0]+1===counts.length?`${counts[0]}–${counts.at(-1)}`:counts.join(', ');
+}
+
 function renderHostForm() {
   state.screen = "host-form";
   const games = listGames().map((game) => `<label class="game-option ${state.gameId === game.id ? "chosen" : ""}">
     <input type="radio" name="game" value="${esc(game.id)}" ${state.gameId === game.id ? "checked" : ""}>
-    <span class="game-check" aria-hidden="true">✓</span><span><strong>${esc(game.label)}</strong><small>${game.minPlayers === game.maxPlayers ? `${game.minPlayers} jugadores` : `${game.minPlayers}–${game.maxPlayers} jugadores`}</small></span>
+    <span class="game-check" aria-hidden="true">✓</span><span><strong>${esc(game.label)}</strong><small>${playerCountLabel(game)} jugadores</small></span>
   </label>`).join("");
   app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="back">← <span>Volver</span></button><a class="menu-brand" href="./" data-action="home">ELTETO<span>✦</span></a></header><section class="menu-setup" aria-labelledby="setup-title">
     <p class="menu-kicker">TÚ PONES LA MESA</p><h1 id="setup-title">Crear partida<span>.</span></h1>
     <div class="menu-fields"><div><label class="field-label" for="host-name">Tu nombre</label><input class="text-field" id="host-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}"></div>
     <div><label class="field-label" for="room-name">Nombre de la sala <span>opcional</span></label><input class="text-field" id="room-name" maxlength="30" placeholder="La de siempre" value="${esc(state.roomName)}"></div></div>
-    <fieldset class="menu-game-fieldset"><legend>Elige el juego</legend><div class="game-options">${games}</div></fieldset>
+    <fieldset class="menu-game-fieldset"><legend>Elige el juego</legend><input class="text-field menu-game-search" type="search" aria-label="Buscar juego" placeholder="Buscar juego" id="game-search"><div class="game-options">${games}</div></fieldset>
     <button class="menu-button menu-primary menu-create" data-action="create-room">Crear sala <span aria-hidden="true">↗</span></button>
   </section></div></section>`;
 }
@@ -90,7 +96,7 @@ function renderLobby() {
   const host = state.role === "host";
   const connected = state.role === "client" && state.players.some((player) => player.id === state.playerId);
   const rows = state.players.map((player, index) => `<div class="player-row"><span class="seat">${String(index + 1).padStart(2, "0")}</span><strong>${esc(player.name)}</strong>${player.isHost ? '<span class="host-pill">ANFITRIÓN</span>' : `<span class="ready-pill">${player.away ? "SIN SEÑAL" : "EN LA MESA"}</span>`}${state.online && host && !player.isHost ? `<button class="text-button" data-action="kick-player" data-player-id="${esc(player.id)}" aria-label="Expulsar a ${esc(player.name)}"><span aria-hidden="true">×</span></button>` : ""}</div>`).join("");
-  const enoughPlayers = game && state.players.length >= game.minPlayers;
+  const enoughPlayers = game && state.players.length <= game.maxPlayers && getGamePlan(game.id).players.includes(state.players.length);
   const connectionTools = host
     ? `<div class="invite-grid">
          ${state.online ? "" : '<button class="button button-cyan" data-action="new-offline-invite">Invitar sin internet 🍆</button>'}
@@ -101,12 +107,12 @@ function renderLobby() {
        </div>`
     : `<div class="connection-status ${connected ? "connected" : ""}">${connected ? (state.online ? (LAN ? "Conectado a la mesa local. Ya estás en la mesa." : "Conectado a la sala. Ya estás en la mesa.") : "Conexión directa establecida. Ya estás en la mesa.") : "Conectando con el anfitrión… No cierres esta página."}</div>${state.answerCode ? codePanel("Muestra este QR al anfitrión para completar la conexión", state.answerCode, "answer") : ""}`;
   const startButton = host
-    ? `<button class="menu-button menu-primary menu-create" data-action="start-game" ${!enoughPlayers ? "disabled" : ""}>${enoughPlayers ? 'Empezar partida <span aria-hidden="true">↗</span>' : `Faltan jugadores (${state.players.length}/${game?.minPlayers ?? "?"})`}</button>`
+    ? `<button class="menu-button menu-primary menu-create" data-action="start-game" ${!enoughPlayers ? "disabled" : ""}>${enoughPlayers ? 'Empezar partida <span aria-hidden="true">↗</span>' : `Se necesitan ${game ? playerCountLabel(game) : "más"} jugadores`}</button>`
     : "";
   app.innerHTML = `<section class="menu-shell menu-room-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="leave-room">← <span>Salir de la sala</span></button><a class="menu-brand" href="./" data-action="home">ELTETO<span>✦</span></a></header><section class="menu-setup menu-lobby" aria-labelledby="lobby-title">
     <p class="menu-kicker">${host ? "SALA CREADA" : "TU SALA"}</p>
     <h1 id="lobby-title">${esc(state.roomName || game?.label || "Sala")}<span>.</span></h1>
-    ${game ? `<p class="lobby-game">${esc(game.label)} <span>· ${game.minPlayers === game.maxPlayers ? game.minPlayers : `${game.minPlayers}–${game.maxPlayers}`} jugadores</span></p>` : ''}
+    ${game ? `<p class="lobby-game">${esc(game.label)} <span>· ${playerCountLabel(game)} jugadores</span></p>` : ''}
     <div class="lobby-grid"><section class="lobby-players" aria-labelledby="players-title"><div class="players-head"><h2 id="players-title">En la mesa</h2><span>${state.players.length}${game ? ` / ${game.maxPlayers}` : ""}</span></div>
     <div class="player-list">${rows || '<div class="empty-seat">Todavía no se ha sentado nadie. Dale al código.</div>'}</div>
     ${state.error ? `<p class="error-message">${esc(state.error)}</p>` : ""}
@@ -132,6 +138,7 @@ function renderGame() {
   state.screen = "game";
   const game = getGame(state.gameId), view = state.view;
   if (!view) { app.innerHTML = `${header()}<section class="panel"><p>Esperando el estado de la partida…</p></section>`; return; }
+  if(!['cinquillo','mus','parchis'].includes(state.gameId)){renderCatalogGame(app,view,state.playerId,playerName,state.error);return;}
   if(state.gameId==='parchis'){renderParchisScreen(app,view,state.playerId,playerName,state.error);return;}
   const origins = new Map([...app.querySelectorAll('.hand [data-card-key]')].map(el => [el.dataset.cardKey, el.getBoundingClientRect()]));
   const stockOrigin = app.querySelector(".table-stock")?.getBoundingClientRect();
@@ -325,6 +332,7 @@ app.addEventListener("click", async (event) => {
   if (!button) return;
   const action = button.dataset.action;
   try {
+    if(action.startsWith("catalog-") && handleCatalogAction(app,button,state.view,sendAction,renderGame))return;
     if (action === "open-table-zoom") { openTableZoom(); return; }
     if (action === "open-game-menu") { app.querySelector('.game-menu')?.showModal(); return; }
     if (action === "parchis-zoom-open") { app.querySelector('.parchis-zoom')?.showModal(); return; }
@@ -570,3 +578,5 @@ if (incomingRoom) {
   beginOnlineJoin(incomingRoom, localStorage.getItem("elteto.playerName") || "Invitado").catch((error) => { state.error = error.message || "No se pudo entrar en la sala."; renderJoinForm(); flash(state.error); });
 } else renderHome();
 if (!LAN && "serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
+
+app.addEventListener("input",event=>{if(event.target.id!=="game-search")return;const query=event.target.value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();for(const option of app.querySelectorAll(".game-option"))option.hidden=!option.textContent.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().includes(query);});

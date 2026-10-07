@@ -30,7 +30,7 @@ export function registerGame(engine: AnyEngine): void {
 }
 
 export function getGame(id: string): AnyEngine {
-  const engine = registry.get(id);
+  const engine = registry.get(id.replace(/_/g,"-"));
   if (!engine) throw new Error(`Juego desconocido: ${id}`);
   return engine;
 }

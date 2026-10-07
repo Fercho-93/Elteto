@@ -4,4 +4,4 @@ Los 23 archivos originales (20 reglamentos, índice, catálogo y procedencia) se
 
 `biblioteca.html` y `lectura/` son copias de consulta sin scripts externos, disponibles en web y Android sin conexión. Para PDFs, la copia de texto conserva todos los idiomas y no sustituye al documento original. Si existe diferencia, prevalece el original. No se concede una licencia nueva sobre el contenido de terceros.
 
-El catálogo ejecutable está en `packages/game-core/src/catalog.ts`; distingue juegos disponibles y planes sin motor. Los 18 planes no están registrados como motores ni pueden abrir salas. Los perfiles y decisiones pendientes se documentan en cada ficha.
+El catálogo ejecutable está en `packages/game-core/src/catalog.ts`. Los veinte juegos disponen de motor y mesa en web y Android LAN. Los resúmenes explican la variante que usa cada sala; los reglamentos originales se conservan para consulta. Las decisiones de edición están en `design/CATALOGO_JUGABLE.md`.

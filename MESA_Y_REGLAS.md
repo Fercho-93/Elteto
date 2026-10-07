@@ -4,7 +4,7 @@
 
 Las reglas aportadas el 6 de octubre de 2026 se conservan en `reglas_juegos/`. El catálogo tipado de los 20 juegos está en `packages/game-core/src/catalog.ts`. La biblioteca local se abre desde la portada y está incluida en la web, Android y la caché sin conexión. Los originales mantienen bytes, tamaños y SHA-256.
 
-Mus, Cinquillo y Parchís tienen motor y mesa jugables en web y Android LAN. Los otros 17 tienen ficha de desarrollo, fases, acciones, material, variante y comprobaciones de aceptación. No se registran motores vacíos ni se permite crear sus salas.
+Los veinte juegos tienen motor y mesa jugables en web y Android LAN. Los 17 añadidos comparten acciones, vistas privadas, avatares y menú. Variantes, finales y validación: [design/CATALOGO_JUGABLE.md](design/CATALOGO_JUGABLE.md).
 
 ## Cinquillo clásico
 
@@ -32,7 +32,7 @@ Disponible para 2–4 jugadores, con cuatro fichas por color, tablero de 68 casi
 
 La presentación común utiliza ilustraciones 2D, mesa de madera y tapete verde. Cinquillo y Mus muestran los diez retratos originales en una fila discreta fuera del tapete. Los nombres y cantidades públicas de cartas quedan al lado; Mus indica compañero y parejas A/B. La mano privada y los controles permanecen visibles en web y Android LAN. Las caras españolas y francesas son imágenes tradicionales originales almacenadas en `apps/web/assets/decks/`, con licencia y procedencia de cada carta. La mano propia conserva botones accesibles; las rivales solo reciben cantidades públicas. Hay vuelo de cartas y reacciones breves, con movimiento reducido respetado. Los huecos de cartas pendientes permanecen invisibles.
 
-`seatPosition` prepara posiciones para 2–8 participantes y `renderSeats` acepta vistas de tablero sin cartas. Esto no habilita el motor de Oca ni Parchís de ocho colores ni amplía el límite actual de Cinquillo (2–6) o Mus (4). No se copian como reglas los tableros ni los recuentos dibujados en los mockups. La composición, sus capas y los recursos están documentados en `design/MESA_2D.md`. No se utiliza WebGL ni modelos 3D.
+`seatPosition` prepara posiciones para 2–8 participantes y `renderSeats` acepta vistas de tablero sin cartas. No habilita Parchís de ocho colores ni amplía el límite actual de Cinquillo (2–6) o Mus (4). No se copian como reglas los tableros ni los recuentos dibujados en los mockups. La composición, sus capas y los recursos están documentados en `design/MESA_2D.md`. No se utiliza WebGL ni modelos 3D.
 
 | Capa | Ubicación | Responsabilidad |
 |---|---|---|
@@ -49,4 +49,4 @@ Las fichas cubren secuencias, bazas, combinaciones, captura, apuestas, banca, pa
 
 Las identidades `PhysicalCard.id` distinguen cartas iguales de barajas diferentes. Los motores nuevos de Remigio/Continental no deben identificar cartas solo por palo e índice. El material de póker español usa los cuatro palos españoles con índices A–K, no la española ordinaria de 40/48.
 
-La biblioteca transcribe los PDFs multilingües, pero el texto español original prevalece. Mentiroso presenta un objetivo inicial que contradice su final: la ficha adopta el final explícito (pierde el último con cartas). Burro es la variante de parejas del PDF. Guiñote sigue el reparto completo de la fuente; no se sustituye por otro reglamento regional. Oca requiere coordenadas y edición definidas antes de implementar sus movimientos. Parchís fija su edición y coordenadas en `design/PARCHIS.md`.
+La biblioteca transcribe los PDFs multilingües, pero el texto español original prevalece. Mentiroso presenta un objetivo inicial que contradice su final: la ficha adopta el final explícito (pierde el último con cartas). Burro es la variante de parejas del PDF. Guiñote sigue el reparto completo de la fuente; no se sustituye por otro reglamento regional. Oca usa 63 casillas y los efectos del texto español del PDF. Parchís fija su edición y coordenadas en `design/PARCHIS.md`.

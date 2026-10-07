@@ -1,5 +1,6 @@
 const CACHE = "elteto-shell-v25";
 const ASSETS = [
+  "./catalog-games.js", "./catalog-games.css", "./game-core/games/shared.js", "./game-core/games/boards.js", "./game-core/games/social-cards.js", "./game-core/games/tricks.js", "./game-core/games/melds.js", "./game-core/games/holdem.js",
   "./assets/elteto-cover-balanced-v5.png",
   "./avatar-art.js", "./assets/elteto-logo-neon-v3.png", "./assets/elteto-avatars-v3.png",
   "./parchis-dice.js", "./parchis-dice.css",

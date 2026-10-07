@@ -49,7 +49,8 @@ const sw=await readFile(swPath,"utf8");
 // A changed menu must get a new URL even when a mobile browser retains its HTTP cache.
 const menuFiles = ['app.js', 'styles.css'];
 const menuHash = createHash('sha256');
-for (const file of menuFiles) menuHash.update(await readFile(path.join(output, file)));
+const versionFiles = [...menuFiles, 'catalog-games.js', 'catalog-games.css', 'game-core/catalog.js', 'game-core/engine.js', 'game-core/index.js', ...['shared','boards','social-cards','tricks','melds','holdem'].map(name => `game-core/games/${name}.js`)];
+for (const file of versionFiles) menuHash.update(await readFile(path.join(output, file)));
 const menuVersion = menuHash.digest('hex').slice(0, 12);
 const indexPath = path.join(output, 'index.html');
 let index = await readFile(indexPath, 'utf8');
