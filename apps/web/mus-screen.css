@@ -30,3 +30,17 @@ body:has(.mus-screen){background:radial-gradient(ellipse at 50% 0,#352a3b,#17171
 /* Result dialogs never alter the approved playing-surface geometry. */
 .hand-result{width:min(480px,calc(100% - 24px));max-height:calc(100dvh - 24px);overflow:auto;border:1px solid #a88b6166;border-radius:18px;background:#211f27;color:#eee6d5;padding:20px;}
 .hand-result::backdrop{background:#100d18db;backdrop-filter:blur(5px);}.hand-result header{display:flex;gap:12px;align-items:center;justify-content:space-between;}.hand-result header p{font:600 10px system-ui,sans-serif;letter-spacing:.08em;color:#d3ba82;}.hand-result h2{font:600 24px/1.25 system-ui,sans-serif;margin:16px 0;overflow-wrap:anywhere;}.hand-result p{font:400 13px/1.5 system-ui,sans-serif;overflow-wrap:anywhere;}.hand-result button{min-height:44px;background:#dac38b;color:#25251f;border:0;border-radius:10px;padding:10px 16px;font:600 12px system-ui,sans-serif;}.hand-result header button{background:#332e3a;color:#ddd1b8;}.result-scores{width:100%;border-collapse:collapse;font:500 13px/1.4 system-ui,sans-serif;}.result-scores caption{text-align:left;color:#cbbfaa;padding:12px 0;}.result-scores th,.result-scores td{padding:10px 6px;text-align:right;border-bottom:1px solid #85755c44;}.result-scores th:first-child{text-align:left;overflow-wrap:anywhere;max-width:180px;}.result-scores thead{font-size:11px;color:#cbbfaa;}.result-scores .your-score{color:#efd49b;}.score-change{font-variant-numeric:tabular-nums;}.hand-result footer{margin-top:18px;}.hand-result footer button{width:100%;}
+
+/* Compact public recaps fit the felt even when the private dock is tall. */
+.mus-screen .game-table,.mus-screen .mus-board,.mus-score>div{min-width:0;}
+@container (max-height:180px){
+ .mus-screen .mus-score{gap:12px;}
+ .mus-screen .mus-score>div{grid-template-columns:auto auto auto;gap:3px;}
+ .mus-screen .mus-score span{font-size:10px;white-space:nowrap;}
+ .mus-screen .mus-score strong{font-size:14px;}
+ .mus-screen .mus-score>div>small{grid-column:auto;}
+ .mus-screen .mus-phase small{display:none;}
+ .game-page.mus-screen .mus-phase strong{font-size:16px;margin:0;}
+ .game-page.mus-screen .table-center{gap:4px;}
+ .mus-screen .revealed-hands small{font-size:9px;line-height:12px;}
+}

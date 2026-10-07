@@ -1,4 +1,5 @@
 import {renderParchisDie,finishDiceRender} from './parchis-dice.js';
+import {parchisRoutes} from './turn-events.js';
 import {escapeHtml as esc,mascotForSeat,MASCOTS} from './table-view.js';
 import {renderRivalRoster,revealActivePlayer} from './rival-portraits.js';
 import {PARCHIS_STARTS,PARCHIS_SAFE,parchisSquare} from './game-core/index.js';
@@ -43,9 +44,30 @@ export function renderParchisBoard(view,playerId,name){
  return `<div class="parchis-board" aria-label="Tablero de Parchís de 68 casillas y cuatro colores">${svg}${tokens.join('')}</div>`;
 }
 function readable(line,view,name){for(const id of [...view.players].sort((a,b)=>b.length-a.length)){const pattern=id.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');line=line.replace(new RegExp(`(^|[^\\w-])${pattern}(?=$|[^\\w-])`,'g'),(_,prefix)=>prefix+name(id));}return line;}
+const travelContexts=new WeakMap();
+function finishParchisTravel(app,view){
+ const key=view.players.join('|'),now=performance.now();let state=travelContexts.get(app);
+ if(!state||state.key!==key||!view.lastRoll){state={key,view,flights:[]};travelContexts.set(app,state);return;}
+ const changes=parchisRoutes(state.view,view),newRoll=view.lastRoll.sequence!==state.view.lastRoll?.sequence;
+ if(changes.length){
+  const forward=Math.max(0,...changes.filter(p=>p.to>=0).map(p=>p.duration));
+  state.flights=changes.map(p=>({...p,started:now,delay:(newRoll?840:0)+(p.to<0?forward:0)}));
+ }
+ state.view=view;
+ if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+ for(const flight of state.flights){
+  const el=[...app.querySelectorAll('.parchis-table [data-pawn]')].find(el=>el.dataset.pawn===`${flight.player}:${flight.piece}`);if(!el)continue;
+  el.classList.add('parchis-last-move');
+  const elapsed=now-flight.started;if(elapsed>=flight.delay+flight.duration)continue;
+  const color=view.colors[flight.player],frames=flight.route.map((progress,i)=>{
+   const [x,y]=pawnPoint(color,progress,flight.piece),size=progress<0?'7%':progress===71?'2.2%':'4.3%';
+   return {offset:i/(flight.route.length-1),left:`${(boardAxis(x)+.5)/20*100}%`,top:`${(boardAxis(y)+.5)/20*100}%`,width:size,height:size};
+  });
+  const animation=el.animate(frames,{duration:flight.duration,delay:flight.delay,easing:'linear',fill:'backwards'});animation.currentTime=elapsed;
+ }
+}
 export function renderParchisScreen(app,view,playerId,name,error=''){
  const menuOpen=app.querySelector('.game-menu')?.open,zoomOpen=app.querySelector('.parchis-zoom')?.open;
- const origins=new Map([...app.querySelectorAll('[data-pawn]')].map(el=>[el.dataset.pawn,el.getBoundingClientRect()]));
  const mine=view.colors[playerId],own=view.players.indexOf(playerId),active=view.turnPlayer===playerId&&!view.finished,rolling=view.phase==='roll'||view.phase==='start';
  const rivals=Array.from({length:view.players.length},(_,offset)=>{const index=(own+offset)%view.players.length,id=view.players[index],character=mascotForSeat(view.players,index);return {id,isSelf:id===playerId,roll:(view.phase==='start'||view.lastRoll?.initial)?view.startingRolls[id]??(view.startingCandidates?.includes(id)===false?'—':'…'):undefined,character,mascot:MASCOTS[character],name:name(id),count:view.pieces[id].filter(p=>p===71).length,unit:'en meta',teamLabel:PARCHIS_PALETTE[view.colors[id]].name,active:!view.finished&&view.turnPlayer===id};});
  const board=renderParchisBoard(view,playerId,name);
@@ -56,5 +78,5 @@ export function renderParchisScreen(app,view,playerId,name,error=''){
  const menu=app.querySelector('.game-menu'),zoom=app.querySelector('.parchis-zoom');if(menuOpen)menu.showModal();if(zoomOpen)zoom.showModal();
  menu.addEventListener('close',()=>app.querySelector('.game-menu-button')?.focus({preventScroll:true}));
  zoom.addEventListener('close',()=>app.querySelector('[data-action="parchis-zoom-open"]')?.focus({preventScroll:true}));
- if(!matchMedia('(prefers-reduced-motion: reduce)').matches)for(const el of app.querySelectorAll('[data-pawn]')){const old=origins.get(el.dataset.pawn),now=el.getBoundingClientRect();if(old&&(Math.abs(old.x-now.x)>1||Math.abs(old.y-now.y)>1))el.animate([{translate:`${old.x-now.x}px ${old.y-now.y}px`},{translate:'0 0'}],{duration:240,easing:'ease-out'});}
+ finishParchisTravel(app,view);
 }

@@ -8,9 +8,10 @@ const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 export function preparePublicMotion(app,view){
  const key=`${view.id}:${view.players.join('|')}:${view.handNumber}`;
  let state=publicContexts.get(app);
- if(!state||state.key!==key){state={key,keys:null,turn:null,flights:new Map()};publicContexts.set(app,state);}
+ if(!state||state.key!==key){state={key,keys:null,turn:null,flights:new Map(),ghosts:new Map()};publicContexts.set(app,state);}
  const seat=[...app.querySelectorAll('.rival-seat')].find(el=>el.dataset.playerId===state.turn);
  state.origin=seat?.getBoundingClientRect();
+ state.before=new Map([...app.querySelectorAll('.catalog-surface [data-public-piece]')].filter(el=>!el.closest('.capture-receipt')).map(el=>[el.dataset.publicPiece,{html:el.outerHTML,rect:el.getBoundingClientRect()}]));
  return state;
 }
 export function finishPublicMotion(app,view,state){
@@ -25,6 +26,17 @@ export function finishPublicMotion(app,view,state){
   animation.currentTime=elapsed;
  }
  for(const key of state.flights.keys())if(!keys.has(key))state.flights.delete(key);
+ if(['capture','tricks'].includes(view.boardKind)&&!reduced()){
+  const collector=view.boardKind==='tricks'?view.turnPlayer:state.turn;
+  const seat=[...app.querySelectorAll('.rival-seat')].find(el=>el.dataset.playerId===collector),target=seat?.getBoundingClientRect();
+  if(target)for(const [key,old] of state.before)if(!keys.has(key)&&!state.ghosts.has(key))state.ghosts.set(key,{...old,target,started:now,delay:view.boardKind==='capture'?700:0});
+  for(const [key,ghost] of state.ghosts){
+   const elapsed=now-ghost.started;if(elapsed>=ghost.delay+500){state.ghosts.delete(key);continue;}
+   const holder=document.createElement('div');holder.innerHTML=ghost.html;const el=holder.firstElementChild;el.classList.add('turn-public-ghost');el.removeAttribute('data-action');el.removeAttribute('data-public-piece');el.setAttribute('aria-hidden','true');el.tabIndex=-1;
+   Object.assign(el.style,{left:ghost.rect.x+'px',top:ghost.rect.y+'px',width:ghost.rect.width+'px',height:ghost.rect.height+'px'});app.append(el);
+   const animation=el.animate([{transform:'none',opacity:1},{transform:`translate(${ghost.target.x+ghost.target.width/2-ghost.rect.x-ghost.rect.width/2}px,${ghost.target.y+ghost.target.height/2-ghost.rect.y-ghost.rect.height/2}px) scale(.35) rotate(10deg)`,opacity:0}],{duration:500,delay:ghost.delay,easing:'ease-in',fill:'both'});animation.currentTime=elapsed;animation.onfinish=()=>el.remove();
+  }
+ }
  state.keys=keys;state.turn=view.turnPlayer;
 }
 function indicateTurn(root,player){
@@ -39,11 +51,11 @@ function indicateTurn(root,player){
 function busy(app,state,on){
  const root=app.querySelector('.catalog-screen');if(!root||root.dataset.game!==state.view.id)return;
  root.dataset.motionBusy=String(on);
- indicateTurn(root,on?state.actor:state.view.finished?null:state.view.turnPlayer);
+ indicateTurn(root,on||root.dataset.turnBusy==='true'?state.actor:state.view.finished?null:state.view.turnPlayer);
  for(const button of root.querySelectorAll('.catalog-options button,.checkers-cancel')){
   if(button.dataset.motionAllowed===undefined)button.dataset.motionAllowed=String(!button.disabled);
   if(state.view.boardKind==='oca'&&button.dataset.diceAllowed===undefined)button.dataset.diceAllowed=button.dataset.motionAllowed;
-  button.disabled=on||button.dataset.motionAllowed!=='true';
+  button.disabled=on||root.dataset.turnBusy==='true'||button.dataset.motionAllowed!=='true';
  }
  const turn=root.querySelector('.catalog-turn');
  if(turn)turn.textContent=on&&state.actor?`${state.name(state.actor)} ${state.view.boardKind==='oca'?'tira y mueve':'mueve'}`:state.view.turnPlayer===state.playerId?'Tu turno':'Turno de '+state.name(state.view.turnPlayer);

@@ -1,5 +1,6 @@
 import {renderCatalogGame,handleCatalogAction} from './catalog-games.js';
 import {beginParchisRoll} from './parchis-dice.js';
+import {TurnSequence,isTurnAction} from './turn-sequence.js';
 import { getGame, listGames, getGamePlan } from "./game-core/index.js";
 import { LocalGuestSession, LocalHostSession } from "./local-session.js";
 import { arrangeCinquilloScreen } from './cinquillo-screen.js';
@@ -36,6 +37,18 @@ function header(back = "home") {
   return `<header class="topbar"><button class="icon-btn" data-action="back" aria-label="Volver">←</button><a class="brand" href="./" data-action="home"><span aria-hidden="true">🍆</span> ELTETO <span aria-hidden="true">🍑</span></a><span class="topbar-tag">FRUTA Y PIQUE*</span></header>`;
 }
 function playerName(id) { return state.players.find((player) => player.id === id)?.name || (id === "host" ? state.name : id); }
+const turnSequence=new TurnSequence({
+ apply(change){
+  state.players=change.players||state.players;state.gameId=change.gameId||state.gameId;state.playerId=change.playerId||state.playerId;
+  state.view=change.view;state.error='';state.screen='game';render();
+ },
+ refresh(){if(state.screen==='game')renderGame();},
+ phaseChanged(){if(state.screen==='game')turnSequence.decorate(app,state.playerId,playerName);},
+ reduced:()=>matchMedia('(prefers-reduced-motion: reduce)').matches,
+ hidden:()=>document.visibilityState==='hidden'
+});
+function receiveGame(change){turnSequence.receive({...change,gameId:change.gameId||state.gameId,playerId:change.playerId||state.playerId,players:change.players||state.players});}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')turnSequence.flush();});
 
 function renderHome() {
   if (GUEST) { renderJoinForm(); return; }
@@ -78,6 +91,7 @@ function renderInstallation() {
   </section></div></section>`;
 }
 function endGuestRoom(message = 'La sala ha terminado.') {
+  turnSequence.reset();
   const session = state.online, guest = state.guest;
   Object.assign(state, { screen: 'guest-ended', view: null, players: [], host: null, guest: null, online: null, selected: new Set(), offerCode: '', answerCode: '', roomCode: '' });
   session?.teardown?.();
@@ -182,6 +196,10 @@ let renderedGame = null;
 let previousSeats = null;
 let shownResult = null;
 function renderGame() {
+  if(!turnSequence.busy&&state.view)turnSequence.adopt({view:state.view,gameId:state.gameId,playerId:state.playerId});
+  renderGameContents();turnSequence.decorate(app,state.playerId,playerName);
+}
+function renderGameContents() {
   state.screen = "game";
   const game = getGame(state.gameId), view = state.view;
   if (!view) { app.innerHTML = `${header()}<section class="panel"><p>Esperando el estado de la partida…</p></section>`; return; }
@@ -249,7 +267,7 @@ function renderGame() {
   if(menuOpen) { app.querySelector('.game-menu').showModal(); app.querySelector('.game-menu-content').scrollTop=menuScrollTop; }
   if(zoomOpen) { openTableZoom(); app.querySelector('.board-zoom .zoom-scroll').scrollTop=zoomScrollTop; }
   const result=app.querySelector('.hand-result'),resultKey=`${gameToken}:${view.handWinner}:${view.finished}`;
-  if(result && (resultOpen || shownResult!==resultKey && !menuOpen && !zoomOpen)) {
+  if(result && (resultOpen || !turnSequence.busy && shownResult!==resultKey && !menuOpen && !zoomOpen)) {
     shownResult=resultKey;result.showModal();
   }
   result?.addEventListener('close',()=>app.querySelector('[data-action="open-hand-result"], [data-action="cinquillo-next-hand"]')?.focus({preventScroll:true}));
@@ -321,6 +339,7 @@ function render() {
 }
 
 function resetToHome() {
+  turnSequence.reset();
   if (GUEST) { endGuestRoom(); return; }
   previousTableKeys = null; renderedGame = null; previousTurn = null; previousSeats = null; shownResult = null;
   Object.assign(state, { role: null, name: "", players: [], view: null, host: null, guest: null, online: null, roomCode: "", offerCode: "", answerCode: "", selected: new Set(), error: "", screen: "home" });
@@ -332,11 +351,7 @@ function onHostChange(change) {
     state.players = change.players;
     state.gameId = change.gameId;
   } else if (change.kind === "game") {
-    state.players = change.players;
-    state.gameId = change.gameId;
-    state.view = change.view;
-    state.error = "";
-    state.screen = "game";
+    receiveGame(change);return;
   } else if (change.kind === "error") {
     state.error = change.message;
     flash(change.message);
@@ -372,6 +387,7 @@ app.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-action]");
   if (!button) return;
   const action = button.dataset.action;
+  if(turnSequence.busy&&isTurnAction(action))return;
   try {
     if(action.startsWith("catalog-") && handleCatalogAction(app,button,state.view,sendAction,renderGame))return;
     if (action === "open-table-zoom") { openTableZoom(); return; }
@@ -576,7 +592,7 @@ window.addEventListener("pagehide", endQrScan);
 function handleGuestChange(change) {
   if (change.kind === 'disconnected') { endGuestRoom(change.message); return; }
   if (change.kind === "lobby") { state.players = change.players || []; state.playerId = change.playerId || state.playerId; state.gameId = change.gameId || state.gameId; state.roomName = change.roomName || state.roomName; }
-  else if (change.kind === "game") { state.players = change.players || state.players; state.playerId = change.playerId || state.playerId; state.view = change.view; state.gameId = change.gameId || state.gameId; state.screen = "game"; }
+  else if (change.kind === "game") { receiveGame(change);return; }
   else if (change.kind === "started") state.error = "";
   else if (change.kind === "error" || change.kind === "disconnected") { state.error = change.message; flash(change.message); }
   render();
@@ -592,7 +608,7 @@ function onOnlineChange(change) {
     state.role = change.isHost ? "host" : "client";
     state.roomCode = change.roomCode || state.roomCode;
     if (change.inviteUrl) state.offerCode = change.inviteUrl;
-    if (change.kind === "game") { state.view = change.view; state.error = ""; state.screen = "game"; }
+    if (change.kind === "game") { receiveGame(change);return; }
   } else if (change.kind === "started") {
     state.error = "";
     return;
@@ -648,6 +664,7 @@ async function beginOfflineGuestJoin(offerCode, name) {
   renderLobby();
 }
 function sendAction(action) {
+  if(turnSequence.busy)return;
   if (state.online) { state.online.sendAction(action).catch((error) => { state.error = error.message; flash(error.message); render(); }); return; }
   if (state.role === "host") state.host.applyLocalAction(action);
   else state.guest.sendAction(action);

@@ -13,7 +13,7 @@ export function renderParchisDie(view,name){
  return `<div class="parchis-die" aria-label="${esc(label)}" data-result="${rolled?value:0}" data-roll-id="${view.lastRoll?.sequence??0}"><div class="die-stage" aria-hidden="true"><i class="die-shadow"></i><div class="die-flight"><div class="die-cube" style="transform:${orientation(value)}">${[1,2,3,4,5,6].map(n=>`<span class="die-face face-${n}">${pipSlots[n].map(slot=>`<i style="grid-area:${Math.ceil(slot/3)} / ${(slot-1)%3+1}"></i>`).join('')}</span>`).join('')}</div></div></div><small>${esc(label)}</small></div>`;
 }
 function lock(app,busy,targets=PARCHIS_TARGETS){
- busy=busy||app.querySelector('.catalog-screen')?.dataset.motionBusy==='true';
+ busy=busy||app.querySelector('.catalog-screen')?.dataset.motionBusy==='true'||!!app.querySelector('[data-turn-busy="true"]');
  app.querySelector(targets.dockSelector)?.setAttribute('aria-busy',String(busy));
  for(const button of app.querySelectorAll(`${targets.rollSelector},${targets.moveSelector}`)){
   if(button.dataset.diceAllowed===undefined)button.dataset.diceAllowed=String(!button.disabled);

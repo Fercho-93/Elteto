@@ -7,7 +7,7 @@ import vm from 'node:vm';
 const index = await readFile('dist/index.html', 'utf8');
 const worker = await readFile('dist/sw.js', 'utf8');
 const hash = createHash('sha256');
-for (const file of ['app.js', 'styles.css', 'qr-scanner.js', 'firebase-sdk.js', 'host-access.js', 'activation-code.js', 'online-room.js', 'room-code.js', 'distribution-config.js', 'guest.html', 'catalog-games.js', 'catalog-games.css', 'board-games.js', 'board-games.css', 'board-motion.js', 'parchis-dice.js', 'parchis-dice.css', 'game-core/catalog.js', 'game-core/engine.js', 'game-core/index.js', 'game-core/bots.js', 'local-session.js', 'lan-session.js', ...['shared','boards','social-cards','tricks','melds','holdem'].map(name => `game-core/games/${name}.js`)]) {
+for (const file of ['app.js', 'styles.css', 'qr-scanner.js', 'firebase-sdk.js', 'host-access.js', 'activation-code.js', 'online-room.js', 'room-code.js', 'distribution-config.js', 'guest.html', 'catalog-games.js', 'catalog-games.css', 'board-games.js', 'board-games.css', 'board-motion.js', 'turn-events.js', 'turn-sequence.js', 'turn-sequence.css', 'parchis-dice.js', 'parchis-dice.css', 'game-core/catalog.js', 'game-core/engine.js', 'game-core/index.js', 'game-core/bots.js', 'local-session.js', 'lan-session.js', ...['shared','boards','social-cards','tricks','melds','holdem'].map(name => `game-core/games/${name}.js`)]) {
   let content = await readFile(`dist/${file}`);
   if (file === 'guest.html') content = Buffer.from(content.toString().replace(/\?v=[a-f0-9]{12}/g, ''));
   hash.update(content);
@@ -16,7 +16,7 @@ const version = hash.digest('hex').slice(0, 12);
 assert.ok(index.includes(`./app.js?v=${version}`));
 assert.ok(index.includes(`./styles.css?v=${version}`));
 assert.ok(index.includes(`./qr-scanner.js?v=${version}`));
-assert.ok(worker.includes(`elteto-shell-v27-${version}`));
+assert.ok(worker.includes(`elteto-shell-v28-${version}`));
 
 const origin = 'https://example.test/Elteto/';
 const handlers = new Map();

@@ -203,7 +203,7 @@ export function animateTable(app, previousKeys, origins, sourceSeat) {
         { transform: "translate(0,0) rotate(3deg) scale(1.05)", offset: 0.8 },
         { transform: "none", opacity: 1 },
       ],
-      { duration: 420, easing: "cubic-bezier(.2,.8,.2,1)" },
+      { duration: 700, easing: "cubic-bezier(.2,.8,.2,1)" },
     );
   }
   return keys;
