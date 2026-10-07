@@ -1,6 +1,6 @@
-const CACHE = "elteto-shell-v18";
+const CACHE = "elteto-shell-v19";
 const ASSETS = [
-  "./rival-portraits.js", "./rival-portraits.css", "./assets/elteto-mascots-bust-v2.png", "./assets/elteto-mascots-bust-side-v2.png",
+  "./rival-portraits.js", "./rival-portraits.css", "./assets/elteto-original-avatars.png",
   "./table-layout.css",
   "./cinquillo-table.css", "./cinquillo-screen.js", "./assets/elteto-mascots-side-v1.png",
   "./", "./index.html", "./styles.css", "./app.js", "./table-view.js", "./card-art.js", "./assets/elteto-mascots-v1.png", "./local-session.js", "./local-transport.js",

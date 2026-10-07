@@ -96,7 +96,7 @@ try {
       assert.equal(await page.locator('.suit-lane .board-card').count(),40);
       assert.match(await page.locator('.game-ribbon').textContent(),/40 cartas españolas/);
       assert.equal(
-        await page.locator(".rival-hand .card-back").count(),
+        await page.locator(".rival-count").evaluateAll(els=>els.reduce((sum,el)=>sum+Number(el.textContent),0)),
         40 - game.hands[id].length,
       );
       assert.equal(
@@ -142,34 +142,23 @@ try {
         await Promise.all(cards.map(card=>card.querySelector('img').decode()));
         return cards.every(card=>{const image=card.querySelector('img'),rect=image.getBoundingClientRect(); return image.naturalWidth>=200 && rect.width>=56 && rect.height>=85 && card.getAttribute('aria-label').includes(' de ');});
       }));
-      assert.equal(await page.locator('.rival-portrait[data-character]').evaluateAll(els => new Set(els.map(el => el.dataset.character)).size),count-1);
-      assert.ok(await page.locator('.table-seat').evaluateAll(seats=>seats.every(seat=>{
-        const direction=seat.dataset.direction;
-        if(direction==='front') return seat.dataset.position==='top';
-        const sprite=seat.querySelector('.rival-art');
-        return sprite.querySelector('image').getAttribute('href').includes('mascots-bust-side-v2') && (direction==='left' ? getComputedStyle(sprite).scale==='-1 1' : getComputedStyle(sprite).scale==='none');
-      })), 'Side seats use directional artwork facing the play area');
-      assert.ok(await page.evaluate(async () => { const image=new Image(); image.src='/assets/elteto-mascots-v1.png'; await image.decode(); return image.naturalWidth===1536 && image.naturalHeight===1024; }));
-      assert.ok(await page.evaluate(async () => { const image=new Image(); image.src='/assets/elteto-mascots-side-v1.png'; await image.decode(); return image.naturalWidth===1536 && image.naturalHeight===1024; }));
+      assert.equal(await page.locator('.rival-original[data-character]').evaluateAll(els => new Set(els.map(el => el.dataset.character)).size),count-1);
+      assert.ok(await page.locator('.rival-original image').evaluateAll(images=>images.every(i=>i.getAttribute('href').includes('elteto-original-avatars.png'))),'Only original user artwork is shown');
+      assert.ok(await page.evaluate(async()=>{const image=new Image();image.src='/assets/elteto-original-avatars.png';await image.decode();return image.naturalWidth===1280&&image.naturalHeight===853;}));
       assert.equal(await page.locator('.game-table').getAttribute('data-scene'),'illustrated-2d');
       assert.equal(await page.locator('.table-canvas,.camera-controls').count(),0);
-      assert.equal(await page.locator('.seat-front').count(),count-1);
-      assert.equal(await page.locator('.game-table .seat-label').count(),count-1);
-      assert.ok(await page.locator('.game-table .seat-label').evaluateAll(labels=>{
+      assert.equal(await page.locator('.seat-front,.rival-hand,.forearms').count(),0);
+      assert.equal(await page.locator('.game-table .rival-name').count(),count-1);
+      assert.ok(await page.locator('.game-table .rival-name').evaluateAll(labels=>{
         const boxes=labels.map(label=>label.getBoundingClientRect());
         const clear=boxes.every((a,i)=>a.left>=0 && a.right<=innerWidth && boxes.slice(i+1).every(b=>a.right<=b.left || b.right<=a.left || a.bottom<=b.top || b.bottom<=a.top));
         if(!clear) throw Error(JSON.stringify(boxes.map(box=>box.toJSON())));
         return clear;
       }),`Readable, separate player labels: ${width}px, ${count} players`);
-      assert.ok(await page.locator('.seat-front').evaluateAll(fronts=>fronts.every(front=>{
-        const body=document.querySelector('[data-player-id="'+front.dataset.frontPlayer+'"]');
-        const felt=document.querySelector('.table-surface');
-        const a=body.getBoundingClientRect(),b=front.getBoundingClientRect();
-        return Math.abs(a.x-b.x)<1 && Math.abs(a.y-b.y)<1 && Math.abs(a.width-b.width)<1 && Math.abs(a.height-b.height)<1 && +getComputedStyle(body).zIndex<+getComputedStyle(felt).zIndex && +getComputedStyle(front).zIndex>+getComputedStyle(felt).zIndex && +getComputedStyle(front.querySelector('.forearms')).zIndex>+getComputedStyle(front.querySelector('.rival-hand')).zIndex;
-      })));
+      assert.equal(await page.locator('.rival-roster').count(),1,'Rivals are grouped outside the playing area');
       await page.evaluate(() => scrollTo(0, 0));
       assert.ok(await page.locator('.table-seat').evaluateAll(seats=>seats.every(seat=>{
-        const r=seat.querySelector('.rival-portrait').getBoundingClientRect(),character=Number(seat.querySelector('[data-character]').dataset.character);
+        const r=seat.querySelector('.rival-original').getBoundingClientRect(),character=Number(seat.querySelector('[data-character]').dataset.character);
         const x=r.left+r.width*.5;
         const y=r.top+r.height*.52;
         const hit=document.elementFromPoint(x,y);
@@ -364,14 +353,14 @@ try {
     );
     await context.close();
   }
-  // Animated grips must move inside their fixed seat frame, never reset its POV translation.
+  // The roster stays fixed while the relevant portrait reacts briefly.
   const motion=await browser.newContext({serviceWorkers:'block',reducedMotion:'no-preference'});
   const motionPage=await motion.newPage();await motionPage.goto(base);await motionPage.waitForFunction(()=>window.testTable);
   const motionGame=cinquilloEngine.createInitialState(['a','b','c','d'],17);
   await motionPage.evaluate(game=>window.testTable('cinquillo',game,game.players[game.turn]),motionGame);
   await motionPage.locator('.legal-card').click();
-  assert.ok(await motionPage.locator('.seat-front').evaluateAll(fronts=>fronts.every(front=>front.getAnimations().length===0 && getComputedStyle(front).transform!=='none')));
-  assert.ok(await motionPage.locator('.seat-grip').evaluateAll(grips=>grips.some(grip=>grip.getAnimations().length>0)));
+  assert.ok(await motionPage.locator('.rival-roster').evaluate(el=>el.getAnimations().length===0),'Roster stays still');
+  assert.ok(await motionPage.locator('.rival-token').evaluateAll(tokens=>tokens.some(t=>t.getAnimations().length>0)),'Only the relevant portrait reacts');
   await motion.close();
   // Real service worker: all references remain readable after network loss.
   if(process.env.TABLE_BROWSER !== 'webkit') {
@@ -396,8 +385,8 @@ try {
       return response.ok && (await response.text()).includes('.board-zoom');
     }));
     assert.ok(await page.evaluate(async()=>{
-      const style=await fetch('../../cinquillo-table.css'),art=await fetch('../../assets/elteto-mascots-bust-side-v2.png'),screen=await fetch('../../cinquillo-screen.js');
-        for (const file of ['rival-portraits.js','rival-portraits.css','assets/elteto-mascots-bust-v2.png']) if(!(await fetch('../../'+file)).ok) return false;
+      const style=await fetch('../../cinquillo-table.css'),art=await fetch('../../assets/elteto-original-avatars.png'),screen=await fetch('../../cinquillo-screen.js');
+        for (const file of ['rival-portraits.js','rival-portraits.css','assets/elteto-original-avatars.png']) if(!(await fetch('../../'+file)).ok) return false;
       return style.ok && (await style.text()).includes('--pile-w') && art.ok && (await art.blob()).size>10000 && screen.ok && (await screen.text()).includes('arrangeCinquilloScreen');
     }));
     assert.ok(await page.evaluate(async()=>{
@@ -424,9 +413,9 @@ try {
   await fallback.close();
   assert.deepEqual(errors, []);
   console.log(
-    "2D table: body behind felt, arms above rim and held backs, traditional Spanish/French decks, Mus/Cinquillo actions, portrait/landscape, offline, reduced motion and playable without WebGL: OK",
+    "2D table: original rival portraits, grouped public counts, subtle reactions, traditional Spanish/French decks, Mus/Cinquillo actions, portrait/landscape, offline, reduced motion and playable without WebGL: OK",
   );
 } finally {
   await browser.close();
   await new Promise((r) => server.close(r));
-}
+}

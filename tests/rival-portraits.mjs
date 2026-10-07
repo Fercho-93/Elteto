@@ -21,6 +21,7 @@ try{
   const actual=await page.locator('.table-surface,.table-center,.hand,.hand-dock').evaluateAll(els=>els.map(el=>el.getBoundingClientRect().toJSON()));
   actual.forEach((rect,i)=>{for(const key of ['x','y','width','height'])assert.ok(Math.abs(rect[key]-row.frozen[i][key])<1,`Approved 0.1.4 geometry changed: ${row.width}×${row.height}/${row.count} ${i} ${key}`);});
  }
+ assert.deepEqual(await readFile(new URL('../apps/web/assets/elteto-original-avatars.png',import.meta.url)),await readFile(new URL('../design/references/personajes-10.png',import.meta.url)),'Original artwork is byte-identical to the user reference');
  const rows=[];
  for(const [width,height] of [[320,568],[390,664],[1280,800]])for(let character=0;character<10;character++) {
   let ids;for(let n=0;n<1000;n++){ids=[`rival-${n}`,'b','c','d','e','f'];if(mascotForSeat(ids,0)===character)break;}
@@ -29,8 +30,8 @@ try{
   // Relative positions 1,3,5 cover right-facing, front and left-facing poses.
   for(const own of [5,3,1]){
    await page.evaluate(({game,own})=>window.testTable('cinquillo',game,game.players[own]),{game,own});await settle(page);
-   const metrics=await page.evaluate(id=>{const seat=[...document.querySelectorAll('.table-seat')].find(el=>el.dataset.playerId===id),portrait=seat.querySelector('.rival-portrait'),r=portrait.getBoundingClientRect(),front=[...document.querySelectorAll('.seat-front')].find(el=>el.dataset.frontPlayer===id);const bodies=[...document.querySelectorAll('.rival-portrait')].map(el=>el.getBoundingClientRect());const overlap=(a,b)=>a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5;return {direction:seat.dataset.direction,faceVisible:document.elementFromPoint(r.x+r.width*.5,r.y+r.height*.52)?.closest('.table-seat')===seat,portraitFits:r.left>=0&&r.right<=innerWidth&&r.top>=44,noOverlap:!bodies.some((a,i)=>bodies.slice(i+1).some(b=>overlap(a,b))),visibleBacks:[...front.querySelectorAll('.card-back')].filter(el=>getComputedStyle(el).display!=='none').length,count:Number(front.querySelector('.seat-label small').textContent.replace(/\D/g,'')),href:portrait.querySelector('image').getAttribute('href'),mirror:getComputedStyle(portrait.querySelector('.rival-art')).scale};},ids[0]);
-   rows.push({width,height,character,...metrics});assert.ok(metrics.faceVisible&&metrics.portraitFits&&metrics.noOverlap,JSON.stringify(rows.at(-1)));assert.equal(metrics.visibleBacks,Math.min(5,game.hands[ids[0]].length));assert.equal(metrics.count,game.hands[ids[0]].length);assert.ok(metrics.href.includes(metrics.direction==='front'?'bust-v2':'bust-side-v2'));assert.equal(metrics.mirror,metrics.direction==='left'?'-1 1':'none');
+   const metrics=await page.evaluate(id=>{const seat=[...document.querySelectorAll('.rival-seat')].find(el=>el.dataset.playerId===id),portrait=seat.querySelector('.rival-original'),r=portrait.getBoundingClientRect();const bodies=[...document.querySelectorAll('.rival-seat')].map(el=>el.getBoundingClientRect());const overlap=(a,b)=>a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5;return {faceVisible:document.elementFromPoint(r.x+r.width*.5,r.y+r.height*.52)?.closest('.rival-seat')===seat,portraitFits:r.left>=0&&r.right<=innerWidth&&r.top>=44,noOverlap:!bodies.some((a,i)=>bodies.slice(i+1).some(b=>overlap(a,b))),count:Number(seat.querySelector('.rival-count').textContent),href:portrait.querySelector('image').getAttribute('href'),order:[...document.querySelectorAll('.rival-seat')].map(s=>s.dataset.playerId),ownAbsent:!document.querySelector('.own-seat')};},ids[0]);
+   rows.push({width,height,character,...metrics});assert.ok(metrics.faceVisible&&metrics.portraitFits&&metrics.noOverlap&&metrics.ownAbsent,JSON.stringify(rows.at(-1)));assert.equal(metrics.count,game.hands[ids[0]].length);assert.ok(metrics.href.includes('elteto-original-avatars.png'));assert.deepEqual(metrics.order,Array.from({length:5},(_,i)=>game.players[(own+i+1)%6]));
    if(width===390&&own===3)await page.screenshot({path:fileURLToPath(new URL(`identity-${character}-${name}.png`,output))});
   }
  }
@@ -39,10 +40,9 @@ try{
   const game=cinquilloEngine.createInitialState(['count-a','count-b'],17);
   game.hands['count-b']=Array.from({length:count},(_,i)=>game.hands['count-b'][i%20]);
   await page.evaluate(game=>window.testTable('cinquillo',game,'count-a'),game);
-  assert.equal(await page.locator('.rival-hand .card-back:visible').count(),Math.min(5,count));
-  assert.equal(Number((await page.locator('.seat-label small').textContent()).replace(/\D/g,'')),count);
+  assert.equal(await page.locator('.rival-hand,.forearms').count(),0);
+  assert.equal(Number((await page.locator('.rival-count').textContent()).replace(/\D/g,'')),count);
  }
- assert.ok(await page.locator('.rival-art clipPath').evaluateAll(clips=>new Set(clips.map(c=>c.id)).size===clips.length),'Body and forearms have separate, explicit atlas clips');
- assert.ok(await page.evaluate(async()=>{for(const file of ['elteto-mascots-bust-v2.png','elteto-mascots-bust-side-v2.png']) {const image=new Image();image.src='./assets/'+file;await image.decode();if(image.naturalWidth!==1536||image.naturalHeight!==1024)return false;const canvas=document.createElement('canvas');canvas.width=1536;canvas.height=1024;const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);if(ctx.getImageData(0,0,1,1).data[3]!==0)return false;}return true;}),'Both local atlases decode and preserve transparent backgrounds');
- assert.deepEqual(errors,[]);await writeFile(new URL(`measurements-${name}.json`,output),JSON.stringify(rows,null,2));console.log(`${name}: 90 identity/direction/viewport cases; 15 approved table/hand geometries preserved; 0/1/5/20-card fans and transparent atlas decoding verified`);
+ assert.ok(await page.evaluate(async()=>{const image=new Image();image.src='./assets/elteto-original-avatars.png';await image.decode();return image.naturalWidth===1280&&image.naturalHeight===853;}),'Original sheet decodes offline from local assets');
+ assert.deepEqual(errors,[]);await writeFile(new URL(`measurements-${name}.json`,output),JSON.stringify(rows,null,2));console.log(`${name}: 90 identity/point-of-view/viewport cases; 15 approved table/hand geometries preserved; 0/1/5/20 public counts and original artwork verified`);
 }finally{await browser.close();await new Promise(r=>server.close(r));}

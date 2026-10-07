@@ -37,8 +37,8 @@ try {
     const hand=rect(document.querySelector('.hand')),table=rect(document.querySelector('.table-surface')),dock=rect(document.querySelector('.hand-dock'));
     const endpoints=[...document.querySelectorAll('.game-table .endpoint')].map(rect);
     const board=[...document.querySelectorAll('.game-table .endpoint,.game-table .lane-next,.game-table .suit-lane>b')].map(rect);
-    const facesVisible=[...document.querySelectorAll('.table-seat')].every(seat=>{const r=rect(seat.querySelector('.rival-portrait')),character=Number(seat.querySelector('[data-character]').dataset.character),x=r.left+r.width*.5,y=r.top+r.height*.52;return document.elementFromPoint(x,y)?.closest('[data-player-id]')===seat;});
-    const labels=[...document.querySelectorAll('.game-table .seat-label')].map(rect);
+    const facesVisible=[...document.querySelectorAll('.table-seat')].every(seat=>{const r=rect(seat.querySelector('.rival-original')),character=Number(seat.querySelector('[data-character]').dataset.character),x=r.left+r.width*.5,y=r.top+r.height*.52;return document.elementFromPoint(x,y)?.closest('[data-player-id]')===seat;});
+    const labels=[...document.querySelectorAll('.game-table .rival-seat')].map(rect);
     const badBoard=board.filter(r=>!inside(r)||r.left<table.left+4||r.right>table.right-4||r.bottom>table.bottom-4||r.bottom>dock.top);
     return {facesVisible,pageHeight:document.documentElement.scrollHeight,handVisible:inside(hand) && hand.bottom<=innerHeight-parseFloat(getComputedStyle(document.querySelector(".cinquillo-screen")).paddingBottom)+1,minCard:endpoints.length?Math.min(...endpoints.map(r=>r.width)):0,tableFits:!badBoard.length,badBoard:badBoard.map(r=>r.toJSON()),labelFits:labels.every(inside),labelOverlap:labels.some((a,i)=>labels.slice(i+1).some(b=>overlap(a,b))),labelCoversGame:labels.some(a=>board.some(b=>overlap(a,b))),endpointOverlap:endpoints.some((a,i)=>endpoints.slice(i+1).some(b=>overlap(a,b))),minButton:Math.min(...[...document.querySelectorAll('.play-header button,.hand-dock button:not(.playing-card)')].map(el=>Math.min(rect(el).width,rect(el).height)))};
    });

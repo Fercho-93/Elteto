@@ -24,7 +24,7 @@ async function rewriteModuleImports(directory) {
 
 await mkdir(output, { recursive: true });
 // Retire previous 3D bundles from incremental local builds as well as fresh builds.
-for (const obsolete of ['table-3d.js','vendor/three.module.min.js','vendor/three.core.min.js','vendor/THREE-LICENSE.txt','vendor/README.md']) {
+for (const obsolete of ['assets/elteto-mascots-bust-v2.png','assets/elteto-mascots-bust-side-v2.png','table-3d.js','vendor/three.module.min.js','vendor/three.core.min.js','vendor/THREE-LICENSE.txt','vendor/README.md']) {
   await rm(path.join(output,obsolete),{force:true});
 }
 await cp(web, output, { recursive: true });

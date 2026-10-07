@@ -1,45 +1,42 @@
-# Rivales de Cinquillo · 0.1.5
+# Rivales de Cinquillo · retratos originales
 
-## Decisión
+## Resultado
 
-Bustos ilustrados con volumen, hombros y manos apoyadas en el borde, sin marcos alrededor de la cara. Se conservan las diez identidades originales. Los laterales usan una pose de tres cuartos orientada hacia el juego; el centro usa la frontal. El jugador local no aparece. Mus mantiene sus ilustraciones anteriores.
+Una franja compacta reúne los retratos circulares originales, los nombres y las cantidades públicas de cartas. La imagen es idéntica byte a byte a `design/references/personajes-10.png`: no se redibujan personajes ni se añaden cuerpos, sillas, manos o abanicos. SVG y CSS encuadran cada rostro sin modificar el bitmap.
 
-La petición exige conservar la mesa aprobada en 0.1.4. No se modifican `cinquillo-table.css`, `cinquillo-screen.js`, la mano, el tapete, las cartas, los controles ni los anclajes de los asientos. El nuevo tamaño de busto depende del tamaño del asiento existente. La etiqueta mantiene nombre y cantidad pública exacta, separados visualmente; su texto completo también está en el título y en la descripción accesible del asiento.
+Las expresiones originales aportan el toque divertido. El turno añade borde dorado, un punto junto al nombre y una reacción breve; una jugada produce un gesto de 260 ms. No hay animación continua. Con una carta se destaca el contador. El movimiento reducido suprime las reacciones. Todo usa el estado público existente: no añade mensajes ni eventos de red.
+
+Los rivales siguen el orden de turno desde el jugador local, que no tiene avatar propio. La asignación de personajes sigue siendo estable entre dispositivos. El nombre completo, personaje y cantidad tienen descripción accesible y se consultan también en el marcador existente. Los retratos son informativos, no botones pequeños.
 
 ## Comparación
 
-Se simularon seis opciones en 90 combinaciones: cinco pantallas (320×568, 390×664, 390×844, 844×390 y 1280×800) por tres cantidades de jugadores (2, 4 y 6). Son simulaciones de interfaz, no un estudio de usuarios ni partidas en productos ajenos.
+Se probaron seis composiciones nuevas con la imagen original en 240 simulaciones: ocho pantallas y 2–6 jugadores. Las capturas usan una partida del motor tras 18 jugadas legales. Se midió encaje, colisiones y conservación de la geometría. Es una evaluación visual y de navegador, no un estudio con usuarios.
 
-| Opción | Evaluación visual |
-|---|---|
-| Silla anterior | Referencia; demasiada proporción dedicada a silla/cuerpo en tamaños pequeños. |
-| Silla anterior con etiqueta sobria | Mejora superficial; conserva la limitación del rostro. |
-| Retrato circular | Identidad clara, pero parece una ficha flotante y pierde manos/cuerpo. |
-| Retrato rectangular redondeado | Ordenado, pero añade un marco ajeno a la mesa y recorta los personajes. |
-| Busto mínimo, sin manos/cartas | Ligero, pero pierde la sensación de estar jugando. |
-| Busto integrado con manos y cartas | Elegido: cara reconocible, continuidad con el borde y menos protagonismo de la silla. |
+| Composición | Sin colisiones | Mesa y mano iguales | Valoración |
+|---|---:|---:|---|
+| Círculos independientes | 40/40 | 40/40 | Ligeros; nombres demasiado próximos al borde. |
+| Franja compacta | 40/40 | 40/40 | Elegida: información agrupada, fondo legible y posición estable. |
+| Tarjetas individuales | 39/40 | 40/40 | Exceso de cajas; invade una combinación compacta. |
+| Círculos en antiguos asientos | 39/40 | 40/40 | Dependencia del borde y poco aire lateral. |
+| Cápsulas horizontales | 37/40 | 40/40 | Buenas con pocos jugadores; nombres apretados al crecer. |
+| Identidad mínima | 40/40 | 40/40 | Ligera pero pierde demasiada expresión. |
 
-El criterio es un equilibrio entre identidad, sensación de estar sentado y respeto del espacio de juego. No se afirma que esta solución sea universalmente óptima.
+La franja final adapta su anchura al número de rivales. Retratos de 44 px en móvil habitual, 32 px en pantallas cortas, 30 px en horizontal corto y 60 px en pantalla amplia y alta. El tapete y los naipes conservan sus dimensiones.
 
-## Referencias de mercado
+## Referencias públicas
 
-- [UNO Mobile, sitio y galería oficiales](https://www.letsplayuno.com/): referencia pública para una identidad visual compacta alrededor de la partida. La adaptación a los personajes de Elteto es una decisión propia.
-- [Poker Now: avatar en el asiento](https://www.pokernow.com/blog/default-in-game-avatar): documenta la identidad visible y persistente durante la partida. Elteto conserva su asignación estable por jugador y no añade compras ni selección de perfil.
-- [Zynga Poker: personalización del avatar](https://zyngasupport.helpshift.com/hc/en/27-zynga-poker/faq/22124-how-do-i-change-my-avatar-in-zynga-poker/): referencia para separar identidad del jugador y superficie de juego.
-- [Governor of Poker: retrato de perfil](https://orangegames.helpshift.com/hc/en/4-governor-of-poker/faq/67-how-do-i-add-a-picture-to-my-profile/): alternativa de retrato enmarcado considerada en los prototipos.
+- [Board Game Arena, guías UX A.1 y A.3](https://en.doc.boardgamearena.com/images/5/57/Guidelines_UX_new_compressed.pdf): agrupar información relacionada, priorizar el tablero y limitar los paneles de jugadores.
+- [UNO Mobile](https://www.letsplayuno.com/) y sus capturas públicas: retratos e información del jugador separados de las cartas.
+- [Plato / Ocho](https://platoapp.com/en/games/ocho): referencia de presentación social compacta; Elteto conserva sus propios personajes.
+- [Poker Now, identidad en el asiento](https://www.pokernow.com/blog/default-in-game-avatar): identidad reconocible y consistente.
+- [Zynga Poker, avatares](https://zyngasupport.helpshift.com/hc/en/27-zynga-poker/faq/22124-how-do-i-change-my-avatar-in-zynga-poker/) y [Governor of Poker, perfil](https://orangegames.helpshift.com/hc/en/4-governor-of-poker/faq/67-how-do-i-add-a-picture-to-my-profile/): alternativas de retrato consideradas.
 
-Se consultó material público; no se crearon cuentas ni se jugaron partidas en estos servicios. No se copiaron sus recursos gráficos.
+Se revisó material público, sin crear cuentas ni jugar partidas en estos servicios. No se afirma haber examinado todos los juegos del mercado ni se copian sus recursos. Las decisiones concretas de Elteto son una adaptación propia.
 
-## Implementación
+## Alcance y pruebas
 
-- `rival-portraits.js` encuadra cada ilustración con medidas propias y un recorte SVG explícito. El rectángulo del atlas completo nunca se muestra por el espacio sobrante del encuadre. Los recortes de cuerpo y manos tienen identificadores separados.
-- `rival-portraits.css` modifica únicamente la presentación de rivales de Cinquillo. Cuerpo detrás del tapete, dorsos encima del borde y manos encima de los dorsos. El reflejo lateral se aplica por igual al cuerpo y al agarre.
-- Hasta cinco dorsos visibles forman el abanico. Con una carta queda un único dorso; con cero desaparece. El número exacto sigue visible y accesible. No se leen las cartas privadas de ningún rival.
-- Turno resaltado con luz dorada discreta y borde de etiqueta. Se mantienen las reacciones a jugadas y al cambio de turno, con respeto a movimiento reducido.
-- Dos atlas PNG RGBA transparentes, versionados y locales: `elteto-mascots-bust-v2.png` y `elteto-mascots-bust-side-v2.png`. Generados con la herramienta integrada de imágenes a partir de las referencias aportadas, sin modificar los atlas anteriores. Ambos se incluyen en Android y caché v18.
+`rival-portraits.js` y `rival-portraits.css` contienen el componente. `table-view.js` lo usa en Cinquillo; Mus mantiene su presentación. No cambian `cinquillo-table.css`, `cinquillo-screen.js`, motores, reglas, transportes, servidor, protocolo ni lógica de conexión.
 
-## Verificación reproducible
+`tests/rival-portraits.mjs` comprueba diez identidades desde tres puntos de vista y tres pantallas: 90 casos por navegador, además de cantidades 0/1/5/20 y 15 comparaciones con la geometría de 0.1.4 (`877cdaa`). La referencia conserva las medidas de tapete, cartas y mano; tolerancia entre motores inferior a un píxel.
 
-`tests/rival-portraits.mjs` comprueba las diez identidades en tres direcciones y tres pantallas: 90 casos por navegador. Comprueba orientación, caras visibles, separación, encuadre y cantidad de dorsos/etiqueta. Además compara 15 geometrías de tapete, zona de cartas y mano con medidas tomadas del commit aprobado `877cdaa` (0.1.4); tolerancia inferior a un píxel entre motores.
-
-Se conservan las 300 combinaciones por navegador de `tests/cinquillo-layout.mjs`, acciones y animaciones de `tests/table-navegador.mjs`, y partidas reales LAN de `tests/lan-navegador.mjs`. La CI ejecuta Chromium y WebKit y adjunta capturas y medidas. WebKit es una aproximación de motor: no sustituye una prueba física en iPhone. La APK de esta rama sigue siendo una compilación de prueba con firma debug.
+Se mantienen 300 escenarios de distribución por navegador, acciones, movimiento reducido, caché sin conexión y partidas LAN con servidor Java real. La CI ejecuta Chromium y WebKit y adjunta capturas y medidas. Android 0.1.5 (código 6) usa caché v19 e incluye la imagen original. Los atlas experimentales descartados no se empaquetan. No sustituye una instalación en un teléfono físico.

@@ -6,7 +6,7 @@ La referencia visual son los seis mockups aportados, conservados en references/.
 
 El jugador local ya no aparece como avatar en ninguna mesa. Su mano y los indicadores de turno permanecen en primer plano; Mus conserva la pareja y la condición de mano junto a sus cartas.
 
-Cinquillo emplea los dos atlas de bustos v2 de los mismos diez personajes, con poses frontal y de tres cuartos hacia la derecha. Los asientos de la derecha reflejan esa pose para mirar a la izquierda, hacia el tapete. El cuerpo y los antebrazos comparten identidad, escala y dirección; el abanico muestra hasta cinco dorsos y la etiqueta conserva la cantidad pública real. Los atlas no llevan cartas dibujadas. La comparación de alternativas, los encuadres y las pruebas están en [AVATARES_RIVALES.md](AVATARES_RIVALES.md). Mus conserva los atlas v1.
+Cinquillo presenta los rivales en una franja compacta de retratos circulares tomados de la imagen original del usuario. Nombre, cantidad real de cartas y turno aparecen juntos. No dibuja cuerpos, sillas, manos ni abanicos de rivales. La comparación y las pruebas están en [AVATARES_RIVALES.md](AVATARES_RIVALES.md). Mus conserva la composición de personajes sentados descrita más abajo.
 
 El tapete muestra completos los dos extremos de cada escalera, sin números superpuestos ni cartas que tapen sus ilustraciones. Una escalera recién abierta muestra su cinco una sola vez. Las cartas intermedias permanecen en el estado público y se consultan con «Ver todas las cartas». Cada palo indica su cantidad y los valores que permiten continuar; se respeta el salto del siete a la sota y el orden francés de partidas antiguas. Los palos sin abrir tienen una silueta vacía, diferenciada de las cartas jugadas.
 
@@ -14,7 +14,7 @@ Cinquillo ocupa el alto disponible con cabecera breve, tapete flexible y mano pe
 
 `cinquillo-table.css` contiene la composición y la paleta sobria de verde profundo, madera y dorado suave. Se carga tanto en la entrada web como en la entrada LAN. Ambos atlas se almacenan localmente y se incluyen en Android y en la caché sin conexión.
 
-## Composición
+## Composición de Mus y base compartida
 
 - Cuerpos y sillas del atlas transparente de diez mascotas, detrás del tapete.
 - Mesa de madera con borde fino y tapete verde. En Cinquillo el contorno deja más espacio útil para jugar.
@@ -24,7 +24,7 @@ Cinquillo ocupa el alto disponible con cabecera breve, tapete flexible y mano pe
 
 La disposición se adapta a móvil vertical, horizontal y escritorio. Hay posiciones compartidas de 2–8 asientos para futuras vistas de tablero. Los motores actuales siguen siendo Cinquillo (2–6) y Mus (4). Las manos de tableros sin cantidades de cartas quedan vacías.
 
-La distribución toma las manos de cada personaje como punto de apoyo sobre el borde. Los rivales de Cinquillo se reparten a lo largo del borde superior, con etiquetas próximas a sus manos y espacio libre para el juego. La altura de la escena y el tamaño de los personajes se ajustan juntos para reducir espacio vacío y dejar sitio a la mano propia y sus controles. `table-layout.css` reúne estos ajustes de composición.
+La distribución toma las manos de cada personaje como punto de apoyo sobre el borde. Los rivales de Cinquillo utilizan la franja independiente descrita anteriormente. La altura de la escena y el tamaño de los personajes se ajustan juntos para reducir espacio vacío y dejar sitio a la mano propia y sus controles. `table-layout.css` reúne estos ajustes de composición.
 
 Las dos entradas, `index.html` y `lan.html`, cargan esa misma composición. Las pruebas LAN abren el servidor Java real con Chromium y WebKit a 390 × 664: verifican que la cara del rival esté sobre el tapete, su nombre no pise el turno, la mano permanezca visible sin scroll vertical y la ampliación funcione.
 

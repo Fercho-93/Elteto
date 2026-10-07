@@ -1,12 +1,10 @@
-// Local presentation assets only. Atlas crops are measured per illustration, not equal cells.
-// Explicit SVG clips prevent neighbouring sprites bleeding into portrait letterboxing.
-export function rivalArtwork(character,side=false,layer='body'){
- const bounds=side?[[5,73,304,432],[314,120,306,385],[634,78,294,427],[933,150,300,355],[1234,142,302,363],[6,613,303,309],[309,520,338,402],[647,546,274,376],[925,525,294,397],[1218,575,318,347]]:[[6,80,302,425],[309,140,315,365],[631,94,278,411],[914,174,316,331],[1233,160,300,345],[6,621,298,301],[304,521,333,401],[639,561,267,361],[913,544,300,378],[1208,578,328,344]];
- const [x,y,w,h]=bounds[character];
- const clipId=`rival-clip-${character}-${side?'side':'front'}-${layer}`;
- const contour=character===6?[[0,0],[1,0],[1,.65],[.90,.80],[.94,1],[.06,1],[.06,.80],[0,.65]]:character===9?[[.02,0],[1,0],[1,1],[.02,1]]:[[0,0],[1,0],[1,1],[0,1]];
- return `<svg class="rival-art" viewBox="0 0 ${w} ${h}" aria-hidden="true" preserveAspectRatio="xMidYMax meet"><defs><clipPath id="${clipId}" clipPathUnits="userSpaceOnUse"><polygon points="${contour.map(([a,b])=>`${a*w},${b*h}`).join(' ')}"/></clipPath></defs><g clip-path="url(#${clipId})"><image x="${-x}" y="${-y}" href="./assets/elteto-${side?'mascots-bust-side-v2.png':'mascots-bust-v2.png'}" width="1536" height="1024"/></g></svg>`;
+// Measured portrait windows into the user's original artwork. No redrawing or generated parts.
+const CROPS=[[27,62,213,213],[271,80,233,233],[523,20,238,238],[784,84,230,230],[1041,77,233,233],[9,490,239,239],[267,440,239,239],[543,477,221,221],[784,461,240,240],[1039,484,236,236]];
+export function originalPortrait(character) {
+ const [x,y,w,h]=CROPS[character];
+ return `<div class="rival-original" data-character="${character}"><svg viewBox="${x} ${y} ${w} ${h}" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><image href="./assets/elteto-original-avatars.png" width="1280" height="853"/></svg></div>`;
 }
-export function renderRivalPortrait(character,name,side = false) {
- return '<div class="player-character" role="img" aria-label="'+name+'"><div class="rival-portrait" data-character="'+character+'">'+rivalArtwork(character,side)+'</div></div>';
+// Only public identity/count/turn information is accepted here.
+export function renderRivalRoster(players,esc) {
+ return `<div class="rival-roster" data-count="${players.length}" style="--rival-count:${players.length}" role="group" aria-label="Jugadores rivales, en orden de turno">${players.map(p=>`<article class="table-seat rival-seat ${p.active?'active-seat':''}" data-player-id="${esc(p.id)}" aria-label="${esc(p.name)}, ${p.mascot}, ${p.count} cartas${p.active?', turno activo':''}" title="${esc(p.name)} · ${p.mascot} · ${p.count} cartas${p.active?' · Su turno':''}"><div class="rival-token">${originalPortrait(p.character)}<span class="rival-count ${p.count===1?'last-card':''}" aria-hidden="true"><i></i>${p.count}</span></div><strong class="rival-name" aria-hidden="true">${esc(p.name)}</strong></article>`).join('')}</div>`;
 }
