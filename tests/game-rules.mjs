@@ -182,17 +182,29 @@ assert.equal(s.finished, false);
 assert.equal(s.phase, "showdown");
 assert.equal(s.gamesWon[s.gameWinner],1);
 assert.ok(musEngine.view(s, "a").revealedHands);
-// Rivals expose public counts, never their private card faces or the local avatar.
+// The shared strip includes yourself, exposes public counts and marks the engine's turn.
 const view = cinquilloEngine.view(
   cinquilloEngine.createInitialState(players, 1),
   "c",
 );
 const html = renderSeats(view, "c", (id) => id, "cinquillo");
 const publicCounts=[...html.matchAll(/class="rival-count [^"]*" data-count="(\d+)"/g)].map(match=>Number(match[1]));
-assert.deepEqual(publicCounts,[10,10,10]);
+assert.deepEqual(publicCounts,[10,10,10,10]);
 assert.equal((html.match(/class="card-back"/g) || []).length, 0);
-assert.equal((html.match(/data-player-id=/g) || []).length, 3);
-assert.ok(!html.includes('data-player-id="c"'));
+assert.deepEqual([...html.matchAll(/data-player-id="([^"]+)"/g)].map(m=>m[1]),['c','d','a','b']);
+assert.ok(html.includes('self-seat'));
+assert.ok(!html.includes('data-card-key'));
+assert.equal([...html.matchAll(/data-player-id="([^"]+)" aria-current="true"/g)][0][1],view.turnPlayer);
+assert.equal((html.match(/aria-current="true"/g)||[]).length,1);
+// During a simultaneous Mus discard, only players still awaiting a decision light up.
+let discard=musEngine.createInitialState(players,31);
+for(let i=0;i<4;i++)discard=musEngine.applyAction(discard,musEngine.view(discard,'a').turnPlayer,{type:'mus',wantsMus:true});
+assert.equal(discard.phase,'discard');
+const firstDiscard=musEngine.view(discard,'a').awaitingDiscardFrom[0];
+discard=musEngine.applyAction(discard,firstDiscard,{type:'discard',cards:[discard.hands[firstDiscard][0]]});
+const discardView=musEngine.view(discard,'a');
+const discardHtml=renderSeats(discardView,'a',id=>id,'mus');
+assert.deepEqual([...discardHtml.matchAll(/data-player-id="([^"]+)" aria-current="true"/g)].map(m=>m[1]).sort(),[...discardView.awaitingDiscardFrom].sort());
 console.log(
   "100 Cinquillo games, 80 Mus matches, repeated discards, conservation, privacy, scoring, turn restrictions and ordago: OK",
 );

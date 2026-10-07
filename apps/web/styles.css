@@ -739,25 +739,34 @@ body:has(.game-page) {
 }
 @media(max-width:360px) { .menu-rule-list { grid-template-columns:1fr; } }
 @media(prefers-reduced-motion:reduce) { .menu-shell *, .menu-shell *::before, .menu-shell *::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
-/* Card-game portraits share the Parchís scale and stay above the felt. */
-:is(.cinquillo-screen,.mus-screen).game-page { --rival-size:64px; }
-:is(.cinquillo-screen,.mus-screen) .game-table .rival-roster { --token-size:var(--rival-size); top:6px; gap:10px; max-width:calc(var(--rival-count) * 180px); align-items:start; }
-:is(.cinquillo-screen,.mus-screen) .game-table .table-seat.rival-seat { align-items:flex-start; gap:6px; }
-:is(.cinquillo-screen,.mus-screen) .rival-count { flex-wrap:wrap; white-space:normal; gap:2px; }
-:is(.cinquillo-screen,.mus-screen) .rival-seat .rival-info { padding-top:calc((var(--rival-size) - 28px) / 2); }
-:is(.cinquillo-screen,.mus-screen) .rival-team { flex-basis:100%; white-space:nowrap; font-size:9px; }
-:is(.cinquillo-screen,.mus-screen) .game-table .table-surface { top:calc(var(--rival-size) + 18px); }
-.cinquillo-screen .game-table .table-center { --board-top:calc(var(--rival-size) + 64px); }
-.mus-screen .game-table .table-center { top:calc(var(--rival-size) + 34px); }
-.cinquillo-screen .game-table .rival-roster:is([data-count="4"],[data-count="5"]) .rival-seat { flex-direction:column; align-items:center; gap:4px; text-align:center; }
-.cinquillo-screen .rival-roster:is([data-count="4"],[data-count="5"]) .rival-info { width:100%; align-items:center; padding-top:0; }
-.cinquillo-screen .game-table:has(.rival-roster:is([data-count="4"],[data-count="5"])) .table-surface { top:calc(var(--rival-size) + 48px); }
-.cinquillo-screen .game-table:has(.rival-roster:is([data-count="4"],[data-count="5"])) .table-center { --board-top:calc(var(--rival-size) + 94px); }
-@media(min-width:700px) and (min-height:700px) { :is(.cinquillo-screen,.mus-screen).game-page { --rival-size:76px; } }
-@media(max-height:620px) { :is(.cinquillo-screen,.mus-screen).game-page { --rival-size:48px; } }
-@media(min-width:600px) and (max-height:699px) { :is(.cinquillo-screen,.mus-screen).game-page { --rival-size:44px; } }
-.cinquillo-screen .game-table .rival-roster:is([data-count="4"],[data-count="5"]) { grid-template-columns:repeat(var(--rival-count),minmax(var(--token-size),1fr)); gap:8px; overflow-x:auto; scrollbar-width:thin; }
-
+/* One public player strip, including yourself, shared by every game. */
+:is(.cinquillo-screen,.mus-screen,.parchis-screen) { --player-avatar-size:64px; }
+:is(.cinquillo-screen,.mus-screen,.parchis-screen) .player-roster.rival-roster { --token-size:var(--player-avatar-size); top:6px; left:10px; right:10px; max-width:none; gap:8px; padding:8px 3px 4px; grid-template-columns:repeat(var(--rival-count),minmax(calc(var(--token-size) + 12px),1fr)); align-items:start; overflow-x:auto; scrollbar-width:thin; scrollbar-color:#69e5e244 transparent; }
+:is(.cinquillo-screen,.mus-screen,.parchis-screen) .player-roster.rival-roster .table-seat.rival-seat { display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; min-width:0; }
+.player-roster .rival-info { align-items:center; width:100%; min-height:40px; padding:0; }
+.player-roster .rival-name { width:100%; }
+.player-roster .rival-count { justify-content:center; flex-wrap:wrap; white-space:normal; gap:2px; }
+.player-roster .rival-team { font-size:9px; }
+.player-roster .rival-original { border:1px solid #ffffff2b; box-shadow:none; }
+.player-roster.rival-roster .active-seat .rival-original { border-color:var(--cyan); outline:2px solid var(--cyan); outline-offset:2px; box-shadow:0 0 16px #69e5e238; }
+.player-roster.rival-roster .active-seat .rival-name { color:var(--cyan); font-weight:750; }
+.player-turn-marker { position:absolute; top:-13px; left:50%; transform:translateX(-50%); color:var(--cyan); font:900 16px/1 system-ui,sans-serif; text-shadow:0 0 8px #69e5e255; }
+.player-roll { position:absolute; right:-3px; bottom:0; display:grid; place-items:center; min-width:23px; height:23px; padding:0 4px; color:var(--ink); background:var(--cyan); border:2px solid #21172b; border-radius:8px; font:800 12px/1 system-ui,sans-serif; }
+.player-turn-announcement { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip-path:inset(50%); white-space:nowrap!important; border:0!important; }
+.parchis-screen .parchis-info .player-roster.rival-roster { position:static; inset:auto; }
+.parchis-info:has(.player-roster) { gap:0; }
+.parchis-info .parchis-status:has(p:empty) { display:none; }
+.parchis-info .parchis-status p:not(:empty) { color:var(--pink); }
+:is(.cinquillo-screen,.mus-screen) .game-table .table-surface { top:calc(var(--player-avatar-size) + 76px); }
+.cinquillo-screen .game-table .table-center { --board-top:calc(var(--player-avatar-size) + 108px); }
+.mus-screen .game-table .table-center { top:calc(var(--player-avatar-size) + 92px); }
+@media(min-width:700px) and (min-height:700px) { :is(.cinquillo-screen,.mus-screen,.parchis-screen) { --player-avatar-size:76px; } }
+@media(max-height:620px) { :is(.cinquillo-screen,.mus-screen,.parchis-screen) { --player-avatar-size:48px; } }
+@media(max-width:599px) and (max-height:620px) { .cinquillo-screen .game-table .table-center { --pile-w:clamp(28px,min(calc((100cqw - 76px) / 4),calc((100cqh - var(--board-top) - 73px) / 3.068)),84px); } }
+@media(min-width:600px) and (max-height:699px) {
+ :is(.cinquillo-screen,.mus-screen,.parchis-screen) { --player-avatar-size:44px; }
+ .cinquillo-screen .game-table .table-center { --board-top:calc(var(--player-avatar-size) + 96px); --pile-w:clamp(24px,min(calc((100cqw - 116px) / 8),calc((100cqh - var(--board-top) - 56px) * 208 / 319)),72px); }
+}
 /* In-game menus use the same plum, pink and turquoise identity as the lobby. */
 .game-menu.game-menu { padding:20px; color:var(--paper); background:radial-gradient(ellipse at 0 0,#63336f55,transparent 65%),#2b1e35; border:1px solid #69e5e23d; border-radius:22px; box-shadow:0 20px 65px #09070c80,inset 0 1px 0 #ffffff0d; }
 .game-menu.game-menu::backdrop { background:#130e1bcc; backdrop-filter:blur(7px); }

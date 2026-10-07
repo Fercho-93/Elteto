@@ -19,10 +19,15 @@ export function arrangeMusScreen(app,view,playerId,name) {
   cards.innerHTML=`<h2>Tu mano <small>${view.mano===playerId?'Eres mano':'Pareja '+team}</small></h2>`;
   hand.classList.remove('hand-fan');cards.append(hand);
   const actions=document.createElement('div');actions.className='mus-decisions';
-  const status=document.createElement('p');status.className='mus-turn';status.setAttribute('role','status');
+  const status=document.createElement('p');status.className='player-turn-announcement';status.setAttribute('role','status');
   status.textContent=view.finished?`Gana la pareja ${view.winnerTeam}`:view.phase==='discard'&&view.awaitingDiscardFrom.includes(playerId)?'Tu descarte':view.turnPlayer===playerId?'Tu turno':`Turno de ${name(view.turnPlayer)}`;
   actions.append(status);
-  if(controls) actions.append(controls);
+  if(controls) {
+    if(view.turnPlayer!==playerId && !['discard','showdown'].includes(view.phase)) controls.querySelector('.helper')?.classList.add('player-turn-announcement');
+    const phase=controls.querySelector('.phase-tag');
+    if(phase) phase.textContent=phase.textContent.replace(/^Te toca\.\s*/, '');
+    actions.append(controls);
+  }
   else actions.insertAdjacentHTML('beforeend','<button data-action="open-game-menu">Ver marcador</button>');
   actions.querySelector('#bet-amount')?.setAttribute('aria-label','Tantos del envite');
   const error=root.querySelector('.error-message');if(error)actions.append(error);

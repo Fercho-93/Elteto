@@ -1,6 +1,6 @@
 // Presentation only: consumes a private engine view, never the host's hidden state.
 import { FRENCH_RANKS, SPANISH_RANKS, SPANISH_SUITS, canPlaceCinquillo } from "./game-core/index.js";
-import { renderRivalRoster } from "./rival-portraits.js";
+import { renderRivalRoster, revealActivePlayer } from "./rival-portraits.js";
 import { cardAsset } from "./card-art.js";
 export const escapeHtml = (value) =>
   String(value ?? "").replace(
@@ -91,10 +91,10 @@ export function seatPosition(count, relative) {
 export function renderSeats(view, playerId, name, gameId) {
   if(gameId==='cinquillo' || gameId==='mus') {
     const own=view.players.indexOf(playerId),n=view.players.length;
-    const players=Array.from({length:n-1},(_,offset)=>{
-      const index=(own+offset+1)%n,id=view.players[index],character=mascotForSeat(view.players,index);
+    const players=Array.from({length:n},(_,offset)=>{
+      const index=(own+offset)%n,id=view.players[index],character=mascotForSeat(view.players,index);
       const isMus=gameId==='mus',team=index%2?'B':'A',partner=isMus&&index%2===own%2;
-      return {id,character,mascot:MASCOTS[character],name:name(id),count:view.handSizes?.[id]||0,teamLabel:isMus?`${team} · ${partner?'Compi':'Rival'}`:'',active:!view.finished&&!view.handWinner&&(view.turnPlayer===id||isMus&&view.phase==='discard'&&view.awaitingDiscardFrom?.includes(id))};
+      return {id,isSelf:id===playerId,character,mascot:MASCOTS[character],name:name(id),count:view.handSizes?.[id]||0,teamLabel:isMus?(id===playerId?team:`${team} · ${partner?'Compi':'Rival'}`):'',active:!view.finished&&!view.handWinner&&(isMus&&view.phase==='discard'?view.awaitingDiscardFrom?.includes(id):view.turnPlayer===id)};
     });
     return renderRivalRoster(players,esc);
   }
@@ -213,6 +213,7 @@ export function animateTable(app, previousKeys, origins, sourceSeat) {
 
 // Reactions use public counts/turns only. Selecting a private card is not a move.
 export function animateSeats(app, before, view) {
+  revealActivePlayer(app);
   if (!before || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const changed = before.log !== view.log?.at(-1);
   for (const seat of app.querySelectorAll(".table-seat")) {

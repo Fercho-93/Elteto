@@ -8,7 +8,7 @@ export function arrangeCinquilloScreen(app, view, playerId, name, filter = 'all'
   const rules=root.querySelector('.game-rules'), history=root.querySelector('.history');
   const zoom=root.querySelector('.board-zoom'), leave=root.querySelector('[data-action="leave-room"]');
   const next=root.querySelector('[data-action="cinquillo-next-hand"]');
-  const lastPlay=root.querySelector('.last-play'), error=root.querySelector('.error-message');
+  const error=root.querySelector('.error-message');
   const myTurn=view.turnPlayer===playerId && !view.finished && !view.handWinner;
   const legal=view.myHand.filter(card=>canPlayCinquillo(view.table,card,view.ruleset));
   const suits=view.ruleset==='legacy-french-52'
@@ -19,8 +19,8 @@ export function arrangeCinquilloScreen(app, view, playerId, name, filter = 'all'
   heading.innerHTML=`<div class="play-title"><h1><span>ELTETO</span> Cinquillo</h1><p class="game-ribbon">Mano ${view.handNumber} · ${view.ruleset==='legacy-french-52'?'52 cartas francesas':'40 cartas españolas'}</p></div><button class="table-overview" data-action="open-table-zoom" aria-label="Ver todas las cartas de la mesa">Mesa <span aria-hidden="true">↗</span></button><button class="game-menu-button" data-action="open-game-menu" aria-label="Marcador, reglas y opciones de partida">⋯</button>`;
   const dock=document.createElement('section');dock.className='hand-dock';dock.setAttribute('aria-label','Tu mano y acciones');
   const title=view.finished ? view.winner ? `Gana ${name(view.winner)}` : 'Partida finalizada' : view.handWinner ? `${name(view.handWinner)} gana la mano` : myTurn ? 'Tu turno' : `Turno de ${name(view.turnPlayer)}`;
-  const instruction=view.finished ? 'Consulta el resultado de la partida' : view.handWinner ? view.handWinner===playerId ? 'Puedes iniciar el siguiente reparto' : `${name(view.handWinner)} iniciará la siguiente mano` : myTurn ? legal.length ? `Juega una carta · ${legal.length} ${legal.length===1?'disponible':'disponibles'}` : 'No tienes jugada. Puedes pasar.' : lastPlay.textContent;
-  dock.innerHTML=`<div class="game-controls play-status"><div class="turn-copy"><div class="turn-banner ${myTurn?'your-turn':''}" role="status">${esc(title)}</div><p class="play-instruction">${esc(instruction)}</p></div><div class="turn-action"></div></div><div class="hand-filters" role="group" aria-label="Filtrar tu mano por palo">${[['all','Todas'],...suits].map(([suit,label])=>{
+  const instruction=view.finished ? 'Consulta el resultado de la partida' : view.handWinner ? view.handWinner===playerId ? 'Puedes iniciar el siguiente reparto' : `${name(view.handWinner)} iniciará la siguiente mano` : myTurn ? legal.length ? `Juega una carta · ${legal.length} ${legal.length===1?'disponible':'disponibles'}` : 'No tienes jugada. Puedes pasar.' : '';
+  dock.innerHTML=`<div class="game-controls play-status"><div class="turn-copy"><div class="player-turn-announcement ${myTurn?'your-turn':''}" role="status">${esc(title)}</div><p class="play-instruction">${esc(instruction)}</p></div><div class="turn-action"></div></div><div class="hand-filters" role="group" aria-label="Filtrar tu mano por palo">${[['all','Todas'],...suits].map(([suit,label])=>{
     const count=suit==='all'?view.myHand.length:view.myHand.filter(card=>card.suit===suit).length;
     const playable=myTurn && legal.some(card=>suit==='all'||card.suit===suit);
     return `<button data-action="hand-filter" data-suit="${suit}" aria-pressed="${filter===suit}" ${!count&&suit!=='all'?'disabled':''} class="${playable?'has-play':''}" aria-label="${label}, ${count} cartas${playable?', tienes jugada':''}"><span>${label}</span><small>${count}</small></button>`;
