@@ -741,9 +741,9 @@ body:has(.game-page) {
 @media(prefers-reduced-motion:reduce) { .menu-shell *, .menu-shell *::before, .menu-shell *::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
 /* One public player strip, including yourself, shared by every game. */
 :is(.cinquillo-screen,.mus-screen,.parchis-screen) { --player-avatar-size:64px; }
-:is(.cinquillo-screen,.mus-screen,.parchis-screen) .player-roster.rival-roster { --token-size:min(var(--player-avatar-size),max(32px,calc((100vw - 56px - (var(--rival-count) - 1) * 8px) / var(--rival-count)))); top:6px; left:10px; right:10px; max-width:none; gap:8px; padding:8px 3px 4px; grid-template-columns:repeat(var(--rival-count),minmax(0,1fr)); align-items:start; overflow-x:auto; scrollbar-width:thin; scrollbar-color:#69e5e244 transparent; }
+:is(.cinquillo-screen,.mus-screen,.parchis-screen) .player-roster.rival-roster { --token-size:min(var(--player-avatar-size),max(28px,calc((100cqw - 6px - (var(--rival-count) - 1) * 8px) / var(--rival-count) - 6px))); top:6px; left:10px; right:10px; max-width:none; gap:8px; padding:14px 3px 4px; grid-template-columns:repeat(var(--rival-count),minmax(0,1fr)); align-items:start; overflow-x:auto; scrollbar-width:thin; scrollbar-color:#69e5e244 transparent; }
 :is(.cinquillo-screen,.mus-screen,.parchis-screen) .player-roster.rival-roster .table-seat.rival-seat { display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; min-width:0; }
-.player-roster .rival-info { align-items:center; width:100%; min-height:40px; padding:0; }
+.player-roster .rival-info { align-items:center; width:100%; min-height:32px; padding:0; }
 .player-roster .rival-name { width:100%; }
 .player-roster .rival-count { justify-content:center; flex-wrap:wrap; white-space:normal; gap:2px; }
 .player-roster .rival-team { font-size:9px; }
@@ -757,16 +757,6 @@ body:has(.game-page) {
 .parchis-info:has(.player-roster) { gap:0; }
 .parchis-info .parchis-status:has(p:empty) { display:none; }
 .parchis-info .parchis-status p:not(:empty) { color:var(--pink); }
-:is(.cinquillo-screen,.mus-screen) .game-table .table-surface { top:calc(var(--player-avatar-size) + 76px); }
-.cinquillo-screen .game-table .table-center { --board-top:calc(var(--player-avatar-size) + 108px); }
-.mus-screen .game-table .table-center { top:calc(var(--player-avatar-size) + 92px); }
-@media(min-width:700px) and (min-height:700px) { :is(.cinquillo-screen,.mus-screen,.parchis-screen) { --player-avatar-size:76px; } }
-@media(max-height:620px) { :is(.cinquillo-screen,.mus-screen,.parchis-screen) { --player-avatar-size:48px; } }
-@media(max-width:599px) and (max-height:620px) { .cinquillo-screen .game-table .table-center { --pile-w:clamp(28px,min(calc((100cqw - 76px) / 4),calc((100cqh - var(--board-top) - 73px) / 3.068)),84px); } }
-@media(min-width:600px) and (max-height:699px) {
- :is(.cinquillo-screen,.mus-screen,.parchis-screen) { --player-avatar-size:44px; }
- .cinquillo-screen .game-table .table-center { --board-top:calc(var(--player-avatar-size) + 96px); --pile-w:clamp(24px,min(calc((100cqw - 116px) / 8),calc((100cqh - var(--board-top) - 56px) * 208 / 319)),72px); }
-}
 /* In-game menus use the same plum, pink and turquoise identity as the lobby. */
 .game-menu.game-menu { padding:20px; color:var(--paper); background:radial-gradient(ellipse at 0 0,#63336f55,transparent 65%),#2b1e35; border:1px solid #69e5e23d; border-radius:22px; box-shadow:0 20px 65px #09070c80,inset 0 1px 0 #ffffff0d; }
 .game-menu.game-menu::backdrop { background:#130e1bcc; backdrop-filter:blur(7px); }
@@ -790,3 +780,64 @@ body:has(.game-page) {
 .game-menu.game-menu a { color:var(--cyan); text-underline-offset:3px; }
 .game-menu.game-menu .leave-game { width:100%; margin:20px 0 2px; color:var(--paper); background:linear-gradient(180deg,#f3488d27,#f3488d14); border:1px solid #f3488d66; border-radius:12px; box-shadow:none; }
 @media(prefers-reduced-motion:reduce) { .game-menu.game-menu button { transition:none; } }
+
+/* Reserve real rows for players and controls instead of offsetting the felt. */
+.game-page:is(.cinquillo-screen,.mus-screen).game-page { grid-template-rows:48px auto minmax(0,1fr) auto; }
+.players-panel { min-width:0; container-type:inline-size; padding:0 10px; }
+.players-panel .table-seat.rival-seat { position:static; inset:auto; transform:none; width:auto; height:auto; z-index:auto; color:#e5ded0; }
+.parchis-info { container-type:inline-size; }
+.players-panel .player-roster.rival-roster { position:static; inset:auto; }
+.game-page:is(.cinquillo-screen,.mus-screen) .game-table .table-surface { inset:10px 2px 10px; }
+.game-page.cinquillo-screen .game-table .table-center { --pile-w:clamp(24px,min(calc((100cqw - 76px) / 4),calc((100cqh - 101px) / 3.068)),84px); --pile-h:calc(var(--pile-w) * 319 / 208); inset:24px 16px 22px; width:auto; transform:none; }
+.game-page.cinquillo-screen .game-table .cinquillo-board { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; width:100%; height:100%; }
+.game-page.cinquillo-screen .game-table .suit-lane { display:grid; grid-template-rows:18px minmax(0,1fr) 18px; gap:6px; padding:0; min-height:0; }
+.game-page.cinquillo-screen .game-table .lane-cards { flex-direction:column; gap:7px; min-height:0; }
+.game-page.cinquillo-screen .game-table .suit-lane > b { font-size:11px; }
+.game-page.cinquillo-screen .game-table .suit-lane > b small { display:none; }
+.game-page.mus-screen .game-table .table-center { inset:24px 16px 22px; width:auto; transform:none; gap:8px; }
+.game-page.mus-screen .hand .playing-card { flex:0 0 calc((100% - 21px) / 4); width:calc((100% - 21px) / 4); max-width:70px; }
+.game-page.mus-screen .table-center .reveal-card { width:min(42px,calc((100% - 9px) / 4),max(14px,calc((100cqh - 175px) / 3.068))); }
+.game-page.mus-screen .table-center .revealed-hands { grid-template-columns:repeat(2,minmax(0,1fr)); }
+@media(min-width:900px) and (min-height:700px) {
+ .game-page.cinquillo-screen .game-table .table-center { --pile-w:clamp(28px,min(calc((100cqw - 132px) / 4),calc((100cqh - 170px) / 3.068)),94px); }
+ .game-page.cinquillo-screen .game-table .cinquillo-board { grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:repeat(2,minmax(0,1fr)); gap:26px 40px; }
+ .game-page.cinquillo-screen .game-table .lane-cards { flex-direction:row; gap:10px; }
+}
+@media(max-height:620px) {
+ :is(.cinquillo-screen,.mus-screen,.parchis-screen) { --player-avatar-size:48px; }
+ .game-page.mus-screen .mus-phase strong { font-size:20px; margin:3px 0; }
+ .game-page.mus-screen .table-stock { display:none; }
+ .game-page.mus-screen .mus-phase small { display:none; }
+ .game-page.mus-screen .mus-score > div { grid-template-columns:auto auto auto; gap:4px; }
+ .game-page.mus-screen .mus-score > div > small { grid-column:auto; }
+ .game-page.mus-screen .mus-score strong { font-size:16px; }
+ .game-page.mus-screen .table-center .revealed-hands { grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; margin-top:2px; }
+ .game-page.mus-screen .table-center .reveal-card { width:min(28px,calc((100% - 9px) / 4),max(12px,calc((100cqh - 142px) / 1.534))); }
+}
+@media(max-height:699px) {
+ .game-page.mus-screen .table-center .revealed-hands { grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; margin-top:2px; }
+ .game-page.mus-screen .table-center .reveal-card { width:min(28px,calc((100% - 9px) / 4),max(12px,calc((100cqh - 142px) / 1.534))); }
+}
+@media(min-width:700px) and (min-height:700px) { :is(.cinquillo-screen,.mus-screen,.parchis-screen) { --player-avatar-size:76px; } }
+@media(min-width:600px) and (max-height:699px) {
+ :is(.cinquillo-screen,.mus-screen,.parchis-screen) { --player-avatar-size:44px; }
+ .game-page:is(.cinquillo-screen,.mus-screen).game-page { --hand-w:clamp(40px,calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--play-top-gap) - 250px) * 208 / 319),62px); grid-template-columns:minmax(0,1fr) clamp(244px,31vw,280px); grid-template-rows:44px auto minmax(0,1fr); column-gap:8px; }
+ .game-page:is(.cinquillo-screen,.mus-screen) > .play-header { grid-column:1 / 3; }
+ .game-page:is(.cinquillo-screen,.mus-screen) > .players-panel { grid-column:2; grid-row:2; padding:0 2px; }
+ .game-page:is(.cinquillo-screen,.mus-screen) > .game-table { grid-column:1; grid-row:2 / 4; }
+ .game-page.cinquillo-screen .hand-dock { grid-column:2; grid-row:3; align-self:end; padding:4px 4px 0; display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:44px 44px auto; min-height:0; }
+ .game-page.cinquillo-screen .hand-dock .hand { grid-column:1; grid-row:3; }
+ .game-page.cinquillo-screen .hand-dock .play-status { grid-column:1; grid-row:1; }
+ .game-page.cinquillo-screen .hand-dock .hand-filters { grid-column:1; grid-row:2; }
+ .game-page.mus-screen .mus-dock { grid-column:2; grid-row:3; align-self:stretch; display:flex; flex-direction:column; gap:8px; padding:8px; min-height:0; overflow:auto; }
+ .game-page.mus-screen .mus-private,.game-page.mus-screen .mus-decisions { flex:none; width:100%; }
+ .game-page.mus-screen .mus-decisions .action-row > button { width:auto; flex:1 1 calc(50% - 3px); padding-inline:6px; }
+ .game-page.mus-screen .game-table .table-center { gap:6px; }
+ .game-page.mus-screen .table-center .revealed-hands { grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; }
+ .game-page.mus-screen .table-center .reveal-card { width:min(28px,calc((100% - 9px) / 4),max(12px,calc((100cqh - 142px) / 1.534))); }
+}
+
+/* Keep navigation clear of display cutouts and long lobby names in their seat. */
+.menu-shell:not(.menu-home) { padding-top:env(safe-area-inset-top); }
+.topbar { height:calc(64px + env(safe-area-inset-top)); padding-top:calc(10px + env(safe-area-inset-top)); padding-inline:max(18px,env(safe-area-inset-left),calc((100vw - 920px) / 2)) max(18px,env(safe-area-inset-right),calc((100vw - 920px) / 2)); }
+.menu-room-shell .player-row strong { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }

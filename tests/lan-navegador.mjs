@@ -37,7 +37,7 @@ try {
    return seats.every(seat=>{const body=seat.getBoundingClientRect();return body.top+body.height*.5<felt.top;});
   }), 'The rival face must remain above the felt on the LAN page');
   assert.equal(await page.locator('.hand-dock').evaluate(el=>getComputedStyle(el).display),'grid');
-  assert.ok(await page.locator('.game-table .rival-name').evaluateAll(labels=>labels.every(el=>el.getBoundingClientRect().bottom<=document.querySelector('.hand-dock').getBoundingClientRect().top)), 'Player labels stay above the private hand');
+  assert.ok(await page.locator('.players-panel .rival-name').evaluateAll(labels=>labels.every(el=>el.getBoundingClientRect().bottom<=document.querySelector('.hand-dock').getBoundingClientRect().top)), 'Player labels stay above the private hand');
   const hand=await page.locator('.hand .playing-card').first().boundingBox();
   assert.ok(hand.y>=0 && hand.y+hand.height<=664, 'Full-size own cards stay visible in the compact mobile viewport');
   assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+1),'LAN screen needs no vertical page scrolling');

@@ -35,6 +35,8 @@ export function arrangeMusScreen(app,view,playerId,name) {
   const menu=document.createElement('dialog');menu.className='game-menu';menu.setAttribute('aria-label','Opciones y marcador de Mus');
   menu.innerHTML=`<header><h2>Tu partida de Mus</h2><button data-action="close-game-menu">Volver</button></header><div class="game-menu-content"><p>Juegos a ${view.targetScore} tantos · primero a ${view.targetGames??1} juegos</p>${['A','B'].map(t=>`<h3>Pareja ${t}${t===team?' · tú':''}</h3><p>${view.players.filter((_,i)=>(i%2?'B':'A')===t).map(id=>esc(name(id))).join(' y ')}<br>${view.scores[t]} tantos · ${view.gamesWon?.[t]??0} juegos</p>`).join('')}</div>`;
   menu.querySelector('.game-menu-content').append(rules,history,leave);leave.classList.add('leave-game');
-  root.classList.add('mus-screen');root.replaceChildren(heading,table,dock,menu,zoom);
+  const players=document.createElement('section');players.className='players-panel';players.setAttribute('aria-label','Jugadores y turno');
+  players.append(table.querySelector('.player-roster'));
+  root.classList.add('mus-screen');root.replaceChildren(heading,players,table,dock,menu,zoom);
   app.querySelector(':scope > .topbar')?.remove();
 }

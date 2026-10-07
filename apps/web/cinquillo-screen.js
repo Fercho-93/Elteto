@@ -44,7 +44,9 @@ export function arrangeCinquilloScreen(app, view, playerId, name, filter = 'all'
   if(view.handWinner || view.finished) content.insertAdjacentHTML('afterbegin','<button data-action="open-hand-result">Ver resultado</button>');
   leave.classList.add('leave-game');
   root.classList.add('cinquillo-screen');
-  root.replaceChildren(heading,table,dock,menu,zoom);
+  const players=document.createElement('section');players.className='players-panel';players.setAttribute('aria-label','Jugadores y turno');
+  players.append(table.querySelector('.player-roster'));
+  root.replaceChildren(heading,players,table,dock,menu,zoom);
   if(view.handWinner || view.finished) root.insertAdjacentHTML('beforeend',renderCinquilloResult(view,playerId,name));
   app.querySelector(':scope > .topbar')?.remove();
   return filter;

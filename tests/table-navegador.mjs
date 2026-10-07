@@ -148,8 +148,8 @@ try {
       assert.equal(await page.locator('.game-table').getAttribute('data-scene'),'illustrated-2d');
       assert.equal(await page.locator('.table-canvas,.camera-controls').count(),0);
       assert.equal(await page.locator('.seat-front,.rival-hand,.forearms').count(),0);
-      assert.equal(await page.locator('.game-table .rival-name').count(),count);
-      assert.ok(await page.locator('.game-table .rival-name').evaluateAll(labels=>{
+      assert.equal(await page.locator('.players-panel .rival-name').count(),count);
+      assert.ok(await page.locator('.players-panel .rival-name').evaluateAll(labels=>{
         const boxes=labels.map(label=>label.getBoundingClientRect());
         const clear=boxes.every((a,i)=>a.left>=0 && a.right<=innerWidth && boxes.slice(i+1).every(b=>a.right<=b.left || b.right<=a.left || a.bottom<=b.top || b.bottom<=a.top));
         if(!clear) throw Error(JSON.stringify(boxes.map(box=>box.toJSON())));
@@ -205,7 +205,7 @@ try {
         const rects=cards.map(card=>card.getBoundingClientRect());
         return cards.every((card,i)=>{
           const r=rects[i];
-          return r.width>=54 && ['none','normal'].includes(getComputedStyle(card,'::after').content) && rects.slice(i+1).every(b=>r.right<=b.left || b.right<=r.left || r.bottom<=b.top || b.bottom<=r.top);
+          return r.width>=24 && ['none','normal'].includes(getComputedStyle(card,'::after').content) && rects.slice(i+1).every(b=>r.right<=b.left || b.right<=r.left || r.bottom<=b.top || b.bottom<=r.top);
         });
       }), 'Both extremes show full, non-overlapping original faces without overprinted numbers');
       const fullHeight=await page.locator('.game-table').evaluate(el=>el.getBoundingClientRect().height);

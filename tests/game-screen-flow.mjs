@@ -70,14 +70,17 @@ try {
   const metrics=await page.evaluate(()=>{
    const rect=el=>el.getBoundingClientRect(),felt=rect(document.querySelector('.table-surface')),inside=r=>r.left>=0&&r.top>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1;
    const cards=[...document.querySelectorAll('.hand .playing-card,.mus-decisions button,.mus-decisions input')];
-   const offFelt=rect(document.querySelector('.rival-roster')).bottom<felt.top;
+   const roster=rect(document.querySelector('.rival-roster'));
+   const offFelt=roster.right<=felt.left||roster.left>=felt.right||roster.bottom<=felt.top||roster.top>=felt.bottom;
    const board=[...document.querySelectorAll('.table-center .reveal-card,.table-center .mus-phase,.mus-score')].every(el=>{const r=rect(el);return r.left>=felt.left+5&&r.right<=felt.right-5&&r.top>=felt.top+5&&r.bottom<=felt.bottom-5;});
    const badBoard=board?[]:[...document.querySelectorAll('.table-center .reveal-card,.table-center .mus-phase,.mus-score')].map(el=>({class:el.className,rect:rect(el).toJSON(),felt:felt.toJSON()}));
    const proportions=[...document.querySelectorAll('.table-center .reveal-card')].every(el=>Math.abs(rect(el).height/rect(el).width-319/208)<.03);
-   return {badBoard,proportions,offFelt,board,visible:cards.every(el=>inside(rect(el))),page:document.documentElement.scrollHeight<=innerHeight+1,count:document.querySelectorAll('.rival-original').length,companion:[...document.querySelectorAll('.rival-team')].filter(el=>el.textContent.includes('Compi')).length,minButton:Math.min(...[...document.querySelectorAll('.mus-decisions button')].map(el=>rect(el).height))};
+   const dock=document.querySelector('.mus-dock'),d=rect(dock);
+   const reachable=innerWidth>=600&&innerHeight<700&&getComputedStyle(dock).overflowY==='auto'&&inside(d)&&cards.every(el=>{const r=rect(el);return r.left>=d.left&&r.right<=d.right&&r.top>=d.top&&r.bottom<=d.top+dock.scrollHeight;});
+   return {reachable,badBoard,proportions,offFelt,board,visible:cards.every(el=>inside(rect(el))),page:document.documentElement.scrollHeight<=innerHeight+1,count:document.querySelectorAll('.rival-original').length,companion:[...document.querySelectorAll('.rival-team')].filter(el=>el.textContent.includes('Compi')).length,minButton:Math.min(...[...document.querySelectorAll('.mus-decisions button')].map(el=>rect(el).height))};
   });
   measurements.push({width,height,phase:game.phase,id,...metrics});
-  assert.ok(metrics.proportions&&metrics.offFelt&&metrics.board&&metrics.visible&&metrics.page,JSON.stringify(measurements.at(-1)));assert.equal(metrics.count,4);assert.equal(metrics.companion,1);assert.ok(metrics.minButton>=44);
+  assert.ok(metrics.proportions&&metrics.offFelt&&metrics.board&&(metrics.visible||metrics.reachable)&&metrics.page,JSON.stringify(measurements.at(-1)));assert.equal(metrics.count,4);assert.equal(metrics.companion,1);assert.ok(metrics.minButton>=44);
   assert.equal(await page.locator('.revealed-hands .reveal-card').count(),game.phase==='showdown'||game.finished?16:0);
   if(id==='a'&&[390,844].includes(width))await page.screenshot({path:`tests/artifacts/flow/mus-${game.finished?'finished':game.phase}-${width}-${height}-${kind}.png`});
  }

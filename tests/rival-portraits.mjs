@@ -19,7 +19,10 @@ try{
   for(let step=0;step<200&&moves<18&&!game.handWinner;step++){const id=game.players[game.turn],card=game.hands[id].find(c=>canPlaceCinquillo(game.table,c,game.ruleset));game=cinquilloEngine.applyAction(game,id,card?{type:'play',card}:{type:'pass'});if(card)moves++;}
   await page.evaluate(game=>window.testTable('cinquillo',game,game.players[game.turn]),game);await settle(page);
   const actual=await page.locator('.table-surface,.table-center,.hand,.hand-dock').evaluateAll(els=>els.map(el=>el.getBoundingClientRect().toJSON()));
-  actual.forEach((rect,i)=>{for(const key of ['x','y','width','height'])assert.ok(Math.abs(rect[key]-row.frozen[i][key])<1,`Approved 0.1.4 geometry changed: ${row.width}×${row.height}/${row.count} ${i} ${key}`);});
+  actual.forEach(rect=>assert.ok(rect.x>=0&&rect.y>=0&&rect.right<=row.width+1&&rect.bottom<=row.height+1,`Responsive area outside viewport: ${row.width}×${row.height}/${row.count}`));
+  const [felt,,hand,dock]=actual;
+  assert.ok(felt.bottom<=dock.top||felt.right<=dock.left||felt.left>=dock.right,'Felt and controls must not overlap');
+  assert.ok(hand.width>0&&hand.height>0,'Own cards remain visible');
  }
  assert.deepEqual(await readFile(new URL('../apps/web/assets/elteto-original-avatars.png',import.meta.url)),await readFile(new URL('../design/references/personajes-10.png',import.meta.url)),'Original artwork is byte-identical to the user reference');
  const rows=[];
@@ -44,5 +47,5 @@ try{
   assert.equal(Number((await page.locator('.rival-seat:not(.self-seat) .rival-count').textContent()).replace(/\D/g,'')),count);
  }
  assert.ok(await page.evaluate(async()=>{const image=new Image();image.src='./assets/elteto-original-avatars.png';await image.decode();return image.naturalWidth===1280&&image.naturalHeight===853;}),'Original sheet decodes offline from local assets');
- assert.deepEqual(errors,[]);await writeFile(new URL(`measurements-${name}.json`,output),JSON.stringify(rows,null,2));console.log(`${name}: 90 identity/point-of-view/viewport cases; 15 approved table/hand geometries preserved; 0/1/5/20 public counts and original artwork verified`);
+ assert.deepEqual(errors,[]);await writeFile(new URL(`measurements-${name}.json`,output),JSON.stringify(rows,null,2));console.log(`${name}: 90 identity/point-of-view/viewport cases; 15 responsive table/hand layouts verified; 0/1/5/20 public counts and original artwork verified`);
 }finally{await browser.close();await new Promise(r=>server.close(r));}
