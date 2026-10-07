@@ -6,7 +6,7 @@ import { doc, getDocFromServer, runTransaction, serverTimestamp, EmailAuthProvid
 
 const CACHE_KEY = 'elteto.hostAccess.v1';
 function remember(user, grant) {
-  const value = { uid: user.uid, email: user.email, mode: grant?.mode, active: grant?.status === 'active' };
+  const value = { uid: user.uid, email: user.email, mode: grant?.mode, active: grant?.status === 'active' && (grant.mode !== 'development' || distributionConfig.developmentAdminEnabled) };
   try { localStorage.setItem(CACHE_KEY, JSON.stringify(value)); } catch {}
   return value;
 }

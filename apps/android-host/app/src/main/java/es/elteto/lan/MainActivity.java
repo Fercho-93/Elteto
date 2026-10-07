@@ -34,18 +34,22 @@ public class MainActivity extends Activity {
         new Thread(()->{
             try {
                 File root=new File(getFilesDir(),"web");copyAssets("",root);
-                server=new LanServer(root,3000);server.setHostAuthorized(getPreferences(MODE_PRIVATE).getBoolean("activated",false));server.start(0,false);
+                server=new LanServer(root,3000);server.setHostAuthorized(localAccessAllowed());server.start(0,false);
                 runOnUiThread(()->{showAddresses();web.loadUrl(server.hostUrl());});
             }catch(Exception e){runOnUiThread(()->addresses.setText("No se pudo iniciar el servidor: "+e.getMessage()));}
         }).start();
     }
+    private boolean localAccessAllowed() {
+        return FirebaseLicenseVerifier.allowsLocal(getPreferences(MODE_PRIVATE).getBoolean("activated",false),
+            getPreferences(MODE_PRIVATE).getString("mode","invitation"), BuildConfig.DEVELOPMENT_ADMIN_ENABLED);
+    }
     public class ActivationBridge {
-        @JavascriptInterface public boolean isActivated() { return getPreferences(MODE_PRIVATE).getBoolean("activated",false); }
+        @JavascriptInterface public boolean isActivated() { return localAccessAllowed(); }
         @JavascriptInterface public String activate(String token) {
             com.google.gson.JsonObject result=new com.google.gson.JsonObject();
             try {
-                String uid=FirebaseLicenseVerifier.verify(token);
-                getPreferences(MODE_PRIVATE).edit().putBoolean("activated",true).putString("uid",uid).commit();
+                FirebaseLicenseVerifier.Grant grant=FirebaseLicenseVerifier.verify(token, BuildConfig.DEVELOPMENT_ADMIN_ENABLED);
+                getPreferences(MODE_PRIVATE).edit().putBoolean("activated",true).putString("uid",grant.uid).putString("mode",grant.mode).commit();
                 server.setHostAuthorized(true);result.addProperty("ok",true);
             } catch(Exception e) { result.addProperty("ok",false);result.addProperty("message","No se pudo verificar el acceso. Comprueba internet y vuelve a entrar."); }
             return result.toString();
