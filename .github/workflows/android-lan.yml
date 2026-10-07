@@ -32,6 +32,8 @@ jobs:
       - run: TABLE_BROWSER=webkit node tests/table-navegador.mjs
       - run: node tests/qr-navegador.mjs
       - run: QR_BROWSER=webkit node tests/qr-navegador.mjs
+      - run: node tests/bots-navegador.mjs
+      - run: BOT_BROWSER=webkit node tests/bots-navegador.mjs
       - run: node tests/catalog-screen.mjs
       - run: CATALOG_BROWSER=webkit node tests/catalog-screen.mjs
       - run: node tests/cinquillo-layout.mjs

@@ -191,6 +191,25 @@ try {
   await no("el anterior ya no", getDoc(sub("ana", "secret", "state")));
   await ok("el nuevo anfitrión confirma jugadas", updateDoc(room("bea"), bump({ ...playing, version: 2 }, {})));
 
+  // Only the host edits AI seats; human membership and hidden views stay protected.
+  const aiLobby = baseRoom({playerOrder:['ana'],players:{ana:player('Ana')},maxPlayers:4,minPlayers:4});
+  const bots = {'bot-1':'IA 1','bot-2':'IA 2','bot-3':'IA 3'};
+  await seed(aiLobby);
+  await no('invitado no añade IA',updateDoc(room('bea'),bump(aiLobby,{bots})));
+  await no('IA con identidad humana',updateDoc(room('ana'),bump(aiLobby,{bots:{bea:'IA'}})));
+  await no('IA sin nombre',updateDoc(room('ana'),bump(aiLobby,{bots:{'bot-1':''}})));
+  await no('demasiadas IA',updateDoc(room('ana'),bump(aiLobby,{bots:{...bots,'bot-4':'IA 4'}})));
+  await ok('anfitrión completa la mesa',updateDoc(room('ana'),bump(aiLobby,{bots})));
+  const withBots = {...aiLobby,bots,version:2};
+  await no('humano no entra en una mesa llena de IA',join('bea',withBots));
+  await no('IA no escribe presencia',setDoc(sub('bot-1','presence','bot-1'),{seenAt:serverTimestamp(),visible:true}));
+  await no('IA no reclama el anfitrión',updateDoc(room('bot-1'),bump(withBots,{hostUid:'bot-1'})));
+  await ok('empezar Mus con una persona y tres IA',updateDoc(room('ana'),bump(withBots,{status:'playing'})));
+  await no('no cambiar IA durante la partida',updateDoc(room('ana'),bump({...withBots,version:3},{bots:{}})));
+  await seed(withBots);
+  await ok('quitar una IA antes de empezar',updateDoc(room('ana'),bump(withBots,{bots:{'bot-1':'IA 1','bot-2':'IA 2'}})));
+  await ok('humano ocupa la plaza libre',join('bea',{...withBots,bots:{'bot-1':'IA 1','bot-2':'IA 2'},version:3}));
+
   // --- Lo demás está cerrado --------------------------------------------------------------
   await no("colecciones sin regla", setDoc(doc(db("ana"), "otra", "cosa"), { a: 1 }));
   console.log(`Reglas de salas online (${checks} comprobaciones): OK`);

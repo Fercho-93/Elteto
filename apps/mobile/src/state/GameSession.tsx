@@ -22,6 +22,8 @@ type SessionApi = SessionState & {
   hostRoom: (gameId: string, hostName: string, roomName: string) => void;
   joinRoom: (address: string, playerName: string) => void;
   startGame: () => void;
+  fillWithBots: () => void;
+  removeBot: (id: string) => void;
   sendAction: (action: unknown) => void;
   leave: () => void;
 };
@@ -103,6 +105,9 @@ export function GameSessionProvider({ children }: { children: React.ReactNode })
     else clientRef.current?.sendAction(action);
   }, []);
 
+  const fillWithBots = useCallback(() => hostRef.current?.fillWithBots(), []);
+  const removeBot = useCallback((id: string) => hostRef.current?.removeBot(id), []);
+
   const leave = useCallback(() => {
     hostRef.current?.close();
     hostRef.current = null;
@@ -112,8 +117,8 @@ export function GameSessionProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const value = useMemo<SessionApi>(
-    () => ({ ...state, hostRoom, joinRoom, startGame, sendAction, leave }),
-    [state, hostRoom, joinRoom, startGame, sendAction, leave]
+    () => ({ ...state, hostRoom, joinRoom, startGame, fillWithBots, removeBot, sendAction, leave }),
+    [state, hostRoom, joinRoom, startGame, fillWithBots, removeBot, sendAction, leave]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

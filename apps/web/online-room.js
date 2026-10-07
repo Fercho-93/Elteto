@@ -1,4 +1,4 @@
-import { getGame } from "./game-core/index.js";
+import { getGame, fillBotSeats, nextBotMove, BotRunner } from "./game-core/index.js";
 import { connectFirebase } from "./firebase-client.js";
 import { createRoomCode, inviteUrlFor } from "./room-code.js";
 import {
@@ -46,7 +46,7 @@ const millis = (timestamp) => (typeof timestamp?.toMillis === "function" ? times
 
 export class OnlineSession {
   /** Crea una sala nueva y deja a esta persona como anfitriona. */
-  static async create({ gameId, roomName, hostName }, onChange, connection = connectFirebase()) {
+  static async create({ gameId, roomName, hostName, fillWithAI = false }, onChange, connection = connectFirebase()) {
     try {
       const name = String(hostName || "").trim().slice(0, 24);
       if (!validName(name)) throw new Error("Indica tu nombre para abrir la sala.");
@@ -59,6 +59,7 @@ export class OnlineSession {
         roomCode: code, gameId: engine.id, roomName: String(roomName || "").trim().slice(0, 40) || `Partida de ${name}`,
         hostUid: uid, status: "lobby", version: 1, minPlayers: engine.minPlayers, maxPlayers: engine.maxPlayers,
         playerOrder: [uid], players: { [uid]: { name, joinedAt: Date.now() } },
+        bots: fillWithAI ? Object.fromEntries(fillBotSeats([{id:uid}], engine.maxPlayers).map(p => [p.id,p.name])) : {},
         createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
       });
       await batch.commit();
@@ -81,7 +82,7 @@ export class OnlineSession {
         if (data.playerOrder.includes(uid)) return;
         if (data.status === "ended") throw new Error("ROOM_ENDED");
         if (data.status !== "lobby") throw new Error("ALREADY_STARTED");
-        if (data.playerOrder.length >= data.maxPlayers) throw new Error("ROOM_FULL");
+        if (data.playerOrder.length + Object.keys(data.bots || {}).length >= data.maxPlayers) throw new Error("ROOM_FULL");
         transaction.update(reference, {
           players: { ...data.players, [uid]: { name, joinedAt: Date.now() } },
           playerOrder: [...data.playerOrder, uid],
@@ -124,6 +125,17 @@ export class OnlineSession {
     this.acks = {};
     this.queue = Promise.resolve();
     this.actionsStop = null;
+    this.botRunner = new BotRunner(
+      () => this.closed || !this.isHost ? null : nextBotMove(this.engine, this.state, Object.keys(this.room.bots || {})),
+      () => this.enqueue(async () => {
+        await this.hostReady;
+        if (this.closed || !this.isHost) return;
+        const move = nextBotMove(this.engine, this.state, Object.keys(this.room.bots || {}));
+        if (!move) return;
+        this.state = this.engine.applyAction(this.state, move.playerId, move.action);
+        await this.publish();
+      }),
+      error => this.onChange({kind:'error', message:String(error.message || error)}));
     // Tareas de quien juega.
     this.viewStop = null;
     this.viewRev = -1;
@@ -273,9 +285,9 @@ export class OnlineSession {
 
   players() {
     if (!this.room) return [];
-    return this.room.playerOrder.map((uid) => ({
+    return [...this.room.playerOrder.map((uid) => ({
       id: uid, name: this.room.players[uid]?.name || "Jugador", isHost: uid === this.room.hostUid, away: this.isAway(uid),
-    }));
+    })), ...Object.entries(this.room.bots || {}).map(([id, name]) => ({id, name, isHost:false, isBot:true, away:false}))];
   }
 
   emitLobby() {
@@ -309,6 +321,7 @@ export class OnlineSession {
       this.rev = data.rev;
       this.acks = { ...data.acks };
       this.emitGame(this.engine.view(this.state, this.uid));
+      this.botRunner.schedule();
     })();
     this.hostReady.catch((error) => this.onChange({ kind: "error", message: roomError(error, "No se pudo recuperar la partida.").message }));
     this.attachActions();
@@ -331,6 +344,7 @@ export class OnlineSession {
   }
 
   leaveHostDuty() {
+    this.botRunner.stop();
     this.hostGeneration = (this.hostGeneration || 0) + 1;
     this.actionsStop?.(); this.actionsStop = null;
     this.state = null;
@@ -371,12 +385,13 @@ export class OnlineSession {
     batch.update(this.roomRef, { ...(starting ? { status: "playing" } : {}), version, updatedAt: serverTimestamp() });
     await batch.commit();
     this.version = version;
+    this.botRunner.schedule();
     if (errors[this.uid]) this.onChange({ kind: "error", message: errors[this.uid].message });
   }
 
   async startGame(seed = Date.now() >>> 0) {
     if (!this.isHost || this.room.status !== "lobby") throw new Error("Solo quien abrió la sala puede empezar la partida.");
-    const players = this.room.playerOrder;
+    const players = this.players().map(p => p.id);
     if (players.length < this.engine.minPlayers) throw new Error(`Se necesitan al menos ${this.engine.minPlayers} jugadores.`);
     if (players.length > this.engine.maxPlayers) throw new Error(`Este juego admite como máximo ${this.engine.maxPlayers} jugadores.`);
     this.state = this.engine.createInitialState(players, seed);
@@ -394,12 +409,29 @@ export class OnlineSession {
     try {
       await runTransaction(this.db, async (transaction) => {
         const current = (await transaction.get(this.roomRef)).data();
+        if (current.hostUid === this.uid && current.status === 'lobby' && current.bots?.[uid]) {
+          const bots = {...current.bots}; delete bots[uid];
+          transaction.update(this.roomRef, {bots, version:current.version + 1, updatedAt:serverTimestamp()});
+          return;
+        }
         if (current.hostUid !== this.uid || current.status !== "lobby" || !current.playerOrder.includes(uid)) return;
         const players = { ...current.players };
         delete players[uid];
         transaction.update(this.roomRef, { players, playerOrder: current.playerOrder.filter((item) => item !== uid), version: current.version + 1, updatedAt: serverTimestamp() });
       });
     } catch (error) { throw roomError(error, "No se pudo expulsar a esa persona."); }
+  }
+
+  async fillWithBots() {
+    if (!this.isHost || this.room.status !== 'lobby') throw new Error('Solo el anfitrión puede completar la mesa antes de empezar.');
+    await runTransaction(this.db, async transaction => {
+      const current = (await transaction.get(this.roomRef)).data();
+      if (current.hostUid !== this.uid || current.status !== 'lobby') throw new Error('La mesa ya no admite jugadores.');
+      const bots = {...current.bots};
+      const seats = [...current.playerOrder.map(id => ({id})), ...Object.keys(bots).map(id => ({id}))];
+      for (const bot of fillBotSeats(seats, this.engine.maxPlayers)) bots[bot.id] = bot.name;
+      transaction.update(this.roomRef, {bots, version:current.version + 1, updatedAt:serverTimestamp()});
+    });
   }
 
   // --- Quien juega --------------------------------------------------------------------
@@ -482,6 +514,7 @@ export class OnlineSession {
 
   teardown() {
     this.closed = true;
+    this.botRunner.stop();
     for (const timer of this.timers) clearInterval(timer);
     this.timers = [];
     document.removeEventListener("visibilitychange", this.onVisibility);

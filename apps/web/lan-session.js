@@ -13,6 +13,7 @@ export class LanSession {
     if (!window.ELTETO_LAN?.hostKey) throw new Error('La mesa se crea desde la app Android anfitriona.');
     const session = new LanSession(onChange, true);
     session.local = new LocalHostSession(options.gameId, options.hostName, options.roomName, change => session.emitHost(change));
+    session.local.canRunBots = () => [...session.local.connections.values()].every(c => c.peer.connected);
     await session.connect();
     session.local.publishLobby();
     return session;
@@ -44,7 +45,7 @@ export class LanSession {
   }
   emitHost(change) {
     if (change.kind === 'lobby' || change.kind === 'game') {
-      change.players = change.players.map(player => ({ ...player, away: player.id !== 'host' && !this.local.connections.get(player.id)?.peer.connected }));
+      change.players = change.players.map(player => ({ ...player, away: !player.isBot && player.id !== 'host' && !this.local.connections.get(player.id)?.peer.connected }));
       this.onChange({ ...change, isHost: true, playerId: 'host', roomCode: this.roomCode, inviteUrl: this.inviteUrl });
     } else this.onChange(change);
   }
@@ -143,6 +144,7 @@ export class LanSession {
     else if (message.type === 'ack') this.pending = false;
   }
   async startGame() { this.assertConnected(); this.local.startGame(); }
+  async fillWithBots() { if (this.isHost) this.local.fillWithBots(); }
   async sendAction(action) {
     if (this.isHost) { this.assertConnected(); this.local.applyLocalAction(action); return; }
     if (this.pending) throw new Error('Espera la confirmación de tu jugada.');
@@ -152,6 +154,7 @@ export class LanSession {
   }
   async removePlayer(id) {
     if (!this.isHost || this.local.started) return;
+    if (this.local.bots.some(p => p.id === id)) { this.local.removePlayer(id); return; }
     this.local.peers.get(id)?.close(); this.local.handleClose(id);
   }
   async exit() {

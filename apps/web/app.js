@@ -95,7 +95,7 @@ function renderLobby() {
   const game = state.gameId ? getGame(state.gameId) : null;
   const host = state.role === "host";
   const connected = state.role === "client" && state.players.some((player) => player.id === state.playerId);
-  const rows = state.players.map((player, index) => `<div class="player-row"><span class="seat">${String(index + 1).padStart(2, "0")}</span><strong>${esc(player.name)}</strong>${player.isHost ? '<span class="host-pill">ANFITRIÓN</span>' : `<span class="ready-pill">${player.away ? "SIN SEÑAL" : "EN LA MESA"}</span>`}${state.online && host && !player.isHost ? `<button class="text-button" data-action="kick-player" data-player-id="${esc(player.id)}" aria-label="Expulsar a ${esc(player.name)}"><span aria-hidden="true">×</span></button>` : ""}</div>`).join("");
+  const rows = state.players.map((player, index) => `<div class="player-row"><span class="seat">${String(index + 1).padStart(2, "0")}</span><strong>${esc(player.name)}</strong>${player.isHost ? '<span class="host-pill">ANFITRIÓN</span>' : `<span class="ready-pill">${player.isBot ? "IA" : player.away ? "SIN SEÑAL" : "EN LA MESA"}</span>`}${host && !player.isHost && (state.online || player.isBot) ? `<button class="text-button" data-action="kick-player" data-player-id="${esc(player.id)}" aria-label="Expulsar a ${esc(player.name)}"><span aria-hidden="true">×</span></button>` : ""}</div>`).join("");
   const enoughPlayers = game && state.players.length <= game.maxPlayers && getGamePlan(game.id).players.includes(state.players.length);
   const connectionTools = host
     ? `<div class="invite-grid">
@@ -116,6 +116,7 @@ function renderLobby() {
     <div class="lobby-grid"><section class="lobby-players" aria-labelledby="players-title"><div class="players-head"><h2 id="players-title">En la mesa</h2><span>${state.players.length}${game ? ` / ${game.maxPlayers}` : ""}</span></div>
     <div class="player-list">${rows || '<div class="empty-seat">Todavía no se ha sentado nadie. Dale al código.</div>'}</div>
     ${state.error ? `<p class="error-message">${esc(state.error)}</p>` : ""}
+    ${host && game && state.players.length < game.maxPlayers ? '<button class="button button-paper full-button" data-action="fill-bots">Completar mesa con IA</button><p class="helper">La IA ocupará las plazas libres. Puedes quitarla antes de empezar.</p>' : ''}
     ${startButton}
     </section><section class="lobby-invite" aria-labelledby="invite-title"><h2 id="invite-title">${host ? "Invita a la mesa" : "Tu conexión"}</h2>
     <p class="helper ${host && state.online && !LAN ? 'compact-help' : ''}">${host ? (state.online ? (LAN ? "Comparte el QR o enlace local. Todos debéis estar en la misma Wi-Fi o hotspot. Mantén Elteto abierto en este Android." : "Pásales el enlace, el QR o el código de la sala. Todos necesitáis internet.") : state.inviteMode === "offline" ? "Modo sin internet: los dos móviles deben estar en la misma Wi-Fi o hotspot. Comparte la invitación y escanea luego la respuesta." : "Elige cómo invitar: con internet (enlace, QR o código) o sin internet (misma Wi-Fi).") : (state.online ? (LAN ? "Mesa local: deja esta página abierta. Si pierdes la señal, intentaremos recuperar tu plaza." : "Deja Elteto abierto: la sala se mantiene mientras el anfitrión siga conectado.") : "Deja Elteto abierto. Para jugar sin internet, conecta ambos móviles a la misma Wi-Fi o hotspot; el anfitrión escaneará tu respuesta QR.")}</p>
@@ -403,8 +404,10 @@ app.addEventListener("click", async (event) => {
       await (state.online || state.host).startGame();
       state.error = "";
       render();
+    } else if (action === "fill-bots") {
+      await (state.online || state.host).fillWithBots();
     } else if (action === "kick-player") {
-      await state.online?.removePlayer(button.dataset.playerId);
+      await (state.online || state.host).removePlayer(button.dataset.playerId);
     } else if (action === "play-card") {
       const key = button.dataset.cardKey;
       if (state.gameId === "mus") {
@@ -549,7 +552,7 @@ async function openOnlineRoom() {
   if (state.online) { renderLobby(); return; }
   if (state.host?.connections?.size) throw new Error("Ya hay jugadores conectados sin internet. Cierra la sala y crea otra para invitar con internet.");
   const { OnlineSession } = await import("./online-room.js");
-  const session = await OnlineSession.create({ gameId: state.gameId, roomName: state.roomName, hostName: state.name }, onOnlineChange);
+  const session = await OnlineSession.create({ gameId: state.gameId, roomName: state.roomName, hostName: state.name, fillWithAI: Boolean(state.host?.bots?.length) }, onOnlineChange);
   state.host?.close();
   Object.assign(state, { host: session, online: session, role: "host", playerId: session.playerId, inviteMode: "online", roomCode: session.roomCode, offerCode: session.inviteUrl, answerCode: "", error: "" });
   renderLobby();
