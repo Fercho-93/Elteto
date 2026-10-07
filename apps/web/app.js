@@ -40,7 +40,7 @@ function renderHome() {
       <header class="menu-header"><a class="menu-brand" href="./" aria-label="Elteto, inicio">ELTETO<span>✦</span></a><nav aria-label="Menú principal"><a href="#menu-games">Juegos</a><a href="./reglas_juegos/biblioteca.html">Reglas ↗</a></nav></header>
       <div class="menu-hero">
         <div class="menu-art"><div class="menu-logo" role="img" aria-label="Elteto: berenjena y melocotón con gafas bajo un arco de neón"></div></div>
-        <div class="menu-intro"><p class="menu-kicker">CARTAS · DADOS · PIQUE</p><h1>Se viene<br> <span>pique.</span></h1><p class="menu-copy">Los de siempre. Con los tuyos.</p>
+        <div class="menu-intro"><h1>Se viene<br> <span>pique.</span></h1>
           <div class="menu-actions">${!LAN || LAN.hostKey ? '<button class="menu-button menu-primary" data-action="open-host">Crear partida <span aria-hidden="true">↗</span></button>' : ''}<button class="menu-button menu-secondary" data-action="open-join">Unirse a la mesa <span aria-hidden="true">→</span></button></div>
           ${LAN ? '<p class="menu-network-note">Mesa local sin internet. Conecta todos los móviles a la misma Wi-Fi o hotspot.</p>' : ''}
         </div>
