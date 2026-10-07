@@ -142,12 +142,12 @@ try {
         await Promise.all(cards.map(card=>card.querySelector('img').decode()));
         return cards.every(card=>{const image=card.querySelector('img'),rect=image.getBoundingClientRect(); return image.naturalWidth>=200 && rect.width>=56 && rect.height>=85 && card.getAttribute('aria-label').includes(' de ');});
       }));
-      assert.equal(await page.locator('.character-sprite[data-character]').evaluateAll(els => new Set(els.map(el => el.dataset.character)).size),count-1);
+      assert.equal(await page.locator('.rival-portrait[data-character]').evaluateAll(els => new Set(els.map(el => el.dataset.character)).size),count-1);
       assert.ok(await page.locator('.table-seat').evaluateAll(seats=>seats.every(seat=>{
         const direction=seat.dataset.direction;
         if(direction==='front') return seat.dataset.position==='top';
-        const body=seat.querySelector('.player-character'),sprite=body.querySelector('.character-sprite');
-        return getComputedStyle(sprite).backgroundImage.includes('mascots-side-v1') && (direction==='left' ? getComputedStyle(body).scale==='-1 1' : getComputedStyle(body).scale==='none');
+        const sprite=seat.querySelector('.rival-art');
+        return sprite.querySelector('image').getAttribute('href').includes('mascots-bust-side-v2') && (direction==='left' ? getComputedStyle(sprite).scale==='-1 1' : getComputedStyle(sprite).scale==='none');
       })), 'Side seats use directional artwork facing the play area');
       assert.ok(await page.evaluate(async () => { const image=new Image(); image.src='/assets/elteto-mascots-v1.png'; await image.decode(); return image.naturalWidth===1536 && image.naturalHeight===1024; }));
       assert.ok(await page.evaluate(async () => { const image=new Image(); image.src='/assets/elteto-mascots-side-v1.png'; await image.decode(); return image.naturalWidth===1536 && image.naturalHeight===1024; }));
@@ -169,9 +169,9 @@ try {
       })));
       await page.evaluate(() => scrollTo(0, 0));
       assert.ok(await page.locator('.table-seat').evaluateAll(seats=>seats.every(seat=>{
-        const r=seat.getBoundingClientRect(),character=Number(seat.querySelector('[data-character]').dataset.character);
-        const x=r.left+r.width*(seat.dataset.direction==='left'?.35:seat.dataset.direction==='right'?.65:.5);
-        const y=r.top+r.height*(character<5?.43:.47);
+        const r=seat.querySelector('.rival-portrait').getBoundingClientRect(),character=Number(seat.querySelector('[data-character]').dataset.character);
+        const x=r.left+r.width*.5;
+        const y=r.top+r.height*.52;
         const hit=document.elementFromPoint(x,y);
         if(hit?.closest('[data-player-id]')!==seat) throw Error(JSON.stringify({character,direction:seat.dataset.direction,x,y,hit:hit?.className,box:r.toJSON()}));
         return true;
@@ -396,7 +396,8 @@ try {
       return response.ok && (await response.text()).includes('.board-zoom');
     }));
     assert.ok(await page.evaluate(async()=>{
-      const style=await fetch('../../cinquillo-table.css'),art=await fetch('../../assets/elteto-mascots-side-v1.png'),screen=await fetch('../../cinquillo-screen.js');
+      const style=await fetch('../../cinquillo-table.css'),art=await fetch('../../assets/elteto-mascots-bust-side-v2.png'),screen=await fetch('../../cinquillo-screen.js');
+        for (const file of ['rival-portraits.js','rival-portraits.css','assets/elteto-mascots-bust-v2.png']) if(!(await fetch('../../'+file)).ok) return false;
       return style.ok && (await style.text()).includes('--pile-w') && art.ok && (await art.blob()).size>10000 && screen.ok && (await screen.text()).includes('arrangeCinquilloScreen');
     }));
     assert.ok(await page.evaluate(async()=>{

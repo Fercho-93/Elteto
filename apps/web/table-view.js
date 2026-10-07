@@ -1,5 +1,6 @@
 // Presentation only: consumes a private engine view, never the host's hidden state.
 import { FRENCH_RANKS, SPANISH_RANKS, SPANISH_SUITS, canPlaceCinquillo } from "./game-core/index.js";
+import { rivalArtwork, renderRivalPortrait } from "./rival-portraits.js";
 import { cardAsset } from "./card-art.js";
 export const escapeHtml = (value) =>
   String(value ?? "").replace(
@@ -107,14 +108,15 @@ export function renderSeats(view, playerId, name, gameId) {
       const team = index % 2 === 0 ? "A" : "B";
       const count = view.handSizes?.[id] || 0;
       const cardGame = Boolean(view.handSizes);
+      const portrait = gameId === 'cinquillo';
       const arms = side ? sideArms(character) : ARM_CONTOURS[character];
       const style = `--seat-x:${x}%;--seat-y:${y}%;--seat-mobile-x:${mobile[0]}%;--seat-mobile-y:${mobile[1]}%;--character-x:${(character % 5) * 25}%;--character-y:${Math.floor(character / 5) * 100}%;--motion-delay:${index * -1.3}s;--grip-y:${side ? (character < 5 ? 67 : 60) : (character < 5 ? 73 : 64)}%;--side-fan-y:${character < 5 ? 52 : 46}%;--left-arm:polygon(${arms[0]});--right-arm:polygon(${arms[1]})`;
       // Body/chair sit behind the felt. This sibling crosses the table rim:
       // card backs under the hands, forearms over them. No hidden values enter it.
       const position=x<20?'left':x>80?'right':x===50?'top':'upper';
-      const compactLabel=gameId==='cinquillo'?`<div class="seat-label"><strong>${esc(name(id))}</strong><small>${count}<span class="seat-cards-word"> cartas</span></small></div>`:'';
-      const front = `<div class="seat-front ${active ? 'active-seat' : ''}" data-direction="${direction}" data-position="${position}" data-front-player="${esc(id)}" style="${style}" aria-hidden="true"><div class="seat-grip">${cardGame ? `<div class="rival-hand">${Array.from({ length: count }, (_, i) => `<i class="card-back" style="--fan-angle:${(i - (count - 1) / 2) * Math.min(10, 65 / Math.max(1, count))}deg"><span>✦</span></i>`).join('')}</div>` : ''}<div class="player-character forearms"><div class="character-sprite arm-left"></div><div class="character-sprite arm-right"></div></div></div>${compactLabel}</div>`;
-      return `<article class="table-seat ${active ? 'active-seat' : ''}" data-direction="${direction}" data-position="${position}" data-player-id="${esc(id)}" style="${style}" aria-label="${esc(name(id))}, ${MASCOTS[character]}${cardGame ? `, ${count} cartas` : ''}${active ? ', turno activo' : ''}">${renderMascot(character, index)}${gameId==='cinquillo'?'':`<div class="seat-label"><strong>${esc(name(id))}</strong><small>${MASCOTS[character]}${gameId === 'mus' ? ` · ${team}` : ''}${cardGame ? ` · ${count} cartas` : ''}</small></div>`}${view.mano === id ? '<span class="mano-badge">Mano</span>' : ''}</article>${front}`;
+      const compactLabel=gameId==='cinquillo'?`<div class="seat-label" title="${esc(name(id))} · ${count} cartas"><strong>${esc(name(id))}</strong><small>${count}<span class="seat-cards-word"> cartas</span></small></div>`:'';
+      const front = `<div class="seat-front ${active ? 'active-seat' : ''}" data-direction="${direction}" data-position="${position}" data-front-player="${esc(id)}" style="${style}" aria-hidden="true"><div class="seat-grip">${cardGame ? `<div class="rival-hand">${Array.from({ length: count }, (_, i) => `<i class="card-back" style="--fan-angle:${portrait ? (i - (Math.min(5,count) - 1) / 2) * 12 : (i - (count - 1) / 2) * Math.min(10, 65 / Math.max(1, count))}deg"><span>✦</span></i>`).join('')}</div>` : ''}${portrait ? `<div class="player-character forearms portrait-arms">${rivalArtwork(character,side,'arms')}</div>` : `<div class="player-character forearms"><div class="character-sprite arm-left"></div><div class="character-sprite arm-right"></div></div>`}</div>${compactLabel}</div>`;
+      return `<article class="table-seat ${active ? 'active-seat' : ''}" data-direction="${direction}" data-position="${position}" data-player-id="${esc(id)}" style="${style}" aria-label="${esc(name(id))}, ${MASCOTS[character]}${cardGame ? `, ${count} cartas` : ''}${active ? ', turno activo' : ''}">${portrait ? renderRivalPortrait(character,MASCOTS[character],side) : renderMascot(character, index)}${gameId==='cinquillo'?'':`<div class="seat-label"><strong>${esc(name(id))}</strong><small>${MASCOTS[character]}${gameId === 'mus' ? ` · ${team}` : ''}${cardGame ? ` · ${count} cartas` : ''}</small></div>`}${view.mano === id ? '<span class="mano-badge">Mano</span>' : ''}</article>${front}`;
 
     })
     .join("");

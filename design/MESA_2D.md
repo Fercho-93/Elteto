@@ -6,7 +6,7 @@ La referencia visual son los seis mockups aportados, conservados en references/.
 
 El jugador local ya no aparece como avatar en ninguna mesa. Su mano y los indicadores de turno permanecen en primer plano; Mus conserva la pareja y la condición de mano junto a sus cartas.
 
-Cinquillo emplea un segundo atlas transparente de los mismos diez personajes, con poses de tres cuartos hacia la derecha. Los asientos de la derecha reflejan esa pose para mirar a la izquierda, hacia el tapete. El rival central conserva el atlas frontal. El cuerpo y los antebrazos comparten identidad, escala y dirección; el abanico mantiene la cantidad pública real de cartas. El atlas lateral no lleva cartas dibujadas.
+Cinquillo emplea los dos atlas de bustos v2 de los mismos diez personajes, con poses frontal y de tres cuartos hacia la derecha. Los asientos de la derecha reflejan esa pose para mirar a la izquierda, hacia el tapete. El cuerpo y los antebrazos comparten identidad, escala y dirección; el abanico muestra hasta cinco dorsos y la etiqueta conserva la cantidad pública real. Los atlas no llevan cartas dibujadas. La comparación de alternativas, los encuadres y las pruebas están en [AVATARES_RIVALES.md](AVATARES_RIVALES.md). Mus conserva los atlas v1.
 
 El tapete muestra completos los dos extremos de cada escalera, sin números superpuestos ni cartas que tapen sus ilustraciones. Una escalera recién abierta muestra su cinco una sola vez. Las cartas intermedias permanecen en el estado público y se consultan con «Ver todas las cartas». Cada palo indica su cantidad y los valores que permiten continuar; se respeta el salto del siete a la sota y el orden francés de partidas antiguas. Los palos sin abrir tienen una silueta vacía, diferenciada de las cartas jugadas.
 

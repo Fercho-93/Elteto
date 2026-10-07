@@ -32,6 +32,8 @@ jobs:
       - run: TABLE_BROWSER=webkit node tests/table-navegador.mjs
       - run: node tests/cinquillo-layout.mjs
       - run: LAYOUT_BROWSER=webkit node tests/cinquillo-layout.mjs
+      - run: node tests/rival-portraits.mjs
+      - run: AVATAR_BROWSER=webkit node tests/rival-portraits.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

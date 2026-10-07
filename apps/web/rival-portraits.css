@@ -1,0 +1,16 @@
+/* Rival artwork only: the approved table, board, dock and seat anchors are unchanged. */
+
+.cinquillo-screen .game-table {--portrait-h:var(--avatar-w);--portrait-w:calc(var(--avatar-w) * 1.2);--rim-offset:5px;}
+.cinquillo-screen .table-seat .player-character {scale:none;filter:none;}
+.cinquillo-screen .rival-portrait,.cinquillo-screen .game-table .seat-front .portrait-arms {position:absolute;inset:auto;left:50%;top:calc(var(--grip-y) - var(--portrait-h) + var(--rim-offset));transform:translateX(-50%);width:var(--portrait-w);height:var(--portrait-h);}
+.rival-art {display:block;width:100%;height:100%;overflow:hidden;}
+.rival-portrait .rival-art {filter:drop-shadow(0 2px 2px #0006);}
+[data-direction="left"] .rival-portrait .rival-art {scale:-1 1;}
+.portrait-arms {clip-path:polygon(5% 81%,35% 79%,50% 85%,65% 79%,95% 82%,95% 100%,5% 100%);}
+.cinquillo-screen .game-table .seat-front .rival-hand {left:56%;top:calc(var(--grip-y) - var(--portrait-h) * .36 + var(--rim-offset));width:50%;height:calc(var(--portrait-h) * .3);transform:translateX(-50%);}
+.cinquillo-screen .game-table .seat-front .rival-hand .card-back {width:calc(var(--portrait-h) * .20);height:calc(var(--portrait-h) * .30);left:calc(50% - var(--portrait-h) * .1);background:repeating-linear-gradient(45deg,#b3a0bc33 0 1px,transparent 1px 3px),linear-gradient(145deg,#614364,#39223e);border:1px solid #d3bc91;border-radius:2px;box-shadow:0 1px 2px #0007;}
+.cinquillo-screen .card-back span {display:none;}
+.cinquillo-screen .card-back:nth-child(n+6) {display:none;}
+
+.cinquillo-screen .seat-label small {border-left:1px solid #c8b38450;padding-left:4px;}
+.cinquillo-screen .active-seat .rival-portrait .rival-art {filter:drop-shadow(0 1px 3px #d8bd7b80);}
