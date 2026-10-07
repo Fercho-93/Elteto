@@ -1,4 +1,4 @@
-import { getGame, fillBotSeats, nextBotMove, BotRunner } from "./game-core/index.js";
+import { getGame, fillBotSeats, nextBotMove, BotRunner, botTurnDelay } from "./game-core/index.js";
 import { connectFirebase } from "./firebase-client.js";
 import { createRoomCode, inviteUrlFor } from "./room-code.js";
 import {
@@ -138,7 +138,7 @@ export class OnlineSession {
         this.state = this.engine.applyAction(this.state, move.playerId, move.action);
         await this.publish();
       }),
-      error => this.onChange({kind:'error', message:String(error.message || error)}));
+      error => this.onChange({kind:'error', message:String(error.message || error)}), botTurnDelay(this.engine.id));
     // Tareas de quien juega.
     this.viewStop = null;
     this.viewRev = -1;

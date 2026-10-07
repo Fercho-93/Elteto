@@ -1,4 +1,4 @@
-import { getGame, fillBotSeats, BotRunner, nextBotMove } from "./game-core/index.js";
+import { getGame, fillBotSeats, BotRunner, botTurnDelay, nextBotMove } from "./game-core/index.js";
 import { acceptOffer, decodeSignal, makeOffer } from "./local-transport.js";
 
 const HOST_ID = "host";
@@ -18,7 +18,7 @@ export class LocalHostSession {
     this.bots = [];
     this.botRunner = new BotRunner(() => this.closed || this.canRunBots?.() === false ? null : nextBotMove(this.engine, this.state, this.bots.map(p => p.id)),
       ({playerId, action}) => { this.state = this.engine.applyAction(this.state, playerId, action); this.sendViews(); },
-      error => this.onChange({kind: 'error', message: String(error.message || error)}));
+      error => this.onChange({kind: 'error', message: String(error.message || error)}), botTurnDelay(this.engine.id));
     this.publishLobby();
   }
 

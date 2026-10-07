@@ -18,9 +18,10 @@ export const dominoEngine=makeEngine('domino',(p,seed)=>{const s=base('domino',p
 const geese=[5,9,14,18,23,27,32,36,41,45,50,54,59];
 export const ocaEngine=makeEngine('oca',(p,seed)=>{const s=base('oca',p,seed);s.positions=mapPlayers(p,()=>1);s.penalties=mapPlayers(p,()=>0);s.prison=null;s.roll=0;return s;},(s,p,a)=>{
  requireTurn(s,p);check(a.type==='roll');
+ if(a.expectedRoll!==undefined)check(Number.isInteger(a.expectedRoll)&&a.expectedRoll===(s.lastRoll?.sequence??0),'La tirada ya fue procesada. Espera al turno actual.');
  if(s.prison===p){note(s,`${p} espera en prisión.`);next(s);return;}
  if(s.penalties[p]>0){s.penalties[p]--;note(s,`${p} pierde turno (${s.penalties[p]} pendientes).`);next(s);return;}
- s.roll=1+Math.floor(random(s)*6);const old=s.positions[p];let at=old+s.roll;if(at>63)at=126-at;
+ s.roll=1+Math.floor(random(s)*6);const old=s.positions[p];let at=old+s.roll;if(at>63)at=126-at;const route=[old];let cursor=old,direction=1;for(let step=0;step<s.roll;step++){if(cursor===63)direction=-1;cursor+=direction;route.push(cursor);}s.lastRoll={sequence:(s.lastRoll?.sequence??0)+1,player:p,value:s.roll,from:old,landing:at,to:at,route};
  s.positions[p]=at;note(s,`${p}: ${s.roll} → ${at}.`);
  if(at===63){finish(s,p);return;}
  let repeat=false;
@@ -31,8 +32,9 @@ export const ocaEngine=makeEngine('oca',(p,seed)=>{const s=base('oca',p,seed);s.
  else if(at===52){if(s.prison){s.positions[s.prison]=old;s.prison=null;}s.prison=p;}
  else if(at===58)s.positions[p]=1;
  const occupant=s.players.find(id=>id!==p&&s.positions[id]===s.positions[p]&&s.positions[p]!==1);if(occupant)s.positions[occupant]=old;
+ s.lastRoll.to=s.positions[p];if(s.positions[p]!==at)s.lastRoll.route.push(s.positions[p]);
  if(s.positions[p]===63){finish(s,p);return;}if(!repeat)next(s);
-},(s,p)=>publicView(s,p,{boardKind:'oca',positions:s.positions,penalties:s.penalties,prison:s.prison,roll:s.roll,unit:'casilla',handSizes:s.positions,instruction:s.prison===p?'Espera a que otro jugador llegue a prisión.':s.penalties[p]?`Pierdes ${s.penalties[p]} turno(s).`:'Llega al 63 con una tirada exacta.',options:!s.finished&&s.players[s.turn]===p?choices([s.prison===p||s.penalties[p]?'Pasar turno':'Tirar dado',{type:'roll'}]):[]}));
+},(s,p)=>publicView(s,p,{boardKind:'oca',lastRoll:s.lastRoll,positions:s.positions,penalties:s.penalties,prison:s.prison,roll:s.roll,unit:'casilla',handSizes:s.positions,instruction:s.prison===p?'Espera a que otro jugador llegue a prisión.':s.penalties[p]?`Pierdes ${s.penalties[p]} turno(s).`:'Llega al 63 con una tirada exacta.',options:!s.finished&&s.players[s.turn]===p?choices([s.prison===p||s.penalties[p]?'Pasar turno':'Tirar dado',{type:'roll'}]):[]}));
 
 type Move={path:number[];captures:number[];kings:number};
 const rc=(i:number)=>[Math.floor(i/8),i%8];
@@ -60,10 +62,10 @@ export const checkersEngine=makeEngine('damas_espanolas',(p,seed)=>{const s=base
  if(a.type==='accept-draw'){check(s.drawOffer&&s.drawOffer!==p);finish(s);return;}
  requireTurn(s,p);if(a.type==='offer-draw'){check(s.drawOffer!==p);s.drawOffer=p;return;}
  check(a.type==='move'&&Array.isArray(a.path));const move=checkersMoves(s.board,s.turn===0?1:-1).find(m=>m.path.join(',')===a.path.join(','));check(move,'Debes realizar una jugada legal y completar todas las capturas.');
- const from=move.path[0],to=move.path[move.path.length-1],piece=s.board[from];s.board[from]=0;move.captures.forEach(i=>s.board[i]=0);s.board[to]=(piece===1&&to<8)||(piece===-1&&to>=56)?piece*2:piece;s.quiet=move.captures.length||Math.abs(piece)===1?0:s.quiet+1;s.drawOffer=null;note(s,`${p}: ${from+1} → ${to+1}${move.captures.length?` · ${move.captures.length} capturas`:''}.`);next(s);
+ const from=move.path[0],to=move.path[move.path.length-1],piece=s.board[from];s.board[from]=0;move.captures.forEach(i=>s.board[i]=0);s.board[to]=(piece===1&&to<8)||(piece===-1&&to>=56)?piece*2:piece;s.lastMove={player:p,path:[...move.path],captures:[...move.captures]};s.quiet=move.captures.length||Math.abs(piece)===1?0:s.quiet+1;s.drawOffer=null;note(s,`${p}: ${from+1} → ${to+1}${move.captures.length?` · ${move.captures.length} capturas`:''}.`);next(s);
  if(!checkersMoves(s.board,s.turn===0?1:-1).length){finish(s,p);return;}
  const key=boardKey(s);s.repetitions[key]=(s.repetitions[key]||0)+1;
  const pieces=s.board.filter((n:number)=>n),white=pieces.filter((n:number)=>n===2).length,black=pieces.filter((n:number)=>n===-2).length;
  const endgame=pieces.length===4&&((white===3&&black===1)||(white===1&&black===3))&&s.board.some((n:number,i:number)=>n===(white===3?2:-2)&&Math.floor(i/8)===i%8);
  s.endgame=endgame?s.endgame+1:0;if(s.quiet>=40||s.repetitions[key]>=3||s.endgame>=26)finish(s);
-},(s,p)=>{const mine=s.players[s.turn]===p,moves=mine&&!s.finished?checkersMoves(s.board,s.turn===0?1:-1):[];return publicView(s,p,{boardKind:'checkers',board:s.board,moves,unit:'fichas',handSizes:mapPlayers(s.players,(_,i)=>s.board.filter((n:number)=>n*(i===0?1:-1)>0).length),instruction:moves.some(m=>m.captures.length)?'Captura obligatoria: selecciona el recorrido.':'Selecciona una ficha y su destino.',options:s.finished?[]:[...(mine&&!s.drawOffer?choices(['Ofrecer tablas',{type:'offer-draw'}]):[]),...(s.drawOffer&&s.drawOffer!==p?choices(['Aceptar tablas',{type:'accept-draw'}]):[])]});});
+},(s,p)=>{const mine=s.players[s.turn]===p,moves=mine&&!s.finished?checkersMoves(s.board,s.turn===0?1:-1):[];return publicView(s,p,{boardKind:'checkers',lastMove:s.lastMove,board:s.board,moves,unit:'fichas',handSizes:mapPlayers(s.players,(_,i)=>s.board.filter((n:number)=>n*(i===0?1:-1)>0).length),instruction:moves.some(m=>m.captures.length)?'Captura obligatoria: selecciona el recorrido.':'Selecciona una ficha y su destino.',options:s.finished?[]:[...(mine&&!s.drawOffer?choices(['Ofrecer tablas',{type:'offer-draw'}]):[]),...(s.drawOffer&&s.drawOffer!==p?choices(['Aceptar tablas',{type:'accept-draw'}]):[])]});});
