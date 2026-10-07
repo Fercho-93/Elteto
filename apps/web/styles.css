@@ -739,13 +739,21 @@ body:has(.game-page) {
 }
 @media(max-width:360px) { .menu-rule-list { grid-template-columns:1fr; } }
 @media(prefers-reduced-motion:reduce) { .menu-shell *, .menu-shell *::before, .menu-shell *::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
-/* Larger Cinquillo portraits fit in the existing space above the table rim. */
-@media(max-width:599px) and (min-height:621px), (min-height:700px){
- .cinquillo-screen .rival-roster{--token-size:44px;}
-}
-@media(max-width:519px) and (min-height:621px){
- .cinquillo-screen .rival-roster:is([data-count="4"],[data-count="5"]){--token-size:36px;}
-}
-@media(max-width:359px) and (min-height:621px){
- .cinquillo-screen .rival-roster[data-count]{--token-size:32px;}
-}
+/* Card-game portraits share the Parchís scale and stay above the felt. */
+:is(.cinquillo-screen,.mus-screen).game-page { --rival-size:64px; }
+:is(.cinquillo-screen,.mus-screen) .game-table .rival-roster { --token-size:var(--rival-size); top:6px; gap:10px; max-width:calc(var(--rival-count) * 180px); align-items:start; }
+:is(.cinquillo-screen,.mus-screen) .game-table .table-seat.rival-seat { align-items:flex-start; gap:6px; }
+:is(.cinquillo-screen,.mus-screen) .rival-count { flex-wrap:wrap; white-space:normal; gap:2px; }
+:is(.cinquillo-screen,.mus-screen) .rival-seat .rival-info { padding-top:calc((var(--rival-size) - 28px) / 2); }
+:is(.cinquillo-screen,.mus-screen) .rival-team { flex-basis:100%; white-space:nowrap; font-size:9px; }
+:is(.cinquillo-screen,.mus-screen) .game-table .table-surface { top:calc(var(--rival-size) + 18px); }
+.cinquillo-screen .game-table .table-center { --board-top:calc(var(--rival-size) + 64px); }
+.mus-screen .game-table .table-center { top:calc(var(--rival-size) + 34px); }
+.cinquillo-screen .game-table .rival-roster:is([data-count="4"],[data-count="5"]) .rival-seat { flex-direction:column; align-items:center; gap:4px; text-align:center; }
+.cinquillo-screen .rival-roster:is([data-count="4"],[data-count="5"]) .rival-info { width:100%; align-items:center; padding-top:0; }
+.cinquillo-screen .game-table:has(.rival-roster:is([data-count="4"],[data-count="5"])) .table-surface { top:calc(var(--rival-size) + 48px); }
+.cinquillo-screen .game-table:has(.rival-roster:is([data-count="4"],[data-count="5"])) .table-center { --board-top:calc(var(--rival-size) + 94px); }
+@media(min-width:700px) and (min-height:700px) { :is(.cinquillo-screen,.mus-screen).game-page { --rival-size:76px; } }
+@media(max-height:620px) { :is(.cinquillo-screen,.mus-screen).game-page { --rival-size:48px; } }
+@media(min-width:600px) and (max-height:699px) { :is(.cinquillo-screen,.mus-screen).game-page { --rival-size:44px; } }
+.cinquillo-screen .game-table .rival-roster:is([data-count="4"],[data-count="5"]) { grid-template-columns:repeat(var(--rival-count),minmax(var(--token-size),1fr)); gap:8px; overflow-x:auto; scrollbar-width:thin; }
