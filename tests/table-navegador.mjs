@@ -372,9 +372,10 @@ try {
     await page.goto(base);
     await page.evaluate(()=>navigator.serviceWorker.ready);
     await page.waitForFunction(()=>navigator.serviceWorker.controller);
-    assert.equal(await page.locator('.menu-extras a[href$="biblioteca.html#proximos"]').count(),1);
+    assert.equal(await page.locator('.menu-actions > *').count(),3);
+    assert.equal(await page.locator('.menu-games,.menu-cast,.menu-extras').count(),0);
     await offlineContext.setOffline(true);
-    await page.goto(base+'reglas_juegos/biblioteca.html');
+    await page.getByRole('link',{name:'Ver reglas',exact:true}).click();
     assert.equal(await page.locator('li a').count(),20);
     await page.goto(base+'reglas_juegos/lectura/cinquillo.html');
     assert.match(await page.locator('.rules-steps').textContent(),/cinco de oros/);

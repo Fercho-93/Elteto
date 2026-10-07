@@ -1,13 +1,12 @@
-import { renderAvatarArtwork } from './avatar-art.js';
 import {beginParchisRoll} from './parchis-dice.js';
-import { getGame, listGames, GAME_CATALOG } from "./game-core/index.js";
+import { getGame, listGames } from "./game-core/index.js";
 import { LocalGuestSession, LocalHostSession } from "./local-session.js";
 import { arrangeCinquilloScreen } from './cinquillo-screen.js';
 import { arrangeMusScreen } from './mus-screen.js';
 import { renderParchisScreen } from './parchis-board.js';
 import { parseRoomCode } from "./room-code.js";
 
-import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, canPlayCinquillo, animateTable, animateSeats, MASCOTS, renderMascot } from "./table-view.js";
+import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, canPlayCinquillo, animateTable, animateSeats } from "./table-view.js";
 
 const LAN = window.ELTETO_LAN;
 const app = document.querySelector("#app");
@@ -30,24 +29,17 @@ function header(back = "home") {
 }
 function playerName(id) { return state.players.find((player) => player.id === id)?.name || (id === "host" ? state.name : id); }
 
-function menuAvatar(index) {
-  return `<span class="menu-avatar" role="img" aria-label="${esc(MASCOTS[index])}">${renderAvatarArtwork(index, 'menu')}</span>`;
-}
 function renderHome() {
   state.screen = "home";
-  app.innerHTML = `<section class="menu-shell">
+  app.innerHTML = `<section class="menu-shell menu-home">
     <div class="menu-wrap">
-      <header class="menu-header"><a class="menu-brand" href="./" aria-label="Elteto, inicio">ELTETO<span>✦</span></a><nav aria-label="Menú principal"><a href="#menu-games">Juegos</a><a href="./reglas_juegos/biblioteca.html">Reglas ↗</a></nav></header>
       <div class="menu-hero">
         <div class="menu-art"><div class="menu-logo" role="img" aria-label="Elteto: berenjena y melocotón con gafas bajo un arco de neón"></div></div>
         <div class="menu-intro"><h1>Se viene<br> <span>pique.</span></h1>
-          <div class="menu-actions">${!LAN || LAN.hostKey ? '<button class="menu-button menu-primary" data-action="open-host"><span class="menu-button-label">Crear partida</span><span class="menu-button-arrow" aria-hidden="true">↗</span></button>' : ''}<button class="menu-button menu-secondary" data-action="open-join"><span class="menu-button-label">Unirse a la mesa</span><span class="menu-button-arrow" aria-hidden="true">→</span></button></div>
+          <nav class="menu-actions" aria-label="Menú principal">${!LAN || LAN.hostKey ? '<button class="menu-button menu-primary" data-action="open-host"><span class="menu-button-label">Crear partida</span><span class="menu-button-arrow" aria-hidden="true">↗</span></button>' : ''}<button class="menu-button menu-secondary" data-action="open-join"><span class="menu-button-label">Unirme a partida</span><span class="menu-button-arrow" aria-hidden="true">→</span></button><a class="menu-button menu-rules" href="./reglas_juegos/biblioteca.html"><span class="menu-button-label">Ver reglas</span><span class="menu-button-arrow" aria-hidden="true">↗</span></a></nav>
           ${LAN ? '<p class="menu-network-note">Mesa local sin internet. Conecta todos los móviles a la misma Wi-Fi o hotspot.</p>' : ''}
         </div>
       </div>
-      <section class="menu-games" id="menu-games" aria-labelledby="menu-games-title"><div class="menu-section-heading"><h2 id="menu-games-title">¿A qué le damos?</h2><a href="./reglas_juegos/biblioteca.html">Ver reglas ↗</a></div><div class="menu-game-grid">${listGames().map((game, index) => `<a class="menu-game" href="./reglas_juegos/lectura/${game.id}.html"><span class="menu-game-symbol" aria-hidden="true">${['♠','♣','⚄'][index]}</span><div><h3>${esc(game.label)}</h3><p>${game.minPlayers === game.maxPlayers ? game.minPlayers : `${game.minPlayers}–${game.maxPlayers}`} jugadores</p></div><span class="menu-game-link" aria-label="Reglas de ${esc(game.label)}">↗</span></a>`).join('')}</div></section>
-      <section class="menu-cast"><details class="menu-characters"><summary>La peña <span>${MASCOTS.length} avatares <b aria-hidden="true">+</b></span></summary><div class="menu-character-grid">${MASCOTS.map((label,index)=>`<figure>${menuAvatar(index)}<figcaption>${esc(label)}</figcaption></figure>`).join('')}</div></details></section>
-      <footer class="menu-footer"><span>ELTETO · Luego no llores.</span><details class="menu-extras"><summary>Extras <span aria-hidden="true">+</span></summary><div class="menu-extra-content"><a href="./reglas_juegos/biblioteca.html#proximos">Próximos juegos <span>${GAME_CATALOG.filter(game => game.status === 'planned').length}</span></a><a href="./assets/decks/credits.html">Créditos de las barajas ↗</a></div></details></footer>
     </div>
   </section>`;
 }

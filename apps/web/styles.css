@@ -499,6 +499,10 @@ body:has(.game-page) {
 @media(hover:hover) {
  .menu-actions .menu-button:hover { transform:translateY(-1px) skewX(-1.5deg); filter:brightness(1.025); box-shadow:inset 0 1px 0 #ffffff45,0 4px 0 #160d2680,0 0 14px var(--button-glow); }
 }
+.menu-home .menu-wrap { min-height:100svh; display:grid; align-items:center; }
+.menu-home .menu-hero { width:100%; padding-block:40px; }
+.menu-actions .menu-rules { --button-glow:#fff8e808; background:#ffffff06; border-color:#fff8e83b; color:var(--paper); box-shadow:inset 0 1px 0 #ffffff12,0 3px 0 #160d2640; }
+.menu-actions .menu-rules::after { display:none; }
 .menu-network-note { max-width:380px; color:var(--menu-muted); font-size:12px; line-height:1.5; margin-top:20px; }
 .menu-games { padding:20px 0 28px; scroll-margin-top:24px; }
 .menu-section-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:15px; }
