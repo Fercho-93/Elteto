@@ -6,7 +6,7 @@ La referencia visual son los seis mockups aportados, conservados en references/.
 
 El jugador local ya no aparece como avatar en ninguna mesa. Su mano y los indicadores de turno permanecen en primer plano; Mus conserva la pareja y la condición de mano junto a sus cartas.
 
-Cinquillo presenta los rivales en una franja compacta de retratos circulares tomados de la imagen original del usuario. Nombre, cantidad real de cartas y turno aparecen juntos. No dibuja cuerpos, sillas, manos ni abanicos de rivales. La comparación y las pruebas están en [AVATARES_RIVALES.md](AVATARES_RIVALES.md). Mus conserva la composición de personajes sentados descrita más abajo.
+Cinquillo presenta los rivales en una fila discreta de retratos circulares tomados de la imagen original del usuario, alineada a la izquierda por encima del tapete. Nombre y cantidad real de cartas aparecen al lado del retrato, sin superponer contadores ni un panel de fondo sobre la mesa. No dibuja cuerpos, sillas, manos ni abanicos de rivales. La comparación y las pruebas están en [AVATARES_RIVALES.md](AVATARES_RIVALES.md). Mus conserva la composición de personajes sentados descrita más abajo.
 
 El tapete muestra completos los dos extremos de cada escalera, sin números superpuestos ni cartas que tapen sus ilustraciones. Una escalera recién abierta muestra su cinco una sola vez. Las cartas intermedias permanecen en el estado público y se consultan con «Ver todas las cartas». Cada palo indica su cantidad y los valores que permiten continuar; se respeta el salto del siete a la sota y el orden francés de partidas antiguas. Los palos sin abrir tienen una silueta vacía, diferenciada de las cartas jugadas.
 

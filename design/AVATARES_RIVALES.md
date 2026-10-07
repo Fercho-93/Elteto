@@ -2,13 +2,13 @@
 
 ## Resultado
 
-Una franja compacta reúne los retratos circulares originales, los nombres y las cantidades públicas de cartas. La imagen es idéntica byte a byte a `design/references/personajes-10.png`: no se redibujan personajes ni se añaden cuerpos, sillas, manos o abanicos. SVG y CSS encuadran cada rostro sin modificar el bitmap.
+Una fila discreta, alineada a la izquierda y situada completamente fuera del tapete, reúne los retratos circulares originales. Cada nombre y cantidad pública de cartas aparece al lado del retrato: el contador nunca se superpone a la cara. La fila no tiene fondo, borde ni sombra y utiliza el espacio superior existente sin reducir la mesa. La imagen es idéntica byte a byte a `design/references/personajes-10.png`: SVG y CSS encuadran cada rostro sin modificar el bitmap.
 
-Las expresiones originales aportan el toque divertido. El turno añade borde dorado, un punto junto al nombre y una reacción breve; una jugada produce un gesto de 260 ms. No hay animación continua. Con una carta se destaca el contador. El movimiento reducido suprime las reacciones. Todo usa el estado público existente: no añade mensajes ni eventos de red.
+Las expresiones originales aportan el toque divertido. El turno añade un borde dorado fino, nombre dorado y una reacción breve; una jugada produce un gesto de 260 ms. No hay animación continua. Con una carta se destaca el contador. El movimiento reducido suprime las reacciones. Todo usa el estado público existente: no añade mensajes ni eventos de red.
 
 Los rivales siguen el orden de turno desde el jugador local, que no tiene avatar propio. La asignación de personajes sigue siendo estable entre dispositivos. El nombre completo, personaje y cantidad tienen descripción accesible y se consultan también en el marcador existente. Los retratos son informativos, no botones pequeños.
 
-## Comparación
+## Comparación inicial (0.1.5)
 
 Se probaron seis composiciones nuevas con la imagen original en 240 simulaciones: ocho pantallas y 2–6 jugadores. Las capturas usan una partida del motor tras 18 jugadas legales. Se midió encaje, colisiones y conservación de la geometría. Es una evaluación visual y de navegador, no un estudio con usuarios.
 
@@ -21,7 +21,7 @@ Se probaron seis composiciones nuevas con la imagen original en 240 simulaciones
 | Cápsulas horizontales | 37/40 | 40/40 | Buenas con pocos jugadores; nombres apretados al crecer. |
 | Identidad mínima | 40/40 | 40/40 | Ligera pero pierde demasiada expresión. |
 
-La franja final adapta su anchura al número de rivales. Retratos de 44 px en móvil habitual, 32 px en pantallas cortas, 30 px en horizontal corto y 60 px en pantalla amplia y alta. El tapete y los naipes conservan sus dimensiones.
+La revisión 0.1.6 elimina el panel oscuro que invadía el tapete y separa los contadores de los retratos. Usa retratos de 32 px en móvil habitual, 28 px con cuatro o cinco rivales, 24 px en pantallas estrechas o cortas y 36 px en pantallas amplias y altas. Las fichas son informativas; los controles conservan su tamaño táctil. Los nombres largos se abrevian visualmente sin perder la descripción accesible completa. El tapete y los naipes conservan sus dimensiones.
 
 ## Referencias públicas
 
@@ -39,4 +39,4 @@ Se revisó material público, sin crear cuentas ni jugar partidas en estos servi
 
 `tests/rival-portraits.mjs` comprueba diez identidades desde tres puntos de vista y tres pantallas: 90 casos por navegador, además de cantidades 0/1/5/20 y 15 comparaciones con la geometría de 0.1.4 (`877cdaa`). La referencia conserva las medidas de tapete, cartas y mano; tolerancia entre motores inferior a un píxel.
 
-Se mantienen 300 escenarios de distribución por navegador, acciones, movimiento reducido, caché sin conexión y partidas LAN con servidor Java real. La CI ejecuta Chromium y WebKit y adjunta capturas y medidas. Android 0.1.5 (código 6) usa caché v19 e incluye la imagen original. Los atlas experimentales descartados no se empaquetan. No sustituye una instalación en un teléfono físico.
+Se mantienen 300 escenarios de distribución por navegador, acciones, movimiento reducido, caché sin conexión y partidas LAN con servidor Java real. La matriz comprueba expresamente que toda la fila esté fuera del tapete y que cada contador esté dentro de pantalla y separado del retrato, con 2–6 jugadores y estados iniciales, intermedios y completos. La CI ejecuta Chromium y WebKit y adjunta capturas y medidas. Android 0.1.6 (código 7) usa caché v20 e incluye la imagen original. Los atlas experimentales descartados no se empaquetan. No sustituye una instalación en un teléfono físico.

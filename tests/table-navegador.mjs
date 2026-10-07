@@ -96,7 +96,7 @@ try {
       assert.equal(await page.locator('.suit-lane .board-card').count(),40);
       assert.match(await page.locator('.game-ribbon').textContent(),/40 cartas españolas/);
       assert.equal(
-        await page.locator(".rival-count").evaluateAll(els=>els.reduce((sum,el)=>sum+Number(el.textContent),0)),
+        await page.locator(".rival-count").evaluateAll(els=>els.reduce((sum,el)=>sum+Number(el.dataset.count),0)),
         40 - game.hands[id].length,
       );
       assert.equal(

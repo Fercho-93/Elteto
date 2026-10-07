@@ -188,7 +188,7 @@ const view = cinquilloEngine.view(
   "c",
 );
 const html = renderSeats(view, "c", (id) => id, "cinquillo");
-const publicCounts=[...html.matchAll(/aria-hidden="true"><i><\/i>(\d+)<\/span>/g)].map(match=>Number(match[1]));
+const publicCounts=[...html.matchAll(/class="rival-count [^"]*" data-count="(\d+)"/g)].map(match=>Number(match[1]));
 assert.deepEqual(publicCounts,[10,10,10]);
 assert.equal((html.match(/class="card-back"/g) || []).length, 0);
 assert.equal((html.match(/data-player-id=/g) || []).length, 3);
