@@ -6,7 +6,7 @@ import { arrangeCinquilloScreen } from './cinquillo-screen.js';
 import { arrangeMusScreen } from './mus-screen.js';
 import { renderParchisScreen } from './parchis-board.js';
 import { parseRoomCode } from "./room-code.js";
-import { activateHost, activateDevelopmentAdmin, requireHostAccess, recoverHostPassword, leaveHostAccount, cachedHostAccess } from './host-access.js';
+import { activateHost, activateDevelopmentAdmin, activatePublicDevelopmentAdmin, requireHostAccess, recoverHostPassword, leaveHostAccount, cachedHostAccess } from './host-access.js';
 import { distributionConfig } from './distribution-config.js';
 
 import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, canPlayCinquillo, animateTable, animateSeats } from "./table-view.js";
@@ -46,6 +46,7 @@ function renderHome() {
         <div class="menu-art"><div class="menu-logo" role="img" aria-label="Elteto: personajes, dados y coche morado entre palmeras de neón"></div></div>
         <div class="menu-intro"><h1>Se viene<br> <span>pique.</span></h1>
           <nav class="menu-actions" aria-label="Menú principal">${!LAN || LAN.hostKey ? '<button class="menu-button menu-primary" data-action="open-host"><span class="menu-button-label">Crear partida</span><span class="menu-button-arrow" aria-hidden="true">↗</span></button>' : ''}<button class="menu-button menu-secondary" data-action="open-join"><span class="menu-button-label">Unirme a partida</span><span class="menu-button-arrow" aria-hidden="true">→</span></button><a class="menu-button menu-rules" href="./reglas_juegos/biblioteca.html"><span class="menu-button-label">Ver reglas</span><span class="menu-button-arrow" aria-hidden="true">↗</span></a></nav>
+          ${distributionConfig.developmentAdminEnabled ? '<button class="text-button access-switch" data-action="development-admin">Entrar como administrador</button>' : ''}
           ${LAN ? '<p class="menu-network-note">Mesa local sin internet. Conecta todos los móviles a la misma Wi-Fi o hotspot.</p>' : ''}
         </div>
       </div>
@@ -61,6 +62,7 @@ function renderAccess() {
     <label class="field-label" for="access-password">Contraseña</label><input class="text-field" id="access-password" type="password" minlength="${accessLogin ? 6 : 8}" autocomplete="${accessLogin ? 'current-password' : 'new-password'}" required>
     ${accessLogin ? '' : `<label class="field-label" for="activation-code">Código de invitación</label><input class="text-field activation-input" id="activation-code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="200" required placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" value="${esc(activationCode)}">`}
     <p class="error-message" id="access-error" role="alert"></p><button type="submit" class="menu-button menu-primary menu-create">${accessLogin ? 'Entrar' : 'Activar acceso'} <span aria-hidden="true">↗</span></button></form>
+    ${distributionConfig.developmentAdminEnabled ? '<button class="text-button access-switch" data-action="development-admin">Entrar como administrador</button>' : ''}
     <button class="text-button access-switch" data-action="access-switch">${accessLogin ? 'Tengo un código' : 'Ya tengo acceso'}</button>
     ${accessLogin ? '<button class="text-button access-switch" data-action="access-recover">Recuperar contraseña</button>' : '<p class="helper">Una invitación, una cuenta. Guarda tu acceso para cambiar de móvil.</p>'}
   </section></div></section>`;
@@ -395,6 +397,12 @@ app.addEventListener("click", async (event) => {
     }
     if (action === "go-to-hand") { const heading=app.querySelector('.hand-heading'); heading.focus({preventScroll:true}); heading.scrollIntoView({block:'start',behavior:'instant'}); }
     else if(action === "close-table-zoom") app.querySelector('.board-zoom')?.close();
+    else if (action === 'development-admin') {
+      if (GUEST || accessBusy) return;
+      accessBusy = true;
+      try { await activatePublicDevelopmentAdmin(); renderHostForm(); }
+      finally { accessBusy = false; }
+    }
     else if (action === 'access-switch') { accessLogin = !accessLogin; renderAccess(); }
     else if (action === 'access-install') { renderInstallation(); }
     else if (action === 'access-logout') { await leaveHostAccount(); renderHome(); }

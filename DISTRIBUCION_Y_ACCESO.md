@@ -20,6 +20,18 @@ de código. Las salas online caducan como máximo en seis horas sin tareas de pa
 
 ## Firebase y administración
 
+### Acceso público temporal en Pages
+
+Durante esta fase sin distribución, `developmentAdminEnabled: true` muestra
+«Entrar como administrador» en la portada y en el formulario de acceso. Cualquier
+visitante puede abrir mesas sin contraseña mientras el workflow «Acceso de desarrollo
+en Pages» tenga `enabled=true`. No concede administración de la base de datos.
+Antes de distribuir: ejecutar ese workflow con `enabled=false` y cambiar
+`developmentAdminEnabled` a `false`. El servidor deja de aceptar salas nuevas de
+las licencias temporales, incluso con una versión antigua de la web. Las licencias
+normales por invitación siguen funcionando. Los permisos locales sin internet
+requieren actualizar la aplicación para retirar este modo.
+
 Durante el desarrollo se puede ejecutar `node scripts/create-development-access.mjs`.
 Guarda un HTML privado en `.private/` con un enlace de administrador sin contraseña.
 El enlace se canjea una vez, antes de 24 horas, y autoriza la identidad anónima de ese

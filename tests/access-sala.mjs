@@ -6,7 +6,7 @@ import { initializeFirestore, connectFirestoreEmulator, doc, getDocFromServer, s
 import { initializeTestEnvironment, assertFails } from '@firebase/rules-unit-testing';
 globalThis.location = new URL('https://fercho-93.github.io/Elteto/');
 globalThis.document = {visibilityState:'visible',addEventListener(){},removeEventListener(){}};
-const { redeemActivationCode } = await import('../dist/host-access.js');
+const { redeemActivationCode, activatePublicDevelopmentAdmin } = await import('../dist/host-access.js');
 const { createActivationCode, activationCodeHash } = await import('../dist/activation-code.js');
 const { OnlineSession } = await import('../dist/online-room.js');
 const env = await initializeTestEnvironment({projectId:'demo-elteto',firestore:{host:'127.0.0.1',port:8080,rules:fs.readFileSync('firestore.rules','utf8')}});
@@ -70,5 +70,15 @@ try {
   await assertFails(setDoc(doc(other.db,'activationCodes','e'.repeat(64)),{status:'unused',kind:'development-admin'}));
   await env.withSecurityRulesDisabled(ctx=>updateDoc(doc(ctx.firestore(),'hostAccess',developer.uid),{status:'revoked'}));
   await assert.rejects(OnlineSession.create({gameId:'cinquillo',hostName:'Administrador'},()=>{},developer),/Activa/);
+  const publicDeveloper=await connect();
+  await assert.rejects(activatePublicDevelopmentAdmin(publicDeveloper));
+  await assertFails(setDoc(doc(publicDeveloper.db,'configuration','development'),{enabled:true}));
+  await env.withSecurityRulesDisabled(ctx=>setDoc(doc(ctx.firestore(),'configuration','development'),{enabled:true}));
+  await activatePublicDevelopmentAdmin(publicDeveloper);
+  assert.equal(publicDeveloper.auth.currentUser.isAnonymous,true);
+  const publicRoom=await OnlineSession.create({gameId:'cinquillo',hostName:'Desarrollo'},()=>{},publicDeveloper);sessions.push(publicRoom);
+  await env.withSecurityRulesDisabled(ctx=>setDoc(doc(ctx.firestore(),'configuration','development'),{enabled:false}));
+  await assert.rejects(activatePublicDevelopmentAdmin(publicDeveloper),/desactivado/);
+  await assert.rejects(OnlineSession.create({gameId:'mus',hostName:'Desarrollo'},()=>{},publicDeveloper));
   console.log('Acceso real: carrera entre dos cuentas, canje atómico, permisos, caducidad, recuperación, invitados y revocación: OK');
 } finally {for(const session of sessions)session.teardown();await env.cleanup();await Promise.all(apps.map(deleteApp));}
