@@ -138,7 +138,7 @@ export class OnlineSession {
         this.state = this.engine.applyAction(this.state, move.playerId, move.action);
         await this.publish();
       }),
-      error => this.onChange({kind:'error', message:String(error.message || error)}), botTurnDelay(this.engine.id));
+      error => this.onChange({kind:'error', message:String(error.message || error)}), () => botTurnDelay(this.engine?.id || this.room?.gameId || ''));
     // Tareas de quien juega.
     this.viewStop = null;
     this.viewRev = -1;

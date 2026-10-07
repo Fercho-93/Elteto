@@ -148,7 +148,7 @@ export const botTurnDelay=(gameId:string)=>['oca','damas_espanolas','damas-espan
 export class BotRunner {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private generation = 0;
-  constructor(private next: () => ReturnType<typeof nextBotMove>, private apply: (move: NonNullable<ReturnType<typeof nextBotMove>>) => unknown | Promise<unknown>, private onError: (error: unknown) => void, private delay = 2400) {}
+  constructor(private next: () => ReturnType<typeof nextBotMove>, private apply: (move: NonNullable<ReturnType<typeof nextBotMove>>) => unknown | Promise<unknown>, private onError: (error: unknown) => void, private delay: number | (() => number) = 2400) {}
   schedule() {
     if (this.timer) return;
     const generation = this.generation;
@@ -160,7 +160,7 @@ export class BotRunner {
         await this.apply(move);
         if (generation === this.generation) this.schedule();
       } catch (error) { this.onError(error); }
-    }, this.delay);
+    }, typeof this.delay === 'function' ? this.delay() : this.delay);
   }
   stop() { this.generation++; if (this.timer) clearTimeout(this.timer); this.timer = null; }
 }
