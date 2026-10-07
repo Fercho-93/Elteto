@@ -182,13 +182,15 @@ assert.equal(s.finished, false);
 assert.equal(s.phase, "showdown");
 assert.equal(s.gamesWon[s.gameWinner],1);
 assert.ok(musEngine.view(s, "a").revealedHands);
-// Seat rotation keeps partnership opposite and represents every hidden card by its back.
+// Rivals expose public counts, never their private card faces or the local avatar.
 const view = cinquilloEngine.view(
   cinquilloEngine.createInitialState(players, 1),
   "c",
 );
 const html = renderSeats(view, "c", (id) => id, "cinquillo");
-assert.equal((html.match(/class="card-back"/g) || []).length, 30);
+const publicCounts=[...html.matchAll(/aria-hidden="true"><i><\/i>(\d+)<\/span>/g)].map(match=>Number(match[1]));
+assert.deepEqual(publicCounts,[10,10,10]);
+assert.equal((html.match(/class="card-back"/g) || []).length, 0);
 assert.equal((html.match(/data-player-id=/g) || []).length, 3);
 assert.ok(!html.includes('data-player-id="c"'));
 console.log(
