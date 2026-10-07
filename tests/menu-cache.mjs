@@ -7,7 +7,11 @@ import vm from 'node:vm';
 const index = await readFile('dist/index.html', 'utf8');
 const worker = await readFile('dist/sw.js', 'utf8');
 const hash = createHash('sha256');
-for (const file of ['app.js', 'styles.css', 'qr-scanner.js', 'catalog-games.js', 'catalog-games.css', 'game-core/catalog.js', 'game-core/engine.js', 'game-core/index.js', ...['shared','boards','social-cards','tricks','melds','holdem'].map(name => `game-core/games/${name}.js`)]) hash.update(await readFile(`dist/${file}`));
+for (const file of ['app.js', 'styles.css', 'qr-scanner.js', 'firebase-sdk.js', 'host-access.js', 'activation-code.js', 'online-room.js', 'room-code.js', 'distribution-config.js', 'guest.html', 'catalog-games.js', 'catalog-games.css', 'game-core/catalog.js', 'game-core/engine.js', 'game-core/index.js', ...['shared','boards','social-cards','tricks','melds','holdem'].map(name => `game-core/games/${name}.js`)]) {
+  let content = await readFile(`dist/${file}`);
+  if (file === 'guest.html') content = Buffer.from(content.toString().replace(/\?v=[a-f0-9]{12}/g, ''));
+  hash.update(content);
+}
 const version = hash.digest('hex').slice(0, 12);
 assert.ok(index.includes(`./app.js?v=${version}`));
 assert.ok(index.includes(`./styles.css?v=${version}`));

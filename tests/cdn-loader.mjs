@@ -6,6 +6,7 @@ import { register } from "node:module";
 register("data:text/javascript," + encodeURIComponent(`
   const CDN = /^https:\\/\\/www\\.gstatic\\.com\\/firebasejs\\/[\\d.]+\\/firebase-([\\w-]+)\\.js$/;
   export async function resolve(specifier, context, next) {
+    if (specifier.endsWith('/firebase-sdk.js')) return next(new URL('../apps/web/firebase-sdk.js', '${import.meta.url}').href, context);
     const match = CDN.exec(specifier);
     if (match) return next("firebase/" + match[1], context);
     return next(specifier, context);

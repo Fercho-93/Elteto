@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 import {readFile} from 'node:fs/promises';
-import {chromium,webkit} from 'playwright';
+const {chromium,webkit}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const cp=process.env.LAN_JAVA_CP || await readFile('.lan-java-classpath','utf8');
 const server=spawn('java',['-cp',cp,'LanServerMain','dist','0']);
 server.stderr.on('data',data=>process.stderr.write(data));
@@ -17,6 +17,7 @@ try {
   const ctx=await browser.newContext({viewport:{width:390,height:664},serviceWorkers:'block',reducedMotion:'reduce'});
   await ctx.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
   await ctx.addInitScript(name=>localStorage.setItem('elteto.playerName',name),name);
+  await ctx.addInitScript(()=>{window.EltetoActivation={isActivated:()=>true};});
   const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));return page;
  };
  const host=await context('Ana');await host.goto(hostUrl);
@@ -67,13 +68,17 @@ try {
  assert.equal(await host.locator('.own-seat').count(),0);
  await host.locator('.game-menu-button').click();
  await host.locator('[data-action="leave-room"]').click();
- await guest.locator('[data-action="open-join"]').waitFor();
+ await guest.getByText('Hasta la próxima.',{exact:true}).waitFor();
+ assert.equal(await guest.locator('[data-action="open-host"]').count(),0);
  // Open another LAN table using the unchanged generic transport, now choosing Mus.
  await host.locator('[data-action="open-host"]').click();
  await host.locator('#host-name').fill('Ana');
  await host.locator('label.game-option:has(input[value="mus"])').click();
  await host.locator('[data-action="create-room"]').click();
  const musCode=(await host.locator('.room-code').textContent()).trim();
+ assert.notEqual(musCode,code,'cada mesa tiene una invitación distinta');
+ const old=await context('Enlace antiguo');await old.goto(base+'/?join='+code);
+ await old.waitForFunction(()=>document.querySelector('#app').textContent.includes('otra mesa'));
  await guest.goto(base+'/?join='+musCode);
  const c=await context('Cris'),d=await context('Dani');
  await c.goto(base+'/?join='+musCode);await d.goto(base+'/?join='+musCode);
@@ -99,7 +104,7 @@ try {
  for(const p of pages) await p.waitForFunction(()=>document.querySelector('.mus-phase strong').textContent==='Chica');
  await host.locator('.game-menu-button').click();
  await host.locator('[data-action="leave-room"]').click();
- for(const p of [guest,c,d]) await p.locator('[data-action="open-join"]').waitFor();
+ for(const p of [guest,c,d]) await p.getByText('Hasta la próxima.',{exact:true}).waitFor();
  // The same room, QR, messages and reconnection path also carry a public board game.
  await host.locator('[data-action="open-host"]').click();await host.locator('#host-name').fill('Ana');
  await host.locator('label.game-option:has(input[value="parchis"])').click();await host.locator('[data-action="create-room"]').click();
@@ -126,7 +131,7 @@ try {
  const before=await guest.locator('.parchis-table [data-pawn]').evaluateAll(els=>els.map(el=>[el.dataset.pawn,el.style.left,el.style.top]));
  await guest.reload();await guest.locator('.parchis-table [data-pawn]').first().waitFor();
  assert.deepEqual(await guest.locator('.parchis-table [data-pawn]').evaluateAll(els=>els.map(el=>[el.dataset.pawn,el.style.left,el.style.top])),before);
- await host.locator('.game-menu-button').click();await host.locator('[data-action="leave-room"]').click();await guest.locator('[data-action="open-join"]').waitFor();
+ await host.locator('.game-menu-button').click();await host.locator('[data-action="leave-room"]').click();await guest.getByText('Hasta la próxima.',{exact:true}).waitFor();
  console.log('Parchís LAN: initial dice, rolls, legal moves, board synchronization and reload/reconnection: OK');
  assert.deepEqual(errors,[]);
  console.log('Mus LAN: cuatro navegadores, 16 cartas privadas, decisión de mus, envite y siguiente lance: OK');

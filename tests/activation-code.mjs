@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { createActivationCode, activationCodeHash, normalizeActivationCode } from '../apps/web/activation-code.js';
+const codes = new Set(Array.from({ length: 1000 }, createActivationCode));
+assert.equal(codes.size, 1000);
+for (const code of codes) assert.match(code, /^[A-HJ-NP-Z2-9]{4}(?:-[A-HJ-NP-Z2-9]{4}){5}$/);
+const code = [...codes][0];
+assert.equal(await activationCodeHash(code), await activationCodeHash(code.toLowerCase().replaceAll('-', ' ')));
+assert.equal(await activationCodeHash(`https://example.test/#activate=${code}`), await activationCodeHash(code));
+assert.match(await activationCodeHash(code), /^[a-f0-9]{64}$/);
+assert.equal(normalizeActivationCode('https://example.test/?activate=secret'), '');
+await assert.rejects(activationCodeHash('ABCD2345'), /código/);
+console.log('Invitaciones: 120 bits, formato, enlaces privados y hash estable: OK');

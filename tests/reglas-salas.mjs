@@ -24,7 +24,7 @@ const baseRoom = (extra = {}) => ({
 });
 const seed = async (data = baseRoom(), more = async () => {}) => {
   await env.clearFirestore();
-  await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), "rooms", CODE), data); await more(ctx.firestore()); });
+  await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), 'hostAccess', 'ana'), { status: 'active' }); await setDoc(doc(ctx.firestore(), "rooms", CODE), data); await more(ctx.firestore()); });
 };
 const bump = (data, patch) => ({ ...patch, version: data.version + 1, updatedAt: serverTimestamp() });
 let checks = 0;
@@ -34,6 +34,7 @@ const no = async (label, promise) => { try { await assertFails(promise); checks+
 try {
   // --- Crear una sala y la cuota ------------------------------------------------------
   await env.clearFirestore();
+  await env.withSecurityRulesDisabled(ctx => setDoc(doc(ctx.firestore(), 'hostAccess', 'ana'), {status: 'active'}));
   const fresh = (uid, code = CODE, extra = {}) => ({
     roomCode: code, gameId: "mus", roomName: "Mesa", hostUid: uid, status: "lobby", version: 1, minPlayers: 4, maxPlayers: 4,
     playerOrder: [uid], players: { [uid]: player(uid) }, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), ...extra,
@@ -46,6 +47,7 @@ try {
   };
   await no("sin sesión", (async () => { const b = writeBatch(anon()); b.set(doc(anon(), "rooms", CODE), fresh("x")); return b.commit(); })());
   await no("sin registro de cuota", setDoc(room("ana"), fresh("ana")));
+  await no('un invitado no crea salas aunque imite la app', create('cris'));
   await no("código con letras prohibidas (I, O)", create("ana", "ABCI2345"));
   await no("anfitrión que no es quien escribe", create("ana", CODE, { hostUid: "bea" }));
   await no("más plazas de las permitidas", create("ana", CODE, { maxPlayers: 9 }));
@@ -175,21 +177,29 @@ try {
   await seed(playing, beat("ana", 100000));
   await no("relevo de un extraño", claim("cris"));
   await no("relevo con cambios de más", updateDoc(room("bea"), bump(playing, { hostUid: "bea", status: "ended" })));
-  await ok("relevo con el anfitrión ausente 90 s", claim("bea"));
+  await no("un invitado no hereda la mesa aunque falte el anfitrión", claim("bea"));
   await seed(playing, beat("ana", 20000, false));
-  await ok("relevo con el anfitrión en segundo plano 15 s", claim("bea"));
+  await no("un invitado no hereda la mesa en segundo plano", claim("bea"));
   await seed(playing, beat("ana", 20000, true));
   await no("el mismo tiempo con la pantalla visible no basta", claim("bea"));
   await seed(baseRoom({ status: "playing", updatedAt: Timestamp.fromMillis(Date.now() - 200000) }));
-  await ok("sin latido, vale la última actividad de la sala", claim("bea", baseRoom({ status: "playing" })));
+  await no("sin latido tampoco se hereda la mesa", claim("bea", baseRoom({ status: "playing" })));
   await seed(baseRoom({ status: "ended" }), beat("ana", 200000));
   await no("no hay relevo en una sala cerrada", claim("bea", baseRoom({ status: "ended" })));
-  // Tras el relevo, los permisos pasan a la nueva persona.
+  // Ni siquiera una cuenta activada que entra como invitada hereda esta sala.
   await seed(playing, beat("ana", 100000));
-  await ok("relevo", claim("bea"));
-  await ok("el nuevo anfitrión lee el estado", (async () => { await env.withSecurityRulesDisabled(async (ctx) => setDoc(doc(ctx.firestore(), "rooms", CODE, "secret", "state"), secret)); return getDoc(sub("bea", "secret", "state")); })());
-  await no("el anterior ya no", getDoc(sub("ana", "secret", "state")));
-  await ok("el nuevo anfitrión confirma jugadas", updateDoc(room("bea"), bump({ ...playing, version: 2 }, {})));
+  await env.withSecurityRulesDisabled(ctx => setDoc(doc(ctx.firestore(), 'hostAccess', 'bea'), {status:'active'}));
+  await no("anfitrión invitado no toma otra sala", claim("bea"));
+
+  // Tras cerrar, ninguna mano ni jugada sigue accesible.
+  await seed(playing);
+  await ok('guardar una vista antes del cierre', setDoc(sub('ana','views','bea'), view()));
+  await ok('cerrar la mesa', updateDoc(room('ana'), bump(playing, {status:'ended'})));
+  await no('el invitado no lee su mano después del cierre', getDoc(sub('bea','views','bea')));
+  await no('el anfitrión no escribe nuevas vistas tras cerrar', setDoc(sub('ana','views','bea'), view()));
+  await no('el invitado no juega tras cerrar', setDoc(sub('bea','actions','bea'), {seq:1,json:'{}',at:serverTimestamp()}));
+  await seed(baseRoom({status:'playing',createdAt:Timestamp.fromMillis(Date.now()-7*60*60*1000)}));
+  await no('la sala caduca sin cron ni TTL de pago', getDoc(sub('bea','views','bea')));
 
   // --- Lo demás está cerrado --------------------------------------------------------------
   await no("colecciones sin regla", setDoc(doc(db("ana"), "otra", "cosa"), { a: 1 }));

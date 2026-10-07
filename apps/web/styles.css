@@ -843,3 +843,12 @@ body:has(.game-page) {
 .menu-shell:not(.menu-home) { padding-top:env(safe-area-inset-top); }
 .topbar { height:calc(64px + env(safe-area-inset-top)); padding-top:calc(10px + env(safe-area-inset-top)); padding-inline:max(18px,env(safe-area-inset-left),calc((100vw - 920px) / 2)) max(18px,env(safe-area-inset-right),calc((100vw - 920px) / 2)); }
 .menu-room-shell .player-row strong { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+/* Acceso e instalación: el mismo marco y paleta que el menú. */
+.access-panel { max-width: 600px; margin-inline: auto; }
+.access-panel form { display: grid; gap: 12px; }
+.access-panel .field-label { margin: 10px 0 0; }
+.access-switch { display: block; margin: 20px auto 0; padding: 10px; }
+.activation-input { font-family: monospace; font-size: clamp(12px, 3.4vw, 18px); letter-spacing: .03em; }
+.install-options { margin-top: 24px; }
+.access-panel .menu-button { margin-top: 16px; }
+.access-panel .error-message:empty { display: none; }

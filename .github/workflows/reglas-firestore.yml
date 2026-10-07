@@ -40,6 +40,8 @@ jobs:
       - run: npm ci
       - name: Probar las reglas contra el emulador
         run: npm run test:reglas
+      - name: Probar canje simultáneo e invitados
+        run: npm run build:web && npm run test:acceso
       - name: Escribir la credencial
         env:
           CUENTA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

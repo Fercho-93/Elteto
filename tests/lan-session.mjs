@@ -5,6 +5,7 @@ globalThis.location = new URL('http://192.168.1.2:3000/');
 const storage = new Map();
 globalThis.sessionStorage = {getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)};
 globalThis.window = { ELTETO_LAN: {roomCode:'ABCD2345',inviteBase:'http://192.168.1.2:3000',hostKey:'secret'} };
+globalThis.fetch = async () => ({ ok: true, json: async () => ({roomCode:'ABCD2345',inviteBase:'http://192.168.1.2:3000'}) });
 let hostSocket;
 const guests = new Map();
 class Socket {

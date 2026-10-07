@@ -1,0 +1,57 @@
+name: Publicar Android
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: android-release
+  cancel-in-progress: false
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build:web
+      - run: node tests/lan-session.mjs
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: bash tests/prepare-lan-java.sh
+      - run: node tests/lan-servidor.mjs
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Preparar firma privada
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ELTETO_ANDROID_KEYSTORE }}
+        run: |
+          test -n "$KEYSTORE_BASE64"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/elteto.jks"
+      - name: Compilar APK firmada
+        env:
+          ELTETO_KEYSTORE: ${{ runner.temp }}/elteto.jks
+          ELTETO_STORE_PASSWORD: ${{ secrets.ELTETO_ANDROID_STORE_PASSWORD }}
+        run: gradle -p apps/android-host assembleRelease
+      - name: Publicar descarga
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp apps/android-host/app/build/outputs/apk/release/app-release.apk Elteto.apk
+          if ! gh release view android-v0.2.0 >/dev/null 2>&1; then
+            gh release create android-v0.2.0 --target "$GITHUB_SHA" --title 'Elteto Android 0.2.0' --notes 'Anfitrión con invitación de un solo uso. Invitados por navegador en la misma Wi-Fi, sin instalar.'
+          fi
+          gh release upload android-v0.2.0 Elteto.apk --clobber
+      - name: Borrar firma del runner
+        if: always()
+        run: rm -f "$RUNNER_TEMP/elteto.jks"
