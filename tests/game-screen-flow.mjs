@@ -77,7 +77,7 @@ try {
    return {badBoard,proportions,offFelt,board,visible:cards.every(el=>inside(rect(el))),page:document.documentElement.scrollHeight<=innerHeight+1,count:document.querySelectorAll('.rival-original').length,companion:[...document.querySelectorAll('.rival-team')].filter(el=>el.textContent.includes('Compi')).length,minButton:Math.min(...[...document.querySelectorAll('.mus-decisions button')].map(el=>rect(el).height))};
   });
   measurements.push({width,height,phase:game.phase,id,...metrics});
-  assert.ok(metrics.proportions&&metrics.offFelt&&metrics.board&&metrics.visible&&metrics.page,JSON.stringify(measurements.at(-1)));assert.equal(metrics.count,3);assert.equal(metrics.companion,1);assert.ok(metrics.minButton>=44);
+  assert.ok(metrics.proportions&&metrics.offFelt&&metrics.board&&metrics.visible&&metrics.page,JSON.stringify(measurements.at(-1)));assert.equal(metrics.count,4);assert.equal(metrics.companion,1);assert.ok(metrics.minButton>=44);
   assert.equal(await page.locator('.revealed-hands .reveal-card').count(),game.phase==='showdown'||game.finished?16:0);
   if(id==='a'&&[390,844].includes(width))await page.screenshot({path:`tests/artifacts/flow/mus-${game.finished?'finished':game.phase}-${width}-${height}-${kind}.png`});
  }

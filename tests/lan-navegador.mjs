@@ -32,12 +32,12 @@ try {
  assert.equal(await host.locator('.hand .playing-card').count()+await guest.locator('.hand .playing-card').count(),40);
  // Exercise the actual LAN entry page: a correct index.html does not cover lan.html.
  for(const page of [host,guest]) {
-  assert.ok(await page.locator('.table-seat:not(.own-seat)').evaluate(seat=>{
-   const body=seat.getBoundingClientRect(),felt=document.querySelector('.table-surface').getBoundingClientRect();
-   return body.top+body.height*.5<felt.top;
+  assert.ok(await page.locator('.table-seat:not(.own-seat)').evaluateAll(seats=>{
+   const felt=document.querySelector('.table-surface').getBoundingClientRect();
+   return seats.every(seat=>{const body=seat.getBoundingClientRect();return body.top+body.height*.5<felt.top;});
   }), 'The rival face must remain above the felt on the LAN page');
   assert.equal(await page.locator('.hand-dock').evaluate(el=>getComputedStyle(el).display),'grid');
-  assert.ok(await page.locator('.game-table .rival-name').evaluate(el=>el.getBoundingClientRect().bottom<=document.querySelector('.hand-dock').getBoundingClientRect().top), 'Player label stays above the private hand');
+  assert.ok(await page.locator('.game-table .rival-name').evaluateAll(labels=>labels.every(el=>el.getBoundingClientRect().bottom<=document.querySelector('.hand-dock').getBoundingClientRect().top)), 'Player labels stay above the private hand');
   const hand=await page.locator('.hand .playing-card').first().boundingBox();
   assert.ok(hand.y>=0 && hand.y+hand.height<=664, 'Full-size own cards stay visible in the compact mobile viewport');
   assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+1),'LAN screen needs no vertical page scrolling');
@@ -53,7 +53,7 @@ try {
  await guest.screenshot({path:`tests/artifacts/lan-mobile-${process.env.LAN_BROWSER||'chromium'}.png`,fullPage:true});
  for(let i=0;i<8;i++){
   const activePages=[];
-  for(const p of [host,guest])if(await p.locator('.turn-banner.your-turn').count())activePages.push(p);
+  for(const p of [host,guest])if(await p.locator('.self-seat.active-seat').count())activePages.push(p);
   assert.equal(activePages.length,1,'exactly one player has the turn, including a mandatory pass');
   const active=activePages[0];
   const previous=await host.locator('.history li').count();const cards=active.locator('.hand .playing-card:not([disabled])');
@@ -63,7 +63,7 @@ try {
  }
  const guestCards=await guest.locator('.hand .playing-card').count();await guest.reload();
  await guest.locator('.hand .playing-card').first().waitFor();assert.equal(await guest.locator('.hand .playing-card').count(),guestCards);
- assert.equal(await host.locator('.table-seat').count(),1);
+ assert.equal(await host.locator('.table-seat').count(),2);
  assert.equal(await host.locator('.own-seat').count(),0);
  await host.locator('.game-menu-button').click();
  await host.locator('[data-action="leave-room"]').click();
@@ -82,8 +82,9 @@ try {
  for(const p of [host,guest,c,d]) {
   await p.locator('.hand .playing-card').first().waitFor();
   assert.equal(await p.locator('.hand .playing-card').count(),4);
-  assert.equal(await p.locator('.rival-original').count(),3);
-  assert.equal(await p.locator('.rival-count').evaluateAll(els=>els.reduce((sum,el)=>sum+Number(el.dataset.count),0)),12);
+  assert.equal(await p.locator('.rival-original').count(),4);
+  assert.equal(await p.locator('.self-seat').count(),1);
+  assert.equal(await p.locator('.rival-count').evaluateAll(els=>els.reduce((sum,el)=>sum+Number(el.dataset.count),0)),16);
  }
  const pages=[host,guest,c,d];
  const actor=async action=>{

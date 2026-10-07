@@ -741,7 +741,7 @@ body:has(.game-page) {
 @media(prefers-reduced-motion:reduce) { .menu-shell *, .menu-shell *::before, .menu-shell *::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
 /* One public player strip, including yourself, shared by every game. */
 :is(.cinquillo-screen,.mus-screen,.parchis-screen) { --player-avatar-size:64px; }
-:is(.cinquillo-screen,.mus-screen,.parchis-screen) .player-roster.rival-roster { --token-size:var(--player-avatar-size); top:6px; left:10px; right:10px; max-width:none; gap:8px; padding:8px 3px 4px; grid-template-columns:repeat(var(--rival-count),minmax(calc(var(--token-size) + 12px),1fr)); align-items:start; overflow-x:auto; scrollbar-width:thin; scrollbar-color:#69e5e244 transparent; }
+:is(.cinquillo-screen,.mus-screen,.parchis-screen) .player-roster.rival-roster { --token-size:min(var(--player-avatar-size),max(32px,calc((100vw - 56px - (var(--rival-count) - 1) * 8px) / var(--rival-count)))); top:6px; left:10px; right:10px; max-width:none; gap:8px; padding:8px 3px 4px; grid-template-columns:repeat(var(--rival-count),minmax(0,1fr)); align-items:start; overflow-x:auto; scrollbar-width:thin; scrollbar-color:#69e5e244 transparent; }
 :is(.cinquillo-screen,.mus-screen,.parchis-screen) .player-roster.rival-roster .table-seat.rival-seat { display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; min-width:0; }
 .player-roster .rival-info { align-items:center; width:100%; min-height:40px; padding:0; }
 .player-roster .rival-name { width:100%; }

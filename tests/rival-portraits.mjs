@@ -31,7 +31,7 @@ try{
   for(const own of [5,3,1]){
    await page.evaluate(({game,own})=>window.testTable('cinquillo',game,game.players[own]),{game,own});await settle(page);
    const metrics=await page.evaluate(id=>{const seat=[...document.querySelectorAll('.rival-seat')].find(el=>el.dataset.playerId===id),portrait=seat.querySelector('.rival-original'),r=portrait.getBoundingClientRect();const bodies=[...document.querySelectorAll('.rival-seat')].map(el=>el.getBoundingClientRect());const overlap=(a,b)=>a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5;return {faceVisible:document.elementFromPoint(r.x+r.width*.5,r.y+r.height*.52)?.closest('.rival-seat')===seat,portraitFits:r.left>=0&&r.right<=innerWidth&&r.top>=44,noOverlap:!bodies.some((a,i)=>bodies.slice(i+1).some(b=>overlap(a,b))),count:Number(seat.querySelector('.rival-count').dataset.count),href:portrait.querySelector('image').getAttribute('href'),order:[...document.querySelectorAll('.rival-seat')].map(s=>s.dataset.playerId),ownAbsent:!document.querySelector('.own-seat')};},ids[0]);
-   rows.push({width,height,character,...metrics});assert.ok(metrics.faceVisible&&metrics.portraitFits&&metrics.noOverlap&&metrics.ownAbsent,JSON.stringify(rows.at(-1)));assert.equal(metrics.count,game.hands[ids[0]].length);assert.ok(metrics.href.includes('elteto-original-avatars.png'));assert.deepEqual(metrics.order,Array.from({length:5},(_,i)=>game.players[(own+i+1)%6]));
+   rows.push({width,height,character,...metrics});assert.ok(metrics.faceVisible&&metrics.portraitFits&&metrics.noOverlap&&metrics.ownAbsent,JSON.stringify(rows.at(-1)));assert.equal(metrics.count,game.hands[ids[0]].length);assert.ok(metrics.href.includes('elteto-avatars-v3.png'));assert.deepEqual(metrics.order,Array.from({length:6},(_,i)=>game.players[(own+i)%6]));
    if(width===390&&own===3)await page.screenshot({path:fileURLToPath(new URL(`identity-${character}-${name}.png`,output))});
   }
  }
@@ -41,7 +41,7 @@ try{
   game.hands['count-b']=Array.from({length:count},(_,i)=>game.hands['count-b'][i%20]);
   await page.evaluate(game=>window.testTable('cinquillo',game,'count-a'),game);
   assert.equal(await page.locator('.rival-hand,.forearms').count(),0);
-  assert.equal(Number((await page.locator('.rival-count').textContent()).replace(/\D/g,'')),count);
+  assert.equal(Number((await page.locator('.rival-seat:not(.self-seat) .rival-count').textContent()).replace(/\D/g,'')),count);
  }
  assert.ok(await page.evaluate(async()=>{const image=new Image();image.src='./assets/elteto-original-avatars.png';await image.decode();return image.naturalWidth===1280&&image.naturalHeight===853;}),'Original sheet decodes offline from local assets');
  assert.deepEqual(errors,[]);await writeFile(new URL(`measurements-${name}.json`,output),JSON.stringify(rows,null,2));console.log(`${name}: 90 identity/point-of-view/viewport cases; 15 approved table/hand geometries preserved; 0/1/5/20 public counts and original artwork verified`);

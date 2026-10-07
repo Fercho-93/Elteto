@@ -90,14 +90,14 @@ try {
         ({ game, id }) => window.testTable("cinquillo", game, id),
         { game, id },
       );
-      assert.equal(await page.locator(".table-seat").count(), count-1);
+      assert.equal(await page.locator(".table-seat").count(), count);
       assert.equal(await page.locator('.own-seat').count(),0);
-      assert.equal(await page.locator(`[data-player-id="${id}"]`).count(),0);
+      assert.equal(await page.locator(`[data-player-id="${id}"]`).count(),1);
       assert.equal(await page.locator('.suit-lane .board-card').count(),40);
       assert.match(await page.locator('.game-ribbon').textContent(),/40 cartas españolas/);
       assert.equal(
         await page.locator(".rival-count").evaluateAll(els=>els.reduce((sum,el)=>sum+Number(el.dataset.count),0)),
-        40 - game.hands[id].length,
+        40,
       );
       assert.equal(
         await page.locator(".hand .playing-card:not([disabled])").count(),
@@ -142,13 +142,13 @@ try {
         await Promise.all(cards.map(card=>card.querySelector('img').decode()));
         return cards.every(card=>{const image=card.querySelector('img'),rect=image.getBoundingClientRect(); return image.naturalWidth>=200 && rect.width>=56 && rect.height>=85 && card.getAttribute('aria-label').includes(' de ');});
       }));
-      assert.equal(await page.locator('.rival-original[data-character]').evaluateAll(els => new Set(els.map(el => el.dataset.character)).size),count-1);
+      assert.equal(await page.locator('.rival-original[data-character]').evaluateAll(els => new Set(els.map(el => el.dataset.character)).size),count);
       assert.ok(await page.locator('.rival-original image').evaluateAll(images=>images.every(i=>i.getAttribute('href').includes('elteto-avatars-v3.png'))),'Generated transparent avatars are shown');
       assert.ok(await page.evaluate(async()=>{const image=new Image();image.src='/assets/elteto-avatars-v3.png';await image.decode();return image.naturalWidth===1983&&image.naturalHeight===793;}));
       assert.equal(await page.locator('.game-table').getAttribute('data-scene'),'illustrated-2d');
       assert.equal(await page.locator('.table-canvas,.camera-controls').count(),0);
       assert.equal(await page.locator('.seat-front,.rival-hand,.forearms').count(),0);
-      assert.equal(await page.locator('.game-table .rival-name').count(),count-1);
+      assert.equal(await page.locator('.game-table .rival-name').count(),count);
       assert.ok(await page.locator('.game-table .rival-name').evaluateAll(labels=>{
         const boxes=labels.map(label=>label.getBoundingClientRect());
         const clear=boxes.every((a,i)=>a.left>=0 && a.right<=innerWidth && boxes.slice(i+1).every(b=>a.right<=b.left || b.right<=a.left || a.bottom<=b.top || b.bottom<=a.top));
