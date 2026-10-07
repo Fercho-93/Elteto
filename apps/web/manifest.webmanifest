@@ -1,7 +1,7 @@
 {
-  "name": "Elteto · Fruta, cartas y piques",
-  "short_name": "Elteto 🍆🍑",
-  "description": "Berenjenas, melocotones, cartas y un pique que madura rápido.",
+  "name": "Elteto · Cartas y tablero",
+  "short_name": "Elteto",
+  "description": "Cinquillo, mus y parchís. Los de siempre, con los tuyos.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

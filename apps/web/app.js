@@ -31,19 +31,19 @@ function playerName(id) { return state.players.find((player) => player.id === id
 
 function renderHome() {
   state.screen = "home";
-  app.innerHTML = `<section class="home">
-    <div class="sticker">FRUTA · BARAJA · REVANCHA</div>
-    <div class="logo-mark" role="img" aria-label="Una berenjena y un melocotón"><span>🍆</span><span>🍑</span></div>
-    <h1>Elteto</h1>
-    <p class="home-copy">La berenjena pone la cara; el melocotón, la tentación. 🍆🍑 Cartas, piques y revancha desde cada móvil.</p>
-    <p class="home-note">${LAN ? "Mesa local sin internet. Conecta todos los móviles a la misma Wi-Fi o hotspot." : "Misma Wi-Fi, fruta madura y cero vergüenza. Lo demás es echarle cara."}</p>
-    <div class="home-actions">
-      ${!LAN || LAN.hostKey ? '<button class="button button-pink" data-action="open-host">Crear partida 🍆</button>' : ""}
-      <button class="button button-cyan" data-action="open-join">Unirse a la timba 🍑</button>
+  app.innerHTML = `<section class="menu-shell">
+    <div class="menu-wrap">
+      <header class="menu-header"><a class="menu-brand" href="./" aria-label="Elteto, inicio">elteto<span>.</span></a><nav aria-label="Menú principal"><a href="#menu-games">Juegos</a><a href="./reglas_juegos/biblioteca.html">Reglas <span aria-hidden="true">↗</span></a></nav></header>
+      <div class="menu-hero">
+        <div class="menu-intro"><span class="menu-mobile-spark" aria-hidden="true">✳</span><p class="menu-kicker">CARTAS, TABLERO Y PIQUE</p><h1>Una más.<br><span>Y nos vamos.</span></h1><p class="menu-copy">Los de siempre. Con los tuyos.</p>
+          <div class="menu-actions">${!LAN || LAN.hostKey ? '<button class="menu-button menu-primary" data-action="open-host">Crear partida <span aria-hidden="true">↗</span></button>' : ''}<button class="menu-button menu-secondary" data-action="open-join">Unirse <span aria-hidden="true">→</span></button></div>
+          ${LAN ? '<p class="menu-network-note">Mesa local sin internet. Conecta todos los móviles a la misma Wi-Fi o hotspot.</p>' : ''}
+        </div>
+        <div class="menu-art" aria-hidden="true"><div class="menu-orbit"></div><div class="menu-wordmark"><span>el</span><span>teto<span class="menu-dot">.</span></span></div><span class="menu-art-label">CARTAS & TABLERO</span><span class="menu-spark">✳</span></div>
+      </div>
+      <section class="menu-games" id="menu-games" aria-labelledby="menu-games-title"><div class="menu-section-heading"><h2 id="menu-games-title">Sobre la mesa</h2><span>${String(listGames().length).padStart(2, '0')} JUEGOS</span></div><div class="menu-game-grid">${listGames().map((game, index) => `<a class="menu-game" href="./reglas_juegos/lectura/${game.id}.html"><span class="menu-game-number">0${index + 1}</span><div><h3>${esc(game.label)}</h3><p>${game.minPlayers === game.maxPlayers ? game.minPlayers : `${game.minPlayers}–${game.maxPlayers}`} jugadores</p></div><span class="menu-game-link">Reglas <span aria-hidden="true">↗</span></span></a>`).join('')}</div></section>
+      <footer class="menu-footer"><span>Elteto · Hecho para jugar</span><details class="menu-extras"><summary>Extras <span aria-hidden="true">+</span></summary><div class="menu-extra-content"><a href="./reglas_juegos/biblioteca.html#proximos">Próximos juegos <span>${GAME_CATALOG.filter(game => game.status === 'planned').length}</span></a><a href="./assets/decks/credits.html">Créditos de las barajas <span aria-hidden="true">↗</span></a><details class="menu-characters"><summary>Personajes <span>${MASCOTS.length}</span></summary><div class="menu-character-grid">${MASCOTS.map((label,index)=>`<figure>${renderMascot(index)}<figcaption>${esc(label)}</figcaption></figure>`).join('')}</div></details></div></details></footer>
     </div>
-    <p><a href="./reglas_juegos/biblioteca.html">Reglas de todos los juegos</a></p><details class="game-rules"><summary>Próximos juegos</summary><ul>${GAME_CATALOG.filter(game => game.status === "planned").map(game => `<li>${esc(game.label)} · Pendiente <a href="./reglas_juegos/lectura/${game.id}.html">Reglas</a></li>`).join("")}</ul></details>
-    <details class="mascot-gallery"><summary>Los diez personajes de Elteto</summary><div>${MASCOTS.map((label,index)=>`<figure>${renderMascot(index)}<figcaption>${label}</figcaption></figure>`).join('')}</div></details>
-    <p><a href="./assets/decks/credits.html">Créditos de las barajas</a></p><p class="fineprint">*La fruta es fresca. Las intenciones, cosa vuestra. 😏</p>
   </section>`;
 }
 
@@ -51,15 +51,15 @@ function renderHostForm() {
   state.screen = "host-form";
   const games = listGames().map((game) => `<label class="game-option ${state.gameId === game.id ? "chosen" : ""}">
     <input type="radio" name="game" value="${esc(game.id)}" ${state.gameId === game.id ? "checked" : ""}>
-    <span class="game-check">✦</span><span><strong>${esc(game.label)}</strong><small>${game.minPlayers === game.maxPlayers ? `${game.minPlayers} jugadores` : `${game.minPlayers}–${game.maxPlayers} jugadores`}</small></span>
+    <span class="game-check" aria-hidden="true">✓</span><span><strong>${esc(game.label)}</strong><small>${game.minPlayers === game.maxPlayers ? `${game.minPlayers} jugadores` : `${game.minPlayers}–${game.maxPlayers} jugadores`}</small></span>
   </label>`).join("");
-  app.innerHTML = `${header()}<section class="panel">
-    <div class="eyebrow">La fruta está madura 🍑</div><h2>Que empiece el pique</h2>
-    <label class="field-label" for="host-name">Tu nombre</label><input class="text-field" id="host-name" maxlength="24" placeholder="La jefa de la mesa" value="${esc(state.name)}">
-    <label class="field-label" for="room-name">Nombre de la sala</label><input class="text-field" id="room-name" maxlength="30" placeholder="La timba de esta noche" value="${esc(state.roomName)}">
-    <div class="field-label">Elige el juego</div><div class="game-options">${games}</div>
-    <button class="button button-pink full-button" data-action="create-room">Repartir y abrir sala 🍆</button>
-  </section>`;
+  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="back">← <span>Volver</span></button><a class="menu-brand" href="./" data-action="home">elteto<span>.</span></a></header><section class="menu-setup" aria-labelledby="setup-title">
+    <p class="menu-kicker">TÚ PONES LA MESA</p><h1 id="setup-title">Crear partida<span>.</span></h1>
+    <div class="menu-fields"><div><label class="field-label" for="host-name">Tu nombre</label><input class="text-field" id="host-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}"></div>
+    <div><label class="field-label" for="room-name">Nombre de la sala <span>opcional</span></label><input class="text-field" id="room-name" maxlength="30" placeholder="La de siempre" value="${esc(state.roomName)}"></div></div>
+    <fieldset class="menu-game-fieldset"><legend>Elige el juego</legend><div class="game-options">${games}</div></fieldset>
+    <button class="menu-button menu-primary menu-create" data-action="create-room">Crear sala <span aria-hidden="true">↗</span></button>
+  </section></div></section>`;
 }
 
 function renderJoinForm() {
@@ -438,7 +438,7 @@ app.addEventListener("input", (event) => {
 app.addEventListener("change", (event) => {
   if (event.target.matches('input[name="game"]')) {
     state.gameId = event.target.value;
-    renderHostForm();
+    for (const option of app.querySelectorAll('.game-option')) option.classList.toggle('chosen', option.contains(event.target));
   }
 });
 
