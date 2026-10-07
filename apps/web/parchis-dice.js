@@ -1,3 +1,4 @@
+import {DICE_DURATION} from './game-physics.js';
 import {escapeHtml as esc} from './table-view.js';
 
 const contexts=new WeakMap();
@@ -25,7 +26,7 @@ export function beginParchisRoll(app,targets=PARCHIS_TARGETS){
  if(!button||button.disabled||state.pending||performance.now()<state.deadline)return false;
  state.pending=true;lock(app,true,targets);button.textContent='Tirando…';
  clearTimeout(state.timer);
- state.timer=setTimeout(()=>{if(!state.pending)return;state.pending=false;lock(app,false,targets);const status=app.querySelector(targets.statusSelector);if(status)status.textContent='Sin respuesta. Comprueba la conexión antes de reintentar.';if(button.isConnected)button.textContent='Reintentar tirada';},12000);
+ state.timer=setTimeout(()=>{if(!state.pending)return;state.pending=false;lock(app,false,targets);const status=app.querySelector(targets.statusSelector);if(status)status.textContent='Sin respuesta. Comprueba la conexión antes de reintentar.';if(button.isConnected)button.textContent='Reintentar';},12000);
  return true;
 }
 export function finishDiceRender(app,view,error,targets=PARCHIS_TARGETS){
@@ -35,7 +36,7 @@ export function finishDiceRender(app,view,error,targets=PARCHIS_TARGETS){
  // A new game in the same app starts a fresh sequence; it has no result to animate.
  if(!view.lastRoll&&sequence===0&&state.sequence>0){state.sequence=0;state.pending=false;state.deadline=0;clearTimeout(state.timer);}
  if(initial){state.sequence=sequence;state.deadline=0;}
- else if(sequence!==state.sequence){state.sequence=sequence;state.pending=false;clearTimeout(state.timer);state.deadline=now+(matchMedia('(prefers-reduced-motion: reduce)').matches?0:840);}
+ else if(sequence!==state.sequence){state.sequence=sequence;state.pending=false;clearTimeout(state.timer);state.deadline=now+(matchMedia('(prefers-reduced-motion: reduce)').matches?0:DICE_DURATION);}
  if(error){state.pending=false;state.deadline=0;clearTimeout(state.timer);}
  const remaining=Math.max(0,state.deadline-now),busy=state.pending||remaining>0;
  lock(app,busy,targets);
@@ -44,9 +45,9 @@ export function finishDiceRender(app,view,error,targets=PARCHIS_TARGETS){
  const value=view.lastRoll.value,flight=app.querySelector('.die-flight'),cube=app.querySelector('.die-cube'),shadow=app.querySelector('.die-shadow');
  // Decaying flight, impacts and rotation simulate weight without influencing the roll.
  const offsets=[0,.22,.45,.62,.76,.88,1],xs=[-18,8,12,-6,3,-1,0],ys=[-5,-28,0,-11,0,-3,0];
- const animation=flight.animate(offsets.map((offset,i)=>({offset,transform:`translate(${xs[i]}px,${ys[i]}px) rotate(${[-18,12,-8,5,-2,1,0][i]}deg)`,easing:i%2?'cubic-bezier(.42,0,1,1)':'cubic-bezier(0,0,.58,1)'})),{duration:840});
- const spin=cube.animate([{transform:orientation(value,720,1080)},{transform:orientation(value)}],{duration:840,easing:'cubic-bezier(.2,.65,.35,1)'});
- const shade=shadow.animate(offsets.map((offset,i)=>({offset,transform:`scale(${[.8,.48,1,.7,1,.9,1][i]})`,opacity:[.3,.12,.4,.2,.4,.32,.4][i]})),{duration:840});
- for(const anim of [animation,spin,shade])anim.currentTime=840-remaining;
+ const animation=flight.animate(offsets.map((offset,i)=>({offset,transform:`translate(${xs[i]}px,${ys[i]}px) rotate(${[-18,12,-8,5,-2,1,0][i]}deg)`,easing:i%2?'cubic-bezier(.42,0,1,1)':'cubic-bezier(0,0,.58,1)'})),{duration:DICE_DURATION});
+ const spin=cube.animate([{transform:orientation(value,540,720)},{transform:orientation(value)}],{duration:DICE_DURATION,easing:'cubic-bezier(.2,.65,.35,1)'});
+ const shade=shadow.animate(offsets.map((offset,i)=>({offset,transform:`scale(${[.8,.48,1,.7,1,.9,1][i]})`,opacity:[.3,.12,.4,.2,.4,.32,.4][i]})),{duration:DICE_DURATION});
+ for(const anim of [animation,spin,shade])anim.currentTime=DICE_DURATION-remaining;
  clearTimeout(state.timer);state.timer=setTimeout(()=>{state.deadline=0;lock(app,false,targets);},remaining);
 }

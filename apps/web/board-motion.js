@@ -1,3 +1,4 @@
+import {DICE_DURATION,CHECKER_STEP,PIECE_TRANSFER,CAPTURE_FADE,settledFrames,gooseFlights} from './game-physics.js';
 import {goosePoint} from './board-games.js';
 import {finishDiceRender,OCA_DICE_TARGETS} from './parchis-dice.js';
 
@@ -7,22 +8,26 @@ const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Capture public positions before replacing the DOM. Private hands are excluded.
 export function preparePublicMotion(app,view){
  const key=`${view.id}:${view.players.join('|')}:${view.handNumber}`;
- let state=publicContexts.get(app);
- if(!state||state.key!==key){state={key,keys:null,turn:null,flights:new Map(),ghosts:new Map()};publicContexts.set(app,state);}
+ let state=publicContexts.get(app);const fresh=!state||state.key!==key;
+ if(fresh){state={key,keys:null,turn:null,flights:new Map(),ghosts:new Map()};publicContexts.set(app,state);}
  const seat=[...app.querySelectorAll('.rival-seat')].find(el=>el.dataset.playerId===state.turn);
  state.origin=seat?.getBoundingClientRect();
- state.before=new Map([...app.querySelectorAll('.catalog-surface [data-public-piece]')].filter(el=>!el.closest('.capture-receipt')).map(el=>[el.dataset.publicPiece,{html:el.outerHTML,rect:el.getBoundingClientRect()}]));
+ state.before=fresh?new Map():new Map([...app.querySelectorAll('.catalog-surface [data-public-piece]')].filter(el=>!el.closest('.capture-receipt')).map(el=>[el.dataset.publicPiece,{html:el.outerHTML,rect:el.getBoundingClientRect()}]));
  return state;
 }
 export function finishPublicMotion(app,view,state){
  const cards=[...app.querySelectorAll('.catalog-surface [data-public-piece]')],keys=new Set(cards.map(el=>el.dataset.publicPiece)),now=performance.now();
+ const dominoAdded=view.boardKind==='domino'&&state.keys&&cards.some(el=>!state.keys.has(el.dataset.publicPiece));
  for(const card of cards){
   const key=card.dataset.publicPiece;
   if(state.keys&&!state.keys.has(key)&&state.origin)state.flights.set(key,{started:now,origin:state.origin});
+  if(dominoAdded&&state.keys.has(key)){const old=state.before.get(key)?.rect,next=card.getBoundingClientRect();if(old&&Math.hypot(old.x-next.x,old.y-next.y)>1)state.flights.set(key,{started:now,origin:old,slide:true});}
   const flight=state.flights.get(key);if(!flight||reduced())continue;
-  const elapsed=now-flight.started;if(elapsed>=700){state.flights.delete(key);continue;}
+  const duration=key.startsWith('tile-')?PIECE_TRANSFER:700;
+  const elapsed=now-flight.started;if(elapsed>=duration){state.flights.delete(key);continue;}
   const destination=card.getBoundingClientRect(),origin=flight.origin;
-  const animation=card.animate([{transform:`translate(${origin.x+origin.width/2-destination.x-destination.width/2}px,${origin.y+origin.height/2-destination.y-destination.height/2}px) rotate(-10deg) scale(.75)`,opacity:.7},{transform:'translate(0,0) rotate(3deg) scale(1.05)',offset:.8},{transform:'none',opacity:1}],{duration:700,easing:'cubic-bezier(.2,.8,.2,1)'});
+  const frames=flight.slide?[{transform:`translate(${origin.x-destination.x}px,${origin.y-destination.y}px)`},{transform:'none'}]:[{transform:`translate(${origin.x+origin.width/2-destination.x-destination.width/2}px,${origin.y+origin.height/2-destination.y-destination.height/2}px) rotate(-10deg) scale(.75)`,opacity:.7},{transform:'translate(0,0) rotate(3deg) scale(1.05)',offset:.8},{transform:'none',opacity:1}];
+  const animation=card.animate(frames,{duration,easing:'cubic-bezier(.2,.8,.2,1)'});
   animation.currentTime=elapsed;
  }
  for(const key of state.flights.keys())if(!keys.has(key))state.flights.delete(key);
@@ -64,33 +69,49 @@ export function finishBoardMotion(app,view,playerId,name,error){
  if(!['oca','checkers'].includes(view.boardKind)){const old=contexts.get(app);if(old){clearTimeout(old.timer);old.key=null;old.deadline=0;}return;}
  let state=contexts.get(app);if(!state){state={key:null,signature:null,deadline:0,timer:null};contexts.set(app,state);}
  const key=`${view.id}:${view.players.join('|')}:${view.handNumber}`,move=view.boardKind==='oca'?view.lastRoll:view.lastMove;
- const signature=move?view.boardKind==='oca'?String(move.sequence):`${move.player}:${move.path.join(',')}:${view.log.length}:${view.log.at(-1)}`:null;
+ const signature=move?view.boardKind==='oca'?String(move.sequence):`${move.player}:${move.path.join(',')}:${move.captures.join(',')}`:null;
  const initial=state.key!==key||!move;
  if(initial){clearTimeout(state.timer);state.key=key;state.signature=signature;state.deadline=0;state.timeline=null;}
  const fresh=!initial&&signature!==state.signature;
+ const before=state.view;
  Object.assign(state,{view,playerId,name,error});
  if(fresh){
   state.signature=signature;state.actor=move.player;
-  const route=view.boardKind==='oca'?(move.route||[move.from||view.positions[move.player],view.positions[move.player]]):move.path;
-  const delay=view.boardKind==='oca'?840:0,step=view.boardKind==='oca'?160:220;
-  state.timeline={route,delay,duration:Math.max(220,(route.length-1)*step),started:performance.now()};
-  state.deadline=reduced()?0:state.timeline.started+delay+state.timeline.duration+500;
+  const started=performance.now();
+  if(view.boardKind==='oca'){
+   const flights=gooseFlights(before,view,move).map(f=>({...f,points:f.route.map((n,i)=>{const snapshot=i===0?before:view,peers=view.players.filter(p=>p===f.player||snapshot.positions[p]===n);return goosePoint(n,peers.indexOf(f.player),peers.length);})}));
+   state.timeline={started,flights};state.deadline=started+Math.max(...flights.map(f=>f.delay+f.duration))+500;
+  }else{
+   const route=move.path,steps=route.slice(1).map(()=>CHECKER_STEP),duration=steps.length*CHECKER_STEP;
+   state.timeline={started,route,steps,duration,captured:move.captures.map((square,i)=>({square,piece:before.board[square],delay:(i+1)*CHECKER_STEP}))};
+   state.deadline=started+duration+(move.captures.length?CAPTURE_FADE:0)+500;
+  }
  }
  if(error||reduced())state.deadline=0;
  const remaining=Math.max(0,state.deadline-performance.now());busy(app,state,remaining>0);
  clearTimeout(state.timer);
  if(!remaining)return;
- const elapsed=performance.now()-state.timeline.started,{route,delay,duration}=state.timeline;
- if(elapsed<delay+duration){
-  let node,frames;
-  if(view.boardKind==='oca'){
-   node=[...app.querySelectorAll('.catalog-surface [data-goose-player]')].find(el=>el.dataset.goosePlayer===state.actor);
-   if(node){const finalPosition=view.positions[state.actor],peers=view.players.filter(p=>view.positions[p]===finalPosition),seat=peers.indexOf(state.actor);frames=route.map((position,i)=>{const [x,y]=goosePoint(position,seat,peers.length);return {offset:i/(route.length-1||1),transform:`translate(${x}px,${y}px)`};});}
-  }else{
-   node=app.querySelector(`.catalog-surface [data-checker-at="${route.at(-1)}"]`);
-   if(node){const size=app.querySelector('.catalog-surface .checkers-board').getBoundingClientRect().width/8,last=route.at(-1);frames=route.map((square,i)=>({offset:i/(route.length-1||1),translate:`${(square%8-last%8)*size}px ${(Math.floor(square/8)-Math.floor(last/8))*size}px`}));}
+ const elapsed=performance.now()-state.timeline.started;
+ if(view.boardKind==='oca'){
+  for(const flight of state.timeline.flights){
+   if(elapsed>=flight.delay+flight.duration)continue;
+   const node=[...app.querySelectorAll('.catalog-surface [data-goose-player]')].find(el=>el.dataset.goosePlayer===flight.player);
+   if(node){node.classList.add('piece-travelling');const animation=node.animate(settledFrames(flight.points,([x,y])=>({transform:`translate(${x}px,${y}px)`}),flight.steps),{duration:flight.duration,delay:flight.delay,fill:'backwards'});animation.currentTime=elapsed;}
   }
-  if(node&&frames){const animation=node.animate(frames,{duration,delay,easing:'linear',fill:'backwards'});animation.currentTime=elapsed;}
+ }else{
+  const {route,steps,duration,captured}=state.timeline,node=app.querySelector(`.catalog-surface [data-checker-at="${route.at(-1)}"]`);
+  if(node&&elapsed<duration){
+   const size=(app.querySelector('.catalog-surface .checkers-board').getBoundingClientRect().width-6)/8,last=route.at(-1);
+   node.classList.add('piece-travelling');
+   const animation=node.animate(settledFrames(route,square=>({translate:`${(square%8-last%8)*size}px ${(Math.floor(square/8)-Math.floor(last/8))*size}px`}),steps),{duration,fill:'backwards'});animation.currentTime=elapsed;
+  }
+  for(const capture of captured){
+   if(elapsed>=capture.delay+CAPTURE_FADE)continue;
+   const stage=app.querySelector('.catalog-surface .checkers-stage'),square=stage.querySelector(`[data-square="${capture.square}"]`),rect=square.getBoundingClientRect(),origin=stage.getBoundingClientRect(),ghost=document.createElement('span');
+   ghost.className=`checker-piece checker-captured ${capture.piece>0?'white':'black'}`;ghost.setAttribute('aria-hidden','true');ghost.textContent=Math.abs(capture.piece)===2?'♛':'';
+   Object.assign(ghost.style,{left:rect.x-origin.x+rect.width/2+'px',top:rect.y-origin.y+rect.height/2+'px',width:(node?.getBoundingClientRect().width||rect.width*.8)+'px',height:(node?.getBoundingClientRect().height||rect.height*.8)+'px'});stage.append(ghost);
+   const animation=ghost.animate([{opacity:1,scale:'1',transform:'translateY(0)'},{opacity:0,scale:'.6',transform:'translateY(3px)'}],{delay:capture.delay,duration:CAPTURE_FADE,fill:'both',easing:'ease-in'});animation.currentTime=elapsed;animation.onfinish=()=>ghost.remove();
+  }
  }
  state.timer=setTimeout(()=>{state.deadline=0;busy(app,state,false);if(state.view.boardKind==='oca')finishDiceRender(app,state.view,state.error,OCA_DICE_TARGETS);},remaining);
 }

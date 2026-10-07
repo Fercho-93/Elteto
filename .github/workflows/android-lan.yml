@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['apps/android-host/**', 'apps/web/**', 'packages/game-core/**', 'tests/table-navegador.mjs', 'tests/turn-screen.mjs', 'tests/turn-sequence.mjs', '.github/workflows/android-lan.yml']
+    paths: ['apps/android-host/**', 'apps/web/**', 'packages/game-core/**', 'tests/table-navegador.mjs', 'tests/turn-screen.mjs', 'tests/physics-screen.mjs', 'tests/turn-sequence.mjs', '.github/workflows/android-lan.yml']
 permissions:
   contents: read
 jobs:
@@ -34,6 +34,8 @@ jobs:
       - run: QR_BROWSER=webkit node tests/qr-navegador.mjs
       - run: node tests/bots-navegador.mjs
       - run: BOT_BROWSER=webkit node tests/bots-navegador.mjs
+      - run: node tests/physics-screen.mjs
+      - run: PHYSICS_BROWSER=webkit node tests/physics-screen.mjs
       - run: node tests/turn-screen.mjs
       - run: TURN_BROWSER=webkit node tests/turn-screen.mjs
       - run: node tests/board-screen.mjs

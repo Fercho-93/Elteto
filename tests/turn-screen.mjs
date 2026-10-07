@@ -53,7 +53,7 @@ try{
  game=parchisEngine.createInitialState(['a','b','c','d'],22);Object.assign(game,{phase:'bonus',bonuses:[20],die:3,lastRoll:{sequence:1,player:'a',value:3,initial:false,round:1},rollCount:1});game.pieces.a[0]=2;game.pieces.b[0]=5;
  // Yellow square 27 is green progress 5 and is not a safe square.
  await start('parchis',game);const moved=parchisEngine.applyAction(game,'a',{type:'move',piece:0});assert.equal(moved.pieces.b[0],-1);await emit('parchis',moved);await phase('move');await actor('a');await visibleStory();
- for(const page of pages){const timing=await page.locator('.parchis-table [data-pawn="a:0"]').evaluate(el=>{const anim=el.getAnimations()[0];return {frames:anim.effect.getKeyframes().length,duration:anim.effect.getTiming().duration};});assert.equal(timing.frames,21);assert.equal(timing.duration,2600);assert.equal(await page.locator('.parchis-table [data-pawn="b:0"]').evaluate(el=>el.getAnimations()[0].effect.getTiming().delay),2600);}
+ for(const page of pages){const timing=await page.locator('.parchis-table [data-pawn="a:0"]').evaluate(el=>{const anim=el.getAnimations()[0];return {frames:anim.effect.getKeyframes().length,duration:anim.effect.getTiming().duration};});assert.equal(timing.frames,41);assert.equal(timing.duration,6000);assert.equal(await page.locator('.parchis-table [data-pawn="b:0"]').evaluate(el=>el.getAnimations()[0].effect.getTiming().delay),6000);}
  await phase('result');await actor('a');await pages[0].screenshot({path:`tests/artifacts/turns/parchis-${kind}.png`});await phase('idle');
  // A captured played card is visible in a public receipt; table cards fly to actor.
  const escoba=getGame('escoba');let capture;

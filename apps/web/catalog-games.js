@@ -1,3 +1,4 @@
+import {finishTableSpeech} from './table-speech.js';
 import {renderCheckersBoard,renderGooseBoard} from './board-games.js';
 import {renderParchisDie,beginParchisRoll,finishDiceRender,OCA_DICE_TARGETS} from './parchis-dice.js';
 import {finishBoardMotion,preparePublicMotion,finishPublicMotion} from './board-motion.js';
@@ -49,7 +50,8 @@ export function renderCatalogGame(app,view,playerId,name,error=''){
  const suits=Object.keys(symbols).concat('joker');
  const myHand=view.myHand.slice().sort((a,b)=>suits.indexOf(a.suit)-suits.indexOf(b.suit)||ranks.indexOf(a.rank)-ranks.indexOf(b.rank));
  const result=view.finished?(view.loser?`${name(view.loser)} pierde`:view.winner?`${name(view.winner)} gana`:'Tablas'):view.phase==='result'?(view.id==='burro'?`${name(view.loser)}: ${'BURRO'.slice(0,view.scores[view.loser])}`:view.boardKind==='bank'?'Banca resuelta':view.handWinner?`${name(view.handWinner)} gana la mano`:'Mano terminada'):'';
- let controls=view.options.map((option,index)=>{if(option.action.type==='extend')return '';const amount=option.action.amountInput;return `${amount?`<label class="catalog-amount">Hasta <input type="number" id="catalog-amount-${index}" min="${amount.min}" max="${amount.max}" value="${amount.value}" step="1"></label>`:''}${actionButton(option.label,'catalog-choice',`data-index="${index}" ${view.boardKind==='oca'&&option.action.type==='roll'&&!view.penalties[playerId]&&view.prison!==playerId?`data-roll-sequence="${view.lastRoll?.sequence??0}"`:''}`)}`;}).join('');
+ let controls=view.options.map((option,index)=>{if(option.action.type==='extend')return '';const amount=option.action.amountInput;return `${amount?`<label class="catalog-amount">Hasta <input type="number" id="catalog-amount-${index}" min="${amount.min}" max="${amount.max}" value="${amount.value}" step="1"></label>`:''}${actionButton(view.boardKind==='oca'&&option.label==='Tirar dado'?'Tirar':option.label,'catalog-choice',`data-index="${index}" ${view.boardKind==='oca'&&option.action.type==='roll'&&!view.penalties[playerId]&&view.prison!==playerId?`data-roll-sequence="${view.lastRoll?.sequence??0}"`:''}`)}`;}).join('');
+ if(view.boardKind==='oca'&&!controls)controls=actionButton('Tirar','catalog-choice',`data-index="0" data-roll-sequence="${view.lastRoll?.sequence??0}" disabled aria-label="Tirar dado"`);
  // Play pieces directly; choosing an end never discloses which ends are legal.
  if(view.boardKind==='domino'&&view.phase==='play')controls=isTurn?(ui.tile?['left','right'].map(side=>actionButton(side==='left'?'Izquierda':'Derecha','catalog-place-tile',`data-side="${side}"`)).join('')+actionButton('Cancelar','catalog-clear'):actionButton('Pasar','catalog-pass')):'';
  if(selectable&&view.boardKind==='melds')controls+=Object.entries(view.exposed).map(([owner,groups])=>groups.map((group,index)=>actionButton(`Añadir a ${group.kind==='set'?'grupo':'escalera'} ${index+1} de ${name(owner)}`,'catalog-extend',`data-owner="${esc(owner)}" data-group="${index}"`)).join('')).join('');
@@ -58,6 +60,7 @@ export function renderCatalogGame(app,view,playerId,name,error=''){
  app.querySelector('.catalog-surface').scrollTop=boardScroll;app.querySelector('.catalog-hand').scrollLeft=handScroll;if(menu){app.querySelector('.game-menu').showModal();app.querySelector('.game-menu-content').scrollTop=menuScroll;}if(zoom){app.querySelector('.catalog-zoom').showModal();app.querySelector('.catalog-zoom-content').scrollTop=zoomScroll;}revealActivePlayer(app);
  finishBoardMotion(app,view,playerId,name,error);
  finishPublicMotion(app,view,publicMotion);
+ finishTableSpeech(app,view,name);
  if(view.boardKind==='oca')finishDiceRender(app,view,error,OCA_DICE_TARGETS);
 }
 export function handleCatalogAction(app,button,view,send,render){

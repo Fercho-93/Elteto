@@ -24,7 +24,7 @@ const sequence=new TurnSequence({apply:c=>display.push(c.view.chain.length),phas
 sequence.receive(change(game));const snapshots=[];
 for(let i=0;i<3;i++){const move=nextBotMove(engine,game,game.players);game=engine.applyAction(game,move.playerId,move.action);snapshots.push(change(game));sequence.receive(change(game));}
 assert.deepEqual(display,[0]);assert.equal(sequence.phase,'announce');sequence.receive(snapshots.at(-1));assert.equal(sequence.queue.length,2);
-advance(TURN_INTRO);assert.deepEqual(display,[0,1]);assert.equal(sequence.phase,'move');advance(700);assert.equal(sequence.phase,'result');advance(TURN_RESULT);assert.equal(sequence.phase,'announce');
+advance(TURN_INTRO);assert.deepEqual(display,[0,1]);assert.equal(sequence.phase,'move');advance(850);assert.equal(sequence.phase,'result');advance(TURN_RESULT);assert.equal(sequence.phase,'announce');
 advance(10000);assert.deepEqual(display,[0,1,2,3]);assert.equal(sequence.busy,false);assert.equal(sequence.queue.length,0);
 sequence.receive({...snapshots[0],playerId:'b'});assert.equal(sequence.busy,false,'A new POV never replays old turns');
 sequence.receive({...snapshots[1],playerId:'b'});sequence.reset();advance(10000);assert.equal(display.at(-1),1,'Leaving cancels pending renders');
@@ -33,5 +33,5 @@ sequence.receive(snapshots[0]);sequence.receive(snapshots[1]);sequence.receive(s
 sequence.reset();game=engine.createInitialState(['a','b','c','d'],22);display=[];sequence.receive(change(game));const expected=[0];
 for(let i=0;i<10;i++){const move=nextBotMove(engine,game,game.players);game=engine.applyAction(game,move.playerId,move.action);expected.push(engine.view(game,'a').chain.length);sequence.receive(change(game));}
 assert.equal(sequence.queue.length,9);advance(30000);assert.deepEqual(display,expected);assert.equal(sequence.busy,false);
-const routes=parchisRoutes({pieces:{a:[2,-1,-1,-1],b:[8,-1,-1,-1]}},{players:['a','b'],pieces:{a:[22,-1,-1,-1],b:[-1,-1,-1,-1]}});assert.equal(routes[0].route.length,21);assert.equal(routes[0].duration,2600);assert.deepEqual(routes[1].route,[8,-1]);
+const routes=parchisRoutes({pieces:{a:[2,-1,-1,-1],b:[8,-1,-1,-1]}},{players:['a','b'],pieces:{a:[22,-1,-1,-1],b:[-1,-1,-1,-1]}});assert.equal(routes[0].route.length,21);assert.equal(routes[0].duration,6000);assert.deepEqual(routes[1].route,[8,-1]);
 console.log(`Turn sequence: ${checked} public actions across all 20 games/POVs; ordered phases, duplicates, cancellation, reconnect and Parchis routes: OK`);

@@ -1,5 +1,6 @@
 import {renderCatalogGame,handleCatalogAction} from './catalog-games.js';
 import {beginParchisRoll} from './parchis-dice.js';
+import {prepareCardPaint,restoreCardPaint} from './card-paint.js';
 import {TurnSequence,isTurnAction} from './turn-sequence.js';
 import { getGame, listGames, getGamePlan } from "./game-core/index.js";
 import { LocalGuestSession, LocalHostSession } from "./local-session.js";
@@ -197,7 +198,7 @@ let previousSeats = null;
 let shownResult = null;
 function renderGame() {
   if(!turnSequence.busy&&state.view)turnSequence.adopt({view:state.view,gameId:state.gameId,playerId:state.playerId});
-  renderGameContents();turnSequence.decorate(app,state.playerId,playerName);
+  const paint=prepareCardPaint(app);renderGameContents();restoreCardPaint(app,paint);turnSequence.decorate(app,state.playerId,playerName);
 }
 function renderGameContents() {
   state.screen = "game";

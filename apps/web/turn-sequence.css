@@ -8,7 +8,7 @@
 [data-turn-busy="true"] .rival-seat.active-seat .rival-original{outline-color:#e4c682;border-color:#e4c682;}
 [data-turn-busy="true"] .catalog-hand,[data-turn-busy="true"] .checkers-board,[data-turn-busy="true"] .parchis-piece-choices,[data-turn-busy="true"] .parchis-pawn,[data-turn-busy="true"] .game-controls button,[data-turn-busy="true"] .mus-decisions .hand{pointer-events:none;}
 
-.parchis-pawn.parchis-last-move{box-shadow:0 0 0 2px #ffe2a0,inset 0 -2px 2px #0005,0 1px 2px #0008;z-index:4;}
+.parchis-pawn.parchis-last-move{z-index:4;}
 .catalog-surface{position:relative;}
 .capture-receipt{position:absolute;bottom:12px;left:12px;right:12px;display:flex;align-items:center;gap:10px;padding:5px 9px;border-radius:10px;background:#123d34e6;border:1px solid #d9c18a55;pointer-events:none;}
 .capture-receipt .catalog-card{width:38px;}
