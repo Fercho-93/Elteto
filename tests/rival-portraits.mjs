@@ -27,7 +27,7 @@ try{
   let ids;for(let n=0;n<1000;n++){ids=[`rival-${n}`,'b','c','d','e','f'];if(mascotForSeat(ids,0)===character)break;}
   assert.equal(mascotForSeat(ids,0),character);
   const game=cinquilloEngine.createInitialState(ids,17);await page.setViewportSize({width,height});
-  // Relative positions 1,3,5 cover right-facing, front and left-facing poses.
+  // Three local players verify consistent identities and relative turn order.
   for(const own of [5,3,1]){
    await page.evaluate(({game,own})=>window.testTable('cinquillo',game,game.players[own]),{game,own});await settle(page);
    const metrics=await page.evaluate(id=>{const seat=[...document.querySelectorAll('.rival-seat')].find(el=>el.dataset.playerId===id),portrait=seat.querySelector('.rival-original'),r=portrait.getBoundingClientRect();const bodies=[...document.querySelectorAll('.rival-seat')].map(el=>el.getBoundingClientRect());const overlap=(a,b)=>a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5;return {faceVisible:document.elementFromPoint(r.x+r.width*.5,r.y+r.height*.52)?.closest('.rival-seat')===seat,portraitFits:r.left>=0&&r.right<=innerWidth&&r.top>=44,noOverlap:!bodies.some((a,i)=>bodies.slice(i+1).some(b=>overlap(a,b))),count:Number(seat.querySelector('.rival-count').textContent),href:portrait.querySelector('image').getAttribute('href'),order:[...document.querySelectorAll('.rival-seat')].map(s=>s.dataset.playerId),ownAbsent:!document.querySelector('.own-seat')};},ids[0]);
@@ -35,7 +35,7 @@ try{
    if(width===390&&own===3)await page.screenshot({path:fileURLToPath(new URL(`identity-${character}-${name}.png`,output))});
   }
  }
- // Synthetic public hand counts exercise empty/single/large fans without a game action.
+ // Synthetic public hand counts exercise empty/single/large hands without a game action.
  for(const count of [0,1,5,20]) {
   const game=cinquilloEngine.createInitialState(['count-a','count-b'],17);
   game.hands['count-b']=Array.from({length:count},(_,i)=>game.hands['count-b'][i%20]);
