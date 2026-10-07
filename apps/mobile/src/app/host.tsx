@@ -8,7 +8,8 @@ import { useGameSession } from "../state/GameSession";
 export default function HostScreen() {
   const router = useRouter();
   const { hostRoom } = useGameSession();
-  const games = useMemo(() => listGames(), []);
+  // This legacy native client only has card screens; board games use web/Android LAN.
+  const games = useMemo(() => listGames().filter(game => game.id === "mus" || game.id === "cinquillo"), []);
   const [gameId, setGameId] = useState(games[0]?.id ?? "");
   const [hostName, setHostName] = useState("");
   const [roomName, setRoomName] = useState("");

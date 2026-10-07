@@ -139,7 +139,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     "id": "parchis",
     "label": "Parchís",
     "family": "race",
-    "status": "planned",
+    "status": "playable",
     "players": [
       2,
       3,
@@ -153,7 +153,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "a25b7b509900f943a645bdb02652f0c729f3ed8d9941f4e3411d461f33d5659f"
     },
     "summary": "Salida con 5; 6 repite y cuenta 7 con cuatro fichas fuera; tercer 6 devuelve última ficha; capturar +20, meta +10 y llegada exacta.",
-    "implementationNotes": "Fijar geometría, colores y seguros del tablero elegido. El PDF no enumera sus coordenadas.",
+    "implementationNotes": "Tablero Elteto de 68 casillas, pasillos de siete y meta exacta: salidas amarillo 5, verde 22, rojo 39 y azul 56. Seguros 5/12/17 y sus rotaciones. Máximo dos fichas por casilla; 5 permite salir o mover; sin excepción de captura en salidas seguras. Desempate inicial entre empatados y bonificaciones completas si hay movimiento válido.",
     "phases": [
       "tirar",
       "mover",

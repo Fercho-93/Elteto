@@ -372,7 +372,7 @@ try {
     await page.goto(base);
     await page.evaluate(()=>navigator.serviceWorker.ready);
     await page.waitForFunction(()=>navigator.serviceWorker.controller);
-    assert.equal(await page.locator('details ul li').count(),18);
+    assert.equal(await page.locator('details ul li').count(),17);
     await offlineContext.setOffline(true);
     await page.goto(base+'reglas_juegos/biblioteca.html');
     assert.equal(await page.locator('li a').count(),20);

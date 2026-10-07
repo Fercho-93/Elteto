@@ -36,6 +36,8 @@ jobs:
       - run: AVATAR_BROWSER=webkit node tests/rival-portraits.mjs
       - run: node tests/game-screen-flow.mjs
       - run: FLOW_BROWSER=webkit node tests/game-screen-flow.mjs
+      - run: node tests/parchis-screen.mjs
+      - run: PARCHIS_BROWSER=webkit node tests/parchis-screen.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

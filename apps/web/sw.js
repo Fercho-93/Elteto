@@ -1,5 +1,6 @@
-const CACHE = "elteto-shell-v21";
+const CACHE = "elteto-shell-v22";
 const ASSETS = [
+  "./parchis-board.js", "./parchis-board.css", "./game-core/games/parchis.js",
   "./mus-screen.js", "./mus-screen.css",
   "./rival-portraits.js", "./rival-portraits.css", "./assets/elteto-original-avatars.png",
   "./table-layout.css",

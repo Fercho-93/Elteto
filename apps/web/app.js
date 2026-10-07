@@ -2,6 +2,7 @@ import { getGame, listGames, GAME_CATALOG } from "./game-core/index.js";
 import { LocalGuestSession, LocalHostSession } from "./local-session.js";
 import { arrangeCinquilloScreen } from './cinquillo-screen.js';
 import { arrangeMusScreen } from './mus-screen.js';
+import { renderParchisScreen } from './parchis-board.js';
 import { parseRoomCode } from "./room-code.js";
 
 import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, canPlayCinquillo, animateTable, animateSeats, MASCOTS, renderMascot } from "./table-view.js";
@@ -126,6 +127,7 @@ function renderGame() {
   state.screen = "game";
   const game = getGame(state.gameId), view = state.view;
   if (!view) { app.innerHTML = `${header()}<section class="panel"><p>Esperando el estado de la partida…</p></section>`; return; }
+  if(state.gameId==='parchis'){renderParchisScreen(app,view,state.playerId,playerName,state.error);return;}
   const origins = new Map([...app.querySelectorAll('.hand [data-card-key]')].map(el => [el.dataset.cardKey, el.getBoundingClientRect()]));
   const stockOrigin = app.querySelector(".table-stock")?.getBoundingClientRect();
   const oldHandKeys = new Set(origins.keys());
@@ -320,6 +322,8 @@ app.addEventListener("click", async (event) => {
   try {
     if (action === "open-table-zoom") { openTableZoom(); return; }
     if (action === "open-game-menu") { app.querySelector('.game-menu')?.showModal(); return; }
+    if (action === "parchis-zoom-open") { app.querySelector('.parchis-zoom')?.showModal(); return; }
+    if (action === "parchis-zoom-close") { app.querySelector('.parchis-zoom')?.close(); return; }
     if (action === "open-hand-result") { app.querySelector('.game-menu')?.close(); app.querySelector('.hand-result')?.showModal(); return; }
     if (action === "close-hand-result") { app.querySelector('.hand-result')?.close(); return; }
     if (action === "close-game-menu") { app.querySelector('.game-menu')?.close(); return; }
@@ -404,6 +408,8 @@ app.addEventListener("click", async (event) => {
     } else if (action === "mus-yes") sendAction({ type: "mus", wantsMus: true });
     else if (action === "mus-no") sendAction({ type: "mus", wantsMus: false });
     else if (action === "mus-next") sendAction({ type: "next-hand" });
+    else if (action === "parchis-roll") sendAction({ type: "roll" });
+    else if (action === "parchis-move") sendAction({ type: "move", piece: Number(button.dataset.piece) });
     else if (action === "mus-pass") sendAction({ type: "pass" });
     else if (action === "mus-bet") sendAction({ type: "bet", amount: Number(document.querySelector("#bet-amount")?.value) || 2 });
     else if (action === "mus-ordago") sendAction({ type: "ordago" });

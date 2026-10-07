@@ -1,6 +1,6 @@
 # Elteto
 
-Juego de cartas para jugar a Mus y Cinquillo desde móviles, con una mesa gamberra, reglas compartidas y partidas entre personas conectadas a la misma red.
+Juego de cartas y tablero para jugar a Mus, Cinquillo y Parchís desde móviles, con una mesa gamberra, reglas compartidas y partidas entre personas conectadas a la misma red.
 
 ## Aplicación web y GitHub Pages
 
@@ -14,7 +14,7 @@ Arquitectura, modelo de datos, reglas, configuración de Firebase y pruebas: [CO
 
 Para probarlo, abre [Elteto en GitHub Pages](https://fercho-93.github.io/Elteto/) en ambos teléfonos, crea la partida en uno, pulsa **Invitar con internet** y entra desde el otro con el QR o el código.
 
-Cinquillo admite de dos a seis participantes. Mus necesita cuatro.
+Cinquillo admite de dos a seis participantes. Mus necesita cuatro. Parchís admite de dos a cuatro.
 
 ### Jugar sin internet entre iPhone y Android
 
@@ -48,7 +48,7 @@ El sitio compilado aparece en `dist/`. Para probarlo localmente, sírvelo desde 
 
 ## Nueva prueba: Android anfitrión e invitados por navegador
 
-`apps/android-host/` añade una app Android que sirve Elteto por HTTP y WebSocket en una red local. iPhone y Android invitados entran con un solo QR desde su navegador, sin Firebase ni una descarga previa de la web. El catálogo habilita Cinquillo y Mus y requiere mantener abierta la app anfitriona. Instalación, arquitectura y límites: [CONFIGURAR_LAN.md](CONFIGURAR_LAN.md).
+`apps/android-host/` añade una app Android que sirve Elteto por HTTP y WebSocket en una red local. iPhone y Android invitados entran con un solo QR desde su navegador, sin Firebase ni una descarga previa de la web. El catálogo habilita Cinquillo, Mus y Parchís y requiere mantener abierta la app anfitriona. Instalación, arquitectura y límites: [CONFIGURAR_LAN.md](CONFIGURAR_LAN.md).
 
 ## App móvil nativa
 
@@ -56,7 +56,7 @@ El sitio compilado aparece en `dist/`. Para probarlo localmente, sírvelo desde 
 
 ## Motor de reglas
 
-`packages/game-core/` contiene los motores puros de Mus y Cinquillo. Cada motor valida las acciones, conserva el estado completo en el anfitrión y produce una vista individual para cada jugador.
+`packages/game-core/` contiene los motores puros de Mus, Cinquillo y Parchís. Cada motor valida las acciones, conserva el estado completo en el anfitrión y produce una vista individual para cada jugador.
 
 ## Mesa y evolución de los juegos
 
@@ -64,4 +64,6 @@ La web y Android LAN comparten una mesa ilustrada en 2D y diez retratos original
 
 ## Reglas y ampliación de juegos
 
-Las [reglas aportadas](reglas_juegos/README.md) conservan los 20 reglamentos originales. La biblioteca está en `reglas_juegos/biblioteca.html` y en la portada del juego. El [catálogo y la arquitectura](MESA_Y_REGLAS.md) distinguen motores disponibles de 18 juegos preparados para desarrollo. Nuevas mesas de Cinquillo: española 40, cinco de oros y puntuación a 30; Mus: ocho reyes/ases, juegos a 40 y partida a tres juegos.
+Las [reglas aportadas](reglas_juegos/README.md) conservan los 20 reglamentos originales. La biblioteca está en `reglas_juegos/biblioteca.html` y en la portada del juego. El [catálogo y la arquitectura](MESA_Y_REGLAS.md) distinguen motores disponibles de 17 juegos preparados para desarrollo. Nuevas mesas de Cinquillo: española 40, cinco de oros y puntuación a 30; Mus: ocho reyes/ases, juegos a 40 y partida a tres juegos.
+
+Parchís: tablero clásico de cuatro colores, dados y movimientos legales, barreras, seguros, capturas y llegada exacta. La edición digital y las decisiones no detalladas por el PDF están en [design/PARCHIS.md](design/PARCHIS.md).

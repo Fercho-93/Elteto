@@ -99,6 +99,33 @@ try {
  await host.locator('.game-menu-button').click();
  await host.locator('[data-action="leave-room"]').click();
  for(const p of [guest,c,d]) await p.locator('[data-action="open-join"]').waitFor();
+ // The same room, QR, messages and reconnection path also carry a public board game.
+ await host.locator('[data-action="open-host"]').click();await host.locator('#host-name').fill('Ana');
+ await host.locator('label.game-option:has(input[value="parchis"])').click();await host.locator('[data-action="create-room"]').click();
+ const boardCode=(await host.locator('.room-code').textContent()).trim();await guest.goto(base+'/?join='+boardCode);
+ await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===2);await host.locator('[data-action="start-game"]').click();
+ for(const p of [host,guest]){await p.locator('.parchis-table [data-pawn]').first().waitFor();assert.equal(await p.locator('.parchis-table [data-pawn]').count(),8);}
+ let moved=0;
+ for(let step=0;step<100&&(step<16||moved<2);step++){
+  // Consecutive blocked rolls can legitimately have identical public text.
+  // Observe the received render instead of requiring a different log message.
+  for(const p of [host,guest])await p.evaluate(()=>{window.parchisUpdated=false;window.parchisObserver?.disconnect();window.parchisObserver=new MutationObserver(()=>{window.parchisUpdated=true;window.parchisObserver.disconnect();});window.parchisObserver.observe(document.querySelector('#app'),{childList:true});});
+  let acted=false;
+  for(const p of [host,guest]){
+   const roll=p.locator('[data-action="parchis-roll"]:not([disabled])'),move=p.locator('.parchis-piece-choices button:not([disabled])');
+   if(await roll.count()){await roll.click();acted=true;break;}
+   if(await move.count()){await move.first().click();moved++;acted=true;break;}
+  }
+  assert.ok(acted,'Exactly the active player can roll or choose a legal piece');
+  for(const p of [host,guest])await p.waitForFunction(()=>window.parchisUpdated);
+  assert.equal(await host.locator('.parchis-die').textContent(),await guest.locator('.parchis-die').textContent());
+ }
+ assert.ok(moved>=2);
+ const before=await guest.locator('.parchis-table [data-pawn]').evaluateAll(els=>els.map(el=>[el.dataset.pawn,el.style.left,el.style.top]));
+ await guest.reload();await guest.locator('.parchis-table [data-pawn]').first().waitFor();
+ assert.deepEqual(await guest.locator('.parchis-table [data-pawn]').evaluateAll(els=>els.map(el=>[el.dataset.pawn,el.style.left,el.style.top])),before);
+ await host.locator('.game-menu-button').click();await host.locator('[data-action="leave-room"]').click();await guest.locator('[data-action="open-join"]').waitFor();
+ console.log('Parchís LAN: initial dice, rolls, legal moves, board synchronization and reload/reconnection: OK');
  assert.deepEqual(errors,[]);
  console.log('Mus LAN: cuatro navegadores, 16 cartas privadas, decisión de mus, envite y siguiente lance: OK');
  console.log('Navegadores separados sin recursos externos: QR, reparto, ocho turnos, recarga y cierre: OK');
