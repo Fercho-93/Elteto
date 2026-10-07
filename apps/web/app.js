@@ -41,7 +41,7 @@ function renderHome() {
       <div class="menu-hero">
         <div class="menu-art"><div class="menu-logo" role="img" aria-label="Elteto: berenjena y melocotón con gafas bajo un arco de neón"></div></div>
         <div class="menu-intro"><h1>Se viene<br> <span>pique.</span></h1>
-          <div class="menu-actions">${!LAN || LAN.hostKey ? '<button class="menu-button menu-primary" data-action="open-host">Crear partida <span aria-hidden="true">↗</span></button>' : ''}<button class="menu-button menu-secondary" data-action="open-join">Unirse a la mesa <span aria-hidden="true">→</span></button></div>
+          <div class="menu-actions">${!LAN || LAN.hostKey ? '<button class="menu-button menu-primary" data-action="open-host"><span class="menu-button-label">Crear partida</span><span class="menu-button-arrow" aria-hidden="true">↗</span></button>' : ''}<button class="menu-button menu-secondary" data-action="open-join"><span class="menu-button-label">Unirse a la mesa</span><span class="menu-button-arrow" aria-hidden="true">→</span></button></div>
           ${LAN ? '<p class="menu-network-note">Mesa local sin internet. Conecta todos los móviles a la misma Wi-Fi o hotspot.</p>' : ''}
         </div>
       </div>

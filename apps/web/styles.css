@@ -481,6 +481,26 @@ body:has(.game-page) {
 .menu-button span { font-size:23px; }
 .menu-button:active { transform:translate(3px,4px); box-shadow:2px 2px var(--black); }
 @media(hover:hover) { .menu-button:hover { transform:translateY(-3px) rotate(-.5deg); box-shadow:6px 9px var(--black); } }
+/* Miami neon treatment for the two home actions only. */
+.menu-actions { gap:17px; padding-inline:3px; }
+.menu-actions .menu-button {
+ --button-neon:#f3488d; --button-edge:#ffb8da; --button-shadow:#8b1b59;
+ position:relative; isolation:isolate; overflow:hidden; border:2px solid var(--button-edge); border-radius:10px;
+ background:linear-gradient(180deg,#ff8cb8 0%,var(--pink) 36%,var(--pink) 65%,#d33380 100%);
+ color:#291333; transform:skewX(-4deg); box-shadow:inset 0 1px 0 #ffffff80,inset 0 -3px 0 #70234a45,0 5px 0 var(--button-shadow),0 8px 0 #160d26,0 0 19px #f3488d50;
+ transition:transform .18s,box-shadow .18s,filter .18s;
+}
+.menu-actions .menu-secondary { --button-neon:#69e5e2; --button-edge:#c5fffc; --button-shadow:#246e83; background:linear-gradient(180deg,#b4fffa 0%,var(--cyan) 36%,var(--cyan) 65%,#3cb8c5 100%); box-shadow:inset 0 1px 0 #ffffff90,inset 0 -3px 0 #1d617d45,0 5px 0 var(--button-shadow),0 8px 0 #160d26,0 0 19px #69e5e24a; }
+.menu-actions .menu-button::before { content:""; position:absolute; inset:-60% -40%; pointer-events:none; background:linear-gradient(110deg,transparent 38%,#ffffff50 49%,transparent 60%); transform:translateX(-75%); transition:transform .55s ease; z-index:-1; }
+.menu-actions .menu-button::after { content:""; position:absolute; right:48px; top:9px; bottom:9px; width:34px; pointer-events:none; background:repeating-linear-gradient(0deg,transparent 0 4px,#ffffff55 4px 6px); opacity:.7; transform:skewX(-14deg); z-index:-1; }
+.menu-actions .menu-button .menu-button-label { font-size:inherit; font-style:italic; font-weight:950; letter-spacing:.3px; text-shadow:0 1px 0 #ffffff75; transform:skewX(4deg); }
+.menu-actions .menu-button .menu-button-arrow { font-size:25px; transform:skewX(4deg); text-shadow:0 1px 0 #ffffff75; }
+.menu-actions .menu-button:active { transform:translateY(4px) skewX(-4deg); box-shadow:inset 0 1px 0 #ffffff80,0 1px 0 var(--button-shadow),0 4px 0 #160d26,0 0 12px var(--button-neon); }
+.menu-actions .menu-button:focus-visible { outline:3px solid var(--paper); outline-offset:6px; }
+@media(hover:hover) {
+ .menu-actions .menu-button:hover { transform:translateY(-2px) skewX(-4deg); filter:brightness(1.07); box-shadow:inset 0 1px 0 #ffffff90,inset 0 -3px 0 #160d2625,0 7px 0 var(--button-shadow),0 10px 0 #160d26,0 0 26px var(--button-neon); }
+ .menu-actions .menu-button:hover::before { transform:translateX(75%); }
+}
 .menu-network-note { max-width:380px; color:var(--menu-muted); font-size:12px; line-height:1.5; margin-top:20px; }
 .menu-games { padding:20px 0 28px; scroll-margin-top:24px; }
 .menu-section-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:15px; }
