@@ -466,9 +466,9 @@ body:has(.game-page) {
 .menu-header nav a { padding:15px 0; }
 .menu-header nav a:hover { color:var(--cyan); }
 .menu-hero { display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:70px; padding:48px 25px 52px; }
-.menu-art { position:relative; width:min(100%,310px); margin:auto; transform:rotate(-4deg); }
-.menu-art::before { content:""; position:absolute; inset:10% -20%; z-index:-1; background:radial-gradient(ellipse,#f3488d60,transparent 67%); filter:blur(20px); }
-.menu-logo { aspect-ratio:245/320; background:url('./assets/menu-brand-sheet.jpg') 25.4106% 18.199% / 522.449% 266.5625% no-repeat; border-radius:21%; box-shadow:9px 12px 0 #150d22,0 0 36px #a347e233; animation:menu-logo-in .55s cubic-bezier(.2,.8,.3,1) both; }
+.menu-art { position:relative; width:min(100%,380px); margin:auto; }
+.menu-art::before { content:""; position:absolute; inset:8% -12% 0; z-index:-1; background:radial-gradient(ellipse at 32% 48%,#69e5e227,transparent 58%),radial-gradient(ellipse at 75% 52%,#f3488d35,transparent 60%); filter:blur(18px); }
+.menu-logo { aspect-ratio:1; background:url('./assets/elteto-logo-neon-v3.png') center / contain no-repeat; filter:drop-shadow(0 5px 2px #150b2475) drop-shadow(0 11px 14px #150b2470); animation:menu-logo-in .55s cubic-bezier(.2,.8,.3,1) both; }
 
 .menu-kicker { font-size:10px; font-weight:850; color:var(--cyan); letter-spacing:1.8px; margin:0 0 18px; text-transform:uppercase; }
 .menu-intro h1 { margin:0; font-size:clamp(48px,5.5vw,76px); line-height:.98; font-weight:1000; letter-spacing:-3px; }
@@ -505,7 +505,8 @@ body:has(.game-page) {
 .menu-characters[open] b { transform:rotate(45deg); }
 .menu-character-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:20px; padding:10px 0 30px; }
 .menu-character-grid figure { margin:0; min-width:0; text-align:center; }
-.menu-avatar { display:block; width:100%; aspect-ratio:248/407; background:url('./assets/elteto-original-avatars.png') var(--avatar-x) var(--avatar-y) / 516.129% 209.582% no-repeat; border-radius:17px; box-shadow:4px 5px #09070c; }
+.menu-avatar { display:block; width:100%; aspect-ratio:1; filter:drop-shadow(0 5px 3px #150b2480); }
+.menu-avatar svg { display:block; width:100%; height:100%; }
 .menu-character-grid figcaption { font-size:11px; margin-top:12px; color:var(--menu-muted); }
 .menu-footer { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; border-top:1px solid var(--menu-line); padding:18px 0 25px; font-size:11px; color:var(--menu-muted); }
 .menu-footer > span { padding:13px 0; }
@@ -560,7 +561,7 @@ body:has(.game-page) {
  .menu-brand { font-size:22px; }
  .menu-header nav { gap:22px; font-size:12px; }
  .menu-hero { grid-template-columns:1fr; gap:30px; text-align:center; padding:28px 0 18px; }
- .menu-art { width:181px; }
+ .menu-art { width:min(76vw,255px); }
  .menu-intro h1 { font-size:36px; letter-spacing:-1.5px; }
  .menu-intro h1 br { display:none; }
  .menu-intro h1 span { margin-left:.16em; }
@@ -589,5 +590,5 @@ body:has(.game-page) {
  .menu-rulebook { padding-top:32px; }
  .rules-steps li { padding:17px 15px; gap:12px; }
 }
-@media(max-width:360px) { .menu-rule-list { grid-template-columns:1fr; } .menu-art { width:160px; } }
+@media(max-width:360px) { .menu-rule-list { grid-template-columns:1fr; } .menu-art { width:220px; } }
 @media(prefers-reduced-motion:reduce) { .menu-shell *, .menu-shell *::before, .menu-shell *::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }

@@ -1,6 +1,6 @@
 const CACHE = "elteto-shell-v25";
 const ASSETS = [
-  "./assets/menu-brand-sheet.jpg",
+  "./avatar-art.js", "./assets/elteto-logo-neon-v3.png", "./assets/elteto-avatars-v3.png",
   "./parchis-dice.js", "./parchis-dice.css",
   "./parchis-board.js", "./parchis-board.css", "./game-core/games/parchis.js",
   "./mus-screen.js", "./mus-screen.css",

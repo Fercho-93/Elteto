@@ -1,8 +1,7 @@
-// Measured portrait windows into the user's original artwork. No redrawing or generated parts.
-const CROPS=[[27,62,213,213],[271,80,233,233],[523,20,238,238],[784,84,230,230],[1041,77,233,233],[9,490,239,239],[267,440,239,239],[543,477,221,221],[784,461,240,240],[1039,484,236,236]];
+import { renderAvatarArtwork } from './avatar-art.js';
+// Newly generated transparent characters, shared with the menu gallery.
 export function originalPortrait(character) {
- const [x,y,w,h]=CROPS[character];
- return `<div class="rival-original" data-character="${character}"><svg viewBox="${x} ${y} ${w} ${h}" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><image href="./assets/elteto-original-avatars.png" width="1280" height="853"/></svg></div>`;
+ return `<div class="rival-original" data-character="${character}">${renderAvatarArtwork(character)}</div>`;
 }
 // Only public identity/count/turn information is accepted here.
 export function renderRivalRoster(players,esc) {

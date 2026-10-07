@@ -1,3 +1,4 @@
+import { renderAvatarArtwork } from './avatar-art.js';
 import {beginParchisRoll} from './parchis-dice.js';
 import { getGame, listGames, GAME_CATALOG } from "./game-core/index.js";
 import { LocalGuestSession, LocalHostSession } from "./local-session.js";
@@ -29,11 +30,8 @@ function header(back = "home") {
 }
 function playerName(id) { return state.players.find((player) => player.id === id)?.name || (id === "host" ? state.name : id); }
 
-// Supplied artwork is framed with CSS, leaving the original images untouched.
 function menuAvatar(index) {
-  const x = [0,260,518,774,1032][index % 5];
-  const y = index < 5 ? 0 : 415;
-  return `<span class="menu-avatar" role="img" aria-label="${esc(MASCOTS[index])}" style="--avatar-x:${x / 1032 * 100}%;--avatar-y:${y / 446 * 100}%"></span>`;
+  return `<span class="menu-avatar" role="img" aria-label="${esc(MASCOTS[index])}">${renderAvatarArtwork(index, 'menu')}</span>`;
 }
 function renderHome() {
   state.screen = "home";
