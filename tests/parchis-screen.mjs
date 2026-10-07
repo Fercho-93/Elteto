@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {parchisEngine as engine} from '../dist/game-core/index.js';
-import {TRACK,pawnPoint} from '../dist/parchis-board.js';
+import {TRACK,pawnPoint,boardAxis} from '../dist/parchis-board.js';
 const {chromium,webkit}=await import('playwright');
-assert.equal(TRACK.length,68);assert.equal(new Set(TRACK.map(p=>p.join(','))).size,68);
+assert.ok(boardAxis(9)-boardAxis(8)>1.5);assert.equal(boardAxis(0),0);assert.equal(boardAxis(19),19);assert.equal(TRACK.length,68);assert.equal(new Set(TRACK.map(p=>p.join(','))).size,68);
 for(const color of ['yellow','green','red','blue'])for(let progress=-1;progress<=71;progress++){const point=pawnPoint(color,progress,0);assert.ok(point.every(n=>n>=0&&n<=19));}
 const fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1];
 const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://localhost').pathname.slice(1)||'index.html';let body=await readFile('dist/'+file);if(file==='app.js')body=Buffer.from(body+fixture);res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':'text/html');res.end(body);}catch{res.writeHead(404);res.end();}});
@@ -30,11 +30,11 @@ try{
   await page.evaluate(async()=>{for(let i=0;i<3;i++)await new Promise(requestAnimationFrame);});
   const metrics=await page.evaluate(()=>{
    const rect=el=>el.getBoundingClientRect(),inside=r=>r.left>=0&&r.top>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1;
-   const felt=rect(document.querySelector('.parchis-felt')),board=rect(document.querySelector('.parchis-table>.parchis-board')),roster=rect(document.querySelector('.rival-roster'));
+   const table=rect(document.querySelector('.parchis-table')),board=rect(document.querySelector('.parchis-table>.parchis-board')),roster=rect(document.querySelector('.rival-roster'));
    const controls=[...document.querySelectorAll('.play-header>button,.parchis-dock button')];
-   return {badControls:controls.filter(el=>!inside(rect(el))).map(el=>({action:el.dataset.action,rect:rect(el).toJSON()})),page:document.documentElement.scrollHeight<=innerHeight+1,boardFits:board.left>=felt.left+5&&board.right<=felt.right-5&&board.top>=felt.top+5&&board.bottom<=felt.bottom-5,offFelt:roster.bottom<felt.top,visible:controls.every(el=>inside(rect(el))),minButton:Math.min(...controls.map(el=>Math.min(rect(el).height,rect(el).width))),boardSize:board.width,pawns:document.querySelectorAll('.parchis-table [data-pawn]').length};
+   return {badControls:controls.filter(el=>!inside(rect(el))).map(el=>({action:el.dataset.action,rect:rect(el).toJSON()})),page:document.documentElement.scrollHeight<=innerHeight+1,boardFits:board.left>=table.left&&board.right<=table.right+1&&board.top>=roster.bottom&&board.bottom<=table.bottom+1,offFelt:roster.bottom<=board.top,noFelt:!document.querySelector('.parchis-felt'),visible:controls.every(el=>inside(rect(el))),minButton:Math.min(...controls.map(el=>Math.min(rect(el).height,rect(el).width))),boardSize:board.width,pawns:document.querySelectorAll('.parchis-table [data-pawn]').length};
   });
-  rows.push({width,height,insets,phase:game.phase,id,...metrics});assert.ok(metrics.page&&metrics.boardFits&&metrics.offFelt&&metrics.visible,JSON.stringify(rows.at(-1)));assert.ok(metrics.minButton>=44);assert.equal(metrics.pawns,16);
+  rows.push({width,height,insets,phase:game.phase,id,...metrics});assert.ok(metrics.page&&metrics.boardFits&&metrics.offFelt&&metrics.noFelt&&metrics.visible,JSON.stringify(rows.at(-1)));assert.ok(metrics.minButton>=44);if(width===390&&height===664&&!insets)assert.ok(metrics.boardSize>=380);assert.equal(metrics.pawns,16);
   if(id==='player-a'&&[320,390,844,1280].includes(width)&&!insets)await page.screenshot({path:`tests/artifacts/parchis/${width}-${height}-${game.phase}-${kind}.png`});
  }
  // Play actual controls from an initial state, without supplying client dice values.
