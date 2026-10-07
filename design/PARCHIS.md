@@ -4,9 +4,9 @@ Parchís se puede jugar en la web y Android LAN con dos, tres o cuatro personas.
 
 ## Presentación
 
-Tablero cuadrado vectorial de 68 casillas, cuatro colores, cuatro fichas por jugador y siete casillas privadas de llegada por color. Los seguros se marcan con un círculo. El tablero ocupa la superficie principal, con los retratos originales de los rivales en una fila exterior; el jugador propio solo ve su color y progreso. El dado, la instrucción y las acciones están debajo en vertical y a la derecha en horizontal.
+Tablero cuadrado vectorial de 68 casillas, cuatro colores, cuatro fichas por jugador y siete casillas privadas de llegada por color. Los seguros se marcan con un círculo. El tablero se presenta directamente, sin tapete verde ni mesa de fondo, y ocupa casi todo el ancho del móvil. Los recorridos tienen un ancho mayor que las casillas longitudinales; sus números se han ampliado y las fichas de salida son más grandes. Conserva las 68 casillas y todas las coordenadas lógicas. La geometría visual se transforma con la misma función para casillas y fichas. El tablero ocupa la superficie principal, con los retratos originales de los rivales en una fila exterior; el jugador propio solo ve su color y progreso. El dado, la instrucción y las acciones están debajo en vertical y a la derecha en horizontal.
 
-Cada ficha tiene un número del 1 al 4 que coincide con sus botones de movimiento. Estos botones tienen al menos 44 px y evitan exigir precisión sobre las pequeñas casillas. Las fichas legales se resaltan. La ampliación permite recorrer un tablero de 740 px. Las transiciones breves respetan la preferencia de movimiento reducido. Los dos ocupantes de una casilla se separan lateralmente.
+Cada ficha tiene un número del 1 al 4 que coincide con sus botones de movimiento. Estos botones tienen al menos 44 px y evitan exigir precisión sobre las pequeñas casillas. Las fichas legales se resaltan. La ampliación permite recorrer un tablero de 740 px. Las transiciones breves respetan la preferencia de movimiento reducido. Los dos ocupantes de una casilla se separan por el eje más ancho de la casilla.
 
 ## Reglas y decisiones de edición
 

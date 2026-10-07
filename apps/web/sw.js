@@ -1,4 +1,4 @@
-const CACHE = "elteto-shell-v22";
+const CACHE = "elteto-shell-v23";
 const ASSETS = [
   "./parchis-board.js", "./parchis-board.css", "./game-core/games/parchis.js",
   "./mus-screen.js", "./mus-screen.css",
