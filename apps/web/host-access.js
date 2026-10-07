@@ -46,7 +46,7 @@ export async function redeemActivationCode(code, connection = connectFirebase())
 export async function readHostAccess() {
   const connection = await connectFirebase();
   const user = connection.auth.currentUser;
-  if (!user || user.isAnonymous) return null;
+  if (!user) return null;
   const grant = (await getDocFromServer(doc(connection.db, 'hostAccess', user.uid))).data();
   const access = remember(user, grant);
   return access.active ? access : null;
@@ -75,6 +75,21 @@ export async function activateHost({ email, password, code, login = false }) {
     if (!access) throw new Error('Esta cuenta no tiene una invitación activa.');
     if (globalThis.window?.EltetoActivation) {
       const result = JSON.parse(window.EltetoActivation.activate(await auth.currentUser.getIdToken(true)));
+      if (!result.ok) throw new Error(result.message || 'No se pudo activar este Android.');
+    }
+    return access;
+  } catch (error) { throw accessError(error); }
+}
+// Enlace privado de desarrollo: Firebase solo admite el canje anónimo de
+// invitaciones marcadas por administración. No es un bypass público del cliente.
+export async function activateDevelopmentAdmin(code) {
+  try {
+    const connection = await connectFirebase();
+    if (!(await readHostAccess())) await redeemActivationCode(code, connection);
+    const access = await readHostAccess();
+    if (!access) throw new Error('No se pudo activar el acceso de desarrollo.');
+    if (globalThis.window?.EltetoActivation) {
+      const result = JSON.parse(window.EltetoActivation.activate(await connection.auth.currentUser.getIdToken(true)));
       if (!result.ok) throw new Error(result.message || 'No se pudo activar este Android.');
     }
     return access;

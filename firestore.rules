@@ -19,6 +19,9 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function registered() { return request.auth != null; }
     function account() { return registered() && request.auth.token.firebase.sign_in_provider == 'password'; }
+    function developmentInvitation(hash) {
+      return get(/databases/$(database)/documents/activationCodes/$(hash)).data.kind == 'development-admin';
+    }
     function licensed() {
       return registered() && exists(/databases/$(database)/documents/hostAccess/$(request.auth.uid))
         && get(/databases/$(database)/documents/hostAccess/$(request.auth.uid)).data.status == 'active';
@@ -28,9 +31,9 @@ service cloud.firestore {
     // Firestore; documento identificado por SHA-256. El canje y la licencia deben
     // nacer en la misma transacción y los clientes no pueden deshacerlos.
     match /activationCodes/{hash} {
-      allow get: if account() && hash.matches('^[a-f0-9]{64}$');
+      allow get: if registered() && hash.matches('^[a-f0-9]{64}$') && (account() || resource.data.kind == 'development-admin');
       allow list, create, delete: if false;
-      allow update: if account() && resource.data.status == 'unused'
+      allow update: if registered() && (account() || resource.data.kind == 'development-admin') && resource.data.status == 'unused'
         && (resource.data.expiresAt == null || resource.data.expiresAt > request.time)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','usedBy','usedAt'])
         && request.resource.data.status == 'used'
@@ -43,10 +46,11 @@ service cloud.firestore {
     match /hostAccess/{owner} {
       allow get: if registered() && request.auth.uid == owner;
       allow list, update, delete: if false;
-      allow create: if account() && request.auth.uid == owner
+      allow create: if registered() && request.auth.uid == owner
         && request.resource.data.keys().hasOnly(['status','codeHash','redeemedAt'])
         && request.resource.data.status == 'active' && request.resource.data.redeemedAt == request.time
         && request.resource.data.codeHash.matches('^[a-f0-9]{64}$')
+        && (account() || developmentInvitation(request.resource.data.codeHash))
         && get(/databases/$(database)/documents/activationCodes/$(request.resource.data.codeHash)).data.status == 'unused'
         && getAfter(/databases/$(database)/documents/activationCodes/$(request.resource.data.codeHash)).data.status == 'used'
         && getAfter(/databases/$(database)/documents/activationCodes/$(request.resource.data.codeHash)).data.usedBy == owner

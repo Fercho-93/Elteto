@@ -20,6 +20,13 @@ de código. Las salas online caducan como máximo en seis horas sin tareas de pa
 
 ## Firebase y administración
 
+Durante el desarrollo se puede ejecutar `node scripts/create-development-access.mjs`.
+Guarda un HTML privado en `.private/` con un enlace de administrador sin contraseña.
+El enlace se canjea una vez, antes de 24 horas, y autoriza la identidad anónima de ese
+navegador para abrir mesas. No concede permisos administrativos sobre Firebase ni
+permite a los invitados generar accesos. No compartirlo; en otro navegador o al
+borrar sus datos se necesita otro enlace. Se revoca con `revoke UID` como las licencias.
+
 Se reutiliza `elteto-fercho93` con acceso anónimo para invitados y Email/Password
 para anfitriones. Publicar `firestore.rules`. El workflow «Preparar invitaciones»
 habilita correo/contraseña y genera códigos con la credencial administrativa que

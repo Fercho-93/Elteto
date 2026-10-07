@@ -22,9 +22,9 @@ async function connect(email, password='Prueba-12345') {
   } else await signInAnonymously(auth);
   return {db,auth,uid:auth.currentUser.uid};
 }
-async function issue(expiresAt=null) {
+async function issue(expiresAt=null,kind=null) {
   const code=createActivationCode(),hash=await activationCodeHash(code);
-  await env.withSecurityRulesDisabled(ctx=>setDoc(doc(ctx.firestore(),'activationCodes',hash),{status:'unused',createdAt:Timestamp.now(),expiresAt,usedBy:null,usedAt:null}));
+  await env.withSecurityRulesDisabled(ctx=>setDoc(doc(ctx.firestore(),'activationCodes',hash),{status:'unused',createdAt:Timestamp.now(),expiresAt,usedBy:null,usedAt:null,...(kind?{kind}:{})}));
   return {code,hash};
 }
 try {
@@ -58,5 +58,17 @@ try {
   await env.withSecurityRulesDisabled(ctx=>updateDoc(doc(ctx.firestore(),'hostAccess',winner.uid),{status:'revoked'}));
   await assert.rejects(OnlineSession.create({gameId:'cinquillo',hostName:'Ana'},()=>{},winner),/Activa/);
   await assert.rejects(redeemActivationCode(invite.code,winner),/ya tiene/);
+  const developer=await connect(),other=await connect();
+  const privateLink=await issue(Timestamp.fromMillis(Date.now()+86400000),'development-admin');
+  await redeemActivationCode(privateLink.code,developer);
+  assert.equal(developer.auth.currentUser.isAnonymous,true,'desarrollo sin correo ni contraseña');
+  assert.equal((await getDocFromServer(doc(developer.db,'hostAccess',developer.uid))).data().status,'active');
+  const developmentRoom=await OnlineSession.create({gameId:'cinquillo',hostName:'Administrador'},()=>{},developer);sessions.push(developmentRoom);
+  await assert.rejects(redeemActivationCode(privateLink.code,other),/usado|válido/);
+  await assert.rejects(redeemActivationCode((await issue()).code,other));
+  await assert.rejects(redeemActivationCode((await issue(Timestamp.fromMillis(Date.now()-60000),'development-admin')).code,other),/caducado/);
+  await assertFails(setDoc(doc(other.db,'activationCodes','e'.repeat(64)),{status:'unused',kind:'development-admin'}));
+  await env.withSecurityRulesDisabled(ctx=>updateDoc(doc(ctx.firestore(),'hostAccess',developer.uid),{status:'revoked'}));
+  await assert.rejects(OnlineSession.create({gameId:'cinquillo',hostName:'Administrador'},()=>{},developer),/Activa/);
   console.log('Acceso real: carrera entre dos cuentas, canje atómico, permisos, caducidad, recuperación, invitados y revocación: OK');
 } finally {for(const session of sessions)session.teardown();await env.cleanup();await Promise.all(apps.map(deleteApp));}

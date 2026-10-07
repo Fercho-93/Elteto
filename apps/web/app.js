@@ -6,7 +6,7 @@ import { arrangeCinquilloScreen } from './cinquillo-screen.js';
 import { arrangeMusScreen } from './mus-screen.js';
 import { renderParchisScreen } from './parchis-board.js';
 import { parseRoomCode } from "./room-code.js";
-import { activateHost, requireHostAccess, recoverHostPassword, leaveHostAccount, cachedHostAccess } from './host-access.js';
+import { activateHost, activateDevelopmentAdmin, requireHostAccess, recoverHostPassword, leaveHostAccount, cachedHostAccess } from './host-access.js';
 import { distributionConfig } from './distribution-config.js';
 
 import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, canPlayCinquillo, animateTable, animateSeats } from "./table-view.js";
@@ -15,7 +15,8 @@ const LAN = window.ELTETO_LAN;
 const GUEST = Boolean(window.ELTETO_GUEST || (LAN && !LAN.hostKey) || parseRoomCode(location.search));
 let accessLogin = false, accessBusy = false;
 let activationCode = new URLSearchParams(location.hash.slice(1)).get('activate') || '';
-if (activationCode) history.replaceState(null, '', location.pathname + location.search);
+let adminCode = new URLSearchParams(location.hash.slice(1)).get('admin') || '';
+if (activationCode || adminCode) history.replaceState(null, '', location.pathname + location.search);
 const app = document.querySelector("#app");
 const toastEl = document.querySelector("#toast");
 const state = {
@@ -656,7 +657,10 @@ if (incomingRoom) {
 } else renderHome();
 if (!LAN && !GUEST && "serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
 if (GUEST) document.querySelector('link[rel="manifest"]')?.remove();
-if (activationCode && !GUEST) renderAccess();
+if (adminCode && !GUEST) {
+  app.innerHTML = '<section class="menu-shell"><div class="menu-wrap"><section class="menu-setup access-panel"><p class="menu-kicker">DESARROLLO</p><h1>Entrando<span>…</span></h1></section></div></section>';
+  activateDevelopmentAdmin(adminCode).then(() => { adminCode = ''; renderInstallation(); }).catch(error => { adminCode = ''; renderAccess(); app.querySelector('#access-error').textContent = error.message; });
+} else if (activationCode && !GUEST) renderAccess();
 
 app.addEventListener('submit', async event => {
   if (event.target.id !== 'access-form') return;

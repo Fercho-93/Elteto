@@ -7,7 +7,8 @@ import { spawnSync } from 'node:child_process';
 const base='https://firestore.googleapis.com/v1/projects/elteto-fercho93/databases/(default)/documents';
 const [command='list',arg='20',mode='']=process.argv.slice(2);
 async function register(hash) {
-  try { await request(`${base}/activationCodes?documentId=${hash}`,{method:'POST',body:JSON.stringify({fields:{status:{stringValue:'unused'},createdAt:{timestampValue:new Date().toISOString()},expiresAt:{nullValue:null},usedBy:{nullValue:null},usedAt:{nullValue:null}}})}); }
+  const development = process.env.ELTETO_DEVELOPMENT_ADMIN === 'true';
+  try { await request(`${base}/activationCodes?documentId=${hash}`,{method:'POST',body:JSON.stringify({fields:{status:{stringValue:'unused'},createdAt:{timestampValue:new Date().toISOString()},expiresAt:development?{timestampValue:new Date(Date.now()+86400000).toISOString()}:{nullValue:null},usedBy:{nullValue:null},usedAt:{nullValue:null},...(development?{kind:{stringValue:'development-admin'}}:{})}})}); }
   catch(error) { if(error.status!==409)throw error; }
 }
 if(command==='generate') {

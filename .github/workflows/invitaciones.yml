@@ -5,6 +5,10 @@ on:
       huellas:
         description: Huellas SHA-256 generadas localmente, separadas por comas. Nunca codigos completos.
         required: true
+      administrador:
+        description: Acceso privado de desarrollo sin contraseña (enlace de un solo uso).
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -27,6 +31,7 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase.json
           ELTETO_INVITATION_HASHES: ${{ inputs.huellas }}
+          ELTETO_DEVELOPMENT_ADMIN: ${{ inputs.administrador }}
         run: |
           node scripts/setup-host-access.mjs
           node scripts/manage-invitations.mjs register-hashes
