@@ -42,7 +42,8 @@ try{
    // Exercise a real user action through the same click handler used by guests.
    const view=engine.view(game,active);await page.evaluate(({id,game,active,names})=>window.testTable(id,game,active,names),{id:engine.id,game,active,names});
    let expected;
-   if(view.validCards?.length){const card=view.validCards[0];expected=engine.applyAction(game,active,{type:'play',card});await page.locator(`[data-action="catalog-select-card"][data-card-id="${card}"]`).click();}
+   if(game.id==='domino'){const action=view.options[0].action;expected=engine.applyAction(game,active,action);await page.locator(`[data-action="catalog-select-tile"][data-tile-id="${action.tile}"]`).click();assert.equal(await page.locator('.catalog-options').textContent(), '');}
+   else if(view.validCards?.length){const card=view.validCards[0];expected=engine.applyAction(game,active,{type:'play',card});await page.locator(`[data-action="catalog-select-card"][data-card-id="${card}"]`).click();}
    else if(view.moves?.length){const path=view.moves[0].path;expected=engine.applyAction(game,active,{type:'move',path});for(const square of path)await page.locator(`.catalog-surface [data-square="${square}"]`).click();}
    else if(game.id==='escoba'){
     const card=view.myHand[0],value=Number(card.rank)>7?Number(card.rank)-2:Number(card.rank),table=captures15(view.table,15-value)[0]||[];

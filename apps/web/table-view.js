@@ -43,7 +43,7 @@ export function cardFace(card) {
   return `<span class="card-face"><span class="card-illustration"><img src="${cardAsset(card)}" alt="" draggable="false"></span></span>`;
 }
 export function renderHandCard(card, options = {}) {
-  return `<button class="playing-card ${options.selected ? "selected" : ""} ${options.playable ? "legal-card" : ""}" style="--card-tilt:${Number(options.tilt) || 0}deg" data-action="play-card" data-card-key="${esc(cardKey(card))}" ${options.disabled ? "disabled" : ""} ${options.selectable ? `aria-pressed="${Boolean(options.selected)}"` : ""} aria-label="${esc(card.rank + " de " + card.suit)}${options.playable ? ", puedes jugarla" : ""}">${cardFace(card)}<span class="hand-index ${["corazones", "diamantes"].includes(card.suit) ? "card-red" : ""}" aria-hidden="true"><b>${esc(card.rank)}</b>${suitArt(card.suit)}</span></button>`;
+  return `<button class="playing-card ${options.selected ? "selected" : ""}" style="--card-tilt:${Number(options.tilt) || 0}deg" data-action="play-card" data-card-key="${esc(cardKey(card))}" ${options.disabled ? "disabled" : ""} ${options.selectable ? `aria-pressed="${Boolean(options.selected)}"` : ""} aria-label="${esc(card.rank + " de " + card.suit)}">${cardFace(card)}<span class="hand-index ${["corazones", "diamantes"].includes(card.suit) ? "card-red" : ""}" aria-hidden="true"><b>${esc(card.rank)}</b>${suitArt(card.suit)}</span></button>`;
 }
 export const MASCOTS = ["Berenjena", "Melocotón", "Plátano", "Bandera", "Aguacate", "Cerdito", "Seta", "Gota", "Caca", "Castañas"];
 // Per-illustration contours keep chair upholstery and torso out of the arm layer.
@@ -137,15 +137,13 @@ export function renderCinquilloBoard(view) {
     .map((suit) => {
       const entry = view.table[suit];
       const count = entry ? entry.high - entry.low + 1 : 0;
-      const next = entry ? [ranks[entry.low - 1], ranks[entry.high + 1]].filter(Boolean) : canPlaceCinquillo(view.table,{suit,rank:'5'},view.ruleset)?['5']:[];
-      const continuation = entry ? next.length ? `Puedes continuar con ${next.join(' o ')}` : 'Palo completo' : next.length ? 'Abre con el 5' : 'Primero el 5 de '+(legacy?'corazones':'oros');
       return `<div class="suit-lane ${count > 2 ? 'has-stack' : ''}" data-suit="${suit}"><b class="${["corazones", "diamantes"].includes(suit) ? "card-red" : ""}" aria-label="${suitNames[suit]}">${suitArt(suit)}<span>${suitNames[suit]}</span><small>· ${count} ${count === 1 ? 'carta' : 'cartas'}</small></b><div class="lane-cards">${ranks.map(
         (rank, index) => {
           const placed = entry && index >= entry.low && index <= entry.high;
           const endpoint = placed && (index === entry.low || index === entry.high);
           return `<span class="board-card ${placed ? "placed" : "empty-slot"} ${endpoint ? 'endpoint' : ''} ${rank === "5" ? "five-slot" : ""}" data-rank="${rank}" ${placed ? `data-table-key="${suit}:${rank}"` : ""} aria-label="${rank} de ${suit}${placed ? ", colocada" : ", pendiente"}">${placed ? cardFace({ suit, rank }) : `<span>${rank}</span>`}</span>`;
         },
-      ).join("")}${entry ? '' : `<span class="unopened-suit" aria-label="${suitNames[suit]} sin abrir"><span>5</span>${suitArt(suit)}<small>Sin abrir</small></span>`}</div><span class="lane-next" aria-label="${continuation}" title="${continuation}">${entry ? next.length ? `<span aria-hidden="true">→ </span>${next.join(' o ')}` : 'Completo' : next.length ? 'Abre el 5' : 'En espera'}</span><span class="lane-range">${count ? `${ranks[entry.low]}${count > 1 ? '–' + ranks[entry.high] : ''} · ${count} ${count === 1 ? 'carta' : 'cartas'}` : 'Sin cartas'}</span></div>`;
+      ).join("")}${entry ? '' : `<span class="unopened-suit" aria-label="${suitNames[suit]} sin abrir"><span>5</span>${suitArt(suit)}<small>Sin abrir</small></span>`}</div><span class="lane-range">${count ? `${ranks[entry.low]}${count > 1 ? '–' + ranks[entry.high] : ''} · ${count} ${count === 1 ? 'carta' : 'cartas'}` : 'Sin cartas'}</span></div>`;
     })
     .join("")}</div>`;
 }

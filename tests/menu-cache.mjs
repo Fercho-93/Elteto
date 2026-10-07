@@ -16,7 +16,7 @@ const version = hash.digest('hex').slice(0, 12);
 assert.ok(index.includes(`./app.js?v=${version}`));
 assert.ok(index.includes(`./styles.css?v=${version}`));
 assert.ok(index.includes(`./qr-scanner.js?v=${version}`));
-assert.ok(worker.includes(`elteto-shell-v25-${version}`));
+assert.ok(worker.includes(`elteto-shell-v26-${version}`));
 
 const origin = 'https://example.test/Elteto/';
 const handlers = new Map();

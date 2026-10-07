@@ -34,6 +34,8 @@ jobs:
       - run: QR_BROWSER=webkit node tests/qr-navegador.mjs
       - run: node tests/bots-navegador.mjs
       - run: BOT_BROWSER=webkit node tests/bots-navegador.mjs
+      - run: node tests/no-aids.mjs
+      - run: AIDS_BROWSER=webkit node tests/no-aids.mjs
       - run: node tests/catalog-screen.mjs
       - run: CATALOG_BROWSER=webkit node tests/catalog-screen.mjs
       - run: node tests/cinquillo-layout.mjs

@@ -8,10 +8,10 @@ export function renderRivalRoster(players,esc) {
  return `<div class="rival-roster player-roster" data-count="${players.length}" style="--rival-count:${players.length}" role="group" aria-label="Jugadores, en orden de turno">${players.map(p=>`<article class="table-seat rival-seat ${p.isSelf?'self-seat ':''}${p.active?'active-seat':''}" data-player-id="${esc(p.id)}" ${p.active?'aria-current="true"':''} aria-label="${esc(p.name)}${p.isSelf?', tú':''}, ${p.mascot}, ${p.count} ${esc(p.unit||'cartas')}${p.teamLabel?', '+esc(p.teamLabel):''}${p.active?', turno activo':''}" title="${esc(p.name)}${p.isSelf?' · tú':''} · ${p.mascot} · ${p.count} ${esc(p.unit||'cartas')}${p.teamLabel?', '+esc(p.teamLabel):''}${p.active?' · Su turno':''}"><div class="rival-token">${originalPortrait(p.character)}${p.active?'<span class="player-turn-marker" aria-hidden="true">▾</span>':''}${p.roll!==undefined?`<span class="player-roll" aria-label="Tirada: ${esc(p.roll)}">${esc(p.roll)}</span>`:''}</div><div class="rival-info" aria-hidden="true"><strong class="rival-name">${p.isSelf?'Tú':esc(p.name)}</strong><span class="rival-count ${p.count===1?'last-card':''}" data-count="${p.count}"><i></i>${p.count}${p.teamLabel?`<span class="rival-team"> · ${esc(p.teamLabel)}</span>`:`<span class="rival-count-word"> ${esc(p.unit||'cartas')}</span>`}</span></div></article>`).join('')}</div>`;
 }
 
-// Scroll only the player strip, keeping the current turn visible on narrow screens.
+// Keep human turns visible without sweeping across the AI seats.
 export function revealActivePlayer(app) {
  const roster=app.querySelector('.player-roster'),active=roster?.querySelector('[aria-current="true"]');
- if(!active)return;
+ if(!active||/^bot-[1-7]$/.test(active.dataset.playerId))return;
  const frame=roster.getBoundingClientRect(),seat=active.getBoundingClientRect();
  if(seat.left<frame.left||seat.right>frame.right)roster.scrollLeft+=seat.left-frame.left-(frame.width-seat.width)/2;
 }

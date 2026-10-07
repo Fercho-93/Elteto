@@ -65,5 +65,5 @@ await writeFile(guestPath, guest);
 // Cache both URLs so an installed app still opens offline, including on its first install.
 const versionedMenu = menuFiles.map(file => `./${file}?v=${menuVersion}`);
 await writeFile(swPath, sw
-  .replace('elteto-shell-v25', `elteto-shell-v25-${menuVersion}`)
+  .replace('elteto-shell-v26', `elteto-shell-v26-${menuVersion}`)
   .replace('const ASSETS = [', `const ASSETS = [...${JSON.stringify([...rulesFiles, ...versionedMenu])},`));

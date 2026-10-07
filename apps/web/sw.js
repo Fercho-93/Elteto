@@ -1,4 +1,4 @@
-const CACHE = "elteto-shell-v25";
+const CACHE = "elteto-shell-v26";
 const ASSETS = [
   './guest.html', './activation-code.js', './host-access.js', './distribution-config.js', './firebase-sdk.js',
   "./catalog-games.js", "./catalog-games.css", "./game-core/games/shared.js", "./game-core/games/boards.js", "./game-core/games/social-cards.js", "./game-core/games/tricks.js", "./game-core/games/melds.js", "./game-core/games/holdem.js",

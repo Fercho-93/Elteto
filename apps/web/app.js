@@ -9,7 +9,7 @@ import { parseRoomCode } from "./room-code.js";
 import { activateHost, activateDevelopmentAdmin, activatePublicDevelopmentAdmin, requireHostAccess, recoverHostPassword, leaveHostAccount, cachedHostAccess } from './host-access.js';
 import { distributionConfig } from './distribution-config.js';
 
-import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, canPlayCinquillo, animateTable, animateSeats } from "./table-view.js";
+import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, animateTable, animateSeats } from "./table-view.js";
 
 const LAN = window.ELTETO_LAN;
 const GUEST = Boolean(window.ELTETO_GUEST || (LAN && !LAN.hostKey) || parseRoomCode(location.search));
@@ -188,8 +188,6 @@ function renderGame() {
   if(!['cinquillo','mus','parchis'].includes(state.gameId)){renderCatalogGame(app,view,state.playerId,playerName,state.error);return;}
   if(state.gameId==='parchis'){renderParchisScreen(app,view,state.playerId,playerName,state.error);return;}
   const origins = new Map([...app.querySelectorAll('.hand [data-card-key]')].map(el => [el.dataset.cardKey, el.getBoundingClientRect()]));
-  const stockOrigin = app.querySelector(".table-stock")?.getBoundingClientRect();
-  const oldHandKeys = new Set(origins.keys());
   const actor = [...app.querySelectorAll('[data-player-id]')].find(el => el.dataset.playerId === previousTurn);
   const actorFront = [...app.querySelectorAll('[data-front-player]')].find(el => el.dataset.frontPlayer === previousTurn);
   const sourceSeat = (actorFront?.querySelector('.rival-hand') || actor)?.getBoundingClientRect();
@@ -212,8 +210,8 @@ function renderGame() {
   const myTurn = view.turnPlayer === state.playerId;
   const selecting = state.gameId === 'mus' && view.phase === 'discard' && view.awaitingDiscardFrom.includes(state.playerId);
   const hand = sortedHand(view.myHand).map((card,index) => {
-    const playable = state.gameId === 'cinquillo' && !view.finished && !view.handWinner && myTurn && canPlayCinquillo(view.table, card, view.ruleset);
-    return renderHandCard(card, {playable, selected: selecting && state.selected.has(cardKey(card)), selectable: selecting, disabled: !selecting && !playable, tilt:(index-(view.myHand.length-1)/2)*2.4});
+    const canInteract = state.gameId === 'cinquillo' && !view.finished && !view.handWinner && myTurn;
+    return renderHandCard(card, {selected: selecting && state.selected.has(cardKey(card)), selectable: selecting, disabled: !selecting && !canInteract, tilt:(index-(view.myHand.length-1)/2)*2.4});
   }).join('');
   const controls = state.gameId === 'mus' ? musControls(view) : cinquilloControls(view);
   const table = state.gameId === 'mus' ? renderMusBoard(view) : renderCinquilloBoard(view);
@@ -260,14 +258,7 @@ function renderGame() {
     const target=[...app.querySelectorAll('[data-action]')].find(el=>el.dataset.action===focusAction && (!focusCard||el.dataset.cardKey===focusCard) && (!focusSuit||el.dataset.suit===focusSuit));
     if(target && !target.disabled && !target.hidden) target.focus({preventScroll:true});
   }
-  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const stock = stockOrigin || app.querySelector('.game-table').getBoundingClientRect();
-    for (const [index, card] of [...app.querySelectorAll('.hand [data-card-key]')].entries()) {
-      if (oldHandKeys.has(card.dataset.cardKey) || !card.animate) continue;
-      const rect = card.getBoundingClientRect();
-      card.animate([{transform:`translate(${stock.x+stock.width/2-rect.x}px,${stock.y+stock.height/2-rect.y}px) rotate(-10deg)`,opacity:0},{transform:'none',opacity:1}], {duration:350,delay:Math.min(index*25,250),easing:'cubic-bezier(.2,.8,.2,1)'});
-    }
-  }
+  // Private hand faces stay in the dock, including on the initial deal.
   previousTableKeys = animateTable(app, previousTableKeys, origins, sourceSeat);
   animateSeats(app, previousSeats, view);
   previousSeats = {turnPlayer:view.turnPlayer,handSizes:{...view.handSizes},log:view.log?.at(-1)};
@@ -315,8 +306,7 @@ function cinquilloControls(view) {
   if (view.finished) return "";
   if (view.handWinner) return `<p class="helper">${esc(playerName(view.handWinner))} gana la mano ${view.handNumber}. Meta: ${view.targetScore} puntos.</p><p>${view.players.map(id=>`${esc(playerName(id))}: ${view.scores[id]}`).join(' · ')}</p>${view.handWinner === state.playerId ? '<button class="button button-paper" data-action="cinquillo-next-hand">Siguiente mano</button>' : ''}`;
   if (view.turnPlayer !== state.playerId) return `<p class="helper">Turno de ${esc(playerName(view.turnPlayer))}.</p>`;
-  const canPass = !view.myHand.some(card => canPlayCinquillo(view.table, card, view.ruleset));
-  return `<p class="helper">Juega una carta que continúe una escalera de la mesa. Las cartas válidas brillan.</p><button class="button button-paper" data-action="cinquillo-pass" ${canPass ? "" : "disabled"}>Paso</button>`;
+  return `<p class="helper">Tu turno.</p><button class="button button-paper" data-action="cinquillo-pass">Paso</button>`;
 }
 
 function render() {

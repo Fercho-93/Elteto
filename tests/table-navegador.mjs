@@ -101,10 +101,10 @@ try {
       );
       assert.equal(
         await page.locator(".hand .playing-card:not([disabled])").count(),
-        1,
+        game.hands[id].length,
       );
       assert.ok(
-        await page.locator('[data-action="cinquillo-pass"]').isDisabled(),
+        await page.locator('[data-action="cinquillo-pass"]').isEnabled(),
       );
       assert.equal(
         await page.evaluate(
@@ -119,11 +119,11 @@ try {
       assert.deepEqual(await page.evaluate(()=>window.tableSnapshot()),game,'Filtering never sends a game action');
       assert.ok(await page.locator('.hand .playing-card:visible').evaluateAll(cards=>cards.every(card=>card.dataset.cardKey.startsWith('oros:'))));
       assert.equal(await page.locator('[data-action="hand-filter"][data-suit="oros"]').getAttribute('aria-pressed'),'true');
-      await page.locator(".hand .playing-card:not([disabled]):visible").click();
+      await page.locator('.hand [data-card-key="oros:5"]').click();
       await page.locator('[data-table-key="oros:5"]').waitFor({state:'attached'});
       assert.equal(await page.locator("[data-table-key]").count(), 1);
       assert.equal(await page.locator('.game-table .endpoint:visible').count(),1,'An opening five is shown once');
-      assert.equal(await page.locator('.game-table [data-suit="oros"] .lane-next').getAttribute('aria-label'),'Puedes continuar con 4 o 6');
+      assert.equal(await page.locator('.game-table .lane-next').count(),0);
       await page.locator('[data-action="hand-filter"][data-suit="all"]').click();
       assert.equal(
         await page.locator(".hand .playing-card").count(),
@@ -178,7 +178,7 @@ try {
       await page.evaluate(game=>window.testTable('cinquillo',game,'a'),full);
       assert.equal(await page.locator('[data-table-key]').count(),40);
       assert.equal(await page.locator('.game-table .endpoint:visible').count(),8);
-      assert.ok(await page.locator('.game-table .lane-next').evaluateAll(labels=>labels.every(label=>label.getAttribute('aria-label')==='Palo completo')));
+      assert.equal(await page.locator('.game-table .lane-next').count(),0);
       assert.ok(await page.locator('[data-table-key]:visible').evaluateAll(cards=>{
         const surface=document.querySelector('.table-surface'),felt=surface.getBoundingClientRect(),style=getComputedStyle(surface);
         const border=parseFloat(style.borderLeftWidth);
@@ -237,7 +237,7 @@ try {
       assert.equal(await page.locator('.board-zoom').evaluate(dialog=>dialog.open),false);
       await page.evaluate(game=>window.testTable('cinquillo',game,'a'),{...full,table:{oros:{low:4,high:6}}});
       assert.deepEqual(await page.locator('.game-table .endpoint:visible').evaluateAll(cards=>cards.map(card=>card.dataset.tableKey)),['oros:5','oros:7']);
-      assert.equal(await page.locator('.game-table [data-suit="oros"] .lane-next').getAttribute('aria-label'),'Puedes continuar con 4 o 10','Spanish seven continues with the sota, not eight');
+      assert.equal(await page.locator('.game-table .lane-next').count(),0,'No continuation hints');
       assert.equal(await page.locator('.game-table [data-suit="oros"] b small').textContent(),'· 3 cartas');
       await page.evaluate(game=>window.testTable('cinquillo',game,'a'),full);
       if(width === 900) await page.screenshot({path:`tests/artifacts/table-full-spanish-${process.env.TABLE_BROWSER||'chromium'}.png`,fullPage:true});
@@ -288,7 +288,7 @@ try {
     closing.hands={a:[{suit:'oros',rank:'6'}],b:[{suit:'copas',rank:'1'}],c:[{suit:'bastos',rank:'12'}],d:[{suit:'espadas',rank:'2'}]};
     closing.table={oros:{low:4,high:4}};closing.turn=0;
     await page.evaluate(game=>window.testTable('cinquillo',game,'a'),closing);
-    await page.locator('.legal-card').click();
+    await page.locator('.hand [data-card-key="oros:6"]').click();
     assert.ok(await page.locator('.hand-result').evaluate(el=>el.open));
     assert.equal(await page.locator('.result-scores tbody tr').first().textContent(),'Ana · tú+88');
     await page.locator('[data-action="close-hand-result"]').click();
@@ -361,7 +361,7 @@ try {
   const motionPage=await motion.newPage();await motionPage.goto(base);await motionPage.waitForFunction(()=>window.testTable);
   const motionGame=cinquilloEngine.createInitialState(['a','b','c','d'],17);
   await motionPage.evaluate(game=>window.testTable('cinquillo',game,game.players[game.turn]),motionGame);
-  await motionPage.locator('.legal-card').click();
+  await motionPage.locator('.hand [data-card-key="oros:5"]').click();
   assert.ok(await motionPage.locator('.rival-roster').evaluate(el=>el.getAnimations().length===0),'Roster stays still');
   assert.ok(await motionPage.locator('.rival-token').evaluateAll(tokens=>tokens.some(t=>t.getAnimations().length>0)),'Only the relevant portrait reacts');
   await motion.close();
@@ -410,9 +410,9 @@ try {
   const fallbackGame=cinquilloEngine.createInitialState(['a','b'],3);
   await fallbackPage.evaluate(game=>window.testTable('cinquillo',game,game.players[game.turn]),fallbackGame);
   assert.equal(await fallbackPage.locator('.game-table').getAttribute('data-scene'),'illustrated-2d');
-  assert.ok(await fallbackPage.locator('.legal-card').isVisible());
+  assert.ok(await fallbackPage.locator('.hand [data-card-key="oros:5"]').isVisible());
   assert.equal(await fallbackPage.locator('.empty-slot').first().evaluate(el=>getComputedStyle(el).visibility),'hidden');
-  await fallbackPage.locator('.legal-card').click();
+  await fallbackPage.locator('.hand [data-card-key="oros:5"]').click();
   assert.equal(await fallbackPage.locator('[data-table-key]').count(),1);
   await fallback.close();
   assert.deepEqual(errors, []);

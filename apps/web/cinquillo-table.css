@@ -77,13 +77,11 @@ body:has(.cinquillo-screen) { background:radial-gradient(ellipse at 50% 0,#352a3
 .hand-filters button { position:relative; display:flex; justify-content:center; align-items:center; gap:4px; min-height:44px; min-width:0; padding:4px 2px; border:1px solid transparent; border-radius:9px; color:#beb8b9; background:none; font:500 11px system-ui,sans-serif; }
 .hand-filters button small { font:400 9px system-ui,sans-serif; color:#9f9a9a; }
 .hand-filters button[aria-pressed="true"] { background:#3b3436; color:#f0dfb6; border-color:#b9a37244; }
-.hand-filters .has-play::after { content:''; position:absolute; bottom:4px; width:4px; height:4px; border-radius:50%; background:#e4cd8b; }
 .cinquillo-screen .hand { padding:7px 3px 9px; gap:6px; margin:0; height:calc(var(--hand-h) + 16px); min-width:0; background:none; justify-content:flex-start; align-items:center; overscroll-behavior-x:contain; scrollbar-width:thin; scrollbar-color:#ac9664 #24222b; touch-action:pan-x; }
 .cinquillo-screen .hand .playing-card { flex:0 0 var(--hand-w); width:var(--hand-w); height:var(--hand-h); margin:0; transform:none; }
 .cinquillo-screen .hand .playing-card[hidden] { display:none; }
 .cinquillo-screen .hand .playing-card:disabled { opacity:1; filter:none; }
-.cinquillo-screen .hand .legal-card { box-shadow:0 0 0 2px #dfc77f,0 3px 8px #08081299; }
-.cinquillo-screen .hand .playing-card.legal-card:hover { transform:translateY(-3px); }
+.cinquillo-screen .hand .playing-card:not(:disabled):hover { transform:translateY(-3px); }
 .cinquillo-screen .play-error { margin:0; padding:4px 8px; font-size:11px; }
 .cinquillo-screen .board-zoom,.game-menu { color:#eee6d5; background:#211f27; border:1px solid #a88b6166; border-radius:18px; width:min(900px,calc(100% - 20px)); max-height:calc(100dvh - 24px); padding:16px; }
 .cinquillo-screen .board-zoom { display:none; }
