@@ -1,5 +1,6 @@
 :root {
   color-scheme: dark;
+  --play-top-gap: 12px;
   --ink: #21172b;
   --night: #130e1b;
   --plum: #382342;

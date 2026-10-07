@@ -10,7 +10,7 @@ body:has(.cinquillo-screen) { background:radial-gradient(ellipse at 50% 0,#352a3
  --pile-w:clamp(54px,min(calc((100vw - 116px) / 4),calc((100dvh - 316px - var(--hand-h)) / 3.068)),84px);
  --pile-h:calc(var(--pile-w) * 319 / 208); --board-top:110px;
  width:min(100%,1440px); height:100svh; height:100dvh; min-height:568px;
- padding:env(safe-area-inset-top,0px) max(8px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(8px,env(safe-area-inset-left,0px));
+ padding:calc(env(safe-area-inset-top,0px) + var(--play-top-gap)) max(8px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(8px,env(safe-area-inset-left,0px));
  margin:0 auto; display:grid; grid-template-rows:48px minmax(0,1fr) auto; gap:0;
 }
 .cinquillo-screen button:focus-visible,.cinquillo-screen summary:focus-visible { outline:3px solid #f1d695; outline-offset:2px; }
