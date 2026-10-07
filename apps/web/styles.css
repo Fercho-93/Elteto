@@ -466,9 +466,9 @@ body:has(.game-page) {
 .menu-header nav a { padding:15px 0; }
 .menu-header nav a:hover { color:var(--cyan); }
 .menu-hero { display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:70px; padding:48px 25px 52px; }
-.menu-art { position:relative; width:min(100%,380px); margin:auto; }
+.menu-art { position:relative; width:min(100%,520px); margin:auto; }
 .menu-art::before { content:""; position:absolute; inset:8% -12% 0; z-index:-1; background:radial-gradient(ellipse at 32% 48%,#69e5e227,transparent 58%),radial-gradient(ellipse at 75% 52%,#f3488d35,transparent 60%); filter:blur(18px); }
-.menu-logo { aspect-ratio:1; background:url('./assets/elteto-logo-neon-v3.png') center / contain no-repeat; filter:drop-shadow(0 5px 2px #150b2475) drop-shadow(0 11px 14px #150b2470); animation:menu-logo-in .55s cubic-bezier(.2,.8,.3,1) both; }
+.menu-logo { aspect-ratio:1402 / 1122; background:url('./assets/elteto-cover-palms-v4.png') center / contain no-repeat; filter:drop-shadow(0 5px 2px #150b2475) drop-shadow(0 11px 14px #150b2470); animation:menu-logo-in .55s cubic-bezier(.2,.8,.3,1) both; }
 
 .menu-kicker { font-size:10px; font-weight:850; color:var(--cyan); letter-spacing:1.8px; margin:0 0 18px; text-transform:uppercase; }
 .menu-intro h1 { margin:0; font-size:clamp(48px,5.5vw,76px); line-height:.98; font-weight:1000; letter-spacing:-3px; }
@@ -583,7 +583,7 @@ body:has(.game-page) {
  .menu-brand { font-size:22px; }
  .menu-header nav { gap:22px; font-size:12px; }
  .menu-hero { grid-template-columns:1fr; gap:30px; text-align:center; padding:28px 0 18px; }
- .menu-art { width:min(76vw,255px); }
+ .menu-art { width:calc(100% + 40px); margin-left:-20px; }
  .menu-intro h1 { font-size:36px; letter-spacing:-1.5px; }
  .menu-intro h1 br { display:none; }
  .menu-intro h1 span { margin-left:.16em; }

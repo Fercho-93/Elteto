@@ -34,7 +34,7 @@ function renderHome() {
   app.innerHTML = `<section class="menu-shell menu-home">
     <div class="menu-wrap">
       <div class="menu-hero">
-        <div class="menu-art"><div class="menu-logo" role="img" aria-label="Elteto: berenjena y melocotón con gafas bajo un arco de neón"></div></div>
+        <div class="menu-art"><div class="menu-logo" role="img" aria-label="Elteto: personajes, dados y coche morado entre palmeras de neón"></div></div>
         <div class="menu-intro"><h1>Se viene<br> <span>pique.</span></h1>
           <nav class="menu-actions" aria-label="Menú principal">${!LAN || LAN.hostKey ? '<button class="menu-button menu-primary" data-action="open-host"><span class="menu-button-label">Crear partida</span><span class="menu-button-arrow" aria-hidden="true">↗</span></button>' : ''}<button class="menu-button menu-secondary" data-action="open-join"><span class="menu-button-label">Unirme a partida</span><span class="menu-button-arrow" aria-hidden="true">→</span></button><a class="menu-button menu-rules" href="./reglas_juegos/biblioteca.html"><span class="menu-button-label">Ver reglas</span><span class="menu-button-arrow" aria-hidden="true">↗</span></a></nav>
           ${LAN ? '<p class="menu-network-note">Mesa local sin internet. Conecta todos los móviles a la misma Wi-Fi o hotspot.</p>' : ''}
