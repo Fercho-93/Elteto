@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 import {readFile} from 'node:fs/promises';
+import {canPlaceCinquillo,SPANISH_RANKS,SPANISH_SUITS,getGame} from '../dist/game-core/index.js';
 const {chromium,webkit}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const cp=process.env.LAN_JAVA_CP || await readFile('.lan-java-classpath','utf8');
 const server=spawn('java',['-cp',cp,'LanServerMain','dist','0']);
@@ -57,8 +58,14 @@ try {
   for(const p of [host,guest])if(await p.locator('.self-seat.active-seat').count())activePages.push(p);
   assert.equal(activePages.length,1,'exactly one player has the turn, including a mandatory pass');
   const active=activePages[0];
-  const previous=await host.locator('.history li').count();const cards=active.locator('.hand .playing-card:not([disabled])');
-  if(await cards.count())await cards.first().click();else await active.locator('[data-action="cinquillo-pass"]').click();
+  const previous=await host.locator('.history li').count();
+  // Every card is selectable now. The test chooses a legal move from public
+  // table positions and its own hand, without relying on production hints.
+  const keys=await active.locator('.cinquillo-board [data-table-key]').evaluateAll(els=>els.map(el=>el.dataset.tableKey));
+  const table=Object.fromEntries(SPANISH_SUITS.flatMap(suit=>{const ranks=keys.filter(key=>key.startsWith(suit+':')).map(key=>SPANISH_RANKS.indexOf(key.split(':')[1]));return ranks.length?[[suit,{low:Math.min(...ranks),high:Math.max(...ranks)}]]:[];}));
+  const hand=await active.locator('.hand .playing-card').evaluateAll(els=>els.map(el=>el.dataset.cardKey));
+  const key=hand.find(key=>{const [suit,rank]=key.split(':');return canPlaceCinquillo(table,{suit,rank});});
+  if(key)await active.locator(`.hand [data-card-key="${key}"]`).click();else await active.locator('[data-action="cinquillo-pass"]').click();
   await host.waitForFunction(n=>document.querySelectorAll('.history li').length>n,previous);
   await guest.waitForFunction(n=>document.querySelectorAll('.history li').length>n,previous);
  }
@@ -133,6 +140,30 @@ try {
  assert.deepEqual(await guest.locator('.parchis-table [data-pawn]').evaluateAll(els=>els.map(el=>[el.dataset.pawn,el.style.left,el.style.top])),before);
  await host.locator('.game-menu-button').click();await host.locator('[data-action="leave-room"]').click();await guest.getByText('Hasta la próxima.',{exact:true}).waitFor();
  console.log('Parchís LAN: initial dice, rolls, legal moves, board synchronization and reload/reconnection: OK');
+ for(const gameId of ['oca','damas-espanolas']){
+  await host.locator('[data-action="open-host"]').click();await host.locator('#host-name').fill('Ana');
+  await host.locator(`label.game-option:has(input[value="${gameId}"])`).click();await host.locator('[data-action="create-room"]').click();
+  const invitation=(await host.locator('.room-code').textContent()).trim();await guest.goto(base+'/?join='+invitation);
+  await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===2);await host.locator('[data-action="start-game"]').click();
+  for(const p of [host,guest]){await p.locator('.catalog-surface').waitFor();assert.ok(await p.locator('.catalog-surface').evaluate(el=>el.scrollHeight<=el.clientHeight+1&&el.scrollWidth<=el.clientWidth+1));}
+  if(gameId==='oca'){
+   for(const p of [host,guest]){assert.equal(await p.locator('.catalog-surface .goose-cell').count(),63);assert.equal(await p.locator('.catalog-surface .goose-board').evaluate(el=>getComputedStyle(el).display),'block');}
+   await host.locator('[data-roll-sequence]').click();await guest.waitForFunction(()=>document.querySelector('.parchis-die').dataset.rollId==='1');
+   assert.equal(await host.locator('.parchis-die').getAttribute('data-result'),await guest.locator('.parchis-die').getAttribute('data-result'));
+   const positions=p=>p.locator('.catalog-surface [data-goose-player]').evaluateAll(els=>els.map(el=>[el.dataset.goosePlayer,el.dataset.position]));assert.deepEqual(await positions(host),await positions(guest));
+  }else{
+   const engine=getGame(gameId);let board=engine.createInitialState(['a','b'],22);
+   for(const [p,id] of [[host,'a'],[guest,'b']]){
+    const move=engine.view(board,id).moves[0];await p.locator(`.catalog-surface [data-square="${move.path[0]}"]`).click();
+    assert.ok((await p.locator('.catalog-surface .checkers-cancel').boundingBox()).height<=44);
+    await p.locator(`.catalog-surface [data-square="${move.path[1]}"]`).click();board=engine.applyAction(board,id,{type:'move',path:move.path});
+    const target=move.path[1];for(const q of [host,guest])await q.waitForFunction(target=>!!document.querySelector(`.catalog-surface [data-checker-at="${target}"]`),target);
+   }
+   assert.equal(await host.locator('.catalog-surface .checker-last-move').count(),1);
+  }
+  await host.locator('.game-menu-button').click();await host.locator('[data-action="leave-room"]').click();await guest.getByText('Hasta la próxima.',{exact:true}).waitFor();
+ }
+ console.log('Damas y oca LAN: compact controls, complete boards, public roll and opponent movement synchronized across both POVs: OK');
  assert.deepEqual(errors,[]);
  console.log('Mus LAN: cuatro navegadores, 16 cartas privadas, decisión de mus, envite y siguiente lance: OK');
  console.log('Navegadores separados sin recursos externos: QR, reparto, ocho turnos, recarga y cierre: OK');
