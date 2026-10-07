@@ -1,9 +1,14 @@
-const CACHE = "elteto-shell-v8";
+const CACHE = "elteto-shell-v22";
 const ASSETS = [
-  "./", "./index.html", "./styles.css", "./app.js", "./table-view.js", "./assets/table-players-v1.png", "./local-session.js", "./local-transport.js",
+  "./parchis-board.js", "./parchis-board.css", "./game-core/games/parchis.js",
+  "./mus-screen.js", "./mus-screen.css",
+  "./rival-portraits.js", "./rival-portraits.css", "./assets/elteto-original-avatars.png",
+  "./table-layout.css",
+  "./cinquillo-table.css", "./cinquillo-screen.js", "./assets/elteto-mascots-side-v1.png",
+  "./", "./index.html", "./styles.css", "./app.js", "./table-view.js", "./card-art.js", "./assets/elteto-mascots-v1.png", "./local-session.js", "./local-transport.js",
   "./room-code.js", "./online-room.js", "./firebase-client.js", "./firebase-config.js",
   "./manifest.webmanifest", "./icon.svg", "./qrcode-generator.js", "./qr-encode.js", "./qr-scanner.js", "./jsqr.js",
-  "./game-core/index.js", "./game-core/engine.js", "./game-core/deck.js",
+  "./game-core/index.js", "./game-core/engine.js", "./game-core/deck.js", "./game-core/catalog.js",
   "./game-core/games/mus.js", "./game-core/games/cinquillo.js"
 ];
 self.addEventListener("install", (event) => {

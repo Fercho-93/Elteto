@@ -1,10 +1,11 @@
 export type Card = { suit: string; rank: string };
+export type PhysicalCard = Card & { id: string; pack: number };
 
 // Baraja española (40 cartas, sin 8 ni 9) - usada en el Mus.
 export const SPANISH_SUITS = ["oros", "copas", "espadas", "bastos"] as const;
 export const SPANISH_RANKS = ["1", "2", "3", "4", "5", "6", "7", "10", "11", "12"] as const;
 
-// Baraja francesa (52 cartas) - usada en el Cinquillo.
+// Baraja francesa (52 cartas), reservada para juegos de póker.
 export const FRENCH_SUITS = ["picas", "corazones", "diamantes", "treboles"] as const;
 export const FRENCH_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"] as const;
 
@@ -43,4 +44,25 @@ export function shuffle<T>(items: T[], rng: () => number): T[] {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+// Physical identity is separate from rank/suit: meld games may use repeated packs.
+export type CardMaterial = "spanish-40" | "spanish-48" | "french-52" | "french-jokers-54" | "spanish-poker-54";
+export function buildCardMaterial(material: CardMaterial, packs = 1): PhysicalCard[] {
+ if (!["spanish-40","spanish-48","french-52","french-jokers-54","spanish-poker-54"].includes(material)) throw new Error("Material de cartas desconocido.");
+ if (!Number.isSafeInteger(packs) || packs < 1 || packs > 8) throw new Error("Número de barajas inválido.");
+ const spanish = material.startsWith("spanish");
+ const ranks: readonly string[] = material === "spanish-40" ? SPANISH_RANKS : material === "spanish-48" ? Array.from({length:12},(_,i)=>String(i+1)) : FRENCH_RANKS;
+ const suits: readonly string[] = spanish ? SPANISH_SUITS : FRENCH_SUITS;
+ const cards: PhysicalCard[] = [];
+ for (let pack=0; pack<packs; pack++) {
+  for (const suit of suits) for (const rank of ranks) cards.push({suit,rank,pack,id:`${pack}:${suit}:${rank}`});
+  if (material.endsWith("54")) for (let j=1;j<=2;j++) cards.push({suit:"joker",rank:String(j),pack,id:`${pack}:joker:${j}`});
+ }
+ return cards;
+}
+export function buildDominoSet(): {id:string;left:number;right:number}[] {
+ const tiles=[];
+ for(let left=0;left<=6;left++) for(let right=left;right<=6;right++) tiles.push({id:`${left}:${right}`,left,right});
+ return tiles;
 }

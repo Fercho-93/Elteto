@@ -1,6 +1,7 @@
 node_modules/
 *.tsbuildinfo
 dist/
+tests/artifacts/
 firestore-debug.log
 firebase-debug.log
 ui-debug.log

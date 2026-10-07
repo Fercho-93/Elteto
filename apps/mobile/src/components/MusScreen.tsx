@@ -38,7 +38,7 @@ export function MusScreen({ view }: { view: MusView }) {
       <View style={styles.scoreRow}>
         <Text style={styles.score}>Equipo A: {view.scores.A}</Text>
         <Text style={styles.score}>Equipo B: {view.scores.B}</Text>
-        <Text style={styles.score}>Meta: {view.targetScore}</Text>
+        <Text style={styles.score}>Meta: {view.targetScore} · Juegos A {view.gamesWon.A} / B {view.gamesWon.B} · Primero a {view.targetGames}</Text>
       </View>
 
       <Text style={styles.phase}>

@@ -1,4 +1,4 @@
-import { cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdir, readdir, readFile, writeFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -23,7 +23,26 @@ async function rewriteModuleImports(directory) {
 }
 
 await mkdir(output, { recursive: true });
+// Retire previous 3D bundles from incremental local builds as well as fresh builds.
+for (const obsolete of ['assets/elteto-mascots-bust-v2.png','assets/elteto-mascots-bust-side-v2.png','table-3d.js','vendor/three.module.min.js','vendor/three.core.min.js','vendor/THREE-LICENSE.txt','vendor/README.md']) {
+  await rm(path.join(output,obsolete),{force:true});
+}
 await cp(web, output, { recursive: true });
+await cp(path.join(root, "reglas_juegos"), path.join(output, "reglas_juegos"), {recursive:true});
 await cp(core, path.join(output, "game-core"), { recursive: true });
 await rewriteModuleImports(path.join(output, "game-core"));
 console.log("Elteto web build generated in dist/.");
+
+// Include the source archive and inert library in the offline shell.
+const rulesFiles=[];
+async function collectRules(dir, prefix="./reglas_juegos") {
+ for (const entry of await readdir(dir,{withFileTypes:true})) {
+  if(entry.isDirectory()) await collectRules(path.join(dir,entry.name),`${prefix}/${entry.name}`);
+  else rulesFiles.push(`${prefix}/${entry.name}`);
+ }
+}
+await collectRules(path.join(root,"reglas_juegos"));
+await collectRules(path.join(web,"assets","decks"),"./assets/decks");
+const swPath=path.join(output,"sw.js");
+const sw=await readFile(swPath,"utf8");
+await writeFile(swPath,sw.replace('const ASSETS = [',`const ASSETS = [...${JSON.stringify(rulesFiles)},`));

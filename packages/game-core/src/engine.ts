@@ -1,3 +1,5 @@
+import { getGamePlan } from "./catalog";
+
 export type PlayerId = string;
 
 /** Ficha de reglas de un juego concreto (Mus, Cinquillo, ...). TState es el estado completo
@@ -21,6 +23,9 @@ export type AnyEngine = GameEngine<any, any, any>;
 const registry = new Map<string, AnyEngine>();
 
 export function registerGame(engine: AnyEngine): void {
+  const plan = getGamePlan(engine.id);
+  if (plan.status !== "playable") throw new Error(`Motor pendiente de validación: ${engine.id}`);
+  if (!plan.players.includes(engine.minPlayers) || !plan.players.includes(engine.maxPlayers)) throw new Error(`Jugadores incompatibles con la ficha: ${engine.id}`);
   registry.set(engine.id, engine);
 }
 

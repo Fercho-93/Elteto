@@ -27,8 +27,22 @@ jobs:
       - run: npm install --no-save --package-lock=false playwright@1.56.1
       - run: npx playwright install --with-deps chromium webkit
       - run: node tests/lan-navegador.mjs
+      - run: LAN_BROWSER=webkit node tests/lan-navegador.mjs
       - run: node tests/table-navegador.mjs
       - run: TABLE_BROWSER=webkit node tests/table-navegador.mjs
+      - run: node tests/cinquillo-layout.mjs
+      - run: LAYOUT_BROWSER=webkit node tests/cinquillo-layout.mjs
+      - run: node tests/rival-portraits.mjs
+      - run: AVATAR_BROWSER=webkit node tests/rival-portraits.mjs
+      - run: node tests/game-screen-flow.mjs
+      - run: FLOW_BROWSER=webkit node tests/game-screen-flow.mjs
+      - run: node tests/parchis-screen.mjs
+      - run: PARCHIS_BROWSER=webkit node tests/parchis-screen.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: capturas-y-medidas-mesa
+          path: tests/artifacts/
       - uses: android-actions/setup-android@v3
         with:
           packages: platform-tools

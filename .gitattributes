@@ -1,0 +1,5 @@
+# Preserve source-document bytes and recorded hashes on every platform.
+/reglas_juegos/*.html -text -whitespace
+/reglas_juegos/*.csv -text -whitespace
+/reglas_juegos/*.json -text -whitespace
+/reglas_juegos/*.pdf -text

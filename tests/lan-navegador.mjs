@@ -1,18 +1,20 @@
+import {mkdir} from 'node:fs/promises';
+await mkdir('tests/artifacts',{recursive:true});
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 import {readFile} from 'node:fs/promises';
-import {chromium} from 'playwright';
+import {chromium,webkit} from 'playwright';
 const cp=process.env.LAN_JAVA_CP || await readFile('.lan-java-classpath','utf8');
 const server=spawn('java',['-cp',cp,'LanServerMain','dist','0']);
 server.stderr.on('data',data=>process.stderr.write(data));
 let browser;
 try {
  const [output]=await once(server.stdout,'data');const hostUrl=String(output).trim();const base=new URL(hostUrl).origin;
- browser=await chromium.launch();
+ browser=await (process.env.LAN_BROWSER==='webkit'?webkit:chromium).launch();
  const errors=[];
  const context=async name=>{
-  const ctx=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
+  const ctx=await browser.newContext({viewport:{width:390,height:664},serviceWorkers:'block',reducedMotion:'reduce'});
   await ctx.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
   await ctx.addInitScript(name=>localStorage.setItem('elteto.playerName',name),name);
   const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));return page;
@@ -27,11 +29,33 @@ try {
  await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===2);
  await host.locator('[data-action="start-game"]').click();
  await guest.locator('.hand .playing-card').first().waitFor();
- assert.equal(await host.locator('.hand .playing-card').count()+await guest.locator('.hand .playing-card').count(),52);
+ assert.equal(await host.locator('.hand .playing-card').count()+await guest.locator('.hand .playing-card').count(),40);
+ // Exercise the actual LAN entry page: a correct index.html does not cover lan.html.
+ for(const page of [host,guest]) {
+  assert.ok(await page.locator('.table-seat:not(.own-seat)').evaluate(seat=>{
+   const body=seat.getBoundingClientRect(),felt=document.querySelector('.table-surface').getBoundingClientRect();
+   return body.top+body.height*.5<felt.top;
+  }), 'The rival face must remain above the felt on the LAN page');
+  assert.equal(await page.locator('.hand-dock').evaluate(el=>getComputedStyle(el).display),'grid');
+  assert.ok(await page.locator('.game-table .rival-name').evaluate(el=>el.getBoundingClientRect().bottom<=document.querySelector('.hand-dock').getBoundingClientRect().top), 'Player label stays above the private hand');
+  const hand=await page.locator('.hand .playing-card').first().boundingBox();
+  assert.ok(hand.y>=0 && hand.y+hand.height<=664, 'Full-size own cards stay visible in the compact mobile viewport');
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+1),'LAN screen needs no vertical page scrolling');
+  assert.ok(await page.locator('.hand .playing-card').evaluateAll(async cards=>{
+   await Promise.all(cards.map(card=>card.querySelector('img').decode()));
+   return cards.every(card=>{const rect=card.getBoundingClientRect();return Math.abs(rect.width/rect.height-208/319)<.02;});
+  }));
+  await page.locator('[data-action="open-table-zoom"]').click();
+  assert.ok(await page.locator('.board-zoom').evaluate(el=>el.open && getComputedStyle(el).position==='fixed'));
+  await page.locator('[data-action="close-table-zoom"]').click();
+  await page.evaluate(()=>scrollTo(0,0));
+ }
+ await guest.screenshot({path:`tests/artifacts/lan-mobile-${process.env.LAN_BROWSER||'chromium'}.png`,fullPage:true});
  for(let i=0;i<8;i++){
-  let active;
-  for(const p of [host,guest])if(await p.locator('.game-controls').textContent().then(s=>s.includes('Juega una carta')))active=p;
-  assert.ok(active,'a player has the turn');
+  const activePages=[];
+  for(const p of [host,guest])if(await p.locator('.turn-banner.your-turn').count())activePages.push(p);
+  assert.equal(activePages.length,1,'exactly one player has the turn, including a mandatory pass');
+  const active=activePages[0];
   const previous=await host.locator('.history li').count();const cards=active.locator('.hand .playing-card:not([disabled])');
   if(await cards.count())await cards.first().click();else await active.locator('[data-action="cinquillo-pass"]').click();
   await host.waitForFunction(n=>document.querySelectorAll('.history li').length>n,previous);
@@ -39,7 +63,9 @@ try {
  }
  const guestCards=await guest.locator('.hand .playing-card').count();await guest.reload();
  await guest.locator('.hand .playing-card').first().waitFor();assert.equal(await guest.locator('.hand .playing-card').count(),guestCards);
- assert.equal(await host.locator('.table-seat').count(),2);
+ assert.equal(await host.locator('.table-seat').count(),1);
+ assert.equal(await host.locator('.own-seat').count(),0);
+ await host.locator('.game-menu-button').click();
  await host.locator('[data-action="leave-room"]').click();
  await guest.locator('[data-action="open-join"]').waitFor();
  // Open another LAN table using the unchanged generic transport, now choosing Mus.
@@ -56,7 +82,8 @@ try {
  for(const p of [host,guest,c,d]) {
   await p.locator('.hand .playing-card').first().waitFor();
   assert.equal(await p.locator('.hand .playing-card').count(),4);
-  assert.equal(await p.locator('.rival-hand .card-back').count(),12);
+  assert.equal(await p.locator('.rival-original').count(),3);
+  assert.equal(await p.locator('.rival-count').evaluateAll(els=>els.reduce((sum,el)=>sum+Number(el.dataset.count),0)),12);
  }
  const pages=[host,guest,c,d];
  const actor=async action=>{
@@ -69,8 +96,36 @@ try {
  for(let i=0;i<50;i++) {await new Promise(r=>setTimeout(r,10));if((await Promise.all(pages.map(p=>p.locator('[data-action="mus-accept"]').count()))).some(Boolean))break;}
  await (await actor('mus-accept')).locator('[data-action="mus-accept"]').click();
  for(const p of pages) await p.waitForFunction(()=>document.querySelector('.mus-phase strong').textContent==='Chica');
+ await host.locator('.game-menu-button').click();
  await host.locator('[data-action="leave-room"]').click();
  for(const p of [guest,c,d]) await p.locator('[data-action="open-join"]').waitFor();
+ // The same room, QR, messages and reconnection path also carry a public board game.
+ await host.locator('[data-action="open-host"]').click();await host.locator('#host-name').fill('Ana');
+ await host.locator('label.game-option:has(input[value="parchis"])').click();await host.locator('[data-action="create-room"]').click();
+ const boardCode=(await host.locator('.room-code').textContent()).trim();await guest.goto(base+'/?join='+boardCode);
+ await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===2);await host.locator('[data-action="start-game"]').click();
+ for(const p of [host,guest]){await p.locator('.parchis-table [data-pawn]').first().waitFor();assert.equal(await p.locator('.parchis-table [data-pawn]').count(),8);}
+ let moved=0;
+ for(let step=0;step<100&&(step<16||moved<2);step++){
+  // Consecutive blocked rolls can legitimately have identical public text.
+  // Observe the received render instead of requiring a different log message.
+  for(const p of [host,guest])await p.evaluate(()=>{window.parchisUpdated=false;window.parchisObserver?.disconnect();window.parchisObserver=new MutationObserver(()=>{window.parchisUpdated=true;window.parchisObserver.disconnect();});window.parchisObserver.observe(document.querySelector('#app'),{childList:true});});
+  let acted=false;
+  for(const p of [host,guest]){
+   const roll=p.locator('[data-action="parchis-roll"]:not([disabled])'),move=p.locator('.parchis-piece-choices button:not([disabled])');
+   if(await roll.count()){await roll.click();acted=true;break;}
+   if(await move.count()){await move.first().click();moved++;acted=true;break;}
+  }
+  assert.ok(acted,'Exactly the active player can roll or choose a legal piece');
+  for(const p of [host,guest])await p.waitForFunction(()=>window.parchisUpdated);
+  assert.equal(await host.locator('.parchis-die').textContent(),await guest.locator('.parchis-die').textContent());
+ }
+ assert.ok(moved>=2);
+ const before=await guest.locator('.parchis-table [data-pawn]').evaluateAll(els=>els.map(el=>[el.dataset.pawn,el.style.left,el.style.top]));
+ await guest.reload();await guest.locator('.parchis-table [data-pawn]').first().waitFor();
+ assert.deepEqual(await guest.locator('.parchis-table [data-pawn]').evaluateAll(els=>els.map(el=>[el.dataset.pawn,el.style.left,el.style.top])),before);
+ await host.locator('.game-menu-button').click();await host.locator('[data-action="leave-room"]').click();await guest.locator('[data-action="open-join"]').waitFor();
+ console.log('Parchís LAN: initial dice, rolls, legal moves, board synchronization and reload/reconnection: OK');
  assert.deepEqual(errors,[]);
  console.log('Mus LAN: cuatro navegadores, 16 cartas privadas, decisión de mus, envite y siguiente lance: OK');
  console.log('Navegadores separados sin recursos externos: QR, reparto, ocho turnos, recarga y cierre: OK');

@@ -11,10 +11,10 @@ for (let seed = 1; seed <= 100; seed++) {
   );
   assert.deepEqual(
     state.hands[first].filter((c) => canPlayCinquillo(state.table, c)),
-    [{ suit: "corazones", rank: "5" }],
+    [{ suit: "oros", rank: "5" }],
   );
   const otherFive = state.hands[first].find(
-    (c) => c.rank === "5" && c.suit !== "corazones",
+    (c) => c.rank === "5" && c.suit !== "oros",
   );
   if (otherFive)
     assert.throws(() =>
@@ -23,7 +23,8 @@ for (let seed = 1; seed <= 100; seed++) {
         card: otherFive,
       }),
     );
-  for (let turn = 0; !state.finished && turn < 500; turn++) {
+  for (let turn = 0; !state.finished && turn < 3000; turn++) {
+    if (state.handWinner) { state = cinquilloEngine.applyAction(state, state.handWinner, {type:"next-hand"}); continue; }
     const id = state.players[state.turn],
       playable = state.hands[id].filter((c) =>
         canPlayCinquillo(state.table, c),
@@ -36,7 +37,7 @@ for (let seed = 1; seed <= 100; seed++) {
     const count =
       Object.values(state.hands).flat().length +
       Object.values(state.table).reduce((n, e) => n + e.high - e.low + 1, 0);
-    assert.equal(count, 52);
+    assert.equal(count, 40);
     const view = cinquilloEngine.view(state, id);
     assert.equal("hands" in view, false);
   }
@@ -92,7 +93,7 @@ assert.equal("revealedHands" in musEngine.view(state, "a"), false);
 // Complete hands and games, with only public/legal actions. Deferred scoring and privacy.
 for (let seed = 1; seed <= 80; seed++) {
   let s = musEngine.createInitialState(players, seed);
-  for (let step = 0; !s.finished && step < 1200; step++) {
+  for (let step = 0; !s.finished && step < 5000; step++) {
     checkDeck(s);
     const v = musEngine.view(s, "a");
     assert.equal("hands" in v, false);
@@ -129,6 +130,7 @@ for (let seed = 1; seed <= 80; seed++) {
 }
 // Juego: 31 beats 32; neither a high punto nor ineligible players may take its turn.
 let s = musEngine.createInitialState(players, 8);
+s.ruleset = "four-kings";
 s.hands = {
   a: [
     { suit: "oros", rank: "10" },
@@ -176,16 +178,21 @@ assert.throws(() =>
   musEngine.applyAction(s, "b", { type: "bet", amount: 100 }),
 );
 s = musEngine.applyAction(s, "b", { type: "accept" });
-assert.ok(s.finished);
+assert.equal(s.finished, false);
+assert.equal(s.phase, "showdown");
+assert.equal(s.gamesWon[s.gameWinner],1);
 assert.ok(musEngine.view(s, "a").revealedHands);
-// Seat rotation keeps partnership opposite and represents every hidden card by its back.
+// Rivals expose public counts, never their private card faces or the local avatar.
 const view = cinquilloEngine.view(
   cinquilloEngine.createInitialState(players, 1),
   "c",
 );
 const html = renderSeats(view, "c", (id) => id, "cinquillo");
-assert.equal((html.match(/class="card-back"/g) || []).length, 39);
-assert.equal((html.match(/data-player-id=/g) || []).length, 4);
+const publicCounts=[...html.matchAll(/class="rival-count [^"]*" data-count="(\d+)"/g)].map(match=>Number(match[1]));
+assert.deepEqual(publicCounts,[10,10,10]);
+assert.equal((html.match(/class="card-back"/g) || []).length, 0);
+assert.equal((html.match(/data-player-id=/g) || []).length, 3);
+assert.ok(!html.includes('data-player-id="c"'));
 console.log(
   "100 Cinquillo games, 80 Mus matches, repeated discards, conservation, privacy, scoring, turn restrictions and ordago: OK",
 );

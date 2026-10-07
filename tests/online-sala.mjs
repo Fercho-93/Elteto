@@ -86,12 +86,17 @@ try {
   await until("Cris expulsada", () => events[2].last("disconnected"));
   await until("lista de dos", () => events[0].last("lobby").players.length === 2);
   guests[1].closed || guests[1].teardown();
-  const cris = track(await OnlineSession.join(host.roomCode, "Cris", events[2].onChange, conns[2]));
-  await until("Cris de vuelta", () => events[0].last("lobby").players.length === 3);
+  // Joining resolves after the write, before every listener has received the
+  // room. A returned session must reach its own lobby before testing lobby exit.
+  // Fresh listeners also prevent the expelled session's old events being reused.
+  const crisEvents = listener();
+  const cris = track(await OnlineSession.join(host.roomCode, "Cris", crisEvents.onChange, conns[2]));
+  await until("Cris de vuelta en ambos móviles", () => events[0].last("lobby").players.length === 3 && crisEvents.last("lobby")?.players.length === 3);
   await cris.exit();
   await until("Cris se marcha", () => events[0].last("lobby").players.length === 2);
+  events[2] = listener();
   const cris2 = track(await OnlineSession.join(host.roomCode, "Cris", events[2].onChange, conns[2]));
-  await until("Cris otra vez", () => events[0].last("lobby").players.length === 3);
+  await until("Cris otra vez en ambos móviles", () => events[0].last("lobby").players.length === 3 && events[2].last("lobby")?.players.length === 3);
   console.log("  ok  expulsar, marcharse y volver");
 
   // --- Partida ----------------------------------------------------------------------------
@@ -144,9 +149,9 @@ try {
       const mine = group.findIndex((p) => p.session.uid === turn);
       const view = latest[mine].view;
       const playable = view.myHand.find((card) => {
-        const idx = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"].indexOf(card.rank);
+        const idx = ["1", "2", "3", "4", "5", "6", "7", "10", "11", "12"].indexOf(card.rank);
         const entry = view.table[card.suit];
-        if (!Object.keys(view.table).length) return card.suit === "corazones" && card.rank === "5";
+        if (!Object.keys(view.table).length) return card.suit === "oros" && card.rank === "5";
         return entry ? idx === entry.high + 1 || idx === entry.low - 1 : card.rank === "5";
       });
       const startLog = latest[mine].view.log.length;

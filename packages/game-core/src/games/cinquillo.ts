@@ -1,23 +1,20 @@
-import { Card, FRENCH_RANKS, buildFrenchDeck, createRng, shuffle } from "../deck";
+import { Card, SPANISH_RANKS, FRENCH_RANKS, buildSpanishDeck, createRng, shuffle } from "../deck";
 import { GameEngine, PlayerId } from "../engine";
 
-// Cinquillo: se reparte toda la baraja francesa entre 2 y 6 jugadores. Empieza quien tiene
-// el 5 de corazones (rey de la mesa). En cada turno un jugador debe colocar, si puede, una
-// carta que continúe una secuencia ya abierta en la mesa (a partir de un 5, hacia arriba
-// hasta K o hacia abajo hasta A) en el palo correspondiente. Si no puede jugar, pasa.
-// Gana quien primero se queda sin cartas en la mano.
-
-const RANK_INDEX: Record<string, number> = Object.fromEntries(
-  FRENCH_RANKS.map((r, i) => [r, i])
-);
-const FIVE_INDEX = RANK_INDEX["5"];
-
+// Classic Spanish forty-card rules supplied in reglas_juegos/cinquillo.html.
+// Four-player source; existing 2–6-player tables use the same scoring as an extension.
 export type CinquilloTableSuit = {
   low: number; // índice más bajo colocado (<= FIVE_INDEX)
   high: number; // índice más alto colocado (>= FIVE_INDEX)
 };
 
 export type CinquilloState = {
+  seed: number;
+  handNumber: number;
+  targetScore: number;
+  scores: Record<PlayerId, number>;
+  handWinner: PlayerId | null;
+  ruleset: "spanish-40" | "legacy-french-52";
   players: PlayerId[];
   hands: Record<PlayerId, Card[]>;
   table: Record<string, CinquilloTableSuit>; // por palo
@@ -29,6 +26,11 @@ export type CinquilloState = {
 };
 
 export type CinquilloView = {
+  handNumber: number;
+  targetScore: number;
+  scores: Record<PlayerId, number>;
+  handWinner: PlayerId | null;
+  ruleset: "spanish-40" | "legacy-french-52";
   players: PlayerId[];
   handSizes: Record<PlayerId, number>;
   myHand: Card[];
@@ -39,35 +41,26 @@ export type CinquilloView = {
   log: string[];
 };
 
-export type CinquilloAction = { type: "play"; card: Card } | { type: "pass" };
+export type CinquilloAction = { type: "play"; card: Card } | { type: "pass" } | { type: "next-hand" };
 
-function canPlace(table: Record<string, CinquilloTableSuit>, card: Card): boolean {
-  if (!Object.keys(table).length) return card.suit === "corazones" && card.rank === "5";
-  const idx = RANK_INDEX[card.rank];
+export function canPlaceCinquillo(table: Record<string, CinquilloTableSuit>, card: Card, ruleset: CinquilloState["ruleset"] = "spanish-40"): boolean {
+  const ranks: readonly string[] = ruleset === "spanish-40" ? SPANISH_RANKS : FRENCH_RANKS;
+  const suits = ruleset === "spanish-40" ? ["oros","copas","espadas","bastos"] : ["picas","corazones","diamantes","treboles"];
+  const idx = ranks.indexOf(card.rank);
+  if (idx < 0 || !suits.includes(card.suit)) return false;
+  if (!Object.keys(table).length) return card.suit === (ruleset === "spanish-40" ? "oros" : "corazones") && card.rank === "5";
   const entry = table[card.suit];
-  if (!entry) return idx === FIVE_INDEX;
-  if (idx === entry.high + 1) return true;
-  if (idx === entry.low - 1) return true;
-  return false;
+  return entry ? idx === entry.high+1 || idx === entry.low-1 : card.rank === "5";
 }
-
-function place(table: Record<string, CinquilloTableSuit>, card: Card): Record<string, CinquilloTableSuit> {
-  const idx = RANK_INDEX[card.rank];
-  const entry = table[card.suit];
-  const next = { ...table };
-  if (!entry) {
-    next[card.suit] = { low: idx, high: idx };
-  } else {
-    next[card.suit] = {
-      low: Math.min(entry.low, idx),
-      high: Math.max(entry.high, idx),
-    };
-  }
-  return next;
+function place(table: Record<string, CinquilloTableSuit>, card: Card, ruleset: CinquilloState["ruleset"]): Record<string, CinquilloTableSuit> {
+  const ranks: readonly string[] = ruleset === "spanish-40" ? SPANISH_RANKS : FRENCH_RANKS;
+  const idx = ranks.indexOf(card.rank), entry = table[card.suit];
+  return {...table,[card.suit]:entry ? {low:Math.min(entry.low,idx),high:Math.max(entry.high,idx)} : {low:idx,high:idx}};
 }
-
-function hasAnyMove(table: Record<string, CinquilloTableSuit>, hand: Card[]): boolean {
-  return hand.some((c) => canPlace(table, c));
+function normalizeLegacy(state: CinquilloState): CinquilloState {
+  if (state.ruleset) return state;
+  return {...state, ruleset:"legacy-french-52", seed:0, handNumber:1, targetScore:1,
+    scores:Object.fromEntries(state.players.map(p=>[p,0])), handWinner:state.finished ? state.winner : null};
 }
 
 export const cinquilloEngine: GameEngine<CinquilloState, CinquilloView, CinquilloAction> = {
@@ -81,36 +74,49 @@ export const cinquilloEngine: GameEngine<CinquilloState, CinquilloView, Cinquill
       throw new Error(`El Cinquillo requiere entre ${this.minPlayers} y ${this.maxPlayers} jugadores distintos.`);
     }
     const rng = createRng(seed);
-    const deck = shuffle(buildFrenchDeck(), rng);
+    const deck = shuffle(buildSpanishDeck(), rng);
     const hands: Record<PlayerId, Card[]> = {};
     players.forEach((p) => (hands[p] = []));
     deck.forEach((card, i) => hands[players[i % players.length]].push(card));
 
     const starter = players.findIndex((p) =>
-      hands[p].some((c) => c.suit === "corazones" && c.rank === "5")
+      hands[p].some((c) => c.suit === "oros" && c.rank === "5")
     );
 
     return {
-      players,
+      players: [...players],
+      ruleset: "spanish-40",
+      seed,
+      handNumber: 1,
+      targetScore: 30,
+      scores: Object.fromEntries(players.map(p => [p, 0])),
+      handWinner: null,
       hands,
       table: {},
       turn: starter >= 0 ? starter : 0,
       passesInRow: 0,
       finished: false,
       winner: null,
-      log: ["Reparto completado. Empieza quien tiene el 5 de corazones."],
+      log: ["Reparto completado. Empieza quien tiene el 5 de oros."],
     };
   },
 
   applyAction(state, playerId, action) {
+    state = normalizeLegacy(state);
     if (state.finished) throw new Error("La partida ya ha terminado.");
+    if (state.handWinner) {
+      if (action.type !== "next-hand" || playerId !== state.handWinner) throw new Error("El ganador de la mano debe iniciar el siguiente reparto.");
+      const next = this.createInitialState(state.players, state.seed + state.handNumber * 104729);
+      return {...next, seed: state.seed, handNumber: state.handNumber + 1, scores: {...state.scores}, targetScore: state.targetScore, log: [...state.log, ...next.log]};
+    }
+    if (action.type === "next-hand") throw new Error("La mano todavía no ha terminado.");
     const current = state.players[state.turn];
     if (current !== playerId) throw new Error("No es tu turno.");
 
     const hand = state.hands[playerId];
 
     if (action.type === "pass") {
-      if (hasAnyMove(state.table, hand)) {
+      if (hand.some(c => canPlaceCinquillo(state.table, c, state.ruleset))) {
         throw new Error("Tienes una jugada posible, no puedes pasar.");
       }
       const passesInRow = state.passesInRow + 1;
@@ -124,30 +130,45 @@ export const cinquilloEngine: GameEngine<CinquilloState, CinquilloView, Cinquill
     const card = action.card;
     const idx = hand.findIndex((c) => c.suit === card.suit && c.rank === card.rank);
     if (idx === -1) throw new Error("No tienes esa carta.");
-    if (!canPlace(state.table, card)) throw new Error("Esa carta no continúa ninguna secuencia abierta.");
+    if (!canPlaceCinquillo(state.table, card, state.ruleset)) throw new Error("Esa carta no continúa ninguna secuencia abierta.");
 
     const newHand = hand.slice();
     newHand.splice(idx, 1);
     const hands = { ...state.hands, [playerId]: newHand };
-    const table = place(state.table, card);
+    const table = place(state.table, card, state.ruleset);
     const log = [...state.log, `${playerId} juega ${card.rank} de ${card.suit}.`];
 
     if (newHand.length === 0) {
-      return { ...state, hands, table, finished: true, winner: playerId, passesInRow: 0, log: [...log, `${playerId} se queda sin cartas y gana la partida.`] };
+      const scores = {...state.scores};
+      const remaining = Object.entries(hands).reduce((n,[id,cards]) => {
+        if (id !== playerId) scores[id] -= cards.length;
+        return n + cards.length;
+      },0);
+      scores[playerId] += 5 + remaining;
+      const finished = scores[playerId] >= state.targetScore;
+      return { ...state, hands, table, scores, handWinner: playerId, finished, winner: finished ? playerId : null, passesInRow: 0,
+        log: [...log, `${playerId} gana la mano y suma ${5 + remaining} puntos.${finished ? " Gana la partida." : " Nuevo reparto pendiente."}`] };
+
     }
 
     return { ...state, hands, table, turn: (state.turn + 1) % state.players.length, passesInRow: 0, log };
   },
 
   view(state, playerId) {
+    state = normalizeLegacy(state);
     const handSizes: Record<PlayerId, number> = {};
     state.players.forEach((p) => (handSizes[p] = state.hands[p].length));
     return {
       players: state.players,
+      ruleset: state.ruleset,
+      handNumber: state.handNumber,
+      targetScore: state.targetScore,
+      scores: {...state.scores},
+      handWinner: state.handWinner,
       handSizes,
       myHand: state.hands[playerId] ?? [],
       table: state.table,
-      turnPlayer: state.players[state.turn],
+      turnPlayer: state.handWinner ?? state.players[state.turn],
       finished: state.finished,
       winner: state.winner,
       log: state.log.slice(-20),

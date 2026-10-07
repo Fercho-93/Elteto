@@ -1,8 +1,11 @@
-import { getGame, listGames } from "./game-core/index.js";
+import { getGame, listGames, GAME_CATALOG } from "./game-core/index.js";
 import { LocalGuestSession, LocalHostSession } from "./local-session.js";
+import { arrangeCinquilloScreen } from './cinquillo-screen.js';
+import { arrangeMusScreen } from './mus-screen.js';
+import { renderParchisScreen } from './parchis-board.js';
 import { parseRoomCode } from "./room-code.js";
 
-import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, canPlayCinquillo, animateTable } from "./table-view.js";
+import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, canPlayCinquillo, animateTable, animateSeats, MASCOTS, renderMascot } from "./table-view.js";
 
 const LAN = window.ELTETO_LAN;
 const app = document.querySelector("#app");
@@ -10,7 +13,7 @@ const toastEl = document.querySelector("#toast");
 const state = {
   screen: "home", role: null, name: "", roomName: "", gameId: "", playerId: null,
   players: [], view: null, host: null, guest: null, online: null, roomCode: "", offerCode: "", answerCode: "",
-  selected: new Set(), error: "", started: false, inviteMode: "offline",
+  selected: new Set(), error: "", started: false, inviteMode: "offline", handSuit: 'all',
 };
 
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
@@ -37,7 +40,9 @@ function renderHome() {
       ${!LAN || LAN.hostKey ? '<button class="button button-pink" data-action="open-host">Crear partida 🍆</button>' : ""}
       <button class="button button-cyan" data-action="open-join">Unirse a la timba 🍑</button>
     </div>
-    <p class="fineprint">*La fruta es fresca. Las intenciones, cosa vuestra. 😏</p>
+    <p><a href="./reglas_juegos/biblioteca.html">Reglas de todos los juegos</a></p><details class="game-rules"><summary>Próximos juegos</summary><ul>${GAME_CATALOG.filter(game => game.status === "planned").map(game => `<li>${esc(game.label)} · Pendiente <a href="./reglas_juegos/lectura/${game.id}.html">Reglas</a></li>`).join("")}</ul></details>
+    <details class="mascot-gallery"><summary>Los diez personajes de Elteto</summary><div>${MASCOTS.map((label,index)=>`<figure>${renderMascot(index)}<figcaption>${label}</figcaption></figure>`).join('')}</div></details>
+    <p><a href="./assets/decks/credits.html">Créditos de las barajas</a></p><p class="fineprint">*La fruta es fresca. Las intenciones, cosa vuestra. 😏</p>
   </section>`;
 }
 
@@ -116,48 +121,86 @@ function renderLobby() {
 let previousTableKeys = null;
 let previousTurn = null;
 let renderedGame = null;
+let previousSeats = null;
+let shownResult = null;
 function renderGame() {
   state.screen = "game";
   const game = getGame(state.gameId), view = state.view;
   if (!view) { app.innerHTML = `${header()}<section class="panel"><p>Esperando el estado de la partida…</p></section>`; return; }
+  if(state.gameId==='parchis'){renderParchisScreen(app,view,state.playerId,playerName,state.error);return;}
   const origins = new Map([...app.querySelectorAll('.hand [data-card-key]')].map(el => [el.dataset.cardKey, el.getBoundingClientRect()]));
   const stockOrigin = app.querySelector(".table-stock")?.getBoundingClientRect();
   const oldHandKeys = new Set(origins.keys());
   const actor = [...app.querySelectorAll('[data-player-id]')].find(el => el.dataset.playerId === previousTurn);
-  const sourceSeat = (actor?.querySelector('.rival-hand') || actor)?.getBoundingClientRect();
-  const gameToken = `${state.gameId}:${view.players.join(',')}`;
-  if (renderedGame !== gameToken) previousTableKeys = null;
+  const actorFront = [...app.querySelectorAll('[data-front-player]')].find(el => el.dataset.frontPlayer === previousTurn);
+  const sourceSeat = (actorFront?.querySelector('.rival-hand') || actor)?.getBoundingClientRect();
+  const gameToken = `${state.gameId}:${view.players.join(',')}:${state.playerId}:${view.handNumber}`;
+  if (renderedGame !== gameToken) { previousTableKeys = null; previousSeats = null; state.handSuit='all'; }
   renderedGame = gameToken;
   const scroll = app.querySelector('.hand')?.scrollLeft || 0;
   const historyOpen = app.querySelector('.history')?.open || false;
+  const rulesOpen = app.querySelector('.game-rules')?.open || false;
+  const focused = app.contains(document.activeElement) ? document.activeElement : null;
+  const focusAction = focused?.dataset.action;
+  const focusCard = focused?.dataset.cardKey;
+  const focusSuit = focused?.dataset.suit;
+  const zoomOpen = app.querySelector('.board-zoom')?.open || false;
+  const zoomScrollTop = app.querySelector('.board-zoom .zoom-scroll')?.scrollTop || 0;
+  const menuOpen = app.querySelector('.game-menu')?.open || false;
+  const resultOpen = app.querySelector('.hand-result')?.open || false;
+  const menuScrollTop = app.querySelector('.game-menu-content')?.scrollTop || 0;
   const winner = state.gameId === 'mus' ? `Gana la pareja ${view.winnerTeam || ''}` : view.winner ? `Gana ${playerName(view.winner)}` : 'Fin de partida';
   const myTurn = view.turnPlayer === state.playerId;
   const selecting = state.gameId === 'mus' && view.phase === 'discard' && view.awaitingDiscardFrom.includes(state.playerId);
-  const hand = sortedHand(view.myHand).map(card => {
-    const playable = state.gameId === 'cinquillo' && !view.finished && myTurn && canPlayCinquillo(view.table, card);
-    return renderHandCard(card, {playable, selected: selecting && state.selected.has(cardKey(card)), selectable: selecting, disabled: !selecting && !playable});
+  const hand = sortedHand(view.myHand).map((card,index) => {
+    const playable = state.gameId === 'cinquillo' && !view.finished && !view.handWinner && myTurn && canPlayCinquillo(view.table, card, view.ruleset);
+    return renderHandCard(card, {playable, selected: selecting && state.selected.has(cardKey(card)), selectable: selecting, disabled: !selecting && !playable, tilt:(index-(view.myHand.length-1)/2)*2.4});
   }).join('');
   const controls = state.gameId === 'mus' ? musControls(view) : cinquilloControls(view);
   const table = state.gameId === 'mus' ? renderMusBoard(view) : renderCinquilloBoard(view);
   const hint = view.finished ? winner : selecting ? 'Selecciona tu descarte' : myTurn ? 'Tu turno' : view.phase === 'discard' ? 'Esperando descartes' : `Turno de ${playerName(view.turnPlayer)}`;
-  app.innerHTML = `${header()}<section class="game-page">
-    <div class="game-top"><span class="game-ribbon">${esc(game.label)} · ${state.gameId === 'mus' ? '4 reyes' : '52 cartas'}</span><button class="text-button" data-action="leave-room">Salir</button></div>
+  app.innerHTML = `${header()}<section class="game-page" data-game="${state.gameId}">
+    <div class="game-top"><span class="game-ribbon">${esc(game.label)} · ${state.gameId === 'mus' ? (view.ruleset === 'eight-kings' ? '8 reyes y 8 ases' : '4 reyes') : (view.ruleset === 'legacy-french-52' ? '52 cartas · mesa anterior' : '40 cartas españolas')}</span><button class="text-button" data-action="leave-room">Salir</button></div>
     ${view.finished ? `<div class="winner-banner" role="status">${esc(winner)}</div>` : ''}
+    ${state.gameId === 'cinquillo' ? `<p class="match-score">Mano ${view.handNumber} · Meta ${view.targetScore} · ${view.players.map(id=>`${esc(playerName(id))}: ${view.scores[id]}`).join(' · ')}</p>` : `<p class="match-score">Juegos: A ${view.gamesWon?.A ?? 0} · B ${view.gamesWon?.B ?? 0} · primero a ${view.targetGames ?? 1}${view.gameWinner ? ` · Gana el juego ${esc(view.gameWinner)}` : ''}</p>`}
+    ${state.gameId === 'mus' ? `<div class="score-strip"><span>Pareja A <b>${view.scores.A}</b></span><span>Pareja B <b>${view.scores.B}</b></span></div>` : ''}
     <div class="turn-banner ${myTurn || selecting ? 'your-turn' : ''}" role="status">${esc(hint)}</div>
-    <section class="game-table seats-${view.players.length}" aria-label="Mesa de ${esc(game.label)}">
+    <section class="game-table seats-${view.players.length}" data-scene="illustrated-2d" aria-label="Mesa de ${esc(game.label)}">
+      <div class="table-surface" aria-hidden="true"><i class="table-leg leg-left"></i><i class="table-leg leg-right"></i></div>
       <div class="felt-watermark" aria-hidden="true">ELTETO <span>LA TIMBA</span></div>
       ${renderSeats(view, state.playerId, playerName, state.gameId)}
       <div class="table-center">${table}</div>
     </section>
+    <div class="table-tools"><button data-action="open-table-zoom">${state.gameId === 'cinquillo' ? 'Ver todas las cartas' : 'Ampliar mesa'}</button>${state.gameId === 'cinquillo' ? '<button data-action="go-to-hand">Mi mano ↓</button>' : ''}</div>
     <p class="last-play" aria-live="polite">${esc(readableLog(view.log?.at(-1) || 'La mesa está lista.'))}</p>
     ${state.error ? `<p class="error-message" role="alert">${esc(state.error)}</p>` : ''}
-    <h3>Tu mano <small>${view.myHand.length} cartas · desliza para verlas</small></h3>
-    <div class="hand" aria-label="Tus cartas">${hand || '<p>No tienes cartas.</p>'}</div>
+    <h3 tabindex="-1" class="hand-heading">Tu mano <small>${view.myHand.length} cartas${state.gameId==='mus' ? ` · Pareja ${view.players.indexOf(state.playerId)%2 ? 'B' : 'A'}` : ''}${view.mano===state.playerId ? ' · Eres mano' : ''}</small></h3>
+    <div class="hand ${view.myHand.length <= 10 ? 'hand-fan' : ''}" aria-label="Tus cartas">${hand || '<p>No tienes cartas.</p>'}</div>
     ${controls ? `<section class="game-controls">${controls}</section>` : ""}
-    <details class="game-rules"><summary>Cómo jugar · reglas de esta mesa</summary>${state.gameId === 'cinquillo' ? '<p>Baraja francesa de 52 cartas. Salida obligatoria con el 5 de corazones. Abre los otros palos con su 5 y continúa hacia el as o el rey, sin saltos. Solo puedes pasar si no tienes jugada. Gana quien vacía su mano.</p>' : '<p>Cuatro jugadores en parejas opuestas; baraja española de 40 cartas, modalidad de 4 reyes (2 y 3 conservan su valor), a 40 tantos. Se decide si hay mus; si todos quieren, se descarta y se vuelve a preguntar. Grande, chica, pares y juego o punto. Los envites aceptados se cuentan al acabar la mano; un órdago aceptado decide la partida. No se aplica juego real ni mus corrido.</p>'}</details>
+    <details class="game-rules"><summary>Cómo jugar · reglas de esta mesa</summary>${state.gameId === 'cinquillo' ? view.ruleset === 'legacy-french-52' ? '<p>Mesa anterior: 52 cartas francesas, salida cinco de corazones, una mano.</p>' : '<p>40 cartas españolas; salida cinco de oros. Escaleras sin saltos: 1–7, sota (10), caballo (11), rey (12). Solo pasa quien no tiene jugada. Ganador de mano: 5 puntos más cartas ajenas; los demás restan sus cartas. Gana quien alcanza 30. La fuente clásica usa cuatro jugadores; las mesas de 2–6 son una ampliación de Elteto.</p>' : `<p>Cuatro jugadores por parejas; ${view.ruleset === 'eight-kings' ? '8 reyes y 8 ases: treses como reyes y doses como ases; mus corrido en la primera mano' : '4 reyes: doses y treses conservan su valor'}. Grande, chica, pares y juego o punto. Juegos a ${view.targetScore} tantos; gana quien logra ${view.targetGames ?? 1} juegos completos. El órdago aceptado decide un juego completo.</p>`}<a href="./reglas_juegos/lectura/${state.gameId}.html">Consultar reglamento completo</a></details>
     <details class="history" ${historyOpen ? 'open' : ''}><summary>Historial de la partida</summary><ol>${(view.log || []).slice().reverse().map(line => `<li>${esc(readableLog(line))}</li>`).join('')}</ol></details>
+    <dialog class="board-zoom" aria-label="Mesa ampliada"></dialog>
   </section>`;
+  if(state.gameId==='cinquillo') state.handSuit=arrangeCinquilloScreen(app,view,state.playerId,playerName,state.handSuit);
+  else if(state.gameId==='mus') arrangeMusScreen(app,view,state.playerId,playerName);
+  app.querySelector('.game-rules').open=rulesOpen;
+  app.querySelector('.board-zoom').addEventListener('close',event=>{
+    event.target.replaceChildren();
+    app.querySelector('[data-action="open-table-zoom"]')?.focus({preventScroll:true});
+  });
+  app.querySelector('.game-menu')?.addEventListener('close',()=>app.querySelector('.game-menu-button')?.focus({preventScroll:true}));
+  if(menuOpen) { app.querySelector('.game-menu').showModal(); app.querySelector('.game-menu-content').scrollTop=menuScrollTop; }
+  if(zoomOpen) { openTableZoom(); app.querySelector('.board-zoom .zoom-scroll').scrollTop=zoomScrollTop; }
+  const result=app.querySelector('.hand-result'),resultKey=`${gameToken}:${view.handWinner}:${view.finished}`;
+  if(result && (resultOpen || shownResult!==resultKey && !menuOpen && !zoomOpen)) {
+    shownResult=resultKey;result.showModal();
+  }
+  result?.addEventListener('close',()=>app.querySelector('[data-action="open-hand-result"], [data-action="cinquillo-next-hand"]')?.focus({preventScroll:true}));
   app.querySelector('.hand').scrollLeft = scroll;
+  if(focusAction) {
+    const target=[...app.querySelectorAll('[data-action]')].find(el=>el.dataset.action===focusAction && (!focusCard||el.dataset.cardKey===focusCard) && (!focusSuit||el.dataset.suit===focusSuit));
+    if(target && !target.disabled && !target.hidden) target.focus({preventScroll:true});
+  }
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const stock = stockOrigin || app.querySelector('.game-table').getBoundingClientRect();
     for (const [index, card] of [...app.querySelectorAll('.hand [data-card-key]')].entries()) {
@@ -167,7 +210,16 @@ function renderGame() {
     }
   }
   previousTableKeys = animateTable(app, previousTableKeys, origins, sourceSeat);
+  animateSeats(app, previousSeats, view);
+  previousSeats = {turnPlayer:view.turnPlayer,handSizes:{...view.handSizes},log:view.log?.at(-1)};
   previousTurn = view.turnPlayer;
+}
+function openTableZoom() {
+  const dialog=app.querySelector('.board-zoom');
+  if(!dialog || !state.view) return;
+  const board=(state.gameId==='mus'?renderMusBoard(state.view):renderCinquilloBoard(state.view)).replaceAll('data-table-key=','data-zoom-key=');
+  dialog.innerHTML=`<header><h2>${esc(getGame(state.gameId).label)} · ${state.gameId==='cinquillo' ? 'Todas las cartas' : 'Mesa ampliada'}</h2><button data-action="close-table-zoom">Volver</button></header><div class="zoom-scroll">${board}</div><p class="zoom-note">${state.gameId==='cinquillo' ? 'Todas las cartas jugadas, ordenadas por palo. En el tapete se muestran los dos extremos de cada escalera.' : 'Desliza la mesa para ver todas las cartas. Puedes volver a tu mano en cualquier momento.'}</p>`;
+  dialog.showModal();
 }
 function readableLog(line) {
   for (const player of [...state.players].sort((a,b) => b.id.length - a.id.length)) {
@@ -202,8 +254,9 @@ function musControls(view) {
 
 function cinquilloControls(view) {
   if (view.finished) return "";
+  if (view.handWinner) return `<p class="helper">${esc(playerName(view.handWinner))} gana la mano ${view.handNumber}. Meta: ${view.targetScore} puntos.</p><p>${view.players.map(id=>`${esc(playerName(id))}: ${view.scores[id]}`).join(' · ')}</p>${view.handWinner === state.playerId ? '<button class="button button-paper" data-action="cinquillo-next-hand">Siguiente mano</button>' : ''}`;
   if (view.turnPlayer !== state.playerId) return `<p class="helper">Turno de ${esc(playerName(view.turnPlayer))}.</p>`;
-  const canPass = !view.myHand.some(card => canPlayCinquillo(view.table, card));
+  const canPass = !view.myHand.some(card => canPlayCinquillo(view.table, card, view.ruleset));
   return `<p class="helper">Juega una carta que continúe una escalera de la mesa. Las cartas válidas brillan.</p><button class="button button-paper" data-action="cinquillo-pass" ${canPass ? "" : "disabled"}>Paso</button>`;
 }
 
@@ -216,7 +269,7 @@ function render() {
 }
 
 function resetToHome() {
-  previousTableKeys = null; renderedGame = null; previousTurn = null;
+  previousTableKeys = null; renderedGame = null; previousTurn = null; previousSeats = null; shownResult = null;
   Object.assign(state, { role: null, name: "", players: [], view: null, host: null, guest: null, online: null, roomCode: "", offerCode: "", answerCode: "", selected: new Set(), error: "", screen: "home" });
   renderHome();
 }
@@ -267,7 +320,20 @@ app.addEventListener("click", async (event) => {
   if (!button) return;
   const action = button.dataset.action;
   try {
-    if (action === "open-host") { state.screen = "host-form"; state.gameId = LAN ? "cinquillo" : state.gameId || listGames()[0]?.id || ""; render(); }
+    if (action === "open-table-zoom") { openTableZoom(); return; }
+    if (action === "open-game-menu") { app.querySelector('.game-menu')?.showModal(); return; }
+    if (action === "parchis-zoom-open") { app.querySelector('.parchis-zoom')?.showModal(); return; }
+    if (action === "parchis-zoom-close") { app.querySelector('.parchis-zoom')?.close(); return; }
+    if (action === "open-hand-result") { app.querySelector('.game-menu')?.close(); app.querySelector('.hand-result')?.showModal(); return; }
+    if (action === "close-hand-result") { app.querySelector('.hand-result')?.close(); return; }
+    if (action === "close-game-menu") { app.querySelector('.game-menu')?.close(); return; }
+    if (action === "hand-filter") {
+      state.handSuit=button.dataset.suit; renderGame(); app.querySelector('.hand').scrollLeft=0;
+      app.querySelector(`.hand-filters [data-suit="${state.handSuit}"]`)?.focus({preventScroll:true}); return;
+    }
+    if (action === "go-to-hand") { const heading=app.querySelector('.hand-heading'); heading.focus({preventScroll:true}); heading.scrollIntoView({block:'start',behavior:'instant'}); }
+    else if(action === "close-table-zoom") app.querySelector('.board-zoom')?.close();
+    else if (action === "open-host") { state.screen = "host-form"; state.gameId = LAN ? "cinquillo" : state.gameId || listGames()[0]?.id || ""; render(); }
     else if (action === "open-join") { state.screen = "join-form"; render(); }
     else if (action === "home" || action === "back") { renderHome(); }
     else if (action === "create-room") {
@@ -342,11 +408,14 @@ app.addEventListener("click", async (event) => {
     } else if (action === "mus-yes") sendAction({ type: "mus", wantsMus: true });
     else if (action === "mus-no") sendAction({ type: "mus", wantsMus: false });
     else if (action === "mus-next") sendAction({ type: "next-hand" });
+    else if (action === "parchis-roll") sendAction({ type: "roll" });
+    else if (action === "parchis-move") sendAction({ type: "move", piece: Number(button.dataset.piece) });
     else if (action === "mus-pass") sendAction({ type: "pass" });
     else if (action === "mus-bet") sendAction({ type: "bet", amount: Number(document.querySelector("#bet-amount")?.value) || 2 });
     else if (action === "mus-ordago") sendAction({ type: "ordago" });
     else if (action === "mus-accept") sendAction({ type: "accept" });
     else if (action === "mus-reject") sendAction({ type: "reject" });
+    else if (action === "cinquillo-next-hand") sendAction({ type: "next-hand" });
     else if (action === "cinquillo-pass") sendAction({ type: "pass" });
     else if (action === "leave-room") {
       if (state.online) void state.online.exit(); else { state.host?.close(); state.guest?.leave(); }

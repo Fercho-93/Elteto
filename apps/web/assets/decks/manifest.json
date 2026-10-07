@@ -1,0 +1,750 @@
+[
+  {
+    "file": "2espadas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:2espadas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "44b4c33df2694b0413344a9d1e6dde0f134a1cc940a0a32fa14214eb5006f8d8"
+  },
+  {
+    "file": "2copas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:2copas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "df78b4ae9dd1d29e32dad022e446db7252ee89953fc7e644be5e2b05c4224be5"
+  },
+  {
+    "file": "2bastos.png",
+    "source": "https://commons.wikimedia.org/wiki/File:2bastos.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "3f5a043f656dfd1e07db66857ce976cab1c676fc48a4da856f3aab2e03f1ca79"
+  },
+  {
+    "file": "2oros.png",
+    "source": "https://commons.wikimedia.org/wiki/File:2oros.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "8958f8c227d6e51238e9067ac48cf42ee7dc943b843c2f37bdd97fdae0635e38"
+  },
+  {
+    "file": "3bastos.png",
+    "source": "https://commons.wikimedia.org/wiki/File:3bastos.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "924f1a47e89382f187b015533e31ab4bd83f7a7d7d9d3082ee367dd2b49f4ba4"
+  },
+  {
+    "file": "3copas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:3copas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "d4b340011cf8b5411056c74a3750ad74297c131bd66c83cc51caac9f0b759901"
+  },
+  {
+    "file": "3espadas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:3espadas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "4705e7452e5efc9d657270ceaeb92838351340ce8cb2d8190dbf07cb2ae9ec28"
+  },
+  {
+    "file": "3oros.png",
+    "source": "https://commons.wikimedia.org/wiki/File:3oros.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "4a41098691a66bc5fed1a652634499117f87d2f9f5ff48fc71e6987161ae0f71"
+  },
+  {
+    "file": "4bastos.png",
+    "source": "https://commons.wikimedia.org/wiki/File:4bastos.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "9b8ec5b6e7d4eb5ef64d52005dfae5a5b39ae6e36848422f6093783a0adeeddf"
+  },
+  {
+    "file": "4espadas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:4espadas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "f9750e0cc43f2d2054d098c94b9d6c042c440e7f12266ed5be83327e4133154d"
+  },
+  {
+    "file": "4copas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:4copas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "22261136c7b0ebe5c1b634411c63125a05e2e2ea3365b4539ee85320e1fb8747"
+  },
+  {
+    "file": "4oros.png",
+    "source": "https://commons.wikimedia.org/wiki/File:4oros.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "cb656a6d83734702ba3e2fc38e1baf7f59b3d62e51560803dd54a7de83aca54b"
+  },
+  {
+    "file": "5bastos.png",
+    "source": "https://commons.wikimedia.org/wiki/File:5bastos.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "4e6b3ec989ed24a55fd2603cec468f0d5f833247fc8c90b01d6e13b634af3269"
+  },
+  {
+    "file": "5copas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:5copas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "1ee6e3d5810d5e9e01c440fc07967d12e3bb0c5541c6cc3010f94f11d0db1723"
+  },
+  {
+    "file": "5espadas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:5espadas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "ba492b7c21ef81ae5a66c70d690744bbd7cd9ba96462fdedfb44313b3bd5325a"
+  },
+  {
+    "file": "5oros.png",
+    "source": "https://commons.wikimedia.org/wiki/File:5oros.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "c6c68f44b393443db248140e1e1654aefc549645a8a076d6f5ccda53d067d110"
+  },
+  {
+    "file": "6copas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:6copas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "6515dfecae40c7ea9163e7b2364c184a97b161239d7ba8eeaffb618a38ced722"
+  },
+  {
+    "file": "6bastos.png",
+    "source": "https://commons.wikimedia.org/wiki/File:6bastos.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "a520779cf3c7b8df3ef8165a1101b11e98e48443f98df2473f851f008526e056"
+  },
+  {
+    "file": "6espadas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:6espadas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "b93b65fad007b108dfff5f0ce7bc672bfca964ff1c91a93c42c3caa3dc174c66"
+  },
+  {
+    "file": "6oros.png",
+    "source": "https://commons.wikimedia.org/wiki/File:6oros.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "3f556f5d85e8ddb8469d9dfdb7c009633a8c9afb63263fb98d703a96a9e06a61"
+  },
+  {
+    "file": "7bastos.png",
+    "source": "https://commons.wikimedia.org/wiki/File:7bastos.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "264361bf938e3c9c23dfbab02476bfdc39d4a9283a7028224ebbd5298aef9908"
+  },
+  {
+    "file": "7copas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:7copas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "dc06f97c968fc64b8fa7d14c6429f02f9ae303229a9318fc2453dc50ed78c3a5"
+  },
+  {
+    "file": "7espadas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:7espadas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "435ae7930f56a4bcbd9c5fe658111b1b747ac5993911e3366179620ce789ced1"
+  },
+  {
+    "file": "7oros.png",
+    "source": "https://commons.wikimedia.org/wiki/File:7oros.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "5fced3b4cb5d4ae7fd5a4ff994a41bf516e6ccedcedd7178b1ef4d1b03887bdc"
+  },
+  {
+    "file": "8bastos.png",
+    "source": "https://commons.wikimedia.org/wiki/File:8bastos.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "c5e7f73c8b1f3b63e50f6d8285c021840fe74ab80aee5e2a322dec468bb3b0aa"
+  },
+  {
+    "file": "8copas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:8copas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "ce92bb7dfbcd6ec023daa8d72c4c058cafadc3e2634856d475d050cb1f3023d2"
+  },
+  {
+    "file": "8espadas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:8espadas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "be78e75b5b2a210b7cf4c27ed907cb0c27ea350cb8f60fef2e8ad9b17c9655ca"
+  },
+  {
+    "file": "8oros.png",
+    "source": "https://commons.wikimedia.org/wiki/File:8oros.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "a10ef470b8b1b8a09d7f2f2b74143591ab9e542e4db9f6fd0c6f30fb02013b6b"
+  },
+  {
+    "file": "9bastos.png",
+    "source": "https://commons.wikimedia.org/wiki/File:9bastos.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "31ebd86882d94db4c18f32a7049d1d081b517d1b8ec38d5e95355bd2926f1a99"
+  },
+  {
+    "file": "9copas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:9copas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "c77d56e626dae80216577c575b5f4277a7bcc37aa9694f4fa3f4d2abb7c1602c"
+  },
+  {
+    "file": "9espadas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:9espadas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "60fa1d4dfa512ec809606d2246c2ef8c7c2801caf06830767869bf8381edbf1c"
+  },
+  {
+    "file": "9oros.png",
+    "source": "https://commons.wikimedia.org/wiki/File:9oros.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "8e687dbb97c1bd4ca435fd0105ce7a5d1d6b68769c35324f1e8eee0d1e509b20"
+  },
+  {
+    "file": "Abastos.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Abastos.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "d89c2407e732545f934c9558a3dcd008fc5c993dda1f313f8145d97f5998df03"
+  },
+  {
+    "file": "Acopas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Acopas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "4df8cedd2df8b6fe37b61f99d097d5fab6dbb3e7b8793592e70560133193173d"
+  },
+  {
+    "file": "Aespadas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Aespadas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "04a51001825e841ad483d241978f4d6ee8464c566d6a647a8a7344d58980eb17"
+  },
+  {
+    "file": "Aoros.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Aoros.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "5a6cafe7b52f7c86fdf4a08fc9ed9f9103ce845c1105b6705a559c21c6bec354"
+  },
+  {
+    "file": "Cbastos.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Cbastos.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "591900d2259ee65e42dbbe769b205a5917f929c68617e48adec74d2fae8fe321"
+  },
+  {
+    "file": "Ccopas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Ccopas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "a49ba6988c0ab85422f9ed96a105779b7289185ad7f1661030325cd5613f191c"
+  },
+  {
+    "file": "Cespadas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Cespadas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "74149ad2ea9d432f25f01cd1019d3dfb0220be62f4d4c9d8279acdd3545b0acb"
+  },
+  {
+    "file": "Rbastos.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Rbastos.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "528548aa1a3665504450122f6fcf4d711b672b1dbb32989056aaa19e643b3990"
+  },
+  {
+    "file": "Coros.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Coros.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "10ca7152ef07dc948370027ea6f3a005a496e0c308b8c7bc46b40e101b9304a6"
+  },
+  {
+    "file": "Rcopas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Rcopas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "ee37cb619e2e3f4397480b6b52a108442a919427016a6b69e3fb8633f9db667a"
+  },
+  {
+    "file": "Respadas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Respadas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "082c56926c11847d95e3922c73f2c8059cf56b36b06a0327f6c2d59f89563207"
+  },
+  {
+    "file": "Roros.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Roros.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "84318563c0d1c553de5e749dd8353c090a22c4f06bbde63f3f9b132fdb619839"
+  },
+  {
+    "file": "Sbastos.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Sbastos.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "399376f908818865d73add2c4f86e026daacc7009b88b51d6dc04e06c66e30f7"
+  },
+  {
+    "file": "Sespadas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Sespadas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "b4b13f7458f8cb2301547172078d389ef6e4b6517ec9e0c8b5160f97afd8bc13"
+  },
+  {
+    "file": "Scopas.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Scopas.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "9db3f44b218b290ab38a8f8dd3ae2fa3f8fd3c61ab677d3e5cf9ee48e7c5e411"
+  },
+  {
+    "file": "Soros.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Soros.png",
+    "artist": "Basquetteur and Germarquezm",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "7e06611abfa2d2647d77d468e6d674f95b97105eac768afe0988f7d79716363d"
+  },
+  {
+    "file": "club_1.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/club_1.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "3e485058d625c282357de30e5ba6ae5011579444ad77eae41314008dc857f26c"
+  },
+  {
+    "file": "club_2.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/club_2.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "28c57729ffae21de77e386034cca4e95bca20ca5718b4fa09805b8719cea7f08"
+  },
+  {
+    "file": "club_3.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/club_3.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "07ddf7ee8b37ff787a313591dfce7ec68fd2f2f4c7b45c4862f0761116b56f24"
+  },
+  {
+    "file": "club_4.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/club_4.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "589cc39b988e748c6589140fdc1b0cea6b9d19842ce623b7d85cd0c612ef4822"
+  },
+  {
+    "file": "club_5.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/club_5.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "f19c59443fe622573d953ec1da4a4458f8e2cd93a41c4b4fd8a12849b65570fc"
+  },
+  {
+    "file": "club_6.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/club_6.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "4124264c2bbd680640d7874a91e5c89bce9160ce0998e35477cbe245cb2f2ab5"
+  },
+  {
+    "file": "club_7.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/club_7.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "2d30a6d869b86e20a7448ec93f216e56be5b3092283e94ea1fe563592408097b"
+  },
+  {
+    "file": "club_8.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/club_8.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "20800d3bc9ee33dbb36839d5b55b00a625024a9821b0398999c6ce15461d8a81"
+  },
+  {
+    "file": "club_9.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/club_9.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "d9d2c52d6e9f1707654c440db42c7f7b1665f9d51f0c2549a5801ad0701b5a3e"
+  },
+  {
+    "file": "club_10.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/club_10.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "22e8c5869bb1cea5c773897463d2cdd9065e3b5ee01c23c6ef0b227c9c06a765"
+  },
+  {
+    "file": "club_jack.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/club_jack.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "30c869f6e4b1af6dcf5fbff18471e03cc1261b6be22e255c63b16bfbbf1b4c18"
+  },
+  {
+    "file": "club_queen.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/club_queen.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "d651e9f68a00f5f86ef808b0aec2c973695b1dcf9dfa57d28fcd4ac7c5d56ddf"
+  },
+  {
+    "file": "club_king.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/club_king.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "30382a8c7dd4fff86994f20ca9aaeebcfb91eebab066a5a9d4fd88134538bd4c"
+  },
+  {
+    "file": "diamond_1.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/diamond_1.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "8d8e9d35b5fec9042c9535bf634282dfc3dd427c6ab4dd2f49cab1cff94a513c"
+  },
+  {
+    "file": "diamond_2.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/diamond_2.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "60ae49844e3e17f34f057f347ad36daf0e3fed238a25d342d7eb9ab62a8c8f2b"
+  },
+  {
+    "file": "diamond_3.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/diamond_3.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "e8c03141ccfd2114a65ef4a5dd7696551eb7295cc4ac4be78e434ab7f06db268"
+  },
+  {
+    "file": "diamond_4.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/diamond_4.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "ee51a3cf146ea9f0dbb23fbf6adc6cc1a8615ce6b16842028b517192a57358ed"
+  },
+  {
+    "file": "diamond_5.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/diamond_5.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "5c905f60602aeaf134c2617bf2632b13547288db850abc88538ee8c77669c7ff"
+  },
+  {
+    "file": "diamond_6.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/diamond_6.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "36727ad18e0e89796019cf51fcaa6825e5a7982caf81cdffd7e6102b74256fe3"
+  },
+  {
+    "file": "diamond_7.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/diamond_7.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "1b14f708a03f739f67b54961fc9f07bc6af7d90c98c63d7634b56a393196a68b"
+  },
+  {
+    "file": "diamond_8.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/diamond_8.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "ee10182449ad00b1324e8a1051a2bef04962476b5025ed0f0c98f0ffb1767e36"
+  },
+  {
+    "file": "diamond_9.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/diamond_9.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "e71969e84ce9e6f68455ee12fd96720389fc6667e0c50f5d2ffb6b9441fcc38d"
+  },
+  {
+    "file": "diamond_10.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/diamond_10.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "eee1624f5aae8a6676c5681d8443c3648e1f90ef73dd157f97ad23a24cf46b80"
+  },
+  {
+    "file": "diamond_jack.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/diamond_jack.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "d828842f5379c414d87d49bca02c0e558612b25a7b9219bd920bf89fad4dbccc"
+  },
+  {
+    "file": "diamond_queen.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/diamond_queen.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "8bbc371976a20a3b387d918e5be6cf5f7285de056b8e1ab0fef0254bfe07ccc2"
+  },
+  {
+    "file": "diamond_king.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/diamond_king.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "0cff1126cb9d68d11afdb095f00f0da073516a7542a6a8db85099d3a40c24f50"
+  },
+  {
+    "file": "heart_1.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/heart_1.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "5b47365c17bcbd7d1a41c7b75636675deaf705d2aca2330cd599a7ed73e2876c"
+  },
+  {
+    "file": "heart_2.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/heart_2.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "ffc000dd3c994e6a2d76931a922e82b0096e857959512a37d299dde46ba5f92b"
+  },
+  {
+    "file": "heart_3.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/heart_3.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "d374502449312621580b34fd28a8c70d4cc9aa89ae024b335d6f8c7a57f813c3"
+  },
+  {
+    "file": "heart_4.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/heart_4.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "aa33f399f500088e86f6c6a7af8663237c4ac2577daa67cb36919d506ded10ea"
+  },
+  {
+    "file": "heart_5.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/heart_5.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "26624bbb02c28fe7ee5d304eb20c45f613decef3c00b53313da470fe7f58b432"
+  },
+  {
+    "file": "heart_6.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/heart_6.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "737258a4045905afcfcb651f7c6c6718cf26aaa4da072d4e5bced85197d01a31"
+  },
+  {
+    "file": "heart_7.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/heart_7.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "15569e586667670febee310b1571d78197494e74ce355a0ed4a26c60af87250f"
+  },
+  {
+    "file": "heart_8.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/heart_8.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "900e8308a914a2f9876802971aada30e1cf9c30c4a18465398715edb56deae1d"
+  },
+  {
+    "file": "heart_9.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/heart_9.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "dbc3edea5636fba77be813785103acc4b38d8111553cc3bb63f72ffc1b15d7db"
+  },
+  {
+    "file": "heart_10.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/heart_10.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "49c02fcb09555ec2bd1ce760d3871a5a7a6679a281d8d959a05d632232d51798"
+  },
+  {
+    "file": "heart_jack.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/heart_jack.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "f2541ff0e9190936ab01ca572edc89d0e99391247733fb48cb3b99db3de574cf"
+  },
+  {
+    "file": "heart_queen.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/heart_queen.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "85b4447031bfdebc8ee653ca41a8791e435ee0db79e9cdc1d521d7d2b9419ea8"
+  },
+  {
+    "file": "heart_king.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/heart_king.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "eae5d53955fea76754c6fff6103f8baab9c12a61f701898b42d427ed84659642"
+  },
+  {
+    "file": "spade_1.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/spade_1.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "6362cb24d66af1d202affe62fc3176b8a01a94831dfa6d7b3bc82a8fce5dd475"
+  },
+  {
+    "file": "spade_2.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/spade_2.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "b68f405459717fe7f53e7c0b8a7cfe396aa6066b5a7b3f56c687db57632a4d24"
+  },
+  {
+    "file": "spade_3.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/spade_3.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "f8f4b415b5b9750fe5cf6de356586312fd5a14e8f61b210aff430bbaa206f539"
+  },
+  {
+    "file": "spade_4.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/spade_4.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "28d8f3370db7610146e1deafc2059fad1f327cd9ac86744c058dd269a014b13e"
+  },
+  {
+    "file": "spade_5.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/spade_5.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "0d7583c17e1bac14097974c9315d6d8a005f06926fe8eab805c749405ba84e1a"
+  },
+  {
+    "file": "spade_6.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/spade_6.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "421616dd330358b09cddab73e2ca01631495e77b1cf7eb299bc476a69ef1dbcf"
+  },
+  {
+    "file": "spade_7.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/spade_7.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "d4f4596d36bde6e9d4a13a8717e29758b4f334a63fa31f50ddb555b46be66b5b"
+  },
+  {
+    "file": "spade_8.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/spade_8.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "36fd23220e19bc2363b735be903c8e42f14bae06c898e4b8799e240cfb323880"
+  },
+  {
+    "file": "spade_9.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/spade_9.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "10978f8164d7790ead612f873c0e185651096b66a4125fbd1e3e4c01ef0e5b71"
+  },
+  {
+    "file": "spade_10.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/spade_10.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "33319e66587a02269bd051ecd4ea168881949b4d096cb81663835a4b0540252f"
+  },
+  {
+    "file": "spade_jack.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/spade_jack.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "f616c00afc4b5841e57ea9169a34c53a9afb99db65d7a03bd97ef913f1d04fb9"
+  },
+  {
+    "file": "spade_queen.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/spade_queen.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "7ce21bbe5b47e29aa868f997c3c64ab8c40d095839195dea592897627be51cdc"
+  },
+  {
+    "file": "spade_king.png",
+    "source": "https://raw.githubusercontent.com/htdebeer/SVG-cards/master/png/2x/spade_king.png",
+    "artist": "David Bellot; SVG-cards maintained by Huub de Beer",
+    "license": "LGPL-2.1",
+    "sha256": "07d28e2dad9b537eb96dac703df2a62fcccf37a3ca1b8f7c7e7363c50d58996d"
+  }
+]

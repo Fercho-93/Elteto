@@ -1,5 +1,7 @@
 // Presentation only: consumes a private engine view, never the host's hidden state.
-import { FRENCH_RANKS, SPANISH_RANKS } from "./game-core/index.js";
+import { FRENCH_RANKS, SPANISH_RANKS, SPANISH_SUITS, canPlaceCinquillo } from "./game-core/index.js";
+import { renderRivalRoster } from "./rival-portraits.js";
+import { cardAsset } from "./card-art.js";
 export const escapeHtml = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -20,20 +22,10 @@ const suitNames = {
   corazones: "Corazones",
   diamantes: "Diamantes",
   treboles: "Tréboles",
+  oros: "Oros", copas: "Copas", espadas: "Espadas", bastos: "Bastos",
 };
 export const cardKey = (card) => `${card.suit}:${card.rank}`;
-export function canPlayCinquillo(table, card) {
-  if (!Object.keys(table).length)
-    return card.suit === "corazones" && card.rank === "5";
-  const index = FRENCH_RANKS.indexOf(card.rank),
-    entry = table[card.suit];
-  return (
-    index >= 0 &&
-    (entry
-      ? index === entry.low - 1 || index === entry.high + 1
-      : card.rank === "5")
-  );
-}
+export const canPlayCinquillo = (table, card, ruleset = "spanish-40") => canPlaceCinquillo(table, card, ruleset);
 function suitArt(suit) {
   if (symbols[suit]) return `<span class="suit-symbol">${symbols[suit]}</span>`;
   const art = {
@@ -48,60 +40,112 @@ function suitArt(suit) {
   return `<svg class="suit-art" viewBox="0 0 60 60" aria-hidden="true">${art[suit] || ""}</svg>`;
 }
 export function cardFace(card) {
-  const symbol = suitArt(card.suit),
-    red = ["corazones", "diamantes"].includes(card.suit);
-  const spanish = !symbols[card.suit];
-  const figure = spanish
-    ? { 10: "Sota", 11: "Caballo", 12: "Rey" }[card.rank]
-    : { J: "Jota", Q: "Reina", K: "Rey" }[card.rank];
-  const count = figure
-    ? 1
-    : card.rank === "A"
-      ? 1
-      : Math.min(10, Number(card.rank));
-  const center = figure
-    ? `<div class="court-art"><span>${card.rank === "11" ? "♞" : "♛"}</span>${symbol}<small>${figure}</small></div>`
-    : `<div class="card-pips pips-${count}">${Array.from({ length: count }, () => symbol).join("")}</div>`;
-  return `<span class="card-face ${red ? "card-red" : ""}"><span class="card-corner">${esc(card.rank)}${symbol}</span>${center}<span class="card-corner corner-bottom">${esc(card.rank)}${symbol}</span></span>`;
+  return `<span class="card-face"><span class="card-illustration"><img src="${cardAsset(card)}" alt="" draggable="false"></span></span>`;
 }
 export function renderHandCard(card, options = {}) {
-  return `<button class="playing-card ${options.selected ? "selected" : ""} ${options.playable ? "legal-card" : ""}" data-action="play-card" data-card-key="${esc(cardKey(card))}" ${options.disabled ? "disabled" : ""} ${options.selectable ? `aria-pressed="${Boolean(options.selected)}"` : ""} aria-label="${esc(card.rank + " de " + card.suit)}${options.playable ? ", puedes jugarla" : ""}">${cardFace(card)}<span class="hand-index ${["corazones", "diamantes"].includes(card.suit) ? "card-red" : ""}" aria-hidden="true"><b>${esc(card.rank)}</b>${suitArt(card.suit)}</span></button>`;
+  return `<button class="playing-card ${options.selected ? "selected" : ""} ${options.playable ? "legal-card" : ""}" style="--card-tilt:${Number(options.tilt) || 0}deg" data-action="play-card" data-card-key="${esc(cardKey(card))}" ${options.disabled ? "disabled" : ""} ${options.selectable ? `aria-pressed="${Boolean(options.selected)}"` : ""} aria-label="${esc(card.rank + " de " + card.suit)}${options.playable ? ", puedes jugarla" : ""}">${cardFace(card)}<span class="hand-index ${["corazones", "diamantes"].includes(card.suit) ? "card-red" : ""}" aria-hidden="true"><b>${esc(card.rank)}</b>${suitArt(card.suit)}</span></button>`;
 }
-function avatar(seat) {
-  const character = seat % 6;
-  return `<div class="player-character" aria-hidden="true"><div class="character-sprite" data-character="${character}" style="--character-x:${(character % 3) * 50}%;--character-y:${Math.floor(character / 3) * 100}%;--motion-delay:${seat * -1.3}s"></div></div>`;
+export const MASCOTS = ["Berenjena", "Melocotón", "Plátano", "Bandera", "Aguacate", "Cerdito", "Seta", "Gota", "Caca", "Castañas"];
+// Per-illustration contours keep chair upholstery and torso out of the arm layer.
+const ARM_CONTOURS = [
+ ['19% 58%,30% 58%,37% 65%,46% 68%,55% 73%,54% 78%,48% 80%,40% 78%,35% 74%,24% 72%,17% 67%', '76% 58%,87% 58%,92% 67%,86% 72%,71% 75%,66% 79%,60% 79%,59% 74%,63% 70%,74% 66%'],
+ ['21% 65%,28% 66%,32% 68%,42% 70%,48% 75%,47% 79%,41% 80%,32% 77%,22% 75%,18% 70%', '77% 65%,84% 66%,86% 70%,82% 75%,72% 78%,66% 80%,61% 79%,60% 75%,66% 70%,74% 68%'],
+ ['19% 60%,29% 60%,34% 66%,41% 68%,46% 72%,45% 77%,41% 80%,34% 78%,30% 74%,23% 72%,15% 67%', '78% 60%,85% 64%,89% 68%,84% 72%,77% 74%,72% 78%,65% 80%,60% 77%,60% 72%,66% 68%,74% 66%'],
+ ['13% 65%,23% 65%,27% 68%,33% 69%,39% 73%,38% 78%,31% 79%,25% 76%,18% 77%,13% 73%,10% 69%', '72% 66%,80% 66%,87% 70%,88% 74%,81% 78%,75% 79%,70% 77%,66% 79%,61% 77%,62% 72%,67% 69%'],
+ ['14% 61%,25% 64%,29% 68%,34% 69%,39% 73%,36% 78%,29% 79%,22% 77%,17% 74%,10% 72%,6% 66%', '78% 61%,87% 61%,91% 66%,88% 71%,80% 74%,74% 77%,68% 79%,63% 78%,63% 73%,69% 69%,77% 67%'],
+ ['17% 58%,28% 58%,35% 61%,40% 65%,38% 69%,31% 69%,25% 67%,17% 67%,13% 63%', '72% 58%,81% 58%,86% 63%,82% 67%,74% 69%,67% 69%,64% 65%,66% 61%'],
+ ['20% 56%,30% 56%,34% 59%,40% 62%,41% 67%,36% 69%,29% 68%,24% 66%,17% 64%,16% 60%', '76% 56%,82% 59%,83% 64%,77% 67%,72% 69%,66% 69%,63% 65%,66% 61%,72% 59%'],
+ ['15% 55%,25% 56%,30% 59%,38% 61%,41% 65%,39% 69%,33% 70%,27% 68%,24% 65%,16% 64%,13% 60%', '77% 55%,86% 58%,87% 63%,80% 65%,74% 69%,68% 70%,64% 68%,64% 63%,70% 60%'],
+ ['12% 56%,22% 56%,31% 59%,37% 62%,39% 66%,36% 70%,29% 70%,23% 67%,17% 65%,10% 62%', '78% 56%,88% 56%,93% 61%,86% 65%,78% 68%,72% 70%,65% 70%,63% 66%,68% 62%'],
+ ['10% 55%,20% 55%,25% 58%,29% 61%,29% 65%,24% 67%,17% 66%,12% 62%,7% 60%', '80% 56%,89% 58%,91% 62%,86% 66%,78% 68%,72% 67%,68% 64%,70% 60%,75% 58%'],
+];
+const SIDE_ARMS = [
+ '33% 53%,42% 55%,54% 62%,62% 61%,70% 60%,78% 63%,80% 67%,76% 72%,66% 73%,50% 72%,40% 66%,33% 60%',
+ '84% 59%,94% 58%,99% 63%,98% 69%,91% 73%,84% 71%,82% 66%',
+];
+const sideArms = character => SIDE_ARMS.map(contour=>character<5 ? contour : contour.replace(/(\d+)% (\d+)%/g,(_,x,y)=>`${x}% ${Number(y)-7}%`));
+// A public roster gives every device the same, unique identities without sending
+// cosmetic state or touching the room protocol. Identity never depends on POV.
+export function mascotForSeat(players, seat) {
+  const hash = [...players.join("|")].reduce((value, ch) => (Math.imul(value, 31) + ch.charCodeAt(0)) >>> 0, 0);
+  return (hash + seat * 3) % MASCOTS.length;
+}
+export function renderMascot(character, seat = character) {
+  return `<div class="player-character" role="img" aria-label="${MASCOTS[character]}"><div class="character-sprite" data-character="${character}" style="--character-x:${(character % 5) * 25}%;--character-y:${Math.floor(character / 5) * 100}%;--motion-delay:${seat * -1.3}s"></div></div>`;
+}
+// Shared seating for card and board games, with the local player at the bottom.
+// These layouts do not change the supported player counts of any engine.
+export function seatPosition(count, relative) {
+  if (!relative) return [50, 94];
+  if (count === 2) return [50, 32];
+  const layouts = {
+    3: [[24, 35], [76, 35]],
+    4: [[9, 49], [50, 32], [91, 49]],
+    5: [[9, 51], [35, 33], [65, 33], [91, 51]],
+    6: [[9, 52], [28, 35], [50, 31], [72, 35], [91, 52]],
+    7: [[9, 59], [21, 39], [39, 32], [61, 32], [79, 39], [91, 59]],
+    8: [[9, 70], [9, 49], [29, 35], [50, 31], [71, 35], [91, 49], [91, 70]],
+  };
+  return layouts[count]?.[relative - 1] || [50, 18];
 }
 export function renderSeats(view, playerId, name, gameId) {
+  if(gameId==='cinquillo' || gameId==='mus') {
+    const own=view.players.indexOf(playerId),n=view.players.length;
+    const players=Array.from({length:n-1},(_,offset)=>{
+      const index=(own+offset+1)%n,id=view.players[index],character=mascotForSeat(view.players,index);
+      const isMus=gameId==='mus',team=index%2?'B':'A',partner=isMus&&index%2===own%2;
+      return {id,character,mascot:MASCOTS[character],name:name(id),count:view.handSizes?.[id]||0,teamLabel:isMus?`${team} · ${partner?'Compi':'Rival'}`:'',active:!view.finished&&!view.handWinner&&(view.turnPlayer===id||isMus&&view.phase==='discard'&&view.awaitingDiscardFrom?.includes(id))};
+    });
+    return renderRivalRoster(players,esc);
+  }
   const ownIndex = view.players.indexOf(playerId),
     n = view.players.length;
   return view.players
     .map((id, index) => {
       const relative = (index - ownIndex + n) % n,
         own = id === playerId;
-      const angle =
-        n === 2 ? Math.PI / 2 : (Math.PI * (relative - 1)) / (n - 2);
-      const x = own ? 50 : n === 2 ? 50 : n === 6 ? [50,14,32,50,68,86][relative] : 14 + (72 * (1 - Math.cos(angle))) / 2;
-      const y = own ? 91 : n === 2 ? 21 : n === 6 ? [91,40,24,14,24,40][relative] : 32 - 11 * Math.sin(angle);
+      if (own) return '';
+      const [x, y] = seatPosition(n, relative);
+      const mobile = [gameId==='cinquillo'?x:x<20?12:x>80?88:x,y];
+      const character = mascotForSeat(view.players, index);
+      const direction = gameId === 'cinquillo' && x !== 50 ? (x < 50 ? 'right' : 'left') : 'front';
+      const side = direction !== 'front';
       const active =
         !view.finished &&
         (view.turnPlayer === id ||
-          (view.phase === "discard" && view.awaitingDiscardFrom.includes(id)));
+          (view.phase === "discard" && view.awaitingDiscardFrom?.includes(id)));
       const team = index % 2 === 0 ? "A" : "B";
-      const count = view.handSizes[id] || 0;
-      return `<article class="table-seat ${own ? "own-seat" : ""} ${active ? "active-seat" : ""}" data-player-id="${esc(id)}" style="--seat-x:${x}%;--seat-y:${y}%" aria-label="${esc(name(id))}, ${count} cartas${active ? ", turno activo" : ""}">${avatar(index)}<div class="seat-label"><strong>${esc(own ? "Tú" : name(id))}</strong><small>${gameId === "mus" ? `Pareja ${team} · ` : ""}${count} cartas</small></div>${view.mano === id ? '<span class="mano-badge">Mano</span>' : ""}${!own ? `<div class="rival-hand" aria-label="${count} cartas boca abajo">${Array.from({ length: count }, (_, i) => `<i class="card-back" style="--fan-angle:${(i - (count - 1) / 2) * Math.min(10, 65 / Math.max(1, count))}deg"><span>✦</span></i>`).join("")}</div>` : ""}</article>`;
+      const count = view.handSizes?.[id] || 0;
+      const cardGame = Boolean(view.handSizes);
+      const arms = side ? sideArms(character) : ARM_CONTOURS[character];
+      const style = `--seat-x:${x}%;--seat-y:${y}%;--seat-mobile-x:${mobile[0]}%;--seat-mobile-y:${mobile[1]}%;--character-x:${(character % 5) * 25}%;--character-y:${Math.floor(character / 5) * 100}%;--motion-delay:${index * -1.3}s;--grip-y:${side ? (character < 5 ? 67 : 60) : (character < 5 ? 73 : 64)}%;--side-fan-y:${character < 5 ? 52 : 46}%;--left-arm:polygon(${arms[0]});--right-arm:polygon(${arms[1]})`;
+      // Body/chair sit behind the felt. This sibling crosses the table rim:
+      // card backs under the hands, forearms over them. No hidden values enter it.
+      const position=x<20?'left':x>80?'right':x===50?'top':'upper';
+      const compactLabel=gameId==='cinquillo'?`<div class="seat-label"><strong>${esc(name(id))}</strong><small>${count}<span class="seat-cards-word"> cartas</span></small></div>`:'';
+      const front = `<div class="seat-front ${active ? 'active-seat' : ''}" data-direction="${direction}" data-position="${position}" data-front-player="${esc(id)}" style="${style}" aria-hidden="true"><div class="seat-grip">${cardGame ? `<div class="rival-hand">${Array.from({ length: count }, (_, i) => `<i class="card-back" style="--fan-angle:${(i - (count - 1) / 2) * Math.min(10, 65 / Math.max(1, count))}deg"><span>✦</span></i>`).join('')}</div>` : ''}<div class="player-character forearms"><div class="character-sprite arm-left"></div><div class="character-sprite arm-right"></div></div></div>${compactLabel}</div>`;
+      return `<article class="table-seat ${active ? 'active-seat' : ''}" data-direction="${direction}" data-position="${position}" data-player-id="${esc(id)}" style="${style}" aria-label="${esc(name(id))}, ${MASCOTS[character]}${cardGame ? `, ${count} cartas` : ''}${active ? ', turno activo' : ''}">${renderMascot(character, index)}${gameId==='cinquillo'?'':`<div class="seat-label"><strong>${esc(name(id))}</strong><small>${MASCOTS[character]}${gameId === 'mus' ? ` · ${team}` : ''}${cardGame ? ` · ${count} cartas` : ''}</small></div>`}${view.mano === id ? '<span class="mano-badge">Mano</span>' : ''}</article>${front}`;
+
     })
     .join("");
 }
 export function renderCinquilloBoard(view) {
-  return `<div class="cinquillo-board">${Object.keys(symbols)
+  const legacy = view.ruleset === "legacy-french-52";
+  const ranks = legacy ? FRENCH_RANKS : SPANISH_RANKS;
+  const suits = legacy ? Object.keys(symbols) : SPANISH_SUITS;
+  return `<div class="cinquillo-board ${legacy ? "legacy-board" : "spanish-board"}">${suits
     .map((suit) => {
       const entry = view.table[suit];
-      return `<div class="suit-lane"><b class="${["corazones", "diamantes"].includes(suit) ? "card-red" : ""}" aria-label="${suitNames[suit]}">${symbols[suit]}</b><div class="lane-cards">${FRENCH_RANKS.map(
+      const count = entry ? entry.high - entry.low + 1 : 0;
+      const next = entry ? [ranks[entry.low - 1], ranks[entry.high + 1]].filter(Boolean) : canPlaceCinquillo(view.table,{suit,rank:'5'},view.ruleset)?['5']:[];
+      const continuation = entry ? next.length ? `Puedes continuar con ${next.join(' o ')}` : 'Palo completo' : next.length ? 'Abre con el 5' : 'Primero el 5 de '+(legacy?'corazones':'oros');
+      return `<div class="suit-lane ${count > 2 ? 'has-stack' : ''}" data-suit="${suit}"><b class="${["corazones", "diamantes"].includes(suit) ? "card-red" : ""}" aria-label="${suitNames[suit]}">${suitArt(suit)}<span>${suitNames[suit]}</span><small>· ${count} ${count === 1 ? 'carta' : 'cartas'}</small></b><div class="lane-cards">${ranks.map(
         (rank, index) => {
           const placed = entry && index >= entry.low && index <= entry.high;
-          return `<span class="board-card ${placed ? "placed" : "empty-slot"} ${rank === "5" ? "five-slot" : ""}" ${placed ? `data-table-key="${suit}:${rank}"` : ""} aria-label="${rank} de ${suit}${placed ? ", colocada" : ", pendiente"}">${placed ? cardFace({ suit, rank }) : `<span>${rank}</span>`}</span>`;
+          const endpoint = placed && (index === entry.low || index === entry.high);
+          return `<span class="board-card ${placed ? "placed" : "empty-slot"} ${endpoint ? 'endpoint' : ''} ${rank === "5" ? "five-slot" : ""}" data-rank="${rank}" ${placed ? `data-table-key="${suit}:${rank}"` : ""} aria-label="${rank} de ${suit}${placed ? ", colocada" : ", pendiente"}">${placed ? cardFace({ suit, rank }) : `<span>${rank}</span>`}</span>`;
         },
-      ).join("")}</div></div>`;
+      ).join("")}${entry ? '' : `<span class="unopened-suit" aria-label="${suitNames[suit]} sin abrir"><span>5</span>${suitArt(suit)}<small>Sin abrir</small></span>`}</div><span class="lane-next" aria-label="${continuation}" title="${continuation}">${entry ? next.length ? `<span aria-hidden="true">→ </span>${next.join(' o ')}` : 'Completo' : next.length ? 'Abre el 5' : 'En espera'}</span><span class="lane-range">${count ? `${ranks[entry.low]}${count > 1 ? '–' + ranks[entry.high] : ''} · ${count} ${count === 1 ? 'carta' : 'cartas'}` : 'Sin cartas'}</span></div>`;
     })
     .join("")}</div>`;
 }
@@ -117,7 +161,7 @@ export const phaseLabels = {
 };
 export function renderMusBoard(view) {
   const pending = view.betting?.pendingBet;
-  return `<div class="mus-board"><div class="score-strip"><span>Pareja A <b>${view.scores.A}</b></span><span>Pareja B <b>${view.scores.B}</b></span></div><div class="mus-phase"><small>MANO ${view.handNumber || 1} · A ${view.targetScore} TANTOS</small><strong>${esc(view.phase === "juego" && view.isPunto ? "Punto" : phaseLabels[view.phase])}</strong><span>${pending ? (pending.ordago ? "¡Órdago sobre la mesa!" : `Envite: ${pending.amount} tantos`) : view.phase === "discard" ? "Cambia tus cartas" : view.phase === "mus" ? "Mus o corta el descarte" : view.revealedHands ? "Cartas a la vista" : "Las cartas siguen ocultas"}</span></div><div class="table-stock"><i class="card-back"><span>✦</span></i><i class="card-back"><span>✦</span></i></div>${view.revealedHands ? `<div class="revealed-hands">${view.players.map((id, i) => `<div><small>Asiento ${i + 1} · Pareja ${i % 2 ? "B" : "A"}</small><div>${view.revealedHands[id].map((card) => `<span class="reveal-card">${cardFace(card)}</span>`).join("")}</div></div>`).join("")}</div>` : ""}</div>`;
+  return `<div class="mus-board"><div class="mus-phase"><small>MANO ${view.handNumber || 1} · A ${view.targetScore} TANTOS</small><strong>${esc(view.phase === "juego" && view.isPunto ? "Punto" : phaseLabels[view.phase])}</strong><span>${pending ? (pending.ordago ? "¡Órdago sobre la mesa!" : `Envite: ${pending.amount} tantos`) : view.phase === "discard" ? "Cambia tus cartas" : view.phase === "mus" ? "Mus o corta el descarte" : view.revealedHands ? "Cartas a la vista" : "Las cartas siguen ocultas"}</span></div><div class="table-stock"><i class="card-back"><span>✦</span></i><i class="card-back"><span>✦</span></i></div>${view.revealedHands ? `<div class="revealed-hands">${view.players.map((id, i) => `<div><small>Asiento ${i + 1} · Pareja ${i % 2 ? "B" : "A"}</small><div>${view.revealedHands[id].map((card) => `<span class="reveal-card">${cardFace(card)}</span>`).join("")}</div></div>`).join("")}</div>` : ""}</div>`;
 }
 export function sortedHand(hand) {
   const suits = [
@@ -165,4 +209,32 @@ export function animateTable(app, previousKeys, origins, sourceSeat) {
     );
   }
   return keys;
+}
+
+// Reactions use public counts/turns only. Selecting a private card is not a move.
+export function animateSeats(app, before, view) {
+  if (!before || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const changed = before.log !== view.log?.at(-1);
+  for (const seat of app.querySelectorAll(".table-seat")) {
+    const id = seat.dataset.playerId;
+    if(seat.classList.contains('rival-seat')) {
+      const token=seat.querySelector('.rival-token');
+      if(before.handSizes?.[id]!==view.handSizes?.[id]) token.animate([{transform:'none'},{transform:'translateY(-2px) rotate(-3deg)',offset:.45},{transform:'none'}],{duration:260,easing:'ease-out'});
+      else if(before.turnPlayer!==view.turnPlayer&&view.turnPlayer===id) token.animate([{transform:'scale(.95)'},{transform:'scale(1.04)',offset:.55},{transform:'none'}],{duration:320,easing:'ease-out'});
+      continue;
+    }
+  const front = [...app.querySelectorAll("[data-front-player]")].find(el => el.dataset.frontPlayer === id);
+  const sprites = [seat.querySelector(".player-character"), front?.querySelector(".seat-grip")].filter(Boolean);
+    for (const sprite of sprites) {
+    if (!sprite.animate) continue;
+    const moved = before.handSizes?.[id] !== view.handSizes?.[id];
+    const acted = changed && before.turnPlayer === id;
+    const enteredTurn = before.turnPlayer !== view.turnPlayer && view.turnPlayer === id;
+    if (moved || acted) {
+      sprite.animate([{transform:"none"},{transform:"translateY(4px) rotate(-3deg)",offset:.4},{transform:"translateY(-3px) rotate(2deg)",offset:.75},{transform:"none"}], {duration:520,easing:"ease-in-out"});
+    } else if (enteredTurn) {
+      sprite.animate([{transform:"none"},{transform:"translateY(-6px) scale(1.04)"},{transform:"none"}], {duration:650,easing:"ease-out"});
+    }
+    }
+  }
 }

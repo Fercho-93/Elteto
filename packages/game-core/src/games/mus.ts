@@ -7,7 +7,8 @@ import {
 } from "../deck";
 import { GameEngine, PlayerId } from "../engine";
 
-// Explicit house variant: four kings, forty points, no real juego or mus corrido.
+// Fournier: eight kings/aces, forty stones per game, first team to three games.
+// Old states retain their four-kings, single-game variant.
 export type Team = "A" | "B";
 export type MusPhaseName = "grande" | "chica" | "pares" | "juego";
 export type BettingState = {
@@ -18,6 +19,10 @@ export type BettingState = {
 };
 type PhaseResult = { winnerTeam: Team; points: number; bonus: number };
 export type MusState = {
+  ruleset: "eight-kings" | "four-kings";
+  gamesWon: Record<Team, number>;
+  targetGames: number;
+  gameWinner: Team | null;
   players: PlayerId[];
   hands: Record<PlayerId, Card[]>;
   stock: Card[];
@@ -41,6 +46,10 @@ export type MusState = {
   log: string[];
 };
 export type MusView = {
+  ruleset: MusState["ruleset"];
+  gamesWon: Record<Team, number>;
+  targetGames: number;
+  gameWinner: Team | null;
   players: PlayerId[];
   myHand: Card[];
   handSizes: Record<PlayerId, number>;
@@ -69,13 +78,18 @@ export type MusAction =
   | { type: "reject" };
 const rankIndex = Object.fromEntries(SPANISH_RANKS.map((rank, i) => [rank, i]));
 const teamOfSeat = (seat: number): Team => (seat % 2 === 0 ? "A" : "B");
-const sumOf = (hand: Card[]) =>
-  hand.reduce((sum, c) => sum + Math.min(10, Number(c.rank)), 0);
+export function musRank(rank: string, ruleset: MusState["ruleset"]): number {
+ return rankIndex[ruleset === "eight-kings" ? rank === "3" ? "12" : rank === "2" ? "1" : rank : rank];
+}
+export function musCardValue(rank: string, ruleset: MusState["ruleset"]): number {
+ return ruleset === "eight-kings" && rank === "3" ? 10 : ruleset === "eight-kings" && rank === "2" ? 1 : Math.min(10, Number(rank));
+}
+const sumOf = (hand: Card[], ruleset: MusState["ruleset"]) => hand.reduce((sum,c)=>sum+musCardValue(c.rank,ruleset),0);
 const gameOrder = [31, 32, 40, 39, 38, 37, 36, 35, 34, 33];
-function pairs(hand: Card[]): number[] {
+function pairs(hand: Card[], ruleset: MusState["ruleset"]): number[] {
   const counts = new Map<number, number>();
   for (const c of hand)
-    counts.set(rankIndex[c.rank], (counts.get(rankIndex[c.rank]) || 0) + 1);
+    counts.set(musRank(c.rank, ruleset), (counts.get(musRank(c.rank, ruleset)) || 0) + 1);
   const groups = [...counts].sort((a, b) => b[0] - a[0]);
   const four = groups.find(([, n]) => n === 4),
     triple = groups.find(([, n]) => n === 3);
@@ -91,14 +105,14 @@ function pairs(hand: Card[]): number[] {
           : [0];
 }
 function eligible(state: MusState, phase: MusPhaseName): number[] {
-  const hasGame = state.players.some((p) => sumOf(state.hands[p]) >= 31);
+  const hasGame = state.players.some((p) => sumOf(state.hands[p], state.ruleset) >= 31);
   return state.players
     .map((_, i) => i)
     .filter((i) =>
       phase === "pares"
-        ? pairs(state.hands[state.players[i]])[0] > 0
+        ? pairs(state.hands[state.players[i]], state.ruleset)[0] > 0
         : phase === "juego" && hasGame
-          ? sumOf(state.hands[state.players[i]]) >= 31
+          ? sumOf(state.hands[state.players[i]], state.ruleset) >= 31
           : true,
     );
 }
@@ -119,12 +133,12 @@ function nextEligible(
 function compareForPhase(state: MusState, phase: MusPhaseName): Team {
   const score = (seat: number): number[] => {
     const hand = state.hands[state.players[seat]];
-    if (phase === "pares") return pairs(hand);
+    if (phase === "pares") return pairs(hand, state.ruleset);
     if (phase === "juego") {
-      const sum = sumOf(hand);
+      const sum = sumOf(hand, state.ruleset);
       return [sum >= 31 ? 100 - gameOrder.indexOf(sum) : sum];
     }
-    const ranks = hand.map((c) => rankIndex[c.rank]);
+    const ranks = hand.map((c) => musRank(c.rank, state.ruleset));
     return phase === "grande"
       ? ranks.sort((a, b) => b - a)
       : ranks.sort((a, b) => a - b).map((r) => -r);
@@ -159,15 +173,15 @@ function bonusFor(state: MusState, phase: MusPhaseName, team: Team): number {
   if (phase === "pares")
     return state.players.reduce(
       (total, p, i) =>
-        total + (teamOfSeat(i) === team ? pairs(state.hands[p])[0] : 0),
+        total + (teamOfSeat(i) === team ? pairs(state.hands[p], state.ruleset)[0] : 0),
       0,
     );
   if (phase === "juego")
     return state.players.reduce(
       (total, p, i) =>
         total +
-        (teamOfSeat(i) === team && sumOf(state.hands[p]) >= 31
-          ? sumOf(state.hands[p]) === 31
+        (teamOfSeat(i) === team && sumOf(state.hands[p], state.ruleset) >= 31
+          ? sumOf(state.hands[p], state.ruleset) === 31
             ? 3
             : 2
           : 0),
@@ -176,14 +190,11 @@ function bonusFor(state: MusState, phase: MusPhaseName, team: Team): number {
   return 0;
 }
 function finished(state: MusState, team: Team): MusState {
-  return {
-    ...state,
-    phase: "finished",
-    finished: true,
-    winnerTeam: team,
-    betting: null,
-    log: [...state.log, `¡Pareja ${team} gana la partida!`],
-  };
+ const gamesWon = {...state.gamesWon, [team]:state.gamesWon[team]+1};
+ const matchOver = gamesWon[team] >= state.targetGames;
+ return {...state, gamesWon, gameWinner:team, phase:matchOver ? "finished" : "showdown", finished:matchOver,
+  winnerTeam:matchOver ? team : null, betting:null,
+  log:[...state.log, `Pareja ${team} gana el juego completo (${gamesWon[team]}/${state.targetGames}).${matchOver ? " Gana la partida." : " Cartas a la vista."}`]};
 }
 function settleHand(state: MusState): MusState {
   let next = { ...state, scores: { ...state.scores }, betting: null };
@@ -249,7 +260,7 @@ function startPhase(state: MusState): MusState {
     },
     log: [
       ...state.log,
-      `Lance de ${phase === "juego" && !state.players.some((p) => sumOf(state.hands[p]) >= 31) ? "punto" : phase}.`,
+      `Lance de ${phase === "juego" && !state.players.some((p) => sumOf(state.hands[p], state.ruleset) >= 31) ? "punto" : phase}.`,
     ],
   };
 }
@@ -276,12 +287,12 @@ function closePhase(
 function dealHand(state: MusState): MusState {
   const deck = shuffle(
     buildSpanishDeck(),
-    createRng(state.seed + state.handNumber * 104729),
+    createRng(state.seed + (state.gamesWon.A + state.gamesWon.B) * 1000003 + state.handNumber * 104729),
   );
   const hands: Record<PlayerId, Card[]> = {},
     pendingDiscard: Record<PlayerId, Card[] | null> = {};
   state.players.forEach((p, i) => {
-    hands[p] = deck.slice(i * 4, i * 4 + 4);
+    hands[p] = Array.from({length:4},(_,round)=>deck[round*4+(i-state.mano+4)%4]);
     pendingDiscard[p] = null;
   });
   return {
@@ -302,6 +313,7 @@ function dealHand(state: MusState): MusState {
 }
 // Saved rooms from the previous engine can be resumed without changing transport/storage.
 function normalizeLegacy(state: MusState): MusState {
+  state = {...state, ruleset: state.ruleset ?? "four-kings", gamesWon: state.gamesWon ?? {A:0,B:0}, targetGames:state.targetGames ?? 1, gameWinner:state.gameWinner ?? null};
   if (Number.isFinite(state.seed) && Array.isArray(state.discarded))
     return state;
   const used = new Set(
@@ -338,6 +350,10 @@ export const musEngine: GameEngine<MusState, MusView, MusAction> = {
     if (players.length !== 4 || new Set(players).size !== 4)
       throw new Error("El Mus requiere exactamente 4 jugadores distintos.");
     return dealHand({
+      ruleset: "eight-kings",
+      gamesWon: {A:0,B:0},
+      targetGames: 3,
+      gameWinner: null,
       players: [...players],
       hands: {},
       stock: [],
@@ -358,7 +374,7 @@ export const musEngine: GameEngine<MusState, MusView, MusAction> = {
       phaseResults: {},
       finished: false,
       winnerTeam: null,
-      log: ["Mus: 4 reyes, 40 tantos, parejas alternas."],
+      log: ["Mus: 8 reyes y 8 ases, 40 tantos, primero en ganar 3 juegos completos."],
     });
   },
   applyAction(state, playerId, action) {
@@ -372,7 +388,9 @@ export const musEngine: GameEngine<MusState, MusView, MusAction> = {
       return dealHand({
         ...state,
         mano: (state.mano + 1) % 4,
-        handNumber: state.handNumber + 1,
+        handNumber: state.gameWinner ? 1 : state.handNumber + 1,
+        scores: state.gameWinner ? {A:0,B:0} : state.scores,
+        gameWinner: null,
       });
     }
     if (state.phase === "mus") {
@@ -384,7 +402,7 @@ export const musEngine: GameEngine<MusState, MusView, MusAction> = {
         ...state.log,
         `${playerId}: ${action.wantsMus ? "mus" : "no hay mus"}.`,
       ];
-      if (!action.wantsMus) return startPhase({ ...state, log });
+      if (!action.wantsMus) return startPhase({ ...state, mano: state.handNumber === 1 && state.ruleset === "eight-kings" ? state.musTurn : state.mano, log });
       const musVotes = state.musVotes + 1;
       return {
         ...state,
@@ -419,36 +437,26 @@ export const musEngine: GameEngine<MusState, MusView, MusAction> = {
           pendingDiscard,
           log: [...state.log, `${playerId} confirma su descarte.`],
         };
-      let stock = [...state.stock],
-        discarded = [...state.discarded],
-        hands = { ...state.hands };
-      // Cards discarded this round enter the recycle pile only after everyone draws.
-      if (
-        stock.length <
-        state.players.reduce((n, p) => n + pendingDiscard[p]!.length, 0)
-      ) {
-        stock = [
-          ...stock,
-          ...shuffle(
-            discarded,
-            createRng(
-              state.seed + state.handNumber * 1009 + state.discardNumber,
-            ),
-          ),
-        ];
-        discarded = [];
-      }
+      let stock = [...state.stock];
+      let discarded = [...state.discarded, ...state.players.flatMap(p => pendingDiscard[p]!)];
+      const hands = Object.fromEntries(state.players.map(p => [p,state.hands[p].filter(c => !pendingDiscard[p]!.some(d => d.suit === c.suit && d.rank === c.rank))]));
+      const discardMano = state.handNumber === 1 && state.ruleset === "eight-kings" ? (state.mano + 1) % 4 : state.mano;
       for (let offset = 0; offset < 4; offset++) {
-        const p = state.players[(state.mano + offset) % 4],
-          remove = pendingDiscard[p]!;
-        hands[p] = [
-          ...hands[p].filter(
-            (c) => !remove.some((d) => d.suit === c.suit && d.rank === c.rank),
-          ),
-          ...stock.splice(0, remove.length),
-        ];
+        const p = state.players[(discardMano + offset) % 4];
+        for (let draw=0; draw<pendingDiscard[p]!.length; draw++) {
+          if (!stock.length) {
+            // Fournier: recycle everyone's discards, except the last recipient's
+            // current discard when that player alone still needs cards.
+            const alone = !state.players.slice().some((_,i)=>i>offset && pendingDiscard[state.players[(discardMano+i)%4]]!.length>0);
+            const ownDiscard = (c:Card) => alone && pendingDiscard[p]!.some(d => d.suit===c.suit && d.rank===c.rank);
+            const recycle = discarded.filter(c => !ownDiscard(c));
+            discarded = discarded.filter(ownDiscard);
+            stock = shuffle(recycle,createRng(state.seed + state.handNumber*1009 + state.discardNumber*17 + offset));
+            if (!stock.length) throw new Error("No hay cartas disponibles para completar el descarte.");
+          }
+          hands[p].push(stock.shift()!);
+        }
       }
-      discarded.push(...state.players.flatMap((p) => pendingDiscard[p]!));
       return {
         ...state,
         hands,
@@ -457,7 +465,8 @@ export const musEngine: GameEngine<MusState, MusView, MusAction> = {
         pendingDiscard: Object.fromEntries(state.players.map((p) => [p, null])),
         discardNumber: state.discardNumber + 1,
         musVotes: 0,
-        musTurn: state.mano,
+        mano: state.handNumber === 1 && state.ruleset === "eight-kings" ? (state.mano + 1) % 4 : state.mano,
+        musTurn: state.handNumber === 1 && state.ruleset === "eight-kings" ? (state.mano + 1) % 4 : state.mano,
         phase: "mus",
         log: [...state.log, "Descarte completado. ¿Hay mus otra vez?"],
       };
@@ -479,7 +488,7 @@ export const musEngine: GameEngine<MusState, MusView, MusAction> = {
       if (consecutivePasses >= eligible(state, phase).length) {
         const noGame =
           phase === "juego" &&
-          !state.players.some((p) => sumOf(state.hands[p]) >= 31);
+          !state.players.some((p) => sumOf(state.hands[p], state.ruleset) >= 31);
         return closePhase(
           next,
           compareForPhase(state, phase),
@@ -541,7 +550,8 @@ export const musEngine: GameEngine<MusState, MusView, MusAction> = {
         };
         if (scores[pending.team] >= state.targetScore)
           return finished(next, pending.team);
-        return closePhase(next, pending.team, 0);
+        const point = phase === "juego" && !state.players.some(p=>sumOf(state.hands[p],state.ruleset)>=31) ? 1 : 0;
+        return closePhase(next, pending.team, point);
       }
       const next = {
         ...state,
@@ -553,7 +563,7 @@ export const musEngine: GameEngine<MusState, MusView, MusAction> = {
       if (pending.ordago) return finished(next, compareForPhase(state, phase));
       const pointBonus =
         phase === "juego" &&
-        !state.players.some((p) => sumOf(state.hands[p]) >= 31)
+        !state.players.some((p) => sumOf(state.hands[p], state.ruleset) >= 31)
           ? 1
           : 0;
       return closePhase(
@@ -568,6 +578,10 @@ export const musEngine: GameEngine<MusState, MusView, MusAction> = {
     state = normalizeLegacy(state);
     const visible = state.phase === "showdown" || state.finished;
     return {
+      ruleset: state.ruleset,
+      gamesWon: {...state.gamesWon},
+      targetGames: state.targetGames,
+      gameWinner: state.gameWinner,
       players: state.players,
       myHand: state.hands[playerId] || [],
       handSizes: Object.fromEntries(
@@ -593,7 +607,7 @@ export const musEngine: GameEngine<MusState, MusView, MusAction> = {
           : [],
       isPunto:
         state.phase === "juego" &&
-        !state.players.some((p) => sumOf(state.hands[p]) >= 31),
+        !state.players.some((p) => sumOf(state.hands[p], state.ruleset) >= 31),
       ...(visible ? { revealedHands: state.hands } : {}),
       finished: state.finished,
       winnerTeam: state.winnerTeam,
@@ -604,3 +618,9 @@ export const musEngine: GameEngine<MusState, MusView, MusAction> = {
     return state.finished;
   },
 };
+
+/** Explicit engine profile for the alternative described by Fournier; no room protocol change. */
+export function createMusState(players: PlayerId[], seed: number, ruleset: MusState["ruleset"] = "eight-kings"): MusState {
+ const state = musEngine.createInitialState(players,seed);
+ return {...state,ruleset,log:[`Mus: ${ruleset === "eight-kings" ? "8 reyes y 8 ases" : "4 reyes y 4 ases"}, 40 tantos, primero en ganar 3 juegos completos.`]};
+}
