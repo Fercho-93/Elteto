@@ -68,7 +68,7 @@ try{
   await page.getByRole('button',{name:id==='continental'?'Exponer contrato':'Cerrar con esta carta',exact:true}).click();
   let next=await page.evaluate(()=>window.tableSnapshot());assert.ok(['show','result'].includes(next.phase));
   while(['show','layoff'].includes(next.phase)){await page.evaluate(({id,game,names})=>window.testTable(id,game,game.players[game.turn],names),{id,game:next,names});await page.locator('[data-action="catalog-choice"]').first().click();next=await page.evaluate(()=>window.tableSnapshot());}
-  assert.equal(next.phase,'result');assert.ok(await page.locator('.catalog-result').isVisible());
+  assert.equal(next.phase,'result');assert.ok(await page.locator('.catalog-result').isVisible());assert.equal(await page.locator('.catalog-instruction').textContent(),'');
   await page.screenshot({path:`tests/artifacts/catalog/${id}-result-${kind}.png`});
   await page.evaluate(({id,game,names})=>window.testTable(id,game,game.players[game.turn],names),{id,game:next,names});
   await page.getByRole('button',{name:'Siguiente mano',exact:true}).click();assert.equal((await page.evaluate(()=>window.tableSnapshot())).handNumber,2);
