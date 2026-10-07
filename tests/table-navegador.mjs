@@ -143,8 +143,8 @@ try {
         return cards.every(card=>{const image=card.querySelector('img'),rect=image.getBoundingClientRect(); return image.naturalWidth>=200 && rect.width>=56 && rect.height>=85 && card.getAttribute('aria-label').includes(' de ');});
       }));
       assert.equal(await page.locator('.rival-original[data-character]').evaluateAll(els => new Set(els.map(el => el.dataset.character)).size),count-1);
-      assert.ok(await page.locator('.rival-original image').evaluateAll(images=>images.every(i=>i.getAttribute('href').includes('elteto-original-avatars.png'))),'Only original user artwork is shown');
-      assert.ok(await page.evaluate(async()=>{const image=new Image();image.src='/assets/elteto-original-avatars.png';await image.decode();return image.naturalWidth===1280&&image.naturalHeight===853;}));
+      assert.ok(await page.locator('.rival-original image').evaluateAll(images=>images.every(i=>i.getAttribute('href').includes('elteto-avatars-v3.png'))),'Generated transparent avatars are shown');
+      assert.ok(await page.evaluate(async()=>{const image=new Image();image.src='/assets/elteto-avatars-v3.png';await image.decode();return image.naturalWidth===1983&&image.naturalHeight===793;}));
       assert.equal(await page.locator('.game-table').getAttribute('data-scene'),'illustrated-2d');
       assert.equal(await page.locator('.table-canvas,.camera-controls').count(),0);
       assert.equal(await page.locator('.seat-front,.rival-hand,.forearms').count(),0);
@@ -388,8 +388,8 @@ try {
       return response.ok && (await response.text()).includes('.board-zoom');
     }));
     assert.ok(await page.evaluate(async()=>{
-      const style=await fetch('../../cinquillo-table.css'),art=await fetch('../../assets/elteto-original-avatars.png'),screen=await fetch('../../cinquillo-screen.js');
-        for (const file of ['rival-portraits.js','rival-portraits.css','assets/elteto-original-avatars.png']) if(!(await fetch('../../'+file)).ok) return false;
+      const style=await fetch('../../cinquillo-table.css'),art=await fetch('../../assets/elteto-avatars-v3.png'),screen=await fetch('../../cinquillo-screen.js');
+        for (const file of ['rival-portraits.js','rival-portraits.css','avatar-art.js','assets/elteto-avatars-v3.png','assets/elteto-logo-neon-v3.png']) if(!(await fetch('../../'+file)).ok) return false;
       return style.ok && (await style.text()).includes('--pile-w') && art.ok && (await art.blob()).size>10000 && screen.ok && (await screen.text()).includes('arrangeCinquilloScreen');
     }));
     assert.ok(await page.evaluate(async()=>{
