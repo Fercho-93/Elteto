@@ -4,6 +4,13 @@ Esta prueba añade una app Android independiente, **Elteto LAN · Prueba**. El a
 
 ## Instalar y jugar
 
+La APK 0.2.1 permite crear mesas directamente, sin contraseña, invitación ni
+activación en Firebase, incluso al abrirla por primera vez sin internet.
+Este acceso temporal se controla con `openLanAccessEnabled` en
+`apps/web/distribution-config.js`, que Android incorpora al compilar. Para volver
+al acceso con invitación, cambia el valor a `false` y genera una nueva APK.
+Los invitados siguen entrando mediante el QR y no obtienen la clave del anfitrión.
+
 1. En GitHub, abre Actions → **Compilar Android LAN** → última ejecución correcta. Descarga el artefacto **Elteto-LAN-Android-prueba**, extrae el ZIP e instala `app-debug.apk` en el Android anfitrión. Es una compilación de prueba, no un lanzamiento de Play Store.
 2. Conecta los móviles a una misma Wi-Fi local o activa un hotspot en el Android y conecta los invitados. La red no necesita salida a internet.
 3. Abre Elteto LAN en Android. Pulsa **Crear partida**, indica tu nombre y elige Cinquillo (2–6 jugadores), Mus (4 jugadores) o Parchís (2–4 jugadores) y crea la mesa.

@@ -15,6 +15,7 @@ import { distributionConfig } from './distribution-config.js';
 import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, animateTable, animateSeats } from "./table-view.js";
 
 const LAN = window.ELTETO_LAN;
+const OPEN_LAN_HOST = Boolean(LAN?.hostKey && window.EltetoActivation?.isOpenAccess?.());
 const GUEST = Boolean(window.ELTETO_GUEST || (LAN && !LAN.hostKey) || parseRoomCode(location.search));
 let accessLogin = false, accessBusy = false;
 let activationCode = new URLSearchParams(location.hash.slice(1)).get('activate') || '';
@@ -61,7 +62,7 @@ function renderHome() {
         <div class="menu-art"><div class="menu-logo" role="img" aria-label="Elteto: personajes, dados y coche morado entre palmeras de neón"></div></div>
         <div class="menu-intro"><h1>Se viene<br> <span>pique.</span></h1>
           <nav class="menu-actions" aria-label="Menú principal">${!LAN || LAN.hostKey ? '<button class="menu-button menu-primary" data-action="open-host"><span class="menu-button-label">Crear partida</span><span class="menu-button-arrow" aria-hidden="true">↗</span></button>' : ''}<button class="menu-button menu-secondary" data-action="open-join"><span class="menu-button-label">Unirme a partida</span><span class="menu-button-arrow" aria-hidden="true">→</span></button><a class="menu-button menu-rules" href="./reglas_juegos/biblioteca.html"><span class="menu-button-label">Ver reglas</span><span class="menu-button-arrow" aria-hidden="true">↗</span></a></nav>
-          ${distributionConfig.developmentAdminEnabled ? '<button class="text-button access-switch" data-action="development-admin">Entrar como administrador</button>' : ''}
+          ${!LAN && distributionConfig.developmentAdminEnabled ? '<button class="text-button access-switch" data-action="development-admin">Entrar como administrador</button>' : ''}
           ${LAN ? '<p class="menu-network-note">Mesa local sin internet. Conecta todos los móviles a la misma Wi-Fi o hotspot.</p>' : ''}
         </div>
       </div>
@@ -70,6 +71,7 @@ function renderHome() {
 }
 
 function renderAccess() {
+  if (OPEN_LAN_HOST) { renderHostForm(); return; }
   state.screen = 'access';
   app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="back">← <span>Volver</span></button><span class="menu-brand">ELTETO<span>✦</span></span></header><section class="menu-setup access-panel">
     <p class="menu-kicker">TU INVITACIÓN</p><h1>${accessLogin ? 'Vuelve a tu mesa' : 'Activa Elteto'}<span>.</span></h1>
@@ -77,7 +79,7 @@ function renderAccess() {
     <label class="field-label" for="access-password">Contraseña</label><input class="text-field" id="access-password" type="password" minlength="${accessLogin ? 6 : 8}" autocomplete="${accessLogin ? 'current-password' : 'new-password'}" required>
     ${accessLogin ? '' : `<label class="field-label" for="activation-code">Código de invitación</label><input class="text-field activation-input" id="activation-code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="200" required placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" value="${esc(activationCode)}">`}
     <p class="error-message" id="access-error" role="alert"></p><button type="submit" class="menu-button menu-primary menu-create">${accessLogin ? 'Entrar' : 'Activar acceso'} <span aria-hidden="true">↗</span></button></form>
-    ${distributionConfig.developmentAdminEnabled ? '<button class="text-button access-switch" data-action="development-admin">Entrar como administrador</button>' : ''}
+    ${!LAN && distributionConfig.developmentAdminEnabled ? '<button class="text-button access-switch" data-action="development-admin">Entrar como administrador</button>' : ''}
     <button class="text-button access-switch" data-action="access-switch">${accessLogin ? 'Tengo un código' : 'Ya tengo acceso'}</button>
     ${accessLogin ? '<button class="text-button access-switch" data-action="access-recover">Recuperar contraseña</button>' : '<p class="helper">Una invitación, una cuenta. Guarda tu acceso para cambiar de móvil.</p>'}
   </section></div></section>`;
@@ -676,10 +678,10 @@ if (incomingRoom) {
 } else renderHome();
 if (!LAN && !GUEST && "serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
 if (GUEST) document.querySelector('link[rel="manifest"]')?.remove();
-if (adminCode && !GUEST) {
+if (adminCode && !GUEST && !OPEN_LAN_HOST) {
   app.innerHTML = '<section class="menu-shell"><div class="menu-wrap"><section class="menu-setup access-panel"><p class="menu-kicker">DESARROLLO</p><h1>Entrando<span>…</span></h1></section></div></section>';
   activateDevelopmentAdmin(adminCode).then(() => { adminCode = ''; renderInstallation(); }).catch(error => { adminCode = ''; renderAccess(); app.querySelector('#access-error').textContent = error.message; });
-} else if (activationCode && !GUEST) renderAccess();
+} else if (activationCode && !GUEST && !OPEN_LAN_HOST) renderAccess();
 
 app.addEventListener('submit', async event => {
   if (event.target.id !== 'access-form') return;

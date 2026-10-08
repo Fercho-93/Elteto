@@ -19,6 +19,9 @@ public final class FirebaseLicenseVerifier {
         // Releases before public development access did not persist a mode.
         return activated && (!"development".equals(mode) || developmentEnabled);
     }
+    public static boolean allowsLocal(boolean activated, String mode, boolean developmentEnabled, boolean openLanAccessEnabled) {
+        return openLanAccessEnabled || allowsLocal(activated, mode, developmentEnabled);
+    }
     static Grant parseGrant(String uid, String json, boolean developmentEnabled) throws Exception {
         JsonObject fields = JsonParser.parseString(json).getAsJsonObject().getAsJsonObject("fields");
         if (fields == null || !"active".equals(fields.getAsJsonObject("status").get("stringValue").getAsString())) throw new Exception("Esta cuenta no tiene acceso activo.");

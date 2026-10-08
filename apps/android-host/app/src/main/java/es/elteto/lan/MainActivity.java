@@ -41,10 +41,11 @@ public class MainActivity extends Activity {
     }
     private boolean localAccessAllowed() {
         return FirebaseLicenseVerifier.allowsLocal(getPreferences(MODE_PRIVATE).getBoolean("activated",false),
-            getPreferences(MODE_PRIVATE).getString("mode","invitation"), BuildConfig.DEVELOPMENT_ADMIN_ENABLED);
+            getPreferences(MODE_PRIVATE).getString("mode","invitation"), BuildConfig.DEVELOPMENT_ADMIN_ENABLED, BuildConfig.OPEN_LAN_ACCESS_ENABLED);
     }
     public class ActivationBridge {
         @JavascriptInterface public boolean isActivated() { return localAccessAllowed(); }
+        @JavascriptInterface public boolean isOpenAccess() { return BuildConfig.OPEN_LAN_ACCESS_ENABLED; }
         @JavascriptInterface public String activate(String token) {
             com.google.gson.JsonObject result=new com.google.gson.JsonObject();
             try {
@@ -54,7 +55,7 @@ public class MainActivity extends Activity {
             } catch(Exception e) { result.addProperty("ok",false);result.addProperty("message","No se pudo verificar el acceso. Comprueba internet y vuelve a entrar."); }
             return result.toString();
         }
-        @JavascriptInterface public void deactivate() { getPreferences(MODE_PRIVATE).edit().clear().commit();server.setHostAuthorized(false); }
+        @JavascriptInterface public void deactivate() { getPreferences(MODE_PRIVATE).edit().clear().commit();server.setHostAuthorized(localAccessAllowed()); }
     }
     private void showAddresses(){
         if(server==null)return;

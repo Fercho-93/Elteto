@@ -20,6 +20,15 @@ public final class LicensePolicyMain {
         check(FirebaseLicenseVerifier.allowsLocal(true, "development", true));
         check(!FirebaseLicenseVerifier.allowsLocal(true, "development", false));
         check(!FirebaseLicenseVerifier.allowsLocal(false, "invitation", true));
+        for (boolean activated : new boolean[]{false, true}) {
+            for (boolean developmentEnabled : new boolean[]{false, true}) {
+                for (String mode : new String[]{null, "invitation", "development"}) {
+                    check(FirebaseLicenseVerifier.allowsLocal(activated, mode, developmentEnabled, true));
+                    check(FirebaseLicenseVerifier.allowsLocal(activated, mode, developmentEnabled, false)
+                        == FirebaseLicenseVerifier.allowsLocal(activated, mode, developmentEnabled));
+                }
+            }
+        }
         System.out.println("Android license: server mode, temporary access withdrawal and legacy offline access: OK");
     }
 }

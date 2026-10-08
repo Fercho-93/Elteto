@@ -42,4 +42,12 @@ storage.set('elteto.hostAccess.v1', JSON.stringify({ uid: user.uid, active: true
 assert.equal(context.cachedHostAccess(), null);
 await assert.rejects(context.requireHostAccess(), /Activa/);
 assert.equal(JSON.parse(storage.get('elteto.hostAccess.v1')).active, false);
+// A new APK can create local tables without a cached grant or Firebase request.
+storage.clear();
+context.connectFirebase = async () => { throw new Error('Firebase must not be contacted for an open LAN host'); };
+context.window = { ELTETO_LAN: { hostKey: 'private-local-host' }, EltetoActivation: { isActivated: () => true } };
+assert.equal(await context.requireHostAccess(), true);
+// A guest never gains host access, even if it imitates the native bridge.
+context.window.ELTETO_LAN = {};
+await assert.rejects(context.requireHostAccess(), /Firebase must not be contacted/);
 console.log('Acceso local: invitaciones, revocación y retirada de licencias de desarrollo tras actualizar: OK');
