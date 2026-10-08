@@ -1,5 +1,5 @@
-import {DICE_DURATION,CHECKER_STEP,PIECE_TRANSFER,CAPTURE_FADE,settledFrames,gooseFlights} from './game-physics.js';
-import {goosePoint} from './board-games.js';
+import {DICE_DURATION,PAWN_STEP,CHECKER_STEP,PIECE_TRANSFER,CAPTURE_FADE,settledFrames,gooseFlights} from './game-physics.js';
+import {goosePoint,gooseRadius} from './board-games.js';
 import {finishDiceRender,OCA_DICE_TARGETS} from './parchis-dice.js';
 
 const contexts=new WeakMap();
@@ -79,7 +79,16 @@ export function finishBoardMotion(app,view,playerId,name,error){
   state.signature=signature;state.actor=move.player;
   const started=performance.now();
   if(view.boardKind==='oca'){
-   const flights=gooseFlights(before,view,move).map(f=>({...f,points:f.route.map((n,i)=>{const snapshot=i===0?before:view,peers=view.players.filter(p=>p===f.player||snapshot.positions[p]===n);return goosePoint(n,peers.indexOf(f.player),peers.length);})}));
+   const flights=gooseFlights(before,view,move),placement=(snapshot,player,n=snapshot.positions[player])=>{const peers=view.players.filter(p=>p===player||snapshot.positions[p]===n);return {point:goosePoint(n,peers.indexOf(player),peers.length),radius:gooseRadius(peers.length)};};
+   // Partners make room at arrival and regroup at departure, without jumping.
+   for(const player of view.players){
+    if(flights.some(f=>f.player===player))continue;
+    const from=placement(before,player),to=placement(view,player);
+    if(from.point.join(',')===to.point.join(',')&&from.radius===to.radius)continue;
+    const arriving=view.positions[player]===view.positions[move.player];
+    flights.push({player,route:[before.positions[player],view.positions[player]],steps:[PAWN_STEP],duration:PAWN_STEP,delay:DICE_DURATION+(arriving?Math.max(0,flights[0].duration-PAWN_STEP):0)});
+   }
+   for(const f of flights){f.points=f.route.map((n,i)=>placement(i===0?before:view,f.player,n).point);f.radii=[placement(before,f.player).radius,placement(view,f.player).radius];}
    state.timeline={started,flights};state.deadline=started+Math.max(...flights.map(f=>f.delay+f.duration))+500;
   }else{
    const route=move.path,steps=route.slice(1).map(()=>CHECKER_STEP),duration=steps.length*CHECKER_STEP;
@@ -96,7 +105,9 @@ export function finishBoardMotion(app,view,playerId,name,error){
   for(const flight of state.timeline.flights){
    if(elapsed>=flight.delay+flight.duration)continue;
    const node=[...app.querySelectorAll('.catalog-surface [data-goose-player]')].find(el=>el.dataset.goosePlayer===flight.player);
-   if(node){node.classList.add('piece-travelling');const animation=node.animate(settledFrames(flight.points,([x,y])=>({transform:`translate(${x}px,${y}px)`}),flight.steps),{duration:flight.duration,delay:flight.delay,fill:'backwards'});animation.currentTime=elapsed;}
+   if(node){node.classList.add('piece-travelling');const animation=node.animate(settledFrames(flight.points,([x,y])=>({transform:`translate(${x}px,${y}px)`}),flight.steps),{duration:flight.duration,delay:flight.delay,fill:'backwards'});animation.currentTime=elapsed;
+    if(flight.radii[0]!==flight.radii[1]){const resize=node.querySelector('.goose-counter').animate(flight.radii.map(r=>({transform:`scale(${r/27})`})),{duration:flight.duration,delay:flight.delay,fill:'backwards',easing:'ease-in-out'});resize.currentTime=elapsed;}
+   }
   }
  }else{
   const {route,steps,duration,captured}=state.timeline,node=app.querySelector(`.catalog-surface [data-checker-at="${route.at(-1)}"]`);

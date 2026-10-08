@@ -2,6 +2,7 @@
 .rival-roster {--token-size:32px;position:absolute;z-index:3;top:6px;left:10px;right:10px;display:grid;grid-template-columns:repeat(var(--rival-count),minmax(0,1fr));gap:8px;max-width:calc(var(--rival-count) * 144px);margin:0;padding:0;background:none;border:0;box-shadow:none;}
 :is(.cinquillo-screen,.mus-screen) .game-table .table-seat.rival-seat {position:static;inset:auto;transform:none;width:auto;height:auto;z-index:auto;min-width:0;display:flex;align-items:center;gap:6px;text-align:left;color:#e5ded0;font-family:system-ui,sans-serif;}
 .rival-token {position:relative;flex:none;width:var(--token-size);height:var(--token-size);}
+.player-piece-badge{position:absolute;right:-1px;bottom:-1px;z-index:4;display:grid;place-items:center;width:clamp(18px,32%,24px);aspect-ratio:1;border:2px solid #f5e6bd;border-radius:50%;background:radial-gradient(circle at 32% 20%,#fffc,var(--piece-color) 55%);box-shadow:inset 0 -2px 1px #0003,0 2px 0 #342825,0 3px 5px #0006;color:#30282f;font:800 11px/1 system-ui,sans-serif;}
 .rival-original {width:100%;height:100%;border:1px solid #a2957955;border-radius:50%;overflow:hidden;background:#39243f;}
 .rival-original svg {display:block;width:100%;height:100%;}
 .rival-info {min-width:0;display:flex;flex-direction:column;gap:1px;}

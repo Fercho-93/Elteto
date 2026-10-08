@@ -19,7 +19,7 @@
 .goose-board .goose-number{fill:#624b33;font:700 21px Georgia,serif;}
 .goose-board .goose-kind{fill:#766047;font:600 9px system-ui,sans-serif;text-anchor:middle;letter-spacing:1px;}
 .goose-board .goose-title{fill:#765630;font:700 27px Georgia,serif;text-anchor:middle;letter-spacing:2px;}
-.goose-board .goose-pawn text{text-anchor:middle;font:800 12px system-ui,sans-serif;fill:#352b2e;}
+.goose-board .goose-pawn text{text-anchor:middle;font:800 21px system-ui,sans-serif;fill:#352b2e;}
 .catalog-dock.oca-dock{display:grid;grid-template-columns:66px minmax(0,1fr);grid-template-rows:32px 70px;gap:4px 10px;height:122px;max-height:none;overflow:visible;}
 .oca-dock .catalog-instruction{grid-column:1/3;min-height:0;overflow:auto;}
 .oca-dock .parchis-die{grid-column:1;grid-row:2;align-self:center;}

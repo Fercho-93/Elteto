@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {getGame,botTurnDelay} from '../dist/game-core/index.js';
-import {GOOSE_PATH} from '../dist/board-games.js';
+import {GOOSE_PATH,GOOSE_COLORS,gooseRadius} from '../dist/board-games.js';
 import {chromium,webkit} from 'playwright';
 assert.equal(GOOSE_PATH.length,63);assert.equal(new Set(GOOSE_PATH.map(p=>p.join(','))).size,63);
 for(let i=1;i<63;i++)assert.equal(Math.abs(GOOSE_PATH[i][0]-GOOSE_PATH[i-1][0])+Math.abs(GOOSE_PATH[i][1]-GOOSE_PATH[i-1][1]),1);
@@ -43,10 +43,20 @@ try{
   if(width===390&&height===844)await page.screenshot({path:`tests/artifacts/boards/checkers-${kind}.png`});
   for(const count of [2,4]){
    const ids=['a','b','c','d'].slice(0,count);game=oca.createInitialState(ids,22);await show('oca',game);
+   const badges=await page.locator('.rival-seat').evaluateAll(seats=>seats.map(s=>({id:s.dataset.playerId,color:s.querySelector('.player-piece-badge')?.dataset.pieceColor,number:s.querySelector('.player-piece-badge')?.textContent,label:s.getAttribute('aria-label')})));
+   for(const badge of badges){const seat=ids.indexOf(badge.id);assert.equal(badge.color,GOOSE_COLORS[seat]);assert.equal(badge.number,String(seat+1));assert.match(badge.label,/ficha/);assert.equal(await page.locator(`.catalog-surface [data-goose-player="${badge.id}"]`).getAttribute('data-piece-color'),badge.color);}
+   const circles=await page.locator('.catalog-surface .goose-counter>circle:first-of-type').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().toJSON()));
+   for(let i=0;i<circles.length;i++)for(let j=i+1;j<circles.length;j++){const a=circles[i],b=circles[j];assert.ok(a.right<=b.left+.75||b.right<=a.left+.75||a.bottom<=b.top+.75||b.bottom<=a.top+.75,'Large shared counters remain separate');}
+   assert.ok(gooseRadius(1)>=24,'A single counter is more than twice the original radius');
    assert.equal(await page.locator('.catalog-surface .goose-cell').count(),63);assert.equal(await page.locator('.catalog-surface .goose-cell .goose-art').count(),63);assert.equal(await page.locator('.die-face').count(),6);
    const metrics=await page.evaluate(()=>{const table=document.querySelector('.catalog-surface'),board=document.querySelector('.goose-board'),r=board.getBoundingClientRect(),t=table.getBoundingClientRect(),dock=document.querySelector('.catalog-dock').getBoundingClientRect();return {page:document.documentElement.scrollHeight<=innerHeight+1&&document.documentElement.scrollWidth<=innerWidth+1,noScroll:table.scrollHeight<=table.clientHeight+1&&table.scrollWidth<=table.clientWidth+1,fits:r.left>=t.left&&r.right<=t.right+1&&r.top>=t.top&&r.bottom<=t.bottom+1,dockFits:dock.bottom<=innerHeight+1,board:r.toJSON()};});
    measurements.push({width,height,count,...metrics});assert.ok(metrics.page&&metrics.noScroll&&metrics.fits&&metrics.dockFits,JSON.stringify(measurements.at(-1)));
-   if(width===390&&height===844&&count===4)await page.screenshot({path:`tests/artifacts/boards/goose-${kind}.png`});
+   if(width===390&&height===844&&count===4){
+    await page.screenshot({path:`tests/artifacts/boards/goose-${kind}.png`});
+    const separate={...game,positions:Object.fromEntries(ids.map((id,i)=>[id,2+i*3]))};await show('oca',separate);
+    const single=await page.locator('.catalog-surface .goose-counter>circle:first-of-type').first().boundingBox();assert.ok(single.width>=16,'A single counter is visibly larger on a phone');
+    await page.screenshot({path:`tests/artifacts/boards/goose-large-${kind}.png`});await show('oca',game);
+   }
    // All six faces are shared with Parchís, not a unicode symbol.
    for(let value=1;value<=6;value++){await show('oca',{...game,roll:value,lastRoll:{sequence:value,player:'a',value,from:1,to:1+value,route:[1,1+value]}});assert.equal(await page.locator('.parchis-die').getAttribute('data-result'),String(value));assert.equal(await page.locator(`.face-${value} i`).count(),value);}
    await page.locator('[data-action="catalog-zoom"]').click();assert.equal(await page.locator('.catalog-zoom .goose-cell').count(),63);await page.locator('[data-action="catalog-close-zoom"]').click();

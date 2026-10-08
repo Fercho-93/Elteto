@@ -1,3 +1,4 @@
+import {renderGameChoices,updateGamePicker,stepGamePicker,filterGamePicker} from './game-picker.js';
 import {renderCatalogGame,handleCatalogAction} from './catalog-games.js';
 import {beginParchisRoll} from './parchis-dice.js';
 import {prepareCardPaint,restoreCardPaint} from './card-paint.js';
@@ -112,17 +113,15 @@ function playerCountLabel(game) {
 function renderHostForm() {
   if (GUEST) return renderJoinForm();
   state.screen = "host-form";
-  const games = listGames().map((game) => `<label class="game-option ${state.gameId === game.id ? "chosen" : ""}">
-    <input type="radio" name="game" value="${esc(game.id)}" ${state.gameId === game.id ? "checked" : ""}>
-    <span class="game-check" aria-hidden="true">✓</span><span><strong>${esc(game.label)}</strong><small>${playerCountLabel(game)} jugadores</small></span>
-  </label>`).join("");
+  const games = renderGameChoices(listGames(),state.gameId,playerCountLabel);
   app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="back">← <span>Volver</span></button><button class="text-button" data-action="access-install">Mi acceso</button></header><section class="menu-setup" aria-labelledby="setup-title">
     <p class="menu-kicker">TÚ PONES LA MESA</p><h1 id="setup-title">Crear partida<span>.</span></h1>
     <div class="menu-fields"><div><label class="field-label" for="host-name">Tu nombre</label><input class="text-field" id="host-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}"></div>
     <div><label class="field-label" for="room-name">Nombre de la sala <span>opcional</span></label><input class="text-field" id="room-name" maxlength="30" placeholder="La de siempre" value="${esc(state.roomName)}"></div></div>
-    <fieldset class="menu-game-fieldset"><legend>Elige el juego</legend><input class="text-field menu-game-search" type="search" aria-label="Buscar juego" placeholder="Buscar juego" id="game-search"><div class="game-options">${games}</div></fieldset>
+    <fieldset class="menu-game-fieldset"><legend>Elige el juego</legend><input class="text-field menu-game-search" type="search" aria-label="Buscar juego" placeholder="Buscar juego" id="game-search">${games}</fieldset>
     <button class="menu-button menu-primary menu-create" data-action="create-room">Crear sala <span aria-hidden="true">↗</span></button>
   </section></div></section>`;
+  updateGamePicker(app,{scroll:true,instant:true});
 }
 
 function renderJoinForm() {
@@ -236,7 +235,7 @@ function renderGameContents() {
   const table = state.gameId === 'mus' ? renderMusBoard(view) : renderCinquilloBoard(view);
   const hint = view.finished ? winner : selecting ? 'Selecciona tu descarte' : myTurn ? 'Tu turno' : view.phase === 'discard' ? 'Esperando descartes' : `Turno de ${playerName(view.turnPlayer)}`;
   app.innerHTML = `${header()}<section class="game-page" data-game="${state.gameId}">
-    <div class="game-top"><span class="game-ribbon">${esc(game.label)} · ${state.gameId === 'mus' ? (view.ruleset === 'eight-kings' ? '8 reyes y 8 ases' : '4 reyes') : (view.ruleset === 'legacy-french-52' ? '52 cartas · mesa anterior' : '40 cartas españolas')}</span><button class="text-button" data-action="leave-room">Salir</button></div>
+    <div class="game-top"><span class="game-ribbon">${esc(game.label)} · ${state.gameId === 'mus' ? (view.ruleset === 'eight-kings' ? '8 reyes y 8 ases' : '4 reyes') : (view.ruleset === 'legacy-french-52' ? '52 cartas · mesa anterior' : '40 cartas españolas')}</span><button class="text-button" data-action="leave-room">Salir de la partida</button></div>
     ${view.finished ? `<div class="winner-banner" role="status">${esc(winner)}</div>` : ''}
     ${state.gameId === 'cinquillo' ? `<p class="match-score">Mano ${view.handNumber} · Meta ${view.targetScore} · ${view.players.map(id=>`${esc(playerName(id))}: ${view.scores[id]}`).join(' · ')}</p>` : `<p class="match-score">Juegos: A ${view.gamesWon?.A ?? 0} · B ${view.gamesWon?.B ?? 0} · primero a ${view.targetGames ?? 1}${view.gameWinner ? ` · Gana el juego ${esc(view.gameWinner)}` : ''}</p>`}
     ${state.gameId === 'mus' ? `<div class="score-strip"><span>Pareja A <b>${view.scores.A}</b></span><span>Pareja B <b>${view.scores.B}</b></span></div>` : ''}
@@ -390,6 +389,7 @@ app.addEventListener("click", async (event) => {
   const action = button.dataset.action;
   if(turnSequence.busy&&isTurnAction(action))return;
   try {
+    if(action==='game-previous'||action==='game-next'){stepGamePicker(app,action==='game-next'?1:-1);return;}
     if(action.startsWith("catalog-") && handleCatalogAction(app,button,state.view,sendAction,renderGame))return;
     if (action === "open-table-zoom") { openTableZoom(); return; }
     if (action === "open-game-menu") { app.querySelector('.game-menu')?.showModal(); return; }
@@ -530,7 +530,7 @@ app.addEventListener("input", (event) => {
 app.addEventListener("change", (event) => {
   if (event.target.matches('input[name="game"]')) {
     state.gameId = event.target.value;
-    for (const option of app.querySelectorAll('.game-option')) option.classList.toggle('chosen', option.contains(event.target));
+    updateGamePicker(app,{scroll:true});
   }
 });
 
@@ -699,4 +699,4 @@ app.addEventListener('submit', async event => {
   finally { accessBusy = false; }
 });
 
-app.addEventListener("input",event=>{if(event.target.id!=="game-search")return;const query=event.target.value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();for(const option of app.querySelectorAll(".game-option"))option.hidden=!option.textContent.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().includes(query);});
+app.addEventListener("input",event=>{if(event.target.id==="game-search")filterGamePicker(app,event.target.value);});
