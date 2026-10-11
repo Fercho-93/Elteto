@@ -22,13 +22,13 @@ try{
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   if(width===390)await page.screenshot({path:'tests/artifacts/help/home.png',fullPage:true});
  }
- for(const id of ['mus','parchis','texas-holdem','damas-espanolas']){
+ for(const id of ['mus','parchis','texas-holdem','damas-espanolas','oca']){
   const engine=getGame(id),game=engine.createInitialState(Array.from({length:engine.minPlayers},(_,i)=>'p'+i),22);
   for(const [width,height] of [[320,568],[390,844],[844,390]]){
    await page.setViewportSize({width,height});await page.evaluate(({id,game})=>window.testTable(id,game,'p0'),{id,game});
    assert.equal(await page.locator('.game-info-button').count(),1);
    await page.locator('.game-info-button').click();await page.locator('.help-original').waitFor();
-   assert.ok((await page.locator('.help-original').textContent()).length>1000);
+   if(id==='oca'){const expected=(await readFile('reglas_juegos/consulta/oca.html','utf8')).match(/<body>([\s\S]*)<\/body>/)[1].replace(/<[^>]+>/g,'');assert.equal((await page.locator('.help-original').textContent()).trim(),expected.trim());}else assert.ok((await page.locator('.help-original').textContent()).length>1000);
    assert.equal(await page.locator('.help-source>a').getAttribute('href'),(await import('../dist/game-core/index.js')).getGamePlan(id).rules.url);
    assert.ok(await page.locator('.game-help').evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight;}));
    await page.locator('[data-help-jump=".help-source"]').click();assert.ok(await page.locator('.help-scroll').evaluate(el=>el.scrollTop>0));
@@ -43,5 +43,5 @@ try{
  }
  const safe=await page.evaluate(async()=>{const {cleanRulebook}=await import('./game-help.js');const doc=cleanRulebook('<script>window.pwned=true</script><p onclick="evil()">Regla</p><a href="javascript:evil()">Enlace</a><iframe src="https://example.com"></iframe>');return {html:doc.innerHTML,pwned:window.pwned};});
  assert.equal(safe.pwned,undefined);assert.ok(!/script|onclick|javascript|iframe/.test(safe.html));assert.deepEqual(errors,[]);
- console.log('Inicio + reglas: cuatro juegos, 12 layouts, reglamentos completos, sanitización y vuelta sin perder partida: OK');
+ console.log('Inicio + reglas: cinco juegos, 15 layouts, reglamentos completos, sanitización y vuelta sin perder partida: OK');
 }finally{await browser.close();await new Promise(r=>server.close(r));}

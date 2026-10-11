@@ -16,9 +16,9 @@
 .catalog-screen[data-game="damas_espanolas"] .catalog-dock{height:94px;max-height:none;}
 .catalog-screen[data-game="damas_espanolas"] .catalog-instruction{height:30px;overflow:auto;}
 .catalog-screen[data-game="oca"] .catalog-surface>.goose-board{width:100%;height:100%;min-height:0;flex:1;margin:0;display:block;}
-.goose-board .goose-number{fill:#624b33;font:700 21px Georgia,serif;}
-.goose-board .goose-kind{fill:#766047;font:600 9px system-ui,sans-serif;text-anchor:middle;letter-spacing:1px;}
-.goose-board .goose-title{fill:#765630;font:700 27px Georgia,serif;text-anchor:middle;letter-spacing:2px;}
+.goose-board .goose-number{fill:#171331;font:900 25px system-ui,sans-serif;}
+.goose-board .goose-kind{fill:#22183d;font:800 9px system-ui,sans-serif;text-anchor:middle;letter-spacing:1px;}
+.goose-board .goose-title{fill:#fff3ca;font:900 27px system-ui,sans-serif;text-anchor:middle;letter-spacing:2px;}
 .goose-board .goose-pawn text{text-anchor:middle;font:800 21px system-ui,sans-serif;fill:#352b2e;}
 .catalog-dock.oca-dock{display:grid;grid-template-columns:66px minmax(0,1fr);grid-template-rows:32px 70px;gap:4px 10px;height:122px;max-height:none;overflow:visible;}
 .oca-dock .catalog-instruction{grid-column:1/3;min-height:0;overflow:auto;}
@@ -47,3 +47,7 @@
 .oca-dock .catalog-options button{flex:0 0 auto;width:auto;min-width:78px;max-width:124px;height:44px;padding:8px 12px;font-size:12px;}
 .oca-dock .catalog-options button{background:linear-gradient(#ead5a4,#ceb77c);border:1px solid #f2dfb755;box-shadow:inset 0 1px 1px #fff8,0 2px 0 #8b7044,0 3px 6px #0003;}
 .oca-dock .parchis-die{width:66px;}
+
+.goose-center-title{fill:#57efff;font:italic 900 46px system-ui,sans-serif;text-anchor:middle;paint-order:stroke;stroke:#17132e;stroke-width:3px;}
+.goose-center-note{fill:#ffe775;font:800 12px system-ui,sans-serif;text-anchor:middle;letter-spacing:1px;}
+.catalog-screen[data-game="oca"] .catalog-surface{background:radial-gradient(ellipse at top,#412053,#101c35);border-color:#a460c8;}

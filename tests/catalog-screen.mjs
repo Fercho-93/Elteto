@@ -37,6 +37,7 @@ try{
  // Character picker preserves typed identity, exposes all ten choices, and persists locally.
  for(const width of [320,390,844]){
   await page.setViewportSize({width,height:844});await page.evaluate(()=>window.testHostForm());
+  const hostBrand=await page.locator('.menu-header .menu-brand').innerHTML();
   await page.locator('#host-name').fill('Ana sin perder nombre');
   assert.equal(await page.locator('#host-name').inputValue(),'Ana sin perder nombre','initial fill '+width);
   await page.locator('#room-name').fill('Mesa elegida');
@@ -50,6 +51,11 @@ try{
    assert.equal(await page.evaluate(()=>localStorage.getItem('elteto.character')),String(character));
   }
   await page.evaluate(()=>window.testJoinForm());
+  assert.equal(await page.locator('.menu-header .menu-brand').innerHTML(),hostBrand);
+  assert.equal(await page.locator('.topbar-tag').count(),0);
+  assert.ok(!/fruta y pique/i.test(await page.locator('#app').innerText()));
+  assert.ok(await page.locator('.menu-setup').isVisible());
+  if(width===390)await page.screenshot({path:`tests/artifacts/catalog/join-${kind}.png`,fullPage:true});
   assert.equal(await page.locator('#join-name').inputValue(),'Ana sin perder nombre');
   await page.locator('#join-name').fill('Bea');
   await page.locator('[data-action="choose-character"]').click();

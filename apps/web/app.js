@@ -123,7 +123,7 @@ function renderHostForm() {
   state.screen = "host-form";
   if (!availableGames(listGames()).some(game=>game.id===state.gameId)) state.gameId = "";
   const games = renderGameChoices(availableGames(listGames()),state.gameId,playerCountLabel);
-  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="back">← <span>Volver</span></button><button class="text-button" data-action="access-install">Mi acceso</button></header><section class="menu-setup" aria-labelledby="setup-title">
+  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="back">← <span>Volver</span></button><a class="menu-brand" href="./" data-action="home">ELTETO<span>✦</span></a><button class="text-button" data-action="access-install">Mi acceso</button></header><section class="menu-setup" aria-labelledby="setup-title">
     <p class="menu-kicker">TÚ PONES LA MESA</p><h1 id="setup-title">Crear partida<span>.</span></h1>
     <div class="menu-fields"><div><label class="field-label" for="host-name">Tu nombre</label><div class="name-character-field"><input class="text-field" id="host-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}">${renderCharacterButton(state.character)}</div></div>
     <div><label class="field-label" for="room-name">Nombre de la sala <span>opcional</span></label><input class="text-field" id="room-name" maxlength="30" placeholder="La de siempre" value="${esc(state.roomName)}"></div></div>
@@ -135,15 +135,15 @@ function renderHostForm() {
 
 function renderJoinForm() {
   state.screen = "join-form";
-  app.innerHTML = `${header()}<section class="panel">
-    <div class="eyebrow">Te guardaron sitio… y fruta 🍑</div><h2>Busca tu mesa</h2>
+  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="back">← <span>Volver</span></button><a class="menu-brand" href="./" data-action="home">ELTETO<span>✦</span></a></header><section class="menu-setup" aria-labelledby="join-title">
+    <p class="menu-kicker">TE GUARDARON SITIO</p><h1 id="join-title">Unirme a partida<span>.</span></h1>
     <p class="helper">Abre el enlace o escanea el QR del anfitrión. Entras como invitado, sin instalar nada.</p>
     <label class="field-label" for="join-name">Tu nombre</label><div class="name-character-field"><input class="text-field" id="join-name" maxlength="24" autocomplete="nickname" placeholder="Donde las dan, las toman" value="${esc(state.name)}">${renderCharacterButton(state.character)}</div>
     <label class="field-label" for="offer-code">Enlace online o código offline</label><div class="scan-row"><button class="button button-paper" data-action="scan-offer">Abrir cámara</button><span>o pega el enlace</span></div><textarea class="code-field" id="offer-code" rows="3" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Código de sala (ABCD2345) o enlace https://fercho-93.github.io/Elteto/?join=…">${esc(state.offerCode)}</textarea>
     ${state.error ? `<p class="error-message" role="alert">${esc(state.error)}</p>` : ''}
-    <button class="button button-cyan full-button" data-action="join-room">Entrar en la sala 🍑</button>
+    <button class="menu-button menu-primary menu-create" data-action="join-room">Entrar en la sala <span aria-hidden="true">→</span></button>
     <p class="fineprint">El QR abre este juego y te mete directamente en la sala.</p>
-  </section>`;
+  </section></div></section>`;
 }
 
 function codePanel(label, code, action, compact = false) {
