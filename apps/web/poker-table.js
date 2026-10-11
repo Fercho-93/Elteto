@@ -1,13 +1,35 @@
 import {renderDrawPile} from './card-art.js';
 import {originalPortrait} from './rival-portraits.js';
 import {mascotForSeat,escapeHtml as esc} from './table-view.js';
-const positions={2:[[50,86],[50,12]],3:[[50,86],[17,19],[83,19]],4:[[50,86],[13,48],[50,12],[87,48]],5:[[50,86],[12,62],[18,16],[82,16],[88,62]],6:[[50,86],[12,66],[12,23],[50,12],[88,23],[88,66]],7:[[50,86],[12,69],[12,38],[33,12],[67,12],[88,38],[88,69]],8:[[50,86],[12,70],[12,40],[27,12],[50,12],[73,12],[88,40],[88,70]]};
+// Physical seat order, clockwise from the local player's place at the bottom.
+const edges={2:['bottom','top'],3:['bottom','top','top'],4:['bottom','left','top','right'],5:['bottom','left','top','top','right'],6:['bottom','left','left','top','right','right'],7:['bottom','left','left','top','top','right','right'],8:['bottom','left','left','top','top','top','right','right']};
 const format=n=>Number(n||0).toLocaleString('es-ES');
 const chip=n=>`<i class="poker-chip" aria-hidden="true"></i><b>${format(n)}</b>`;
 export function renderPokerTable(view,name,playerId,publicCards){
- const own=Math.max(0,view.players.indexOf(playerId)),ordered=view.players.map((_,i)=>view.players[(own+i)%view.players.length]),seats=positions[ordered.length];
- const settled=view.phase==='result'||view.finished,collected=Math.max(0,view.pot-Object.values(view.street).reduce((a,b)=>a+b,0));
- return `<div class="poker-table" data-seats="${ordered.length}"><div class="poker-level">Ciegas <b>${view.smallBlindAmount}/${view.bigBlindAmount}</b> · suben en mano ${view.nextBlindHand}</div><div class="poker-pot" aria-label="${settled?'Bote repartido':'Bote acumulado'}: ${collected} fichas"><span>${settled?'BOTE REPARTIDO':'BOTE'}</span><div class="poker-chip-pile">${chip(collected)}</div>${!settled&&collected!==view.pot?`<small>Total con apuestas: ${format(view.pot)}</small>`:''}</div>${!settled?renderDrawPile(view.stockCount,true):''}<div class="poker-community">${publicCards(Array.from({length:5},(_,i)=>view.board[i]||null))}</div>${ordered.map((id,i)=>{const [x,y]=seats[i],active=!view.finished&&view.turnPlayer===id,status=view.eliminated[id]?'Observador':view.away?.[id]?'Ausente':view.folded[id]?'Retirado':view.chips[id]===0?'All-in':'';return `<article class="poker-seat table-seat ${id===playerId?'self-seat ':''}${active?'active-seat ':''}${status==='Observador'?'poker-observer ':''}" style="left:clamp(38px,${x}%,calc(100% - 38px));top:clamp(56px,${y}%,calc(100% - 56px))" data-player-id="${esc(id)}" ${active?'aria-current="true"':''} aria-label="${esc(name(id))}, ${format(view.chips[id])} fichas${status?', '+status:''}">${originalPortrait(mascotForSeat(view.players,view.players.indexOf(id),view.characters))}<strong class="poker-name">${esc(id===playerId?'Tú':name(id))}</strong><span class="poker-stack" aria-label="${view.chips[id]} fichas disponibles">${chip(view.chips[id])}</span><small class="poker-status">${view.dealer===id?'<i class="poker-dealer" title="Repartidor">D</i> ':''}${esc(status||(view.smallBlind===id?'Ciega pequeña':view.bigBlind===id?'Ciega grande':''))}</small>${view.publicHands[id]?.length?`<div class="poker-showdown">${publicCards(view.publicHands[id])}</div>`:''}</article>${view.street[id]>0?`<div class="poker-wager" data-player-id="${esc(id)}" style="left:${50+(x-50)*.62}%;top:${51+(y-51)*.57}%" aria-label="Apuesta de ${esc(name(id))}: ${view.street[id]} fichas">${chip(view.street[id])}</div>`:''}`;}).join('')}${view.payouts.length?`<div class="poker-payouts">${view.payouts.map((pay,i)=>`<span>${view.payouts.length>1?(i?'Bote lateral':'Bote principal')+': ':''}${format(pay.pot)} → ${pay.winners.map(id=>esc(name(id))).join(', ')}</span>`).join('')}</div>`:''}</div>`;
+ const own=Math.max(0,view.players.indexOf(playerId));
+ const ordered=view.players.map((_,i)=>view.players[(own+i)%view.players.length]);
+ const settled=view.phase==='result'||view.finished;
+ const collected=Math.max(0,view.pot-Object.values(view.street).reduce((a,b)=>a+b,0));
+ const seat=(id)=>{
+  const active=!view.finished&&view.turnPlayer===id;
+  const status=view.eliminated[id]?'Observador':view.away?.[id]?'Ausente':view.folded[id]?'Retirado':view.chips[id]===0?'All-in':'';
+  return `<article class="poker-seat table-seat ${id===playerId?'self-seat ':''}${active?'active-seat ':''}${status==='Observador'?'poker-observer ':''}" data-player-id="${esc(id)}" ${active?'aria-current="true"':''} aria-label="${esc(name(id))}, ${format(view.chips[id])} fichas${status?', '+status:''}">
+   ${originalPortrait(mascotForSeat(view.players,view.players.indexOf(id),view.characters))}
+   <div class="poker-identity"><strong class="poker-name">${esc(id===playerId?'Tú':name(id))}</strong><span class="poker-stack" aria-label="${view.chips[id]} fichas disponibles">${chip(view.chips[id])}</span><small class="poker-status">${view.dealer===id?'<i class="poker-dealer" title="Repartidor">D</i> ':''}${esc(status||(view.smallBlind===id?'Ciega pequeña':view.bigBlind===id?'Ciega grande':''))}</small></div>
+   ${view.street[id]>0?`<div class="poker-wager" data-player-id="${esc(id)}" aria-label="Apuesta de ${esc(name(id))}: ${view.street[id]} fichas"><small>Apuesta</small>${chip(view.street[id])}</div>`:''}
+  </article>`;
+ };
+ const edge=side=>`<div class="poker-edge poker-edge-${side}">${ordered.filter((id,i)=>edges[ordered.length][i]===side).map(seat).join('')}</div>`;
+ return `<div class="poker-table" data-seats="${ordered.length}"><div class="poker-level">Ciegas <b>${view.smallBlindAmount}/${view.bigBlindAmount}</b> · suben en mano ${view.nextBlindHand}</div>
+  ${edge('top')}${edge('left')}
+  <div class="poker-play-area"><div class="poker-center-meta"><div class="poker-pot" aria-label="${settled?'Bote repartido':'Bote acumulado'}: ${collected} fichas"><span>${settled?'BOTE REPARTIDO':'BOTE'}</span><div class="poker-chip-pile">${chip(collected)}</div>${!settled&&collected!==view.pot?`<small>Total con apuestas: ${format(view.pot)}</small>`:''}</div>${!settled?renderDrawPile(view.stockCount,true):''}</div>
+   <div class="poker-community">${publicCards(Array.from({length:5},(_,i)=>view.board[i]||null))}</div>
+   ${view.payouts.length?`<div class="poker-payouts">${view.payouts.map((pay,i)=>`<span>${view.payouts.length>1?(i?'Bote lateral':'Bote principal')+': ':''}${format(pay.pot)} → ${pay.winners.map(id=>esc(name(id))).join(', ')}</span>`).join('')}</div>`:''}
+  </div>${edge('right')}${edge('bottom')}</div>`;
+}
+export function renderPokerShowdown(view,name,publicCards){
+ const shown=view.players.filter(id=>view.publicHands[id]?.length);
+ return shown.length?`<section class="poker-revealed-hands" aria-label="Cartas enseñadas">${shown.map(id=>`<div class="poker-showdown" data-player-id="${esc(id)}"><strong>${esc(name(id))}</strong>${publicCards(view.publicHands[id])}</div>`).join('')}</section>`:'';
 }
 export function collectPokerBets(app,previous,view){
  if(!previous||previous.handNumber!==view.handNumber||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
