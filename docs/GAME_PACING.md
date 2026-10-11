@@ -8,6 +8,6 @@ Mus usa sus eventos públicos para anunciar MUS, corte, descarte, declaraciones,
 
 Referencias de presentación: [PokerStars: mesa, apuestas, animaciones y anuncios](https://www.pokerstars.com/help/articles/table-appearance-feature/232136/) y [Monopoly de Marmalade: experiencia móvil y tablero animado](https://www.marmaladegamestudio.com/ua-monopoly). Los tiempos son decisiones propias de Elteto, no tiempos oficiales de estos productos. Las reglas y el cálculo de resultados permanecen en el motor.
 
-Los dibujos de los avatares conservan sus nodos SVG decodificados entre actualizaciones. Las nuevas cartas del póker salen del mazo y el saldo del bote tiene una zona separada de las fichas. El menú distingue la ausencia temporal de la salida de la sala.
+Los dibujos de los avatares usan imágenes PNG recortadas con CSS y conservan sus nodos decodificados entre actualizaciones. Las nuevas cartas del póker salen del mazo y el saldo del bote tiene una zona separada de las fichas. El menú distingue la ausencia temporal de la salida de la sala.
 
 La primera entrada solicita nombre y personaje, que se conservan para las siguientes partidas. En Parchís se distingue la tirada inicial que decide el orden de una tirada de movimiento: solo esta última permite sacar una ficha con un cinco y salida libre.

@@ -143,7 +143,7 @@ try {
         return cards.every(card=>{const image=card.querySelector('img,.reference-card-art'),rect=image.getBoundingClientRect(); return (image.tagName.toLowerCase()==='svg'||image.naturalWidth>=200) && rect.width>=56 && rect.height>=85 && card.getAttribute('aria-label').includes(' de ');});
       }));
       assert.equal(await page.locator('.rival-original[data-character]').evaluateAll(els => new Set(els.map(el => el.dataset.character)).size),count);
-      assert.ok(await page.locator('.rival-original image').evaluateAll(images=>images.every(i=>i.getAttribute('href').includes('elteto-avatars-v3.png'))),'Generated transparent avatars are shown');
+      assert.ok(await page.locator('.rival-original img').evaluateAll(images=>images.every(i=>i.getAttribute('src').includes('elteto-avatars-v3.png'))),'Generated transparent avatars are shown');
       assert.ok(await page.evaluate(async()=>{const image=new Image();image.src='/assets/elteto-avatars-v3.png';await image.decode();return image.naturalWidth===1983&&image.naturalHeight===793;}));
       assert.equal(await page.locator('.game-table').getAttribute('data-scene'),'illustrated-2d');
       assert.equal(await page.locator('.table-canvas,.camera-controls').count(),0);

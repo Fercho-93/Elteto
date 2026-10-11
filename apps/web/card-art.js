@@ -32,5 +32,5 @@ export function renderCardBack(french=false){
 }
 export function renderDrawPile(count,french=false){
  if(!(count>0))return '';
- return `<div class="deck-stock ${french?'deck-blue':'deck-red'}" role="img" aria-label="Mazo ${french?'de póker':'español'}: ${count} cartas sin repartir"><span class="deck-stock-card">${renderCardBack(french)}</span><span class="deck-stock-card">${renderCardBack(french)}</span><b class="deck-stock-count">${count}</b></div>`;
+ return `<div class="deck-stock ${french?'deck-blue':'deck-red'}" role="img" aria-label="Mazo ${french?'de póker':'español'}: ${count} cartas sin repartir"><span class="deck-stock-card">${renderCardBack(french)}</span><span class="deck-stock-card">${renderCardBack(french)}</span><b class="deck-stock-count">${count}${french?' cartas':''}</b></div>`;
 }

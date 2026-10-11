@@ -21,20 +21,13 @@ export function restoreCardPaint(app,pool){
  pools.set(app,pool);
 }
 
-// Keep decoded SVG image nodes alive as well: rebuilding them causes a WebKit flash.
+// Reuse native avatar rasters, including their decoded image and crop wrapper.
+function avatarKey(el){return [el.closest('[data-player-id]')?.dataset.playerId||'',el.closest('dialog')?.className||'',el.dataset.avatar].join('|');}
 export function prepareAvatarPaint(app){
  const pool=new Map();
- for(const svg of app.querySelectorAll('svg')){
-  const image=svg.querySelector('image[href*="elteto-avatars"]');if(!image)continue;
-  const key=[svg.closest('[data-player-id]')?.dataset.playerId||'',svg.closest('dialog')?.className||'',svg.getAttribute('viewBox'),image.getAttribute('href')].join('|');
-  const nodes=pool.get(key)||[];nodes.push(svg);pool.set(key,nodes);
- }
+ for(const el of app.querySelectorAll('.avatar-artwork')){const key=avatarKey(el),nodes=pool.get(key)||[];nodes.push(el);pool.set(key,nodes);}
  return pool;
 }
 export function restoreAvatarPaint(app,pool){
- for(const svg of app.querySelectorAll('svg')){
-  const image=svg.querySelector('image[href*="elteto-avatars"]');if(!image)continue;
-  const key=[svg.closest('[data-player-id]')?.dataset.playerId||'',svg.closest('dialog')?.className||'',svg.getAttribute('viewBox'),image.getAttribute('href')].join('|');
-  const previous=pool.get(key)?.shift();if(previous)svg.replaceWith(previous);
- }
+ for(const el of app.querySelectorAll('.avatar-artwork')){const previous=pool.get(avatarKey(el))?.shift();if(previous)el.replaceWith(previous);}
 }

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {chromium,webkit} from 'playwright';
+import {PNG} from 'pngjs';
 import {getGame} from '../dist/game-core/index.js';
 let fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1];
 fixture+=`\nwindow.directPoker=view=>{state.view=view;renderGame();};`;
@@ -16,11 +17,14 @@ try{
  await page.locator('[data-action="open-join"]').click();assert.equal(await page.locator('#join-name').inputValue(),'Fer');await page.reload();assert.equal(await page.locator('#profile-name').count(),0);
  const engine=getGame('texas-holdem');let game=engine.createInitialState(['a','b','c','d'],90);
  await page.evaluate(game=>window.testTable('texas-holdem',game,'a'),game);
- await page.evaluate(()=>window.avatarNodes=[...document.querySelectorAll('.catalog-surface .poker-seat svg')]);
+ const portrait=page.locator('.catalog-surface .poker-seat .avatar-artwork').first();const avatarPixels=await portrait.screenshot();
+ await page.evaluate(()=>window.avatarNodes=[...document.querySelectorAll('.catalog-surface .poker-seat .avatar-artwork')]);
  for(let i=0;i<3;i++){
   const actor=game.players[game.turn];game=engine.applyAction(game,actor,{type:'call'});
   await page.evaluate(v=>window.directPoker(v),engine.view(game,'a'));
-  assert.equal(await page.evaluate(()=>window.avatarNodes.every((node,i)=>node===document.querySelectorAll('.catalog-surface .poker-seat svg')[i])),true,'Decoded avatar nodes remain stable after every decision');
+  assert.equal(await page.evaluate(()=>window.avatarNodes.every((node,i)=>node===document.querySelectorAll('.catalog-surface .poker-seat .avatar-artwork')[i])),true,'Decoded avatar nodes remain stable after every decision');
+  assert.ok(await page.locator('.catalog-surface .poker-seat .avatar-artwork img').evaluateAll(images=>images.length===4&&images.every(img=>img.complete&&img.naturalWidth===1983)));
+  const before=PNG.sync.read(avatarPixels),after=PNG.sync.read(await portrait.screenshot());let changed=0,total=0;for(let y=4;y<before.height-4;y++)for(let x=4;x<before.width-4;x++){const p=(y*before.width+x)*4;total++;if([0,1,2].some(c=>Math.abs(before.data[p+c]-after.data[p+c])>50))changed++;}assert.ok(changed/total<.05,'Avatar pixels remain visible after decision');
   assert.ok(await page.locator('.poker-moving-chip').count()>0,'Bet chips fly from stack or into pot');
  }
  const metrics=await page.locator('.catalog-surface .poker-chip-pile').evaluate(el=>{const icon=el.querySelector('.poker-chip').getBoundingClientRect(),n=el.querySelector('b').getBoundingClientRect();return icon.right<n.left&&icon.bottom<=el.getBoundingClientRect().bottom+1;});assert.ok(metrics,'Pot number has a separate lane from chip art');
