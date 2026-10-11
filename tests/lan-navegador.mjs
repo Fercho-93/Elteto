@@ -120,7 +120,10 @@ try {
  }
  const pages=[host,guest,c,d];
  const actor=async action=>{
-  for(const p of pages) if(await p.locator(`[data-action="${action}"]`).count())return p;
+  for(let attempt=0;attempt<100;attempt++){
+   for(const p of pages) if(await p.locator(`[data-action="${action}"]`).count())return p;
+   await new Promise(r=>setTimeout(r,100));
+  }
   throw Error('No actor for '+action);
  };
  await (await actor('mus-no')).locator('[data-action="mus-no"]').click();
