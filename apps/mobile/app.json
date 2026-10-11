@@ -7,7 +7,9 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router"
+    ],
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -16,10 +18,9 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#21172B",
+        "backgroundColor": "#390069",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundImage": "./assets/android-icon-background.png"
       },
       "predictiveBackGestureEnabled": false
     },

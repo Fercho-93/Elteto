@@ -14,7 +14,7 @@ const ASSETS = ['./mus-table.js','./mus-flow.js','./game-core/games/mus-legacy.j
   "./cinquillo-table.css", "./cinquillo-screen.js", "./assets/elteto-mascots-side-v1.png",
   "./", "./index.html", "./styles.css", "./app.js", "./table-view.js", "./card-art.js", "./assets/elteto-mascots-v1.png", "./local-session.js", "./local-transport.js",
   "./room-code.js", "./online-room.js", "./firebase-client.js", "./firebase-config.js",
-  "./manifest.webmanifest", "./icon.svg", "./qrcode-generator.js", "./qr-encode.js", "./qr-scanner.js", "./jsqr.js",
+  "./manifest.webmanifest", "./icon.svg", "./icon-32.png", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png", "./qrcode-generator.js", "./qr-encode.js", "./qr-scanner.js", "./jsqr.js",
   "./game-core/bots.js", "./lan-session.js", "./game-core/index.js", "./game-core/engine.js", "./game-core/deck.js", "./game-core/catalog.js",
   "./game-core/games/mus.js", "./game-core/games/cinquillo.js"
 ];
