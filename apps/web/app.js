@@ -1,3 +1,4 @@
+import {renderMusScreen,openMusPanel} from './mus-table.js';
 import {mountGameHelp,openGameHelp,closeGameHelp} from './game-help.js';
 import {renderAvatarArtwork,CHARACTER_NAMES,renderCharacterButton,renderCharacterDialog,validCharacter,savedCharacter,saveCharacter} from './avatar-art.js';
 import {renderGameChoices,updateGamePicker,availableGames} from './game-picker.js';
@@ -26,7 +27,7 @@ if (activationCode || adminCode) history.replaceState(null, '', location.pathnam
 const app = document.querySelector("#app");
 const toastEl = document.querySelector("#toast");
 const state = {
-  character: savedCharacter(), screen: "home", role: null, name: "", roomName: "", gameId: "", playerId: null,
+  musTarget:40, character: savedCharacter(), screen: "home", role: null, name: "", roomName: "", gameId: "", playerId: null,
   players: [], view: null, host: null, guest: null, online: null, roomCode: "", offerCode: "", answerCode: "",
   selected: new Set(), error: "", started: false, inviteMode: "offline", handSuit: 'all',
 };
@@ -165,7 +166,7 @@ function renderLobby() {
   const host = state.role === "host";
   const connected = state.role === "client" && state.players.some((player) => player.id === state.playerId);
   const rosterIds=state.players.map(player=>player.id),characters=Object.fromEntries(state.players.map(player=>[player.id,player.character]));
-  const rows = state.players.map((player, index) => `<div class="player-row"><span class="lobby-character" role="img" aria-label="${CHARACTER_NAMES[mascotForSeat(rosterIds,index,characters)]}">${renderAvatarArtwork(mascotForSeat(rosterIds,index,characters),"lobby")}</span><strong>${esc(player.name)}</strong>${player.isHost ? '<span class="host-pill">ANFITRIÓN</span>' : `<span class="ready-pill">${player.isBot ? "IA" : player.away ? "SIN SEÑAL" : "EN LA MESA"}</span>`}${host && !player.isHost && (state.online || player.isBot) ? `<button class="text-button" data-action="kick-player" data-player-id="${esc(player.id)}" aria-label="Expulsar a ${esc(player.name)}"><span aria-hidden="true">×</span></button>` : ""}</div>`).join("");
+  const rows = state.players.map((player, index) => `<div class="player-row"><span class="lobby-character" role="img" aria-label="${CHARACTER_NAMES[mascotForSeat(rosterIds,index,characters)]}">${renderAvatarArtwork(mascotForSeat(rosterIds,index,characters),"lobby")}</span><strong>${esc(player.name)}${state.gameId==='mus'?`<small class="lobby-mus-team">Pareja ${index%2?'azul':'roja'}</small>`:''}</strong>${player.isHost ? '<span class="host-pill">ANFITRIÓN</span>' : `<span class="ready-pill">${player.isBot ? "IA" : player.away ? "SIN SEÑAL" : "EN LA MESA"}</span>`}${host && !player.isHost && (state.online || player.isBot) ? `<button class="text-button" data-action="kick-player" data-player-id="${esc(player.id)}" aria-label="Expulsar a ${esc(player.name)}"><span aria-hidden="true">×</span></button>` : ""}</div>`).join("");
   const enoughPlayers = game && state.players.length <= game.maxPlayers && getGamePlan(game.id).players.includes(state.players.length);
   const connectionTools = host
     ? `<div class="invite-grid">
@@ -186,8 +187,8 @@ function renderLobby() {
     <div class="lobby-grid"><section class="lobby-players" aria-labelledby="players-title"><div class="players-head"><h2 id="players-title">En la mesa</h2><span>${state.players.length}${game ? ` / ${game.maxPlayers}` : ""}</span></div>
     <div class="player-list">${rows || '<div class="empty-seat">Todavía no se ha sentado nadie. Dale al código.</div>'}</div>
     ${state.error ? `<p class="error-message">${esc(state.error)}</p>` : ""}
-    ${host && game && state.players.length < game.maxPlayers ? '<button class="button button-paper full-button" data-action="fill-bots">Completar mesa con IA</button><p class="helper">La IA ocupará las plazas libres. Puedes quitarla antes de empezar.</p>' : ''}
-    ${startButton}
+    ${host && game && game.id!=='mus' && state.players.length < game.maxPlayers ? '<button class="button button-paper full-button" data-action="fill-bots">Completar mesa con IA</button><p class="helper">La IA ocupará las plazas libres. Puedes quitarla antes de empezar.</p>' : ''}
+    ${state.gameId==='mus'?`<section class="mus-setup" aria-label="Configuración de Mus"><p>4 jugadores · parejas enfrentadas</p><h3>¿A CUÁNTOS TANTOS JUGAMOS?</h3>${host?`<div>${[30,40].map(n=>`<button data-action="mus-target" data-target="${n}" aria-pressed="${state.musTarget===n}">${n}</button>`).join('')}</div>`:`<p>El anfitrión elige 30 o 40 antes de repartir. Verás el objetivo al comenzar.</p>`}<p>Una partida · 8 reyes y 8 ases · sin vacas</p></section>`:''}${startButton}
     </section><section class="lobby-invite" aria-labelledby="invite-title"><h2 id="invite-title">${host ? "Invita a la mesa" : "Tu conexión"}</h2>
     <p class="helper ${host && state.online && !LAN ? 'compact-help' : ''}">${host ? (state.online ? (LAN ? "Comparte el QR o enlace local. Todos debéis estar en la misma Wi-Fi o hotspot. Mantén Elteto abierto en este Android." : "Pásales el enlace, el QR o el código de la sala. Todos necesitáis internet.") : state.inviteMode === "offline" ? "Modo sin internet: los dos móviles deben estar en la misma Wi-Fi o hotspot. Comparte la invitación y escanea luego la respuesta." : "Elige cómo invitar: con internet (enlace, QR o código) o sin internet (misma Wi-Fi).") : (state.online ? (LAN ? "Mesa local: deja esta página abierta. Si pierdes la señal, intentaremos recuperar tu plaza." : "Deja Elteto abierto: la sala se mantiene mientras el anfitrión siga conectado.") : "Deja Elteto abierto. Para jugar sin internet, conecta ambos móviles a la misma Wi-Fi o hotspot; el anfitrión escaneará tu respuesta QR.")}</p>
     <div class="connection-box">${connectionTools}</div>
@@ -214,6 +215,7 @@ function renderGameContents() {
   state.screen = "game";
   const game = getGame(state.gameId), view = state.view ? {...state.view,characters:Object.fromEntries(state.players.map(p=>[p.id,p.character])),away:Object.fromEntries(state.players.map(p=>[p.id,Boolean(p.away)]))} : null;
   if (!view) { app.innerHTML = `${header()}<section class="panel"><p>Esperando el estado de la partida…</p></section>`; return; }
+  if(state.gameId==='mus'&&view.version===2){renderMusScreen(app,view,state.playerId,playerName,state.selected,state.error);return;}
   if(!['cinquillo','mus','parchis'].includes(state.gameId)){renderCatalogGame(app,view,state.playerId,playerName,state.error);return;}
   if(state.gameId==='parchis'){renderParchisScreen(app,view,state.playerId,playerName,state.error);return;}
   const origins = new Map([...app.querySelectorAll('.hand [data-card-key]')].map(el => [el.dataset.cardKey, el.getBoundingClientRect()]));
@@ -410,6 +412,10 @@ app.addEventListener("click", async (event) => {
   const action = button.dataset.action;
   if(turnSequence.busy&&isTurnAction(action))return;
   try {
+    if(action==='open-mus-panel'){app.querySelector('.game-menu')?.close();openMusPanel(app,button.dataset.kind);return;}
+    if(action==='close-mus-panel'){app.querySelector('.mus-detail')?.close();return;}
+    if(action==='mus-bet-less'||action==='mus-bet-more'){const input=app.querySelector('#bet-amount');input.value=String(Math.max(Number(input.min),Math.min(Number(input.max),Number(input.value)+(action==='mus-bet-more'?1:-1))));return;}
+    if(action==='mus-target'){state.musTarget=Number(button.dataset.target);app.querySelectorAll('[data-action=mus-target]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.target)===state.musTarget)));return;}
     if(action==='open-game-help'){event.preventDefault();await openGameHelp(state.gameId,state.view);return;}
     if (action === 'choose-character') {
       app.insertAdjacentHTML('beforeend',renderCharacterDialog(state.character));
@@ -513,7 +519,7 @@ app.addEventListener("click", async (event) => {
     else if (action === "copy-code") await copyCode(button.dataset.codeAction);
     else if (action === "share-code") await shareCode(button.dataset.codeAction);
     else if (action === "start-game") {
-      await (state.online || state.host).startGame();
+      await (state.online || state.host).startGame(undefined,{targetScore:state.musTarget});
       state.error = "";
       render();
     } else if (action === "fill-bots") {
@@ -529,7 +535,9 @@ app.addEventListener("click", async (event) => {
         const card = state.view.myHand.find((item) => `${item.suit}:${item.rank}` === key);
         if (card) sendAction({ type: "play", card });
       }
-    } else if (action === "mus-discard") {
+    } else if(action==="mus-declare-pairs")sendAction({type:"declare-pairs",has:button.dataset.has==="true"});
+    else if(action==="mus-declare-juego")sendAction({type:"declare-juego",has:button.dataset.has==="true"});
+    else if (action === "mus-discard") {
       const cards = state.view.myHand.filter((card) => state.selected.has(`${card.suit}:${card.rank}`));
       sendAction({ type: "discard", cards });
       state.selected.clear();
@@ -539,7 +547,7 @@ app.addEventListener("click", async (event) => {
     else if (action === "parchis-roll") { if(beginParchisRoll(app))sendAction({ type: "roll", expectedRoll:Number(button.dataset.rollSequence) }); }
     else if (action === "parchis-move") sendAction({ type: "move", piece: Number(button.dataset.piece) });
     else if (action === "mus-pass") sendAction({ type: "pass" });
-    else if (action === "mus-bet") sendAction({ type: "bet", amount: Number(document.querySelector("#bet-amount")?.value) || 2 });
+    else if (action === "mus-bet") sendAction({ type: "bet", amount: Number(document.querySelector("#bet-amount")?.value) });
     else if (action === "mus-ordago") sendAction({ type: "ordago" });
     else if (action === "mus-accept") sendAction({ type: "accept" });
     else if (action === "mus-reject") sendAction({ type: "reject" });
@@ -712,6 +720,7 @@ async function beginOfflineGuestJoin(offerCode, name) {
   renderLobby();
 }
 function sendAction(action) {
+  if(state.gameId==='mus'&&state.view?.version===2)action={...action,expectedRevision:state.view.revision,...(action.type==='discard'?{expectedDiscardRound:state.view.discardRound}:{})};
   if(turnSequence.busy)return;
   if (state.online) { state.online.sendAction(action).catch((error) => { state.error = error.message; flash(error.message); render(); }); return; }
   if (state.role === "host") state.host.applyLocalAction(action);

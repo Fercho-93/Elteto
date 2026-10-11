@@ -55,6 +55,7 @@ export function chooseBotAction(engine: AnyEngine, v: any, playerId: string, ran
     return cards.length ? {type: 'play', card: pick(cards)} : {type: 'pass'};
   }
   if (engine.id === 'mus') {
+    if(v.version===2){const options:any[]=v.availableActions||[];const a=options.find(a=>a.type==='declare-pairs'||a.type==='declare-juego')||options.find(a=>a.type==='accept')||options.find(a=>a.type==='reject')||options.find(a=>a.type==='pass')||options.find(a=>a.type==='next-hand')||options.find(a=>a.type==='mus'&&a.wantsMus===false);return a?{type:a.type,...(a.has!==undefined?{has:a.has}:{}),...(a.wantsMus!==undefined?{wantsMus:a.wantsMus}:{})}:null;}
     if (v.phase === 'showdown') return {type: 'next-hand'};
     if (v.phase === 'mus') return {type: 'mus', wantsMus: false};
     return v.betting?.pendingBet ? {type: 'accept'} : {type: 'pass'};

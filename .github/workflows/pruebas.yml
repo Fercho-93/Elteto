@@ -42,3 +42,24 @@ jobs:
       - run: npm run test:reglas
       - run: npm run test:online
       - run: npm run test:acceso
+
+  mus-movil:
+    name: Mus en Android e iPhone (Chromium y WebKit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm install --no-save --package-lock=false playwright
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run build:web
+      - run: node --no-warnings tests/mus-mobile.mjs
+      - run: MUS_BROWSER=webkit node --no-warnings tests/mus-mobile.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mus-movil
+          path: tests/artifacts/mus

@@ -1,6 +1,7 @@
+import {MusFlowRunner} from './mus-flow.js';
 import {PokerAbsenceRunner} from './poker-presence.js';
 import {characterProfile} from './avatar-art.js';
-import { getGame, fillBotSeats, BotRunner, botTurnDelay, nextBotMove } from "./game-core/index.js";
+import { getGame, createMusState, fillBotSeats, BotRunner, botTurnDelay, nextBotMove } from "./game-core/index.js";
 import { acceptOffer, decodeSignal, makeOffer } from "./local-transport.js";
 
 const HOST_ID = "host";
@@ -20,13 +21,14 @@ export class LocalHostSession {
     this.closed = false;
     this.bots = [];
     this.botRunner = new BotRunner(() => this.closed || this.canRunBots?.() === false ? null : nextBotMove(this.engine, this.state, this.bots.map(p => p.id)),
-      ({playerId, action}) => { this.state = this.engine.applyAction(this.state, playerId, action); this.sendViews(); },
+      ({playerId, action}) => { this.state = this.engine.applyAction(this.state, playerId, this.engine.id==='mus'?{...action,at:Date.now()}:action); this.sendViews(); },
       error => this.onChange({kind: 'error', message: String(error.message || error)}), botTurnDelay(this.engine.id));
     this.absenceRunner=new PokerAbsenceRunner(()=>this.closed?null:({engine:this.engine,state:this.state,players:this.players()}),move=>{
       const current=this.absenceRunner.candidate();if(!current||current.key!==move.key)return;
       this.state=this.engine.applyAction(this.state,move.playerId,move.action);this.sendViews();
     },{onError:error=>this.onChange({kind:'error',message:String(error.message||error)})});
     this.absenceRunner.start();
+    this.musFlow=new MusFlowRunner(()=>({engine:this.engine,state:this.state,paused:[...this.connections.values()].some(c=>c.peer.connected===false)}),action=>this.applyAction(HOST_ID,action),error=>this.onChange({kind:"error",message:error.message}));
     this.publishLobby();
   }
 
@@ -111,19 +113,20 @@ export class LocalHostSession {
 
   handleClose(peerId) {
     this.peers.delete(peerId);
-    if(this.started&&this.engine.id==='texas-holdem'){
+    if(this.started&&['texas-holdem','mus'].includes(this.engine.id)){
       const connection=this.connections.get(peerId);if(connection)connection.peer.connected=false;
       this.publishLobby();this.sendViews();return;
     }
     if (this.connections.delete(peerId)) this.publishLobby();
   }
 
-  startGame(seed = Date.now() >>> 0) {
+  startGame(seed, options = {}) {
+    seed ??= this.engine.id==='mus'?crypto.getRandomValues(new Uint32Array(1))[0]:Date.now()>>>0;
     if (this.closed || this.started) throw new Error('La partida ya ha empezado o la sala está cerrada.');
     const players = this.players().map((player) => player.id);
     if (players.length < this.engine.minPlayers) throw new Error("Se necesitan al menos " + this.engine.minPlayers + " jugadores.");
     if (players.length > this.engine.maxPlayers) throw new Error("Este juego admite como máximo " + this.engine.maxPlayers + " jugadores.");
-    this.state = this.engine.createInitialState(players, seed);
+    this.state = this.engine.id==='mus'?createMusState(players,seed,'eight-kings',options.targetScore??40):this.engine.createInitialState(players, seed);
     this.started = true;
     this.broadcast(say("started"));
     this.sendViews();
@@ -143,7 +146,7 @@ export class LocalHostSession {
       if (player.id === HOST_ID) this.onChange({ kind: "game", players, gameId: this.engine.id, view });
       else this.connections.get(player.id)?.peer.send(say("state", { view }));
     }
-    this.botRunner.schedule();
+    this.botRunner.schedule();this.musFlow?.schedule();
   }
 
   setSittingOut(value){this.hostSittingOut=Boolean(value);this.publishLobby();this.sendViews();}
@@ -155,7 +158,8 @@ export class LocalHostSession {
   applyAction(playerId, action) {
     if (!this.started || !this.state) return;
     try {
-      this.state = this.engine.applyAction(this.state, playerId, action);
+      if(this.engine.id==='mus'&&this.players().some(p=>!p.isBot&&p.away))throw new Error('La mesa está en pausa. Falta un jugador por volver a su plaza.');
+      this.state = this.engine.applyAction(this.state, playerId, this.engine.id==='mus'?{...action,at:Date.now()}:action);
       this.sendViews();
     } catch (error) {
       if (playerId === HOST_ID) this.onChange({ kind: "error", message: error.message });
@@ -164,7 +168,7 @@ export class LocalHostSession {
   }
 
   close() {
-    this.closed = true;
+    this.closed = true;this.musFlow?.close();
     this.botRunner.stop();
     this.absenceRunner.stop();
     this.broadcast(say('closed', { message: 'El anfitrión ha cerrado la sala.' }));
@@ -203,7 +207,7 @@ export class LocalGuestSession {
     if (this.closed) return;
     if (!message || typeof message.type !== "string") return;
     if (message.type === 'closed') {
-      this.closed = true;
+      this.closed = true;this.musFlow?.close();
       this.onChange({ kind: 'disconnected', message: message.data?.message || 'La sala ha terminado.' });
       this.peer?.close();
     } else if (message.type === "welcome") {

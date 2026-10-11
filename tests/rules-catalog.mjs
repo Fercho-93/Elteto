@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFile, stat} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
-import {GAME_CATALOG, listGames, getGame, buildCardMaterial, buildDominoSet, canPlaceCinquillo, cinquilloEngine, musEngine, musRank, musCardValue} from '../dist/game-core/index.js';
+import {GAME_CATALOG, listGames, getGame, buildCardMaterial, buildDominoSet, canPlaceCinquillo, cinquilloEngine, legacyMusEngine as musEngine, musRank, musCardValue} from '../dist/game-core/index.js';
 
 const provenance = JSON.parse(await readFile('reglas_juegos/procedencia.json','utf8'));
 assert.equal(GAME_CATALOG.length,20);

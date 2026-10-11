@@ -10,10 +10,11 @@ try{
  const page=await browser.newPage({serviceWorkers:'block',reducedMotion:'reduce'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:'+server.address().port);await page.waitForFunction(()=>window.testTable);
  await page.setViewportSize({width:390,height:844});
- const mus=getGame('mus'),game=mus.createInitialState(['a','b','c','d'],12);
+ const mus=getGame('mus');let game=mus.createInitialState(['a','b','c','d'],12);
+ while(['dealing','cards-dealt'].includes(game.phase))game=mus.applyAction(game,'a',{type:'advance'});
  assert.equal(mus.view(game,'a').stockCount,game.stock.length);
  await page.evaluate(game=>window.testTable('mus',game,'a'),game);
- assert.equal(await page.locator('.deck-stock').getAttribute('aria-label'),'Mazo español: 24 cartas sin repartir');
+ assert.equal(await page.locator('.deck-stock').getAttribute('aria-label'),'Mazo español: cartas sin repartir');
  assert.equal(await page.locator('.deck-stock .deck-red').count(),2);
  assert.equal(await page.locator('.hand .reference-card-art').count(),4);
  await mkdir('tests/artifacts/decks',{recursive:true});await page.screenshot({path:'tests/artifacts/decks/mus.png'});

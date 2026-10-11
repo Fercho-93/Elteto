@@ -3,6 +3,7 @@ export type GamePlan = {
  id: string; label: string; family: string; status: "playable" | "planned";
  players: readonly number[]; material: string; defaultVariant: string;
  rules: { file: string; url: string; sha256: string };
+ activeRules?: {file:string;url:string;version:string};
  summary: string; implementationNotes: string;
  phases: readonly string[]; actions: readonly string[]; acceptance: readonly string[];
 };
@@ -60,18 +61,14 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "url": "https://www.nhfournier.es/como-jugar/mus/",
       "sha256": "234c68988b16a0a8569cc40237e4797b47f18d19dc47d9f8ac62b56068dd348a"
     },
-    "summary": "8 reyes/8 ases; cuatro jugadores por parejas; 40 tantos por juego, gana quien logra 3 juegos completos.",
-    "implementationNotes": "Las salas antiguas conservan 4 reyes y un juego; el perfil alternativo de 4 reyes queda disponible en el motor.",
-    "phases": [
-      "mus",
-      "discard",
-      "grande",
-      "chica",
-      "pares",
-      "juego",
-      "showdown"
-    ],
+    "activeRules": {"file":"reglas_juegos/consulta/mus.html","url":"https://lafederaciondemus.es/wp-content/uploads/2026/02/Reglamento-de-Juego-Federacion.pdf","version":"FEM V.7 · 16/02/2025"},
+    "summary": "FEM V.7: 8 reyes/8 ases; cuatro jugadores por parejas; una partida a 30 o 40 tantos.",
+    "implementationNotes": "Objetivo por defecto 40; declaraciones de pares y juego veraces; envites aceptados pendientes de recuento; negadas al cerrar el lance; tanteo en orden y libro de tantos. Se conserva el motor anterior solo al reanudar salas antiguas.",
+    "phases": ["dealing", "cards-dealt", "mus", "discard", "redeal", "grande", "chica", "pares-declaration", "pares", "juego-declaration", "juego", "punto", "showing", "counting", "showdown", "finished"],
     "actions": [
+      "advance",
+      "declare-pairs",
+      "declare-juego",
       "mus",
       "discard",
       "pass",
@@ -84,8 +81,8 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     "acceptance": [
       "Equivalencia 3/rey y 2/as",
       "31 vence a 32",
-      "Dejes y punto",
-      "Órdago decide juego, no partida",
+      "Negadas, punto y recuento ordenado",
+      "Órdago decide la partida a 30 o 40",
       "Mus corrido inicial"
     ]
   },

@@ -155,7 +155,7 @@ export class LanSession {
     else if (message.type === 'ack') this.pending = false;
   }
   async setSittingOut(value){this.sittingOut=Boolean(value);if(this.isHost)this.local.setSittingOut(value);else this.send({type:"sit-out",data:{value:Boolean(value)}});}
-  async startGame() { this.assertConnected(); this.local.startGame(); }
+  async startGame(seed,options) { this.assertConnected(); this.local.startGame(seed,options); }
   async fillWithBots() { if (this.isHost) this.local.fillWithBots(); }
   async sendAction(action) {
     if (this.isHost) { this.assertConnected(); this.local.applyLocalAction(action); return; }

@@ -1,6 +1,7 @@
+import {MusFlowRunner} from './mus-flow.js';
 import {PokerAbsenceRunner} from './poker-presence.js';
 import {characterProfile} from './avatar-art.js';
-import { getGame, fillBotSeats, nextBotMove, BotRunner, botTurnDelay } from "./game-core/index.js";
+import { getGame, createMusState, fillBotSeats, nextBotMove, BotRunner, botTurnDelay } from "./game-core/index.js";
 import { connectFirebase } from "./firebase-client.js";
 import { createRoomCode, inviteUrlFor } from "./room-code.js";
 import {
@@ -152,6 +153,7 @@ export class OnlineSession {
       this.state=this.engine.applyAction(this.state,move.playerId,move.action);await this.publish();
     }),{onError:error=>this.onChange({kind:'error',message:String(error.message||error)})});
     this.absenceRunner.start();
+    this.musFlow=new MusFlowRunner(()=>this.isHost?({engine:this.engine,state:this.state,paused:this.players().some(p=>!p.isBot&&p.away)}):null,action=>this.enqueue(async()=>{await this.hostReady;if(!this.isHost||this.players().some(p=>!p.isBot&&p.away)||this.state?.revision!==action.expectedRevision)return;this.state=this.engine.applyAction(this.state,this.state.players[0],this.engine.id==='mus'?{...action,at:Date.now()}:action);await this.publish();}),error=>this.onChange({kind:"error",message:error.message}));
     this.onVisibility = () => { if (document.visibilityState === "visible") void this.heartbeat(); };
   }
 
@@ -202,8 +204,8 @@ export class OnlineSession {
         if (data?.seenAt?.toMillis) this.presence.set(uid, { seenAt: data.seenAt.toMillis(), visible: data.visible, sittingOut:data.sittingOut });
         else this.presence.delete(uid);
         if (this.room?.status === "lobby") this.emitLobby();
-        else if(this.room?.gameId==='texas-holdem'&&this.state&&this.isHost)this.emitGame(this.engine.view(this.state,this.uid));
-        else if(this.room?.gameId==='texas-holdem'&&this.lastView)this.emitGame(this.lastView);
+        else if(['texas-holdem','mus'].includes(this.room?.gameId)&&this.state&&this.isHost){this.emitGame(this.engine.view(this.state,this.uid));this.musFlow?.schedule();}
+        else if(['texas-holdem','mus'].includes(this.room?.gameId)&&this.lastView)this.emitGame(this.lastView);
       }, () => {});
       this.presenceStops.set(uid, stop);
     }
@@ -332,7 +334,7 @@ export class OnlineSession {
       this.rev = data.rev;
       this.acks = { ...data.acks };
       this.emitGame(this.engine.view(this.state, this.uid));
-      this.botRunner.schedule();
+      this.botRunner.schedule();this.musFlow?.schedule();
     })();
     this.hostReady.catch((error) => this.onChange({ kind: "error", message: roomError(error, "No se pudo recuperar la partida.").message }));
     this.attachActions();
@@ -355,7 +357,7 @@ export class OnlineSession {
   }
 
   leaveHostDuty() {
-    this.botRunner.stop();
+    this.botRunner.stop();this.musFlow?.cancel();
     this.hostGeneration = (this.hostGeneration || 0) + 1;
     this.actionsStop?.(); this.actionsStop = null;
     this.state = null;
@@ -375,7 +377,11 @@ export class OnlineSession {
     const errors = {};
     try {
       const action = JSON.parse(data.json);
-      this.state = this.engine.applyAction(this.state, playerUid, action);
+      if(this.engine.id==='mus'&&this.state.version===2){
+        if(this.players().some(p=>!p.isBot&&p.away))throw new Error('La mesa está en pausa. Espera a que todos vuelvan a su plaza.');
+        if(action.type==='advance'&&playerUid!==this.uid)throw new Error('Espera a que la mesa termine esta transición.');
+      }
+      this.state = this.engine.applyAction(this.state, playerUid, this.engine.id==='mus'?{...action,at:Date.now()}:action);
     } catch (error) {
       errors[playerUid] = { seq, message: String(error?.message || "Jugada no válida.").slice(0, 200) };
     }
@@ -396,16 +402,17 @@ export class OnlineSession {
     batch.update(this.roomRef, { ...(starting ? { status: "playing" } : {}), version, updatedAt: serverTimestamp() });
     await batch.commit();
     this.version = version;
-    this.botRunner.schedule();
+    this.botRunner.schedule();this.musFlow?.schedule();
     if (errors[this.uid]) this.onChange({ kind: "error", message: errors[this.uid].message });
   }
 
-  async startGame(seed = Date.now() >>> 0) {
+  async startGame(seed, options = {}) {
+    seed ??= this.engine.id==='mus'?crypto.getRandomValues(new Uint32Array(1))[0]:Date.now()>>>0;
     if (!this.isHost || this.room.status !== "lobby") throw new Error("Solo quien abrió la sala puede empezar la partida.");
     const players = this.players().map(p => p.id);
     if (players.length < this.engine.minPlayers) throw new Error(`Se necesitan al menos ${this.engine.minPlayers} jugadores.`);
     if (players.length > this.engine.maxPlayers) throw new Error(`Este juego admite como máximo ${this.engine.maxPlayers} jugadores.`);
-    this.state = this.engine.createInitialState(players, seed);
+    this.state = this.engine.id==='mus'?createMusState(players,seed,'eight-kings',options.targetScore??40):this.engine.createInitialState(players, seed);
     this.acks = {};
     this.hostReady = Promise.resolve();
     this.hostGeneration = (this.hostGeneration || 0) + 1;
@@ -530,7 +537,7 @@ export class OnlineSession {
   teardown() {
     this.closed = true;
     this.botRunner.stop();
-    this.absenceRunner.stop();
+    this.absenceRunner.stop();this.musFlow?.close();
     for (const timer of this.timers) clearInterval(timer);
     this.timers = [];
     document.removeEventListener("visibilitychange", this.onVisibility);

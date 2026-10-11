@@ -4,7 +4,7 @@ import { createServer } from "node:http";
 import { readFile, mkdir } from "node:fs/promises";
 await mkdir('tests/artifacts',{recursive:true});
 const { chromium, webkit } = await import(process.env.PLAYWRIGHT_MODULE || "playwright");
-import { cinquilloEngine, musEngine } from "../dist/game-core/index.js";
+import { cinquilloEngine, legacyMusEngine as musEngine } from "../dist/game-core/index.js";
 import { MASCOTS, mascotForSeat, renderSeats, seatPosition } from "../dist/table-view.js";
 assert.equal(MASCOTS.length, 10);
 const roster = Array.from({length:10},(_,i)=>`mascot-${i}`);
@@ -139,8 +139,8 @@ try {
       // Original traditional deck faces decode even on disabled buttons.
       assert.ok(await page.locator(".hand .playing-card").first().isDisabled());
       assert.ok(await page.locator('.hand .playing-card').evaluateAll(async cards => {
-        await Promise.all(cards.map(card=>card.querySelector('img').decode()));
-        return cards.every(card=>{const image=card.querySelector('img'),rect=image.getBoundingClientRect(); return image.naturalWidth>=200 && rect.width>=56 && rect.height>=85 && card.getAttribute('aria-label').includes(' de ');});
+        await Promise.all(cards.flatMap(card=>card.querySelector('img')?[card.querySelector('img').decode()]:[]));
+        return cards.every(card=>{const image=card.querySelector('img,.reference-card-art'),rect=image.getBoundingClientRect(); return (image.tagName.toLowerCase()==='svg'||image.naturalWidth>=200) && rect.width>=56 && rect.height>=85 && card.getAttribute('aria-label').includes(' de ');});
       }));
       assert.equal(await page.locator('.rival-original[data-character]').evaluateAll(els => new Set(els.map(el => el.dataset.character)).size),count);
       assert.ok(await page.locator('.rival-original image').evaluateAll(images=>images.every(i=>i.getAttribute('href').includes('elteto-avatars-v3.png'))),'Generated transparent avatars are shown');
@@ -334,7 +334,7 @@ try {
       await page.locator(".revealed-hands .reveal-card").count(),
       16,
     );
-    assert.ok(await page.locator('.hand .card-illustration img').count()>0);
+    assert.ok(await page.locator('.hand .card-illustration img,.hand .reference-card-art').count()>0);
     assert.ok(await page.locator('.game-table .reveal-card,.game-table .mus-phase').evaluateAll(elements=>{
       const felt=document.querySelector('.table-surface').getBoundingClientRect();
       const border=parseFloat(getComputedStyle(document.querySelector('.table-surface')).borderLeftWidth);

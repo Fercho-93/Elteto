@@ -15,6 +15,7 @@ export function parchisRoutes(before,after){
  return moved;
 }
 export function publicTurnEvent(before,after){
+ if(after?.version===2&&after.ruleset==='eight-kings'&&after.stage)return null;
  if(!before||!after||!same(before.players,after.players))return null;
  const roll=after.lastRoll&&(after.lastRoll.sequence!==before.lastRoll?.sequence)?after.lastRoll:null;
  const checkers=after.boardKind==='checkers'&&!same(before.lastMove,after.lastMove)?after.lastMove:null;

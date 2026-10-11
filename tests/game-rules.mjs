@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { cinquilloEngine, musEngine } from "../dist/game-core/index.js";
+import { cinquilloEngine, legacyMusEngine as musEngine } from "../dist/game-core/index.js";
 import { canPlayCinquillo, renderSeats } from "../dist/table-view.js";
 const players = ["a", "b", "c", "d"];
 const key = (c) => `${c.suit}:${c.rank}`;

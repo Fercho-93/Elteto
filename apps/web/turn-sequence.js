@@ -1,6 +1,6 @@
 import {publicTurnEvent,viewIdentity,TURN_INTRO,TURN_RESULT,readableTurn} from './turn-events.js';
 const navigation=new Set(['catalog-zoom','catalog-close-zoom','catalog-clear','parchis-zoom-open','parchis-zoom-close']);
-export const isTurnAction=action=>action==='play-card'||action==='cinquillo-pass'||action==='cinquillo-next-hand'||action.startsWith('mus-')||action.startsWith('parchis-')&&!navigation.has(action)||action.startsWith('catalog-')&&!navigation.has(action);
+export const isTurnAction=action=>action==='play-card'||action==='cinquillo-pass'||action==='cinquillo-next-hand'||action.startsWith('mus-')&&!['mus-bet-less','mus-bet-more','mus-target'].includes(action)||action.startsWith('parchis-')&&!navigation.has(action)||action.startsWith('catalog-')&&!navigation.has(action);
 // Each device queues only its own redacted snapshots. The host remains authoritative.
 export class TurnSequence {
  constructor({apply,refresh=()=>{},phaseChanged=()=>{},reduced=()=>false,hidden=()=>false,setTimer=(fn,ms)=>setTimeout(fn,ms),clearTimer=id=>clearTimeout(id)}){

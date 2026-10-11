@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile,mkdir} from 'node:fs/promises';
 import {chromium,webkit} from 'playwright';
-import {getGame} from '../dist/game-core/index.js';
+import {getGame,getGamePlan} from '../dist/game-core/index.js';
 let fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1];
 fixture+=`\nwindow.testHome=()=>renderHome();window.testLobby=id=>{Object.assign(state,{screen:'lobby',role:'host',gameId:id,roomName:'Mesa de prueba',view:null,players:[{id:'host',name:'Ana',isHost:true}]});renderLobby();};`;
 const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://local').pathname.slice(1)||'index.html';let body=await readFile('dist/'+file);if(file==='app.js')body=Buffer.from(body+fixture);res.setHeader('content-type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.jpg')?'image/jpeg':file.endsWith('.png')?'image/png':'text/html');res.end(body);}catch{res.writeHead(404);res.end();}});
@@ -29,7 +29,7 @@ try{
    assert.equal(await page.locator('.game-info-button').count(),1);
    await page.locator('.game-info-button').click();await page.locator('.help-original').waitFor();
    if(id==='oca'){const expected=(await readFile('reglas_juegos/consulta/oca.html','utf8')).match(/<body>([\s\S]*)<\/body>/)[1].replace(/<[^>]+>/g,'');assert.equal((await page.locator('.help-original').textContent()).trim(),expected.trim());}else assert.ok((await page.locator('.help-original').textContent()).length>1000);
-   assert.equal(await page.locator('.help-source>a').getAttribute('href'),(await import('../dist/game-core/index.js')).getGamePlan(id).rules.url);
+   assert.equal(await page.locator('.help-source>a').getAttribute('href'),(getGamePlan(id).activeRules||getGamePlan(id).rules).url);
    assert.ok(await page.locator('.game-help').evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight;}));
    await page.locator('[data-help-jump=".help-source"]').click();assert.ok(await page.locator('.help-scroll').evaluate(el=>el.scrollTop>0));
    await page.locator('[data-help-jump=".help-table-rules"]').click();

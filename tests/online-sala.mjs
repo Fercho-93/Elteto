@@ -183,7 +183,7 @@ try {
   // --- Mus: cuatro manos de cuatro cartas -----------------------------------------------
   const mus = await open("mus", ["Ana", "Bea", "Cris", "Dani"]);
   await mus.host.startGame(7);
-  const musViews = await until("Mus repartido", () => { const v = mus.events.map((e) => e.last("game")); return v.every(Boolean) ? v : null; });
+  const musViews = await until("Mus repartido", () => { const v = mus.events.map((e) => e.last("game")); return v.every(e=>e?.view.stage==='MUS_DECISION') ? v : null; });
   for (const change of musViews) assert.equal(change.view.myHand.length, 4);
   assert.equal(new Set(musViews.flatMap((c) => c.view.myHand.map((card) => `${card.suit}:${card.rank}`))).size, 16);
   console.log("  ok  Mus: cuatro jugadores, cuatro cartas cada uno");
@@ -235,9 +235,10 @@ try {
   solo.host.botRunner.delay=1;
   await solo.host.startGame(77);
   const soloEngine=getGame('mus');
+  solo.host.musFlow.close();
   for(let step=0;step<2000&&!solo.host.state.finished;step++) {
     const view=soloEngine.view(solo.host.state,solo.host.uid);
-    const action=chooseBotAction(soloEngine,view,solo.host.uid);
+    const action=['dealing','cards-dealt','redeal','showing','counting'].includes(view.phase)?{type:'advance',expectedRevision:view.revision}:chooseBotAction(soloEngine,view,solo.host.uid);
     if(action){await solo.host.sendAction(action);await solo.host.queue;}
     else await sleep(5);
   }
@@ -250,6 +251,7 @@ try {
   const mixed=await open('mus',['Ana','Bea']);
   await mixed.host.fillWithBots();await until('mesa mixta llena',()=>mixed.host.players().length===4);
   await mixed.host.startGame(99);
+  await until('Mus listo antes del corte',()=>mixed.events[0].last('game')?.view.stage==='MUS_DECISION');
   await mixed.host.sendAction({type:'mus',wantsMus:false});await mixed.host.queue;
   await mixed.host.sendAction({type:'pass'});await mixed.host.queue;
   await until('turno de Bea',()=>mixed.events[1].last('game')?.view.turnPlayer===mixed.guests[0].uid);
