@@ -204,8 +204,9 @@ service cloud.firestore {
         allow get: if member();
         allow list: if false;
         allow create, update: if member() && request.auth.uid == playerId
-          && request.resource.data.keys().hasOnly(['seenAt','visible'])
-          && request.resource.data.seenAt == request.time && request.resource.data.visible is bool;
+          && request.resource.data.keys().hasOnly(['seenAt','visible','sittingOut'])
+          && request.resource.data.seenAt == request.time && request.resource.data.visible is bool
+          && (!('sittingOut' in request.resource.data) || (room().gameId=='texas-holdem' && request.resource.data.sittingOut is bool));
         allow delete: if registered() && request.auth.uid == playerId && request.auth.uid in room().playerOrder;
       }
 

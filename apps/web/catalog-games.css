@@ -21,3 +21,45 @@ html:has(.catalog-screen),body:has(.catalog-screen),body:has(.catalog-screen) #a
 .catalog-screen .players-panel{position:relative;}
 .player-speech{position:absolute;z-index:8;max-width:132px;min-width:78px;padding:6px 9px;border-radius:11px;background:linear-gradient(#fff7df,#ecdab2);border:1px solid #fff9;color:#352b27;box-shadow:0 3px 0 #91774d,0 5px 10px #0005;font:650 11px/14px system-ui,sans-serif;text-align:center;pointer-events:none;transform-origin:var(--speech-pointer,50%) 0;}
 .player-speech:before{content:'';position:absolute;top:-5px;left:calc(var(--speech-pointer,50%) - 5px);width:9px;height:9px;rotate:45deg;background:#fff7df;border-top:1px solid #fff9;border-left:1px solid #fff9;}
+/* Hold'em: identities, stacks and committed chips live on the felt. */
+.game-page.catalog-screen[data-game="texas_holdem"]{grid-template-rows:48px minmax(0,1fr) auto}
+.catalog-screen[data-game="texas_holdem"] .catalog-surface{padding:0;overflow:hidden;position:relative;gap:0;border-radius:45% / 12%;}
+.poker-table{width:100%;height:100%;min-height:300px;position:relative;isolation:isolate;container-type:size;background:radial-gradient(ellipse,#226d56,#103a31);}
+.poker-table:before{content:'';position:absolute;inset:7% 5%;border:1px solid #d3c48a30;border-radius:45%;pointer-events:none}
+.poker-level{position:absolute;top:2px;left:0;right:0;text-align:center;font-size:9px;color:#e6dbbb}
+.poker-table .poker-seat{position:absolute;transform:translate(-50%,-50%);width:72px;height:auto;text-align:center;z-index:3;display:flex;align-items:center;flex-direction:column;gap:1px;line-height:1.2;}
+.poker-seat .rival-original{width:54px;height:54px;filter:drop-shadow(0 4px 3px #0006)}
+.poker-seat .rival-original svg{height:100%;width:100%;}
+.poker-table .poker-name{max-width:100%;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px 4px;background:#172c28d9;border-radius:5px}
+.poker-stack{display:flex;align-items:center;justify-content:center;gap:4px;background:#282435;border:1px solid #b6a376;border-radius:14px;padding:3px 7px;font-size:11px;box-shadow:0 2px 3px #0005;min-width:52px;}
+.poker-chip{display:inline-block;flex:none;width:15px;height:15px;border-radius:50%;background:#d84783;border:3px dashed #ffe8cb;box-shadow:0 0 0 1px #68294d,0 2px 0 #6f2044;}
+.poker-table .poker-status{height:13px;font-size:8px;color:#ddd3b9;white-space:nowrap;}
+.poker-dealer{font:700 8px/12px system-ui;display:inline-block;width:12px;height:12px;border-radius:50%;background:#fff6d9;color:#243c30;font-style:normal;}
+.poker-seat.active-seat .poker-stack{border-color:#71efda;box-shadow:0 0 0 2px #71efda66;}
+.poker-seat.active-seat:before{content:'▾';position:absolute;top:-12px;color:#86ffde;font-size:16px;}
+.poker-observer .rival-original{opacity:.5}
+.poker-pot{position:absolute;top:29%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:2;font-size:9px;white-space:nowrap;}
+.poker-chip-pile{display:flex;align-items:center;justify-content:center;gap:7px;font-size:17px;font-weight:800;text-shadow:0 2px 2px #0008;}
+.poker-chip-pile .poker-chip{width:20px;height:20px;box-shadow:0 3px 0 #8e284f,0 5px 0 #e26c99,0 7px 0 #8e284f;}
+.poker-pot small{font-size:8px;color:#ebddbf;display:block;margin-top:4px}
+.poker-community{position:absolute;top:51%;left:50%;transform:translate(-50%,-50%);width:64%;z-index:1;}
+.poker-community .catalog-public-cards{flex-wrap:nowrap;gap:3px;}
+.poker-community .catalog-card{width:calc((100% - 12px)/5);max-width:62px;border-width:1px;}
+.poker-community .catalog-card-back{min-height:0;font-size:20px;}
+.poker-wager,.poker-moving-chip{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:4px;padding:2px 4px;border-radius:9px;background:#12372bbb;font-size:10px;z-index:4;white-space:nowrap;}
+.poker-moving-chip{pointer-events:none;z-index:7}
+.poker-showdown{position:absolute;top:22px;left:50%;transform:translateX(-50%);}
+.poker-showdown .catalog-public-cards{flex-wrap:nowrap;gap:2px;}
+.poker-showdown .catalog-card{width:25px!important;}
+.poker-payouts{position:absolute;left:22%;right:22%;top:64%;text-align:center;font-size:9px;display:flex;flex-direction:column;background:#143a30d9;border-radius:8px;z-index:4;max-height:16%;overflow:auto;}
+.catalog-screen[data-game="texas_holdem"] .catalog-result{position:absolute;top:37%;left:22%;right:22%;z-index:5;font-size:11px;text-align:center;margin:0;padding:3px;background:#143a30ee;border-radius:8px;}
+.catalog-screen[data-game="texas_holdem"] .catalog-dock{position:relative;padding-left:108px;min-height:116px;max-height:32dvh;}
+.catalog-screen[data-game="texas_holdem"] .catalog-hand{position:absolute;left:7px;top:10px;gap:3px;padding:0;}
+.catalog-screen[data-game="texas_holdem"] .catalog-hand .catalog-card{width:44px;}
+.catalog-screen[data-game="texas_holdem"] .catalog-options{gap:4px;}
+.catalog-screen[data-game="texas_holdem"] .catalog-options button{min-width:64px;padding:5px 7px;font-size:11px;flex:1 1 auto;}
+.catalog-screen[data-game="texas_holdem"] .catalog-amount{font-size:10px;gap:4px;}
+.catalog-screen[data-game="texas_holdem"] .catalog-amount input{width:70px;padding:4px;}
+.catalog-zoom-content .poker-table{height:480px;flex:none;}
+@media(min-width:600px) and (max-height:699px){.game-page.catalog-screen[data-game="texas_holdem"]{grid-template-rows:44px minmax(0,1fr);grid-template-columns:minmax(0,1fr) 220px;}.catalog-screen[data-game="texas_holdem"]>.catalog-surface{grid-row:2;grid-column:1;}.catalog-screen[data-game="texas_holdem"]>.catalog-dock{grid-row:2;grid-column:2;padding:8px;max-height:none;min-height:0;}.catalog-screen[data-game="texas_holdem"] .catalog-hand{position:static;justify-content:center;}.poker-table{min-height:0;}.poker-seat .rival-original{width:38px;height:38px;}.poker-table .poker-seat{width:62px;}.poker-table .poker-name{font-size:9px;}.poker-stack{font-size:10px;padding:2px 5px;}.poker-table .poker-status{font-size:7px;height:10px;}.poker-level{font-size:8px;}}
+@media(max-width:359px){.poker-table .poker-seat{width:61px}.poker-seat .rival-original{width:45px;height:45px}.poker-stack{font-size:10px;padding:2px 5px}.poker-table .poker-name{font-size:9px}.poker-level{font-size:8px}.poker-table{min-height:280px}.catalog-screen[data-game="texas_holdem"] .catalog-dock{padding-left:94px}.catalog-screen[data-game="texas_holdem"] .catalog-hand .catalog-card{width:39px}}

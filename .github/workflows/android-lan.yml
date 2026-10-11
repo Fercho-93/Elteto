@@ -42,6 +42,7 @@ jobs:
       - run: BOARD_BROWSER=webkit node tests/board-screen.mjs
       - run: node tests/no-aids.mjs
       - run: AIDS_BROWSER=webkit node tests/no-aids.mjs
+      - run: node tests/poker-screen.mjs
       - run: node tests/catalog-screen.mjs
       - run: CATALOG_BROWSER=webkit node tests/catalog-screen.mjs
       - run: node tests/cinquillo-layout.mjs

@@ -37,20 +37,20 @@ try{
  // Character picker preserves typed identity, exposes all ten choices, and persists locally.
  for(const width of [320,390,844]){
   await page.setViewportSize({width,height:844});await page.evaluate(()=>window.testHostForm());
-  await page.locator('#host-name').fill('Ana sin perder el nombre');
-  assert.equal(await page.locator('#host-name').inputValue(),'Ana sin perder el nombre','initial fill '+width);
+  await page.locator('#host-name').fill('Ana sin perder nombre');
+  assert.equal(await page.locator('#host-name').inputValue(),'Ana sin perder nombre','initial fill '+width);
   await page.locator('#room-name').fill('Mesa elegida');
   for(let character=0;character<10;character++){
    await page.locator('[data-action="choose-character"]').click();
    assert.equal(await page.locator('.character-option').count(),10);
    await page.locator(`.character-option[data-character="${character}"]`).click();
    await page.locator('.character-dialog').waitFor({state:'detached'});
-   assert.equal(await page.locator('#host-name').inputValue(),'Ana sin perder el nombre',JSON.stringify({width,character}));
+   assert.equal(await page.locator('#host-name').inputValue(),'Ana sin perder nombre',JSON.stringify({width,character}));
    assert.equal(await page.locator('#room-name').inputValue(),'Mesa elegida');
    assert.equal(await page.evaluate(()=>localStorage.getItem('elteto.character')),String(character));
   }
   await page.evaluate(()=>window.testJoinForm());
-  assert.equal(await page.locator('#join-name').inputValue(),'Ana sin perder el nombre');
+  assert.equal(await page.locator('#join-name').inputValue(),'Ana sin perder nombre');
   await page.locator('#join-name').fill('Bea');
   await page.locator('[data-action="choose-character"]').click();
   assert.ok(await page.locator('.character-option[data-character="9"]').getAttribute('aria-pressed')==='true');
@@ -68,14 +68,14 @@ try{
     await page.evaluate(async()=>{for(let i=0;i<4;i++)await new Promise(requestAnimationFrame);});
     const metrics=await page.evaluate(()=>{
      const rect=el=>el.getBoundingClientRect(),inside=r=>r.left>=-1&&r.top>=-1&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1;
-     const header=rect(document.querySelector('.play-header')),roster=rect(document.querySelector('.players-panel')),table=rect(document.querySelector('.catalog-surface')),dock=rect(document.querySelector('.catalog-dock'));
+     const header=rect(document.querySelector('.play-header')),roster=document.querySelector('.players-panel')?rect(document.querySelector('.players-panel')):null,table=rect(document.querySelector('.catalog-surface')),dock=rect(document.querySelector('.catalog-dock'));
      const overlap=(a,b)=>a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1;
      const active=rect(document.querySelector('.active-seat .rival-original'));
-     return {page:document.documentElement.scrollHeight<=innerHeight+1&&document.documentElement.scrollWidth<=innerWidth+1,inside:[header,roster,table,dock,active].every(inside),separate:!overlap(roster,table)&&!overlap(dock,table),boardWidth:table.width,boardHeight:table.height,dockHeight:dock.height,buttons:[...document.querySelectorAll('.play-header button,.catalog-options button')].every(el=>rect(el).height>=43),brokenImages:[...document.images].filter(img=>!img.complete||!img.naturalWidth).map(img=>img.src)};
+     return {page:document.documentElement.scrollHeight<=innerHeight+1&&document.documentElement.scrollWidth<=innerWidth+1,inside:[header,roster,table,dock,active].filter(Boolean).every(inside),separate:(!roster||!overlap(roster,table))&&!overlap(dock,table),boardWidth:table.width,boardHeight:table.height,dockHeight:dock.height,buttons:[...document.querySelectorAll('.play-header button,.catalog-options button')].every(el=>rect(el).height>=43),brokenImages:[...document.images].filter(img=>!img.complete||!img.naturalWidth).map(img=>img.src)};
     });
     results.push({id:engine.id,count,width,height,...metrics});assert.ok(metrics.page&&metrics.inside&&metrics.separate&&metrics.buttons,JSON.stringify(results.at(-1)));assert.ok(metrics.boardHeight>=70,JSON.stringify(results.at(-1)));
     // The three common surfaces remain usable at every size.
-    await page.locator('.game-menu-button').click();assert.equal(await page.locator('.game-menu [data-action="leave-room"]').textContent(),'Salir de la partida');assert.ok(await page.locator('.game-menu').evaluate(el=>el.open));
+    await page.locator('.game-menu-button').click();assert.equal(await page.locator('.game-menu [data-action="leave-room"]').textContent(),engine.id==='texas-holdem'?'Ausentarme y volver':'Salir de la partida');assert.ok(await page.locator('.game-menu').evaluate(el=>el.open));
     await page.locator('.game-menu details').first().locator('summary').click();
     const rules=await page.locator('.game-menu a').getAttribute('href');assert.ok((await page.request.get(new URL(rules,page.url()).href)).ok());
     await page.locator('.game-menu [data-action="close-game-menu"]').click();

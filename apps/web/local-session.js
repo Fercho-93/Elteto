@@ -1,3 +1,4 @@
+import {PokerAbsenceRunner} from './poker-presence.js';
 import {characterProfile} from './avatar-art.js';
 import { getGame, fillBotSeats, BotRunner, botTurnDelay, nextBotMove } from "./game-core/index.js";
 import { acceptOffer, decodeSignal, makeOffer } from "./local-transport.js";
@@ -21,13 +22,18 @@ export class LocalHostSession {
     this.botRunner = new BotRunner(() => this.closed || this.canRunBots?.() === false ? null : nextBotMove(this.engine, this.state, this.bots.map(p => p.id)),
       ({playerId, action}) => { this.state = this.engine.applyAction(this.state, playerId, action); this.sendViews(); },
       error => this.onChange({kind: 'error', message: String(error.message || error)}), botTurnDelay(this.engine.id));
+    this.absenceRunner=new PokerAbsenceRunner(()=>this.closed?null:({engine:this.engine,state:this.state,players:this.players()}),move=>{
+      const current=this.absenceRunner.candidate();if(!current||current.key!==move.key)return;
+      this.state=this.engine.applyAction(this.state,move.playerId,move.action);this.sendViews();
+    },{onError:error=>this.onChange({kind:'error',message:String(error.message||error)})});
+    this.absenceRunner.start();
     this.publishLobby();
   }
 
   players() {
     return [
-      { id: HOST_ID, name: this.hostName, ...this.hostCharacter, isHost: true },
-      ...[...this.connections.values()].map(({ id, name, character }) => ({ id, name, ...characterProfile(character), isHost: false })),
+      { id: HOST_ID, name: this.hostName, ...this.hostCharacter, away:Boolean(this.hostSittingOut), isHost: true },
+      ...[...this.connections.values()].map(({ id, name, character, peer, sittingOut }) => ({ id, name, ...characterProfile(character), away:Boolean(sittingOut)||peer.connected===false, isHost: false })),
       ...this.bots,
     ];
   }
@@ -93,7 +99,9 @@ export class LocalHostSession {
       return;
     }
     if (!connection) return;
-    if (message.type === "action") {
+    if(message.type==='sit-out'&&this.engine.id==='texas-holdem'){
+      connection.sittingOut=Boolean(message.data?.value);this.publishLobby();this.sendViews();
+    } else if (message.type === "action") {
       this.applyAction(peerId, message.data?.action);
     } else if (message.type === "leave") {
       this.peers.get(peerId)?.close();
@@ -103,6 +111,10 @@ export class LocalHostSession {
 
   handleClose(peerId) {
     this.peers.delete(peerId);
+    if(this.started&&this.engine.id==='texas-holdem'){
+      const connection=this.connections.get(peerId);if(connection)connection.peer.connected=false;
+      this.publishLobby();this.sendViews();return;
+    }
     if (this.connections.delete(peerId)) this.publishLobby();
   }
 
@@ -134,6 +146,8 @@ export class LocalHostSession {
     this.botRunner.schedule();
   }
 
+  setSittingOut(value){this.hostSittingOut=Boolean(value);this.publishLobby();this.sendViews();}
+
   applyLocalAction(action) {
     this.applyAction(HOST_ID, action);
   }
@@ -152,6 +166,7 @@ export class LocalHostSession {
   close() {
     this.closed = true;
     this.botRunner.stop();
+    this.absenceRunner.stop();
     this.broadcast(say('closed', { message: 'El anfitrión ha cerrado la sala.' }));
     for (const peer of this.peers.values()) peer.close();
     this.peers.clear();
@@ -207,6 +222,8 @@ export class LocalGuestSession {
       this.onChange({ kind: "error", message: message.data?.message || "No se pudo completar la acción." });
     }
   }
+
+  setSittingOut(value){this.peer?.send(say("sit-out",{value:Boolean(value)}));}
 
   sendAction(action) {
     if (!this.peer?.send(say("action", { action }))) throw new Error("Se perdió la conexión con quien creó la sala.");

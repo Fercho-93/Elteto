@@ -1,3 +1,4 @@
+import {PokerAbsenceRunner} from './poker-presence.js';
 import {characterProfile} from './avatar-art.js';
 import { getGame, fillBotSeats, nextBotMove, BotRunner, botTurnDelay } from "./game-core/index.js";
 import { connectFirebase } from "./firebase-client.js";
@@ -146,6 +147,11 @@ export class OnlineSession {
     this.lastErrorSeq = 0;
     this.seq = null;
     this.claiming = false;
+    this.absenceRunner=new PokerAbsenceRunner(()=>this.isHost?{engine:this.engine,state:this.state,players:this.players()}:null,move=>this.enqueue(async()=>{
+      await this.hostReady;const current=this.absenceRunner.candidate();if(!current||current.key!==move.key)return;
+      this.state=this.engine.applyAction(this.state,move.playerId,move.action);await this.publish();
+    }),{onError:error=>this.onChange({kind:'error',message:String(error.message||error)})});
+    this.absenceRunner.start();
     this.onVisibility = () => { if (document.visibilityState === "visible") void this.heartbeat(); };
   }
 
@@ -159,7 +165,7 @@ export class OnlineSession {
       if (error?.code === "permission-denied") this.disconnect("Ya no estás en esta sala.");
       else this.onChange({ kind: "error", message: "Se perdió la conexión con la sala." });
     });
-    this.timers.push(setInterval(() => { if (document.visibilityState === "visible") void this.heartbeat(); }, HEARTBEAT_MS));
+    this.timers.push(setInterval(() => { if (document.visibilityState === "visible") void this.heartbeat(); }, 5000));
     this.timers.push(setInterval(() => this.watchHost(), WATCH_MS));
     document.addEventListener("visibilitychange", this.onVisibility);
     return this;
@@ -172,11 +178,13 @@ export class OnlineSession {
   async heartbeat() {
     // Las reglas solo dejan escribir el latido a quien ya figura en la sala.
     if (this.closed || this.heartbeatBusy || !this.seenSelf || navigator.onLine === false) return;
+    if(this.room?.gameId!=='texas-holdem'&&Date.now()-(this.lastHeartbeat||0)<HEARTBEAT_MS)return;
+    this.lastHeartbeat=Date.now();
     this.heartbeatBusy = true;
     const reference = doc(this.db, "rooms", this.code, "presence", this.uid);
     const sent = Date.now();
     try {
-      await setDoc(reference, { seenAt: serverTimestamp(), visible: document.visibilityState === "visible" });
+      await setDoc(reference, { seenAt: serverTimestamp(), visible: document.visibilityState === "visible", ...(this.room?.gameId==='texas-holdem'?{sittingOut:Boolean(this.sittingOut)}:{}) });
       const confirmed = await getDocFromServer(reference);
       const server = millis(confirmed.data()?.seenAt);
       const received = Date.now();
@@ -191,9 +199,11 @@ export class OnlineSession {
       const stop = onSnapshot(doc(this.db, "rooms", this.code, "presence", uid), (snapshot) => {
         const data = snapshot.data({ serverTimestamps: "estimate" });
         this.presenceLoaded.add(uid);
-        if (data?.seenAt?.toMillis) this.presence.set(uid, { seenAt: data.seenAt.toMillis(), visible: data.visible });
+        if (data?.seenAt?.toMillis) this.presence.set(uid, { seenAt: data.seenAt.toMillis(), visible: data.visible, sittingOut:data.sittingOut });
         else this.presence.delete(uid);
         if (this.room?.status === "lobby") this.emitLobby();
+        else if(this.room?.gameId==='texas-holdem'&&this.state&&this.isHost)this.emitGame(this.engine.view(this.state,this.uid));
+        else if(this.room?.gameId==='texas-holdem'&&this.lastView)this.emitGame(this.lastView);
       }, () => {});
       this.presenceStops.set(uid, stop);
     }
@@ -204,6 +214,12 @@ export class OnlineSession {
   }
 
   isAway(uid) {
+    if(this.room?.gameId==='texas-holdem'){
+      if(uid===this.uid&&this.sittingOut)return true;
+      const record=this.presence.get(uid),now=this.serverNow();
+      if(record?.sittingOut)return true;
+      return record?now!==null&&now-record.seenAt>20000:this.presenceLoaded.has(uid);
+    }
     const now = this.serverNow();
     const record = this.presence.get(uid);
     if (now === null || !record) return false;
@@ -293,6 +309,7 @@ export class OnlineSession {
   }
 
   emitGame(view) {
+    this.lastView=view;
     this.onChange({
       kind: "game", players: this.players(), gameId: this.room.gameId, roomName: this.room.roomName,
       playerId: this.uid, isHost: this.isHost, view,
@@ -472,6 +489,10 @@ export class OnlineSession {
   // --- Salir ---------------------------------------------------------------------------
 
   /** El anfitrión cierra la sala para todos; el resto se marcha (en el vestíbulo deja su plaza). */
+  async setSittingOut(value){
+    if(this.room?.gameId!=='texas-holdem')return;
+    this.sittingOut=Boolean(value);await this.heartbeat();
+  }
   async exit() {
     if (this.closed) return;
     const room = this.room;
@@ -509,6 +530,7 @@ export class OnlineSession {
   teardown() {
     this.closed = true;
     this.botRunner.stop();
+    this.absenceRunner.stop();
     for (const timer of this.timers) clearInterval(timer);
     this.timers = [];
     document.removeEventListener("visibilitychange", this.onVisibility);

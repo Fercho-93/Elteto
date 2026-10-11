@@ -130,6 +130,12 @@ try {
 
   // --- Presencia ----------------------------------------------------------------------
   await seed(playing);
+  await no("ausencia solo para póker", setDoc(sub("bea", "presence", "bea"), {seenAt:serverTimestamp(),visible:true,sittingOut:true}));
+  await seed(baseRoom({gameId:'texas-holdem'}));
+  await ok("ausencia propia en póker",setDoc(sub('bea','presence','bea'),{seenAt:serverTimestamp(),visible:true,sittingOut:true}));
+  await no("ausencia de otro jugador",setDoc(sub('ana','presence','bea'),{seenAt:serverTimestamp(),visible:true,sittingOut:true}));
+  await no("ausencia con tipo falso",setDoc(sub('bea','presence','bea'),{seenAt:serverTimestamp(),visible:true,sittingOut:'yes'}));
+  await seed();
   await ok("latido propio", setDoc(sub("bea", "presence", "bea"), { seenAt: serverTimestamp(), visible: true }));
   await no("latido de otra persona", setDoc(sub("bea", "presence", "ana"), { seenAt: serverTimestamp(), visible: true }));
   await no("latido con hora inventada", setDoc(sub("bea", "presence", "bea"), { seenAt: Timestamp.fromMillis(0), visible: true }));

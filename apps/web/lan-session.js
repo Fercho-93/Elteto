@@ -17,7 +17,7 @@ export class LanSession {
     Object.assign(window.ELTETO_LAN, await fetch('./lan-config', { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error('No se pudo abrir la mesa.'); return r.json(); }));
     const session = new LanSession(onChange, true);
     session.local = new LocalHostSession(options.gameId, options.hostName, options.roomName, change => session.emitHost(change), options.character);
-    session.local.canRunBots = () => [...session.local.connections.values()].every(c => c.peer.connected);
+    session.local.canRunBots = () => session.local.engine.id==='texas-holdem' || [...session.local.connections.values()].every(c => c.peer.connected);
     await session.connect();
     session.local.publishLobby();
     return session;
@@ -50,7 +50,7 @@ export class LanSession {
   }
   emitHost(change) {
     if (change.kind === 'lobby' || change.kind === 'game') {
-      change.players = change.players.map(player => ({ ...player, away: !player.isBot && player.id !== 'host' && !this.local.connections.get(player.id)?.peer.connected }));
+      change.players = change.players.map(player => ({ ...player, away: player.away || (!player.isBot && player.id !== 'host' && !this.local.connections.get(player.id)?.peer.connected) }));
       this.onChange({ ...change, isHost: true, playerId: 'host', roomCode: this.roomCode, inviteUrl: this.inviteUrl });
     } else this.onChange(change);
   }
@@ -66,7 +66,7 @@ export class LanSession {
         if (packet.type === 'connected') {
           accepted = true;
           clearTimeout(timeout);
-          if (!this.isHost) this.send({ type: 'hello', data: { name: this.name, ...this.character } });
+          if (!this.isHost) this.send({ type: 'hello', data: { name: this.name, ...this.character, sittingOut:Boolean(this.sittingOut) } });
           resolve();
         } else if (packet.type === 'fatal') {
           clearTimeout(timeout);
@@ -114,11 +114,12 @@ export class LanSession {
       this.local.peers.set(id, peer);
       const existing = this.local.connections.get(id);
       if (existing) {
-        existing.peer = peer;
+        existing.peer = peer;existing.sittingOut=Boolean(message.data?.sittingOut);
         peer.send({ type: 'welcome', data: { playerId: id, gameId: this.local.engine.id } });
         this.local.publishLobby();
         this.local.sendViews();
       } else this.local.handleMessage(id, message);
+    } else if(message.type==='sit-out'){this.local.handleMessage(id,message);
     } else if (message.type === 'action') {
       if (!this.local.connections.get(id)?.peer.connected) return;
       const previous = this.acks.get(id) || 0;
@@ -134,6 +135,7 @@ export class LanSession {
     }
   }
   assertConnected() {
+    if(this.local.engine.id==='texas-holdem')return;
     if ([...this.local.connections.values()].some(c => !c.peer.connected)) throw new Error('Partida en pausa: falta un jugador. Puede volver a entrar con el mismo navegador.');
   }
   handleGuestPacket(message) {
@@ -152,6 +154,7 @@ export class LanSession {
     } else if (message.type === 'error') this.onChange({ kind: 'error', message: data.message });
     else if (message.type === 'ack') this.pending = false;
   }
+  async setSittingOut(value){this.sittingOut=Boolean(value);if(this.isHost)this.local.setSittingOut(value);else this.send({type:"sit-out",data:{value:Boolean(value)}});}
   async startGame() { this.assertConnected(); this.local.startGame(); }
   async fillWithBots() { if (this.isHost) this.local.fillWithBots(); }
   async sendAction(action) {

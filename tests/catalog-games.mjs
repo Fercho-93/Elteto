@@ -24,7 +24,7 @@ for(const engine of games){
  for(const p of s.players){const v=engine.view(s,p);assert.equal(v.players.length,count);assert.equal(v.hands,undefined);assert.equal(v.stock,undefined);assert.equal(v.seed,undefined);assert.deepEqual(v.myHand,s.hands[p]);v.myHand.length=0;assert.equal(JSON.stringify(s),snapshot);}
  if(['chinchon','remigio','continental'].includes(s.id))continue;
  for(let n=0;n<12000&&!s.finished;n++){const original=s,before=JSON.stringify(s),p=s.players[s.turn],action=stepAction(engine,s);try{s=engine.applyAction(s,p,action);}catch(e){throw new Error(`${engine.id}/${count}/${n}/${s.phase}: ${JSON.stringify(action)}: ${e.message}`,{cause:e});}assert.equal(JSON.stringify(original),before);actions++;if(n%31===0)for(const id of s.players){const v=engine.view(s,id);assert.equal(v.hands,undefined);assert.equal(v.seed,undefined);assert.ok(v.myHand.every(c=>s.hands[id].some(x=>x.id===c.id)));}
-  if(s.id==='texas_holdem')assert.equal(Object.values(s.chips).reduce((a,b)=>a+b,0)+(s.phase==='result'||s.finished?0:Object.values(s.paid).reduce((a,b)=>a+b,0)),count*500);
+  if(s.id==='texas_holdem')assert.equal(Object.values(s.chips).reduce((a,b)=>a+b,0)+(s.phase==='result'||s.finished?0:Object.values(s.paid).reduce((a,b)=>a+b,0)),count*1000);
   if(s.id==='siete_y_medio')assert.equal(Object.values(s.chips).reduce((a,b)=>a+b,0),count*100);
  }
  assert.ok(s.finished,`${engine.id}/${count} did not finish`);matches++;console.log(`${engine.id}: ${count} players, complete match OK`);

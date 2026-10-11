@@ -51,7 +51,7 @@ const turnSequence=new TurnSequence({
  reduced:()=>matchMedia('(prefers-reduced-motion: reduce)').matches,
  hidden:()=>document.visibilityState==='hidden'
 });
-function receiveGame(change){turnSequence.receive({...change,gameId:change.gameId||state.gameId,playerId:change.playerId||state.playerId,players:change.players||state.players});}
+function receiveGame(change){if(state.screen==='poker-break'){state.view=change.view;state.players=change.players||state.players;render();return;}turnSequence.receive({...change,gameId:change.gameId||state.gameId,playerId:change.playerId||state.playerId,players:change.players||state.players});}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')turnSequence.flush();});
 
 function renderHome() {
@@ -207,7 +207,7 @@ function renderGame() {
 }
 function renderGameContents() {
   state.screen = "game";
-  const game = getGame(state.gameId), view = state.view ? {...state.view,characters:Object.fromEntries(state.players.map(p=>[p.id,p.character]))} : null;
+  const game = getGame(state.gameId), view = state.view ? {...state.view,characters:Object.fromEntries(state.players.map(p=>[p.id,p.character])),away:Object.fromEntries(state.players.map(p=>[p.id,Boolean(p.away)]))} : null;
   if (!view) { app.innerHTML = `${header()}<section class="panel"><p>Esperando el estado de la partida…</p></section>`; return; }
   if(!['cinquillo','mus','parchis'].includes(state.gameId)){renderCatalogGame(app,view,state.playerId,playerName,state.error);return;}
   if(state.gameId==='parchis'){renderParchisScreen(app,view,state.playerId,playerName,state.error);return;}
@@ -333,8 +333,18 @@ function cinquilloControls(view) {
   return `<p class="helper">Tu turno.</p><button class="button button-paper" data-action="cinquillo-pass">Paso</button>`;
 }
 
+async function takePokerBreak(){
+ if(state.gameId!=='texas-holdem'||!state.view||state.view.finished)return false;
+ await (state.online||state.host||state.guest)?.setSittingOut(true);
+ turnSequence.reset();state.screen='poker-break';render();return true;
+}
+function renderPokerBreak(){
+ const chips=state.view?.chips?.[state.playerId]||0;
+ app.innerHTML=`<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><span class="menu-brand">ELTETO ✦</span></header><section class="menu-setup"><h1>Tu sitio sigue reservado</h1><p>Conservas tu personaje y tus ${chips.toLocaleString('es-ES')} fichas. Las ciegas siguen contando mientras estás ausente.</p><p>Si te toca y no vuelves en 12 segundos, pasarás cuando sea gratis o te retirarás si hay una apuesta. Si todos están ausentes, se espera.</p><button class="button button-cyan full-button" data-action="poker-return">Volver a la partida</button></section></div></section>`;
+}
 function render() {
-  if (state.screen === 'access') renderAccess();
+  if(state.screen==='poker-break')renderPokerBreak();
+  else if (state.screen === 'access') renderAccess();
   else if (state.screen === 'installation') renderInstallation();
   else if (state.screen === 'guest-ended') renderGuestEnded();
   else if (state.screen === "host-form") renderHostForm();
@@ -440,6 +450,7 @@ app.addEventListener("click", async (event) => {
     else if (action === "open-join") { state.screen = "join-form"; render(); }
     else if (action === "home" || action === "back") {
       event.preventDefault();
+      if(await takePokerBreak())return;
       if (state.online) await state.online.exit(); else { state.host?.close(); state.guest?.leave(); }
       if (GUEST && state.role === 'client') endGuestRoom(); else resetToHome();
     }
@@ -528,7 +539,12 @@ app.addEventListener("click", async (event) => {
     else if (action === "mus-reject") sendAction({ type: "reject" });
     else if (action === "cinquillo-next-hand") sendAction({ type: "next-hand" });
     else if (action === "cinquillo-pass") sendAction({ type: "pass" });
+    else if(action==='poker-return'){
+      await (state.online||state.host||state.guest)?.setSittingOut(false);
+      state.screen='game';state.error='';render();
+    }
     else if (action === "leave-room") {
+      if(await takePokerBreak())return;
       if (state.online) await state.online.exit(); else { state.host?.close(); state.guest?.leave(); }
       resetToHome();
     }

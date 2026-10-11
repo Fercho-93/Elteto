@@ -90,3 +90,31 @@ await new Promise(r=>setTimeout(r,40));assert.notEqual(aiHost.local.state.phase,
 assert.ok(aiEvents.findLast(e=>e.kind==='game').players.every(p=>!p.away));
 await aiHost.exit();
 console.log('LAN: completar con IA, quitar IA y turnos automáticos sin invitados: OK');
+
+// Hold'em retains absent seats but never pauses the connected players.
+window.ELTETO_LAN.hostKey='secret';const pokerEvents=[[],[]];
+const pokerHost=await LanSession.create({gameId:'texas-holdem',hostName:'Ana',character:2,roomName:'Poker'},e=>pokerEvents[0].push(e));
+window.ELTETO_LAN.hostKey=null;
+const pokerGuest=await LanSession.join('ABCD2345','Bea',e=>pokerEvents[1].push(e),9);
+await tick();await tick();await pokerHost.startGame();await tick();
+const pokerId=pokerGuest.playerId;
+await pokerGuest.setSittingOut(true);await tick();await tick();
+assert.ok(pokerHost.local.players().find(p=>p.id===pokerId).away);
+await pokerGuest.setSittingOut(false);await tick();await tick();
+assert.equal(pokerHost.local.players().find(p=>p.id===pokerId).away,false);
+pokerGuest.ws.close();await tick();clearTimeout(pokerGuest.timer);
+assert.equal(pokerHost.local.players().length,2);
+await pokerHost.sendAction({type:'call'});await tick();
+assert.equal(pokerHost.local.state.players[pokerHost.local.state.turn],pokerId);
+const runner=pokerHost.local.absenceRunner;runner.stop();runner.delay=0;
+await runner.tick();await runner.tick();await tick();
+assert.equal(pokerHost.local.state.phase,'flop','absent guest checks instead of blocking the hand');
+const chips=pokerHost.local.state.chips[pokerId],hand=JSON.stringify(pokerHost.local.state.hands[pokerId]);
+await pokerGuest.connect();await tick();await tick();
+assert.equal(pokerGuest.playerId,pokerId);
+assert.equal(pokerHost.local.state.chips[pokerId],chips);
+assert.equal(JSON.stringify(pokerHost.local.state.hands[pokerId]),hand);
+assert.equal(pokerHost.local.players().find(p=>p.id===pokerId).character,9);
+assert.equal(pokerHost.local.players().find(p=>p.id===pokerId).away,false);
+await pokerGuest.exit();await pokerHost.exit();
+console.log('LAN póker: ausentarse, continuar, acción automática y reenganche con fichas/personaje: OK');

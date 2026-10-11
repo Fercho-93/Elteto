@@ -110,7 +110,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "sha256": "0391b861c37a8d01e4deaf379e3077c3fbb437f3bd55d63e3917a92ab44db220"
     },
     "summary": "Dos privadas y cinco comunitarias; mejor combinación de cinco; apuestas en fichas.",
-    "implementationNotes": "Sin límite. 500 fichas por jugador, ciegas 5/10 y botes laterales. Gana quien reúne todas las fichas. Sin dinero real.",
+    "implementationNotes": "Sin límite. 1.000 fichas por jugador, ciegas 5/10 que suben ambas en 5 cada dos manos y botes laterales. Gana quien reúne todas las fichas. Sin dinero real.",
     "phases": [
       "ciegas",
       "preflop",

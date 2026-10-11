@@ -9,10 +9,10 @@ export function evaluatePoker(cards:PhysicalCard[]){check(cards.length>=5&&cards
 const alive=(s:State)=>s.players.filter(p=>!s.folded[p]);
 function pay(s:State,p:string,n:number){check(n>=0&&n<=s.chips[p]);s.chips[p]-=n;s.street[p]+=n;s.paid[p]+=n;}
 function seatAfter(s:State,seat:number,predicate:(p:string)=>boolean){for(let i=1;i<=s.players.length;i++){const j=(seat+i)%s.players.length;if(predicate(s.players[j]))return j;}return seat;}
-function holdemDeal(s:State){s.hands=mapPlayers(s.players,()=>[]);s.stock=deck(s,'french-52');s.board=[];s.burn=[];s.folded=mapPlayers(s.players,p=>s.chips[p]<=0);s.street=mapPlayers(s.players,()=>0);s.paid=mapPlayers(s.players,()=>0);s.acted=mapPlayers(s.players,()=>-1);s.lastRaise=10;s.currentBet=10;s.payouts=[];s.phase='preflop';s.revealed=false;s.handWinner=null;const active=alive(s);if(active.length<2){finish(s,active[0]);return;}
+function holdemDeal(s:State){s.hands=mapPlayers(s.players,()=>[]);s.stock=deck(s,'french-52');s.board=[];s.burn=[];s.folded=mapPlayers(s.players,p=>s.chips[p]<=0);s.street=mapPlayers(s.players,()=>0);s.paid=mapPlayers(s.players,()=>0);s.acted=mapPlayers(s.players,()=>-1);s.blindLevel=Math.floor((s.handNumber-1)/2);s.smallBlindAmount=5+s.blindLevel*5;s.bigBlindAmount=10+s.blindLevel*5;s.lastRaise=s.bigBlindAmount;s.currentBet=s.bigBlindAmount;s.payouts=[];s.phase='preflop';s.revealed=false;s.handWinner=null;const active=alive(s);if(active.length<2){finish(s,active[0]);return;}
  s.dealer=s.handNumber===1?seatAfter(s,s.players.length-1,p=>!s.folded[p]):seatAfter(s,s.dealer,p=>!s.folded[p]);
  for(let i=0;i<2;i++)for(let j=1;j<=s.players.length;j++){const p=s.players[(s.dealer+j)%s.players.length];if(!s.folded[p])s.hands[p].push(s.stock.pop()!);}
- const small=active.length===2?s.dealer:seatAfter(s,s.dealer,p=>!s.folded[p]),big=seatAfter(s,small,p=>!s.folded[p]);s.smallBlind=s.players[small];s.bigBlind=s.players[big];pay(s,s.smallBlind,Math.min(5,s.chips[s.smallBlind]));pay(s,s.bigBlind,Math.min(10,s.chips[s.bigBlind]));s.pending=active.filter(p=>s.chips[p]>0);s.turn=seatAfter(s,big,p=>s.pending.includes(p));note(s,'Ciegas 5 / 10.');advancePoker(s);
+ const small=active.length===2?s.dealer:seatAfter(s,s.dealer,p=>!s.folded[p]),big=seatAfter(s,small,p=>!s.folded[p]);s.smallBlind=s.players[small];s.bigBlind=s.players[big];pay(s,s.smallBlind,Math.min(s.smallBlindAmount,s.chips[s.smallBlind]));pay(s,s.bigBlind,Math.min(s.bigBlindAmount,s.chips[s.bigBlind]));s.pending=active.filter(p=>s.chips[p]>0);s.turn=seatAfter(s,big,p=>s.pending.includes(p));note(s,`Ciegas ${s.smallBlindAmount} / ${s.bigBlindAmount}.`);advancePoker(s);
 }
 function drawStreet(s:State){s.burn.push(s.stock.pop()!);if(s.board.length===0){s.board.push(...s.stock.splice(-3));s.phase='flop';}else{s.board.push(s.stock.pop()!);s.phase=s.board.length===4?'turn':'river';}}
 export function pokerPayout(s:State){const levels=[...new Set(Object.values(s.paid) as number[])].filter(x=>x>0).sort((a,b)=>a-b);let before=0;s.payouts=[];for(const level of levels){const contributors=s.players.filter(p=>s.paid[p]>=level),pot=(level-before)*contributors.length;before=level;const eligible=contributors.filter(p=>!s.folded[p]);if(!eligible.length){contributors.forEach(p=>s.chips[p]+=pot/contributors.length);continue;}const scores=eligible.map(p=>({p,score:evaluatePoker([...s.hands[p],...s.board])}));scores.sort((a,b)=>comparePoker(b.score,a.score));const winners=scores.filter(x=>comparePoker(x.score,scores[0].score)===0).map(x=>x.p);const share=Math.floor(pot/winners.length);let odd=pot%winners.length;const ordered=Array.from({length:s.players.length},(_,i)=>s.players[(s.dealer+i+1)%s.players.length]).filter(p=>winners.includes(p));for(const p of ordered)s.chips[p]+=share+(odd-->0?1:0);s.payouts.push({pot,winners,category:scores[0].score[0]});}
@@ -25,10 +25,10 @@ function advancePoker(s:State){
  if(s.pending.length){if(!s.pending.includes(s.players[s.turn]))s.turn=seatAfter(s,s.turn,p=>s.pending.includes(p));return;}
  if(s.board.length===5){pokerPayout(s);return;}
  if(capable.length<=1){while(s.board.length<5)drawStreet(s);pokerPayout(s);return;}
- drawStreet(s);s.street=mapPlayers(s.players,()=>0);s.acted=mapPlayers(s.players,()=>-1);s.currentBet=0;s.lastRaise=10;s.pending=capable;s.turn=seatAfter(s,s.dealer,p=>s.pending.includes(p));
+ drawStreet(s);s.street=mapPlayers(s.players,()=>0);s.acted=mapPlayers(s.players,()=>-1);s.currentBet=0;s.lastRaise=s.bigBlindAmount||10;s.pending=capable;s.turn=seatAfter(s,s.dealer,p=>s.pending.includes(p));
 }
 function canRaise(s:State,p:string){return s.acted[p]===-1||s.currentBet-s.acted[p]>=s.lastRaise;}
-export const holdemEngine=makeEngine('texas_holdem',(p,seed)=>{const s=base('texas_holdem',p,seed);s.chips=mapPlayers(p,()=>500);s.scores={...s.chips};s.dealer=0;holdemDeal(s);return s;},(s,p,a)=>{
+export const holdemEngine=makeEngine('texas_holdem',(p,seed)=>{const s=base('texas_holdem',p,seed);s.chips=mapPlayers(p,()=>1000);s.scores={...s.chips};s.dealer=0;holdemDeal(s);return s;},(s,p,a)=>{
  requireTurn(s,p);if(s.phase==='result'){check(a.type==='next-hand');s.handNumber++;holdemDeal(s);return;}
  const owed=Math.max(0,s.currentBet-s.street[p]);
  if(a.type==='fold')s.folded[p]=true;
@@ -41,4 +41,13 @@ export const holdemEngine=makeEngine('texas_holdem',(p,seed)=>{const s=base('tex
  }else throw new Error('Acción de póker no válida.');
  s.acted[p]=s.currentBet;s.pending=s.pending.filter((id:string)=>id!==p);note(s,`${p}: ${a.type==='fold'?'se retira':a.type==='check'?'pasa':a.type==='call'?'iguala':`apuesta hasta ${s.street[p]}`}.`);s.turn=seatAfter(s,s.turn,id=>s.pending.includes(id));advancePoker(s);
 },(s,p)=>{let options:any[]=[];const owed=Math.max(0,s.currentBet-s.street[p]),max=s.street[p]+s.chips[p],min=s.currentBet+s.lastRaise;if(s.players[s.turn]===p&&!s.finished){if(s.phase==='result')options=choices(['Siguiente mano',{type:'next-hand'}]);else{options=choices(['Retirarme',{type:'fold'}],[owed?`Igualar ${Math.min(owed,s.chips[p])}`:'Pasar',{type:owed?'call':'check'}]);if(canRaise(s,p)&&max>=min)options.push({label:s.currentBet?'Subir':'Apostar',action:{type:'raise',amountInput:{min,max,value:min}}});if(max<=s.currentBet||canRaise(s,p))options.push(...choices([`All-in · ${s.chips[p]}`,{type:'all-in'}]));}}
- return publicView(s,p,{boardKind:'poker',board:s.board,chips:s.chips,street:s.street,folded:s.folded,dealer:s.players[s.dealer],smallBlind:s.smallBlind,bigBlind:s.bigBlind,pot:(Object.values(s.paid) as number[]).reduce((a,b)=>a+b,0),payouts:s.payouts,publicHands:s.revealed?mapPlayers(s.players,id=>s.folded[id]?[]:s.hands[id]):{},instruction:s.phase==='result'?'Bote repartido.':`Sin límite · ciegas 5 / 10${owed?` · faltan ${owed}`:''}`,session:'500 fichas iniciales · sin dinero',options});});
+ return publicView(s,p,{boardKind:'poker',board:s.board,chips:s.chips,street:['result','finished'].includes(s.phase)?mapPlayers(s.players,()=>0):s.street,smallBlindAmount:s.smallBlindAmount||5,bigBlindAmount:s.bigBlindAmount||10,blindLevel:s.blindLevel||0,nextBlindHand:2*(Math.floor((s.handNumber-1)/2)+1)+1,eliminated:mapPlayers(s.players,id=>s.chips[id]===0&&(['result','finished'].includes(s.phase)||s.folded[id])),folded:s.folded,dealer:s.players[s.dealer],smallBlind:s.smallBlind,bigBlind:s.bigBlind,pot:(Object.values(s.paid) as number[]).reduce((a,b)=>a+b,0),payouts:s.payouts,publicHands:s.revealed?mapPlayers(s.players,id=>s.folded[id]?[]:s.hands[id]):{},instruction:s.phase==='result'?'Bote repartido.':`Sin límite · ciegas ${s.smallBlindAmount||5} / ${s.bigBlindAmount||10}${owed?` · faltan ${owed}`:''}`,session:'1.000 fichas iniciales · sin dinero',options});});
+
+// Absent seats never call or raise on a player's behalf. All-ins remain eligible for the pot.
+export function pokerAbsentAction(s:State){
+ if(s.finished)return null;
+ if(s.phase==='result')return {type:'next-hand'};
+ const p=s.players[s.turn];
+ if(s.folded[p]||s.chips[p]<=0)return null;
+ return {type:s.currentBet>s.street[p]?'fold':'check'};
+}

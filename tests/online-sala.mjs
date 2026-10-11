@@ -291,6 +291,26 @@ try {
     await room.host.exit();console.log(`  ok  ${engine.label}: sala, acciones y vistas privadas`);
   }
 
+  const pokerRoom=await open('texas-holdem',['Ana','Bea']);
+  await pokerRoom.host.startGame(91);
+  await until('póker repartido',()=>pokerRoom.events.every(e=>e.last('game')));
+  const pokerGuest=pokerRoom.guests[0],guestId=pokerGuest.uid;
+  await pokerGuest.setSittingOut(true);
+  await until('póker ausente',()=>pokerRoom.host.players().find(p=>p.id===guestId)?.away);
+  await pokerRoom.host.sendAction({type:'call'});
+  await until('turno del ausente',()=>pokerRoom.host.state.players[pokerRoom.host.state.turn]===guestId);
+  const absence=pokerRoom.host.absenceRunner;absence.stop();absence.delay=0;
+  await absence.tick();await absence.tick();
+  await until('ausente pasa, juego continúa',()=>pokerRoom.host.state.phase==='flop');
+  const remaining=pokerRoom.host.state.chips[guestId],hole=JSON.stringify(pokerRoom.host.state.hands[guestId]);
+  pokerGuest.teardown();
+  const returned=track(await OnlineSession.join(pokerRoom.host.roomCode,'Bea',pokerRoom.events[1].onChange,pokerRoom.conns[1],4));
+  await until('reenganche del mismo jugador',()=>!pokerRoom.host.players().find(p=>p.id===guestId)?.away);
+  assert.equal(returned.uid,guestId);assert.equal(pokerRoom.host.state.chips[guestId],remaining);
+  assert.equal(JSON.stringify(pokerRoom.host.state.hands[guestId]),hole);
+  assert.equal(pokerRoom.host.players().find(p=>p.id===guestId).character,4);
+  await pokerRoom.host.exit();
+  console.log('  ok  Póker: ausente, partida continúa y misma identidad/fichas al reenganchar');
   console.log("Salas online de punta a punta: OK");
 } finally {
   for (const session of sessions) if (!session.closed) session.teardown();
