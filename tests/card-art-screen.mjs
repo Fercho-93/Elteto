@@ -20,8 +20,9 @@ try{
  await mkdir('tests/artifacts/decks',{recursive:true});await page.screenshot({path:'tests/artifacts/decks/mus.png'});
  const poker=getGame('texas-holdem'),p=poker.createInitialState(['a','b'],12);
  await page.evaluate(game=>window.testTable('texas-holdem',game,'a'),p);
- assert.equal(await page.locator('.catalog-surface .deck-stock').getAttribute('aria-label'),'Mazo de póker: 48 cartas sin repartir');
- assert.equal(await page.locator('.catalog-surface .deck-stock .deck-blue').count(),2);
+ assert.equal(poker.view(p,'a').stockCount,48);
+ assert.equal(await page.locator('.catalog-surface .deck-stock').count(),0);
+ assert.equal(await page.locator('.catalog-surface .poker-community .catalog-card').count(),5);
  await page.screenshot({path:'tests/artifacts/decks/poker.png'});
  await page.evaluate(async()=>{
   const {renderCardArtwork,renderCardBack}=await import('./card-art.js');
@@ -33,5 +34,5 @@ try{
  const windows=await page.locator('.test-deck-gallery svg').evaluateAll(svgs=>svgs.map(el=>el.getAttribute('viewBox')));assert.equal(new Set(windows).size,40);
  await page.evaluate(async()=>{await Promise.all(['./assets/decks/fournier-spanish.jpg','./assets/decks/elteto-backs.jpg'].map(src=>new Promise((resolve,reject)=>{const img=new Image();img.onload=resolve;img.onerror=reject;img.src=src;})));});
  await page.screenshot({path:'tests/artifacts/decks/all-cards.png',fullPage:true});assert.deepEqual(errors,[]);
- console.log('Barajas: 40 frontales originales, dorso rojo/azul, mazos Mus/póker y recuentos: OK');
+ console.log('Barajas: 40 frontales originales, dorso rojo/azul, mazo Mus, póker sin mazo visible y recuentos: OK');
 }finally{await browser.close();await new Promise(r=>server.close(r));}
