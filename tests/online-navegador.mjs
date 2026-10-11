@@ -23,6 +23,8 @@ const server = createServer(async (req, res) => {
     const pathname = decodeURIComponent(new URL(req.url, "http://x").pathname);
     const file = path.join(dist, pathname === "/" ? "index.html" : pathname);
     let body = await fs.readFile(file);
+    // Keep legacy Cinquillo transport coverage with a catalog fixture used only by this test.
+    if (pathname === '/app.js') body = Buffer.from(body.toString().replaceAll('availableGames(listGames())','listGames()'));
     if (pathname === '/firebase-config.js') body = Buffer.from(body.toString().replaceAll('elteto-fercho93', 'demo-elteto'));
     res.setHeader("Content-Type", TYPES[path.extname(file)] || "application/octet-stream");
     res.end(body);
@@ -99,7 +101,8 @@ try {
   await host.page.click('[data-action="open-host"]');
   await host.page.fill("#host-name", "Ana");
   await host.page.fill("#room-name", "Mesa online");
-  await host.page.click('label.game-option:has(input[value="cinquillo"])');
+  await host.page.locator('.game-category:has(input[value="cinquillo"]) summary').click();
+  await host.page.locator('input[value="cinquillo"]').check();
   await host.page.fill("#host-name", "Ana");
   await host.page.click('[data-action="create-room"]');
   await host.page.click('[data-action="new-invite"]');

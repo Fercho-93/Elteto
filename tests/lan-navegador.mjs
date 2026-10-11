@@ -17,6 +17,16 @@ try {
  const context=async name=>{
   const ctx=await browser.newContext({viewport:{width:390,height:664},serviceWorkers:'block',reducedMotion:'reduce'});
   await ctx.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
+  // Transport coverage includes paused engines without exposing them in the shipping menu.
+  await ctx.route('**/app.js*',async route=>{
+   let body=await readFile('dist/app.js','utf8');
+   body=body.replaceAll('availableGames(listGames())','listGames()').replace('state.gameId || ""; render();','state.gameId || "cinquillo"; render();');
+   await route.fulfill({body,contentType:'text/javascript'});
+  });
+  await ctx.route('**/game-picker.js',async route=>{
+   const body=(await readFile('dist/game-picker.js','utf8')).replace("ids:['parchis','damas-espanolas']","ids:['parchis','damas-espanolas','oca']");
+   await route.fulfill({body,contentType:'text/javascript'});
+  });
   await ctx.addInitScript(name=>localStorage.setItem('elteto.playerName',name),name);
   await ctx.addInitScript(()=>{window.EltetoActivation={isActivated:()=>true,isOpenAccess:()=>true};});
   const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));return page;
@@ -83,7 +93,7 @@ try {
  // Open another LAN table using the unchanged generic transport, now choosing Mus.
  await host.locator('[data-action="open-host"]').click();
  await host.locator('#host-name').fill('Ana');
- await host.locator('label.game-option:has(input[value="mus"])').click();
+ await host.locator('.game-category:has(input[value="mus"]) summary').click();await host.locator('input[value="mus"]').check();
  await host.locator('[data-action="create-room"]').click();
  const musCode=(await host.locator('.room-code').textContent()).trim();
  assert.notEqual(musCode,code,'cada mesa tiene una invitación distinta');
@@ -117,7 +127,7 @@ try {
  for(const p of [guest,c,d]) await p.getByText('Hasta la próxima.',{exact:true}).waitFor();
  // The same room, QR, messages and reconnection path also carry a public board game.
  await host.locator('[data-action="open-host"]').click();await host.locator('#host-name').fill('Ana');
- await host.locator('label.game-option:has(input[value="parchis"])').click();await host.locator('[data-action="create-room"]').click();
+ await host.locator('.game-category:has(input[value="parchis"]) summary').click();await host.locator('input[value="parchis"]').check();await host.locator('[data-action="create-room"]').click();
  const boardCode=(await host.locator('.room-code').textContent()).trim();await guest.goto(base+'/?join='+boardCode);await c.goto(base+'/?join='+boardCode);await d.goto(base+'/?join='+boardCode);
  await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===4);await host.locator('[data-action="start-game"]').click();
  for(const p of [host,guest,c,d]){await p.locator('.parchis-table [data-pawn]').first().waitFor();assert.equal(await p.locator('.parchis-table [data-pawn]').count(),16);}
@@ -145,7 +155,7 @@ try {
  console.log('Parchís LAN: initial dice, rolls, legal moves, board synchronization and reload/reconnection: OK');
  for(const gameId of ['oca','damas-espanolas']){
   await host.locator('[data-action="open-host"]').click();await host.locator('#host-name').fill('Ana');
-  await host.locator(`label.game-option:has(input[value="${gameId}"])`).click();await host.locator('[data-action="create-room"]').click();
+  await host.locator(`.game-category:has(input[value="${gameId}"]) summary`).click();await host.locator(`input[value="${gameId}"]`).check();await host.locator('[data-action="create-room"]').click();
   const invitation=(await host.locator('.room-code').textContent()).trim();await guest.goto(base+'/?join='+invitation);
   await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===2);await host.locator('[data-action="start-game"]').click();
   for(const p of [host,guest]){await p.locator('.catalog-surface').waitFor();assert.ok(await p.locator('.catalog-surface').evaluate(el=>el.scrollHeight<=el.clientHeight+1&&el.scrollWidth<=el.clientWidth+1));}

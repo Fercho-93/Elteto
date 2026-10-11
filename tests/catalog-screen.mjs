@@ -13,32 +13,27 @@ const errors=[],results=[],names=['Ana María de la Mesa','Beatriz','Cristina','
 try{
  const page=await browser.newPage({serviceWorkers:'block',reducedMotion:'reduce'});page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:'+server.address().port);await page.waitForFunction(()=>window.testTable);
- await page.evaluate(()=>window.testHostForm());assert.equal(await page.locator('.game-option').count(),20);
- await page.locator('#game-search').fill('domino');assert.equal(await page.locator('.game-option:not([hidden])').count(),1);
- await page.locator('#game-search').fill('');
  for(const [width,height] of [[320,568],[390,844],[844,390],[1280,800]]){
   await page.setViewportSize({width,height});await page.evaluate(()=>window.testHostForm());
-  await page.locator('.game-option').first().click();
-  const metrics=await page.locator('.game-options').evaluate(track=>{const cards=[...track.querySelectorAll('.game-option')].map(el=>el.getBoundingClientRect());return {horizontal:track.scrollWidth>track.clientWidth,oneRow:cards.every(r=>Math.abs(r.top-cards[0].top)<4),vertical:cards.every(r=>r.height>r.width),compact:cards.every(r=>r.height<=190),page:document.documentElement.scrollWidth<=innerWidth};});
-  assert.ok(Object.values(metrics).every(Boolean),JSON.stringify({width,...metrics}));
-  assert.ok(await page.locator('[data-action="game-previous"]').isDisabled());
-  const ids=listGames().map(g=>g.id);
-  for(let i=1;i<ids.length;i++){await page.locator('[data-action="game-next"]').click();assert.equal(await page.locator('input[name="game"]:checked').inputValue(),ids[i]);assert.equal(await page.locator('.game-option.chosen').count(),1);}
-  assert.ok(await page.locator('[data-action="game-next"]').isDisabled());
-  await page.locator('input[name="game"]:checked').press('ArrowLeft');assert.equal(await page.locator('input[name="game"]:checked').inputValue(),ids.at(-2));
-  await page.locator('#game-search').fill('dómino');assert.equal(await page.locator('.game-option:not([hidden])').count(),1);
-  await page.locator('[data-action="game-next"]').click();assert.equal(await page.locator('input[name="game"]:checked').inputValue(),'domino');
-  assert.ok(await page.locator('[data-action="game-next"]').isDisabled());assert.ok(await page.locator('[data-action="game-previous"]').isDisabled());
-  await page.locator('#game-search').fill('no-such-game');assert.ok(await page.locator('.game-picker-empty').isVisible());assert.equal(await page.locator('.game-option:not([hidden])').count(),0);
-  await page.locator('#game-search').fill('');assert.equal(await page.locator('.game-option:not([hidden])').count(),20);assert.equal(await page.locator('input[name="game"]:checked').inputValue(),'domino');
+  assert.equal(await page.locator('.game-category').count(),2);
+  assert.deepEqual(await page.locator('input[name="game"]').evaluateAll(inputs=>inputs.map(i=>i.value).sort()),['damas-espanolas','mus','parchis','texas-holdem']);
+  for(const id of ['parchis','damas-espanolas','mus','texas-holdem']){
+   const category=page.locator('.game-category').filter({has:page.locator(`input[value="${id}"]`)});
+   await category.locator('summary').click();
+   await category.locator(`input[value="${id}"]`).check();
+   assert.equal(await page.locator('input[name="game"]:checked').inputValue(),id);
+   assert.equal(await page.locator('.game-category.chosen').count(),1);
+   assert.equal(await category.evaluate(el=>el.open),false);
+   const name=({'damas-espanolas':'Damas','texas-holdem':'Póker',mus:'Mus',parchis:'Parchís'})[id];
+   assert.ok((await category.locator('.category-title').textContent()).endsWith(': '+name));
+  }
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  await page.locator('#host-name').fill('Nombre conservado');
+  await page.evaluate(()=>window.testHostForm());
+  assert.equal(await page.locator('#host-name').inputValue(),'Nombre conservado');
+  assert.equal(await page.locator('input[name="game"]:checked').inputValue(),'texas-holdem');
   if(width===390)await page.screenshot({path:`tests/artifacts/catalog/game-picker-${kind}.png`,fullPage:true});
  }
- // In normal motion the accordion opens without moving the page vertically.
- await page.setViewportSize({width:390,height:844});await page.evaluate(()=>window.testHostForm());await page.emulateMedia({reducedMotion:'no-preference'});
- await page.evaluate(async()=>{for(let i=0;i<4;i++)await new Promise(requestAnimationFrame);});
- const scrollY=await page.evaluate(()=>window.scrollY);await page.locator('[data-action="game-next"]').click();await page.waitForTimeout(350);
- const accordion=await page.locator('.game-option.chosen').evaluate(el=>{const a=el.getBoundingClientRect(),b=el.closest('.game-options').getBoundingClientRect();return {visible:a.left>=b.left-1&&a.right<=b.right+1,width:a.width,other:el.nextElementSibling.getBoundingClientRect().width,scrollY:window.scrollY};});
- assert.ok(accordion.visible&&accordion.width>accordion.other);assert.equal(accordion.scrollY,scrollY,'Choosing a game only scrolls the horizontal deck');await page.emulateMedia({reducedMotion:'reduce'});
  for(const engine of listGames().filter(g=>!['cinquillo','mus','parchis'].includes(g.id))){
   for(const count of [...new Set([engine.minPlayers,engine.maxPlayers])]){
    const ids=Array.from({length:count},(_,i)=>`p${i}`),game=engine.createInitialState(ids,22),active=game.players[game.turn];
@@ -98,5 +93,5 @@ try{
   await page.getByRole('button',{name:'Siguiente mano',exact:true}).click();assert.equal((await page.evaluate(()=>window.tableSnapshot())).handNumber,2);
  }
  assert.deepEqual(errors,[]);await writeFile(`tests/artifacts/catalog/measurements-${kind}.json`,JSON.stringify(results,null,2));
- console.log(`${kind}: ${results.length} catalog layouts, rules/menu/zoom, 20-game selection, engine-backed actions: OK`);
+ console.log(`${kind}: ${results.length} catalog layouts, rules/menu/zoom, two categories / four-game selection, engine-backed actions: OK`);
 }finally{await browser.close();await new Promise(r=>server.close(r));}

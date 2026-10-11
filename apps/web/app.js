@@ -1,4 +1,4 @@
-import {renderGameChoices,updateGamePicker,stepGamePicker,filterGamePicker} from './game-picker.js';
+import {renderGameChoices,updateGamePicker,availableGames} from './game-picker.js';
 import {renderCatalogGame,handleCatalogAction} from './catalog-games.js';
 import {beginParchisRoll} from './parchis-dice.js';
 import {prepareCardPaint,restoreCardPaint} from './card-paint.js';
@@ -115,15 +115,16 @@ function playerCountLabel(game) {
 function renderHostForm() {
   if (GUEST) return renderJoinForm();
   state.screen = "host-form";
-  const games = renderGameChoices(listGames(),state.gameId,playerCountLabel);
+  if (!availableGames(listGames()).some(game=>game.id===state.gameId)) state.gameId = "";
+  const games = renderGameChoices(availableGames(listGames()),state.gameId,playerCountLabel);
   app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="back">← <span>Volver</span></button><button class="text-button" data-action="access-install">Mi acceso</button></header><section class="menu-setup" aria-labelledby="setup-title">
     <p class="menu-kicker">TÚ PONES LA MESA</p><h1 id="setup-title">Crear partida<span>.</span></h1>
     <div class="menu-fields"><div><label class="field-label" for="host-name">Tu nombre</label><input class="text-field" id="host-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}"></div>
     <div><label class="field-label" for="room-name">Nombre de la sala <span>opcional</span></label><input class="text-field" id="room-name" maxlength="30" placeholder="La de siempre" value="${esc(state.roomName)}"></div></div>
-    <fieldset class="menu-game-fieldset"><legend>Elige el juego</legend><input class="text-field menu-game-search" type="search" aria-label="Buscar juego" placeholder="Buscar juego" id="game-search">${games}</fieldset>
+    <fieldset class="menu-game-fieldset"><legend>Elige el juego</legend>${games}</fieldset>
     <button class="menu-button menu-primary menu-create" data-action="create-room">Crear sala <span aria-hidden="true">↗</span></button>
   </section></div></section>`;
-  updateGamePicker(app,{scroll:true,instant:true});
+  updateGamePicker(app);
 }
 
 function renderJoinForm() {
@@ -391,7 +392,6 @@ app.addEventListener("click", async (event) => {
   const action = button.dataset.action;
   if(turnSequence.busy&&isTurnAction(action))return;
   try {
-    if(action==='game-previous'||action==='game-next'){stepGamePicker(app,action==='game-next'?1:-1);return;}
     if(action.startsWith("catalog-") && handleCatalogAction(app,button,state.view,sendAction,renderGame))return;
     if (action === "open-table-zoom") { openTableZoom(); return; }
     if (action === "open-game-menu") { app.querySelector('.game-menu')?.showModal(); return; }
@@ -419,7 +419,7 @@ app.addEventListener("click", async (event) => {
     else if (action === "open-host") {
       if (GUEST) throw new Error('Esta invitación solo permite entrar en la sala.');
       try { await requireHostAccess(); } catch { renderAccess(); return; }
-      state.screen = "host-form"; state.gameId = LAN ? "cinquillo" : state.gameId || listGames()[0]?.id || ""; render();
+      state.screen = "host-form"; state.gameId = state.gameId || ""; render();
     }
     else if (action === "open-join") { state.screen = "join-form"; render(); }
     else if (action === "home" || action === "back") {
@@ -433,7 +433,7 @@ app.addEventListener("click", async (event) => {
       const gameId = document.querySelector('input[name="game"]:checked')?.value;
       const name = document.querySelector("#host-name")?.value.trim();
       const roomName = document.querySelector("#room-name")?.value.trim();
-      if (!name || !gameId) throw new Error("Elige un nombre y un juego para abrir la mesa.");
+      if (!name || !availableGames(listGames()).some(game=>game.id===gameId)) throw new Error("Elige un nombre y un juego para abrir la mesa.");
       state.name = name; state.roomName = roomName || `Partida de ${name}`; state.gameId = gameId; state.role = "host"; state.playerId = "host"; state.error = "";
       if (LAN) {
         const { LanSession } = await import("./lan-session.js");
@@ -532,7 +532,9 @@ app.addEventListener("input", (event) => {
 app.addEventListener("change", (event) => {
   if (event.target.matches('input[name="game"]')) {
     state.gameId = event.target.value;
-    updateGamePicker(app,{scroll:true});
+    updateGamePicker(app);
+    event.target.closest("details").open = false;
+    event.target.closest("details").querySelector("summary").focus();
   }
 });
 
@@ -700,5 +702,3 @@ app.addEventListener('submit', async event => {
   } catch (error) { errorEl.textContent = error.message; submit.disabled = false; }
   finally { accessBusy = false; }
 });
-
-app.addEventListener("input",event=>{if(event.target.id==="game-search")filterGamePicker(app,event.target.value);});

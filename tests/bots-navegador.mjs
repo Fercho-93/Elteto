@@ -21,11 +21,12 @@ try {
   page.on('pageerror',e=>errors.push(e.message));
   // Exercise the already-activated offline host path; activation has its own emulator suite.
   await page.addInitScript(()=>localStorage.setItem('elteto.hostAccess.v1',JSON.stringify({uid:'test-host',active:true})));
-  for(const engine of listGames()) {
+  for(const engine of listGames().filter(g=>["mus","parchis","texas-holdem","damas-espanolas"].includes(g.id))) {
     await page.goto(`http://127.0.0.1:${server.address().port}`);
     await page.locator('[data-action="open-host"]').click();
     await page.locator('#host-name').fill('Ana');
-    await page.locator(`.game-option:has(input[value="${engine.id}"])`).click();
+    await page.locator(`.game-category:has(input[value="${engine.id}"]) summary`).click();
+    await page.locator(`input[value="${engine.id}"]`).check();
     await page.locator('[data-action="create-room"]').click();
     assert.ok(await page.locator('[data-action="start-game"]').isDisabled());
     await page.getByRole('button',{name:'Completar mesa con IA',exact:true}).click();

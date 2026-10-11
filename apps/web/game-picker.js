@@ -21,24 +21,23 @@ function illustration(id){
  }
  return `<svg viewBox="0 0 120 108" aria-hidden="true" focusable="false">${art}</svg>`;
 }
+export const AVAILABLE_GAME_IDS = ['parchis','damas-espanolas','mus','texas-holdem'];
+export function availableGames(games){return AVAILABLE_GAME_IDS.map(id=>games.find(game=>game.id===id)).filter(Boolean);}
+const label = game => ({'damas-espanolas':'Damas','texas-holdem':'Póker'})[game.id] || game.label;
 export function renderGameChoices(games,selected,countLabel){
- return `<div class="game-options" aria-label="Juegos disponibles">${games.map(game=>{const kind=['parchis','oca','damas_espanolas','damas-espanolas'].includes(game.id)?'Tablero':game.id==='domino'?'Fichas':'Cartas';return `<label class="game-option ${game.id===selected?'chosen':''}"><input type="radio" name="game" value="${esc(game.id)}" ${game.id===selected?'checked':''}><span class="game-card-kind">${kind}</span><span class="game-check" aria-hidden="true">✓</span><span class="game-card-art">${illustration(game.id)}</span><span class="game-card-copy"><strong>${esc(game.label)}</strong><small>${countLabel(game)} jugadores</small></span></label>`;}).join('')}</div><p class="game-picker-empty" hidden>No hay juegos con ese nombre.</p><div class="game-picker-footer"><span class="game-picker-summary" role="status">Desliza para elegir</span><div class="game-picker-arrows"><button type="button" data-action="game-previous" aria-label="Elegir el juego anterior">←</button><button type="button" data-action="game-next" aria-label="Elegir el juego siguiente">→</button></div></div>`;
+ const groups=[{id:'board',title:'Juegos de Tablero',ids:['parchis','damas-espanolas'],art:'parchis'},{id:'cards',title:'Juegos de cartas',ids:games.filter(g=>!['parchis','damas-espanolas','oca'].includes(g.id)).map(g=>g.id),art:'mus'}];
+ return `<div class="game-categories" aria-label="Juegos disponibles">${groups.map(group=>{
+  const choices=games.filter(g=>group.ids.includes(g.id)),chosen=choices.find(g=>g.id===selected);
+  return `<details name="game-category" class="game-category ${chosen?'chosen':''}" data-category="${group.id}"><summary><span class="category-art">${illustration(group.art)}${group.id==='board'?illustration('damas-espanolas'):illustration('texas-holdem')}</span><strong class="category-title">${group.title}${chosen?': '+esc(label(chosen)):''}</strong><span class="category-hint">${chosen?'Seleccionado · '+countLabel(chosen)+' jugadores':'Pulsa para elegir'} <span aria-hidden="true">⌄</span></span></summary><div class="category-combo" role="group" aria-label="${group.title}">${choices.map(game=>`<label class="category-choice"><input type="radio" name="game" value="${esc(game.id)}" ${game.id===selected?'checked':''}><span>${esc(label(game))}</span><small>${countLabel(game)} jugadores</small></label>`).join('')}</div></details>`;
+ }).join('')}</div><p class="game-picker-summary" role="status">${selected?'Juego elegido: '+esc(label(games.find(g=>g.id===selected))):'Elige un juego para abrir la mesa'}</p>`;
 }
-export function updateGamePicker(app,{scroll=false,instant=false}={}){
- const track=app.querySelector('.game-options');if(!track)return;
- const visible=[...track.querySelectorAll('.game-option')].filter(option=>!option.hidden),selected=track.querySelector('input:checked')?.closest('.game-option');
- for(const option of track.querySelectorAll('.game-option'))option.classList.toggle('chosen',option===selected);
- const index=visible.indexOf(selected);app.querySelector('[data-action="game-previous"]').disabled=index<=0;app.querySelector('[data-action="game-next"]').disabled=!visible.length||index===visible.length-1;
- app.querySelector('.game-picker-empty').hidden=visible.length>0;
- app.querySelector('.game-picker-summary').textContent=selected?`Elegido: ${selected.querySelector('strong').textContent}`:'Desliza para elegir';
- if(scroll){const target=selected&&!selected.hidden?selected:visible[0];if(target){const a=track.getBoundingClientRect(),b=target.getBoundingClientRect();track.scrollTo({left:track.scrollLeft+b.left-a.left-(a.width-b.width)/2,behavior:instant||matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}}
-}
-export function stepGamePicker(app,direction){
- const options=[...app.querySelectorAll('.game-option')].filter(option=>!option.hidden),index=options.findIndex(option=>option.querySelector('input').checked),target=options[index<0?0:index+direction];
- target?.querySelector('input').click();target?.querySelector('input').focus({preventScroll:true});
-}
-export function filterGamePicker(app,query){
- const normal=value=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
- for(const option of app.querySelectorAll('.game-option')){option.hidden=!normal(option.querySelector('strong').textContent).includes(normal(query));option.querySelector('input').disabled=option.hidden;}
- updateGamePicker(app,{scroll:true,instant:true});
+export function updateGamePicker(app){
+ const input=app.querySelector('input[name="game"]:checked');
+ for(const category of app.querySelectorAll('.game-category')){
+  const chosen=category.contains(input),title=category.dataset.category==='board'?'Juegos de Tablero':'Juegos de cartas';
+  category.classList.toggle('chosen',chosen);
+  category.querySelector('.category-title').textContent=title+(chosen?': '+input.nextElementSibling.textContent:'');
+  category.querySelector('.category-hint').textContent=chosen?'Seleccionado · '+input.parentElement.querySelector('small').textContent+' ⌄':'Pulsa para elegir ⌄';
+ }
+ app.querySelector('.game-picker-summary').textContent=input?'Juego elegido: '+input.nextElementSibling.textContent:'Elige un juego para abrir la mesa';
 }
