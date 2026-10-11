@@ -1,0 +1,23 @@
+.play-header:has(.game-info-button){grid-template-columns:minmax(0,1fr) auto auto auto!important;gap:5px!important}
+.game-info-button{display:grid;place-items:center;width:44px;height:44px;min-width:44px;min-height:44px;border:1px solid #ddc38d55;border-radius:12px;background:#28232c;color:#e5cd94;flex:none;}
+.game-info-button span{display:grid;place-items:center;width:21px;height:21px;border:1.5px solid currentColor;border-radius:50%;font:700 15px/1 Georgia,serif;}
+.game-info-button:focus-visible{outline:2px solid #74e1dc;outline-offset:2px;}
+.game-help{width:min(800px,calc(100vw - 20px));height:calc(100dvh - 24px);max-height:calc(100dvh - 24px);padding:0;border:1px solid #c6ab7155;border-radius:20px;background:radial-gradient(ellipse at top,#352a3b,#191820);color:#fff0d7;box-shadow:0 14px 60px #0009;}
+.game-help[open]{display:flex;flex-direction:column;}
+.game-help::backdrop{background:#120d1cdd;}
+.game-help>header{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid #dec28b33;flex:none;}
+.game-help h1{font:800 20px/1.2 system-ui;margin:4px 0 0;}
+.help-eyebrow{font:700 9px/1.4 system-ui;letter-spacing:1.2px;color:#7ae7dd;margin:0;}
+.help-return{min-height:44px;min-width:44px;padding:8px 12px;border-radius:11px;border:1px solid #e6cd9455;background:#302a38;color:#ffe6b3;font:650 11px/1.3 system-ui;}
+.help-scroll{overflow:auto;overscroll-behavior:contain;min-height:0;padding:20px;font:400 14px/1.7 system-ui;scrollbar-width:thin;}
+.game-help h2{font:750 19px/1.4 system-ui;color:#e9cd90;margin:24px 0 12px;}
+.game-help h3,.game-help h4,.game-help h5,.game-help h6{font:750 16px/1.4 system-ui;color:#73e4d8;margin:24px 0 10px;}
+.game-help p{margin:10px 0 16px;}.game-help li{margin:9px 0;}.game-help ul,.game-help ol{padding-left:22px;}
+.help-table-rules{background:#ffffff05;border:1px solid #e4c99233;border-radius:14px;padding:16px;margin-bottom:28px;}
+.help-table-rules h2{margin-top:8px;}.help-table-rules li::marker{color:#f28caf;}
+.help-source>p{color:#c7bacb;font-size:12px;}.game-help a{color:#83e5db;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere;}
+.help-original{margin-top:20px;overflow-wrap:anywhere;}.help-original img{display:block;max-width:100%;height:auto;margin:16px auto;border-radius:10px;background:#fff8e4;}.help-original table{display:block;overflow-x:auto;border-collapse:collapse;max-width:100%;margin:16px 0;}.help-original th,.help-original td{padding:10px;border:1px solid #e3d0ac44;min-width:75px;}.help-original th{background:#ffffff08;color:#edcd92;}.help-original pre{white-space:pre-wrap;}
+.help-index{margin:18px 0;border:1px solid #ffffff26;border-radius:12px;padding:12px;}.help-index summary{color:#e9cd90;cursor:pointer;}.help-index>div{display:grid;gap:6px;margin-top:12px;}.help-index button{min-height:44px;padding:8px 12px;text-align:left;background:#ffffff08;color:#e6dfcf;border:0;border-radius:8px;font:600 12px/1.5 system-ui;}
+@media(max-width:359px){.game-help>header{padding:12px;}.game-help h1{font-size:17px;}.help-return{max-width:125px;}.help-scroll{padding:14px;font-size:13px;}.help-table-rules{padding:12px;}}
+.help-tabs{display:flex;gap:8px;padding:8px 16px;border-bottom:1px solid #ffffff16;flex:none;}
+.help-tabs button{flex:1;min-height:44px;padding:8px;border:1px solid #e5cb8c33;border-radius:10px;background:#ffffff05;color:#e9d6b0;font:650 11px/1.4 system-ui;}.help-tabs button:focus-visible,.help-return:focus-visible{outline:2px solid #79e4d7;outline-offset:2px;}

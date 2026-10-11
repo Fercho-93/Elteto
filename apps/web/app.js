@@ -1,3 +1,4 @@
+import {mountGameHelp,openGameHelp,closeGameHelp} from './game-help.js';
 import {renderAvatarArtwork,CHARACTER_NAMES,renderCharacterButton,renderCharacterDialog,validCharacter,savedCharacter,saveCharacter} from './avatar-art.js';
 import {renderGameChoices,updateGamePicker,availableGames} from './game-picker.js';
 import {renderCatalogGame,handleCatalogAction} from './catalog-games.js';
@@ -55,18 +56,20 @@ function receiveGame(change){if(state.screen==='poker-break'){state.view=change.
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')turnSequence.flush();});
 
 function renderHome() {
+  closeGameHelp();
   if (GUEST) { renderJoinForm(); return; }
   state.screen = "home";
   app.innerHTML = `<section class="menu-shell menu-home">
     <div class="menu-wrap">
       <div class="menu-hero">
         <div class="menu-art"><div class="menu-logo" role="img" aria-label="Elteto: personajes, dados y coche morado entre palmeras de neón"></div></div>
-        <div class="menu-intro"><h1>Se viene<br> <span>pique.</span></h1>
-          <nav class="menu-actions" aria-label="Menú principal">${!LAN || LAN.hostKey ? '<button class="menu-button menu-primary" data-action="open-host"><span class="menu-button-label">Crear partida</span><span class="menu-button-arrow" aria-hidden="true">↗</span></button>' : ''}<button class="menu-button menu-secondary" data-action="open-join"><span class="menu-button-label">Unirme a partida</span><span class="menu-button-arrow" aria-hidden="true">→</span></button><a class="menu-button menu-rules" href="./reglas_juegos/biblioteca.html"><span class="menu-button-label">Ver reglas</span><span class="menu-button-arrow" aria-hidden="true">↗</span></a></nav>
+        <div class="menu-intro"><h1>Se viene<br> <span>PIQUE!</span></h1>
+          <nav class="menu-actions" aria-label="Menú principal">${!LAN || LAN.hostKey ? '<button class="menu-button menu-primary" data-action="open-host"><span class="menu-button-label">Crear partida</span><span class="menu-button-arrow" aria-hidden="true">→</span></button>' : ''}<button class="menu-button menu-secondary" data-action="open-join"><span class="menu-button-label">Unirme a partida</span><span class="menu-button-arrow" aria-hidden="true">→</span></button></nav>
           ${!LAN && distributionConfig.developmentAdminEnabled ? '<button class="text-button access-switch" data-action="development-admin">Entrar como administrador</button>' : ''}
-          ${LAN ? '<p class="menu-network-note">Mesa local sin internet. Conecta todos los móviles a la misma Wi-Fi o hotspot.</p>' : ''}
+
         </div>
       </div>
+      <footer class="menu-credit">By Fercho&amp;PAS</footer>
     </div>
   </section>`;
 }
@@ -96,6 +99,7 @@ function renderInstallation() {
   </section></div></section>`;
 }
 function endGuestRoom(message = 'La sala ha terminado.') {
+  closeGameHelp();
   try{sessionStorage.removeItem(`elteto.joined.${state.roomCode}`);if(LAN)sessionStorage.removeItem(`elteto.lan.${location.host}.${state.roomCode}`);}catch{}
   turnSequence.reset();
   const session = state.online, guest = state.guest;
@@ -189,6 +193,7 @@ function renderLobby() {
     <div class="connection-box">${connectionTools}</div>
     </section></div>
   </section></div></section>`;
+  mountGameHelp(app,state.gameId);
   for (const canvas of app.querySelectorAll("[data-qr-action]")) {
     const value = canvas.dataset.qrAction === "answer" ? state.answerCode : state.offerCode;
     try { window.CONTINUUM.QrEncode.draw(canvas, value); }
@@ -203,7 +208,7 @@ let previousSeats = null;
 let shownResult = null;
 function renderGame() {
   if(!turnSequence.busy&&state.view)turnSequence.adopt({view:state.view,gameId:state.gameId,playerId:state.playerId});
-  const paint=prepareCardPaint(app);renderGameContents();restoreCardPaint(app,paint);turnSequence.decorate(app,state.playerId,playerName);
+  const paint=prepareCardPaint(app);renderGameContents();mountGameHelp(app,state.gameId);restoreCardPaint(app,paint);turnSequence.decorate(app,state.playerId,playerName);
 }
 function renderGameContents() {
   state.screen = "game";
@@ -405,6 +410,7 @@ app.addEventListener("click", async (event) => {
   const action = button.dataset.action;
   if(turnSequence.busy&&isTurnAction(action))return;
   try {
+    if(action==='open-game-help'){event.preventDefault();await openGameHelp(state.gameId,state.view);return;}
     if (action === 'choose-character') {
       app.insertAdjacentHTML('beforeend',renderCharacterDialog(state.character));
       const dialog=app.querySelector('.character-dialog');
