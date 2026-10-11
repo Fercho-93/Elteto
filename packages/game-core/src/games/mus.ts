@@ -46,6 +46,7 @@ export type MusState = {
   log: string[];
 };
 export type MusView = {
+  stockCount: number;
   ruleset: MusState["ruleset"];
   gamesWon: Record<Team, number>;
   targetGames: number;
@@ -587,6 +588,7 @@ export const musEngine: GameEngine<MusState, MusView, MusAction> = {
       handSizes: Object.fromEntries(
         state.players.map((p) => [p, state.hands[p].length]),
       ),
+      stockCount: state.stock.length,
       mano: state.players[state.mano],
       handNumber: state.handNumber,
       scores: state.scores,

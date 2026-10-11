@@ -2,7 +2,7 @@ import {validCharacter} from './avatar-art.js';
 // Presentation only: consumes a private engine view, never the host's hidden state.
 import { FRENCH_RANKS, SPANISH_RANKS, SPANISH_SUITS, canPlaceCinquillo } from "./game-core/index.js";
 import { renderRivalRoster, revealActivePlayer } from "./rival-portraits.js";
-import { cardAsset } from "./card-art.js";
+import { renderCardArtwork, renderCardBack, renderDrawPile } from "./card-art.js";
 export const escapeHtml = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -41,7 +41,7 @@ function suitArt(suit) {
   return `<svg class="suit-art" viewBox="0 0 60 60" aria-hidden="true">${art[suit] || ""}</svg>`;
 }
 export function cardFace(card) {
-  return `<span class="card-face"><span class="card-illustration"><img src="${cardAsset(card)}" alt="" draggable="false"></span></span>`;
+  return `<span class="card-face"><span class="card-illustration">${renderCardArtwork(card)}</span></span>`;
 }
 export function renderHandCard(card, options = {}) {
   return `<button class="playing-card ${options.selected ? "selected" : ""}" style="--card-tilt:${Number(options.tilt) || 0}deg" data-action="play-card" data-card-key="${esc(cardKey(card))}" ${options.disabled ? "disabled" : ""} ${options.selectable ? `aria-pressed="${Boolean(options.selected)}"` : ""} aria-label="${esc(card.rank + " de " + card.suit)}">${cardFace(card)}<span class="hand-index ${["corazones", "diamantes"].includes(card.suit) ? "card-red" : ""}" aria-hidden="true"><b>${esc(card.rank)}</b>${suitArt(card.suit)}</span></button>`;
@@ -125,7 +125,7 @@ export function renderSeats(view, playerId, name, gameId) {
       // card backs under the hands, forearms over them. No hidden values enter it.
       const position=x<20?'left':x>80?'right':x===50?'top':'upper';
       const compactLabel=gameId==='cinquillo'?`<div class="seat-label"><strong>${esc(name(id))}</strong><small>${count}<span class="seat-cards-word"> cartas</span></small></div>`:'';
-      const front = `<div class="seat-front ${active ? 'active-seat' : ''}" data-direction="${direction}" data-position="${position}" data-front-player="${esc(id)}" style="${style}" aria-hidden="true"><div class="seat-grip">${cardGame ? `<div class="rival-hand">${Array.from({ length: count }, (_, i) => `<i class="card-back" style="--fan-angle:${(i - (count - 1) / 2) * Math.min(10, 65 / Math.max(1, count))}deg"><span>✦</span></i>`).join('')}</div>` : ''}<div class="player-character forearms"><div class="character-sprite arm-left"></div><div class="character-sprite arm-right"></div></div></div>${compactLabel}</div>`;
+      const front = `<div class="seat-front ${active ? 'active-seat' : ''}" data-direction="${direction}" data-position="${position}" data-front-player="${esc(id)}" style="${style}" aria-hidden="true"><div class="seat-grip">${cardGame ? `<div class="rival-hand">${Array.from({ length: count }, (_, i) => `<i class="card-back" style="--fan-angle:${(i - (count - 1) / 2) * Math.min(10, 65 / Math.max(1, count))}deg">${renderCardBack()}</i>`).join('')}</div>` : ''}<div class="player-character forearms"><div class="character-sprite arm-left"></div><div class="character-sprite arm-right"></div></div></div>${compactLabel}</div>`;
       return `<article class="table-seat ${active ? 'active-seat' : ''}" data-direction="${direction}" data-position="${position}" data-player-id="${esc(id)}" style="${style}" aria-label="${esc(name(id))}, ${MASCOTS[character]}${cardGame ? `, ${count} cartas` : ''}${active ? ', turno activo' : ''}">${renderMascot(character, index)}${gameId==='cinquillo'?'':`<div class="seat-label"><strong>${esc(name(id))}</strong><small>${MASCOTS[character]}${gameId === 'mus' ? ` · ${team}` : ''}${cardGame ? ` · ${count} cartas` : ''}</small></div>`}${view.mano === id ? '<span class="mano-badge">Mano</span>' : ''}</article>${front}`;
 
     })
@@ -161,7 +161,7 @@ export const phaseLabels = {
 };
 export function renderMusBoard(view) {
   const pending = view.betting?.pendingBet;
-  return `<div class="mus-board"><div class="mus-phase"><small>MANO ${view.handNumber || 1} · A ${view.targetScore} TANTOS</small><strong>${esc(view.phase === "juego" && view.isPunto ? "Punto" : phaseLabels[view.phase])}</strong><span>${pending ? (pending.ordago ? "¡Órdago sobre la mesa!" : `Envite: ${pending.amount} tantos`) : view.phase === "discard" ? "Cambia tus cartas" : view.phase === "mus" ? "Mus o corta el descarte" : view.revealedHands ? "Cartas a la vista" : "Las cartas siguen ocultas"}</span></div><div class="table-stock"><i class="card-back"><span>✦</span></i><i class="card-back"><span>✦</span></i></div>${view.revealedHands ? `<div class="revealed-hands">${view.players.map((id, i) => `<div><small>Asiento ${i + 1} · Pareja ${i % 2 ? "B" : "A"}</small><div>${view.revealedHands[id].map((card) => `<span class="reveal-card">${cardFace(card)}</span>`).join("")}</div></div>`).join("")}</div>` : ""}</div>`;
+  return `<div class="mus-board"><div class="mus-phase"><small>MANO ${view.handNumber || 1} · A ${view.targetScore} TANTOS</small><strong>${esc(view.phase === "juego" && view.isPunto ? "Punto" : phaseLabels[view.phase])}</strong><span>${pending ? (pending.ordago ? "¡Órdago sobre la mesa!" : `Envite: ${pending.amount} tantos`) : view.phase === "discard" ? "Cambia tus cartas" : view.phase === "mus" ? "Mus o corta el descarte" : view.revealedHands ? "Cartas a la vista" : "Las cartas siguen ocultas"}</span></div>${view.revealedHands?'':renderDrawPile(view.stockCount??Math.max(0,40-view.players.length*4))}${view.revealedHands ? `<div class="revealed-hands">${view.players.map((id, i) => `<div><small>Asiento ${i + 1} · Pareja ${i % 2 ? "B" : "A"}</small><div>${view.revealedHands[id].map((card) => `<span class="reveal-card">${cardFace(card)}</span>`).join("")}</div></div>`).join("")}</div>` : ""}</div>`;
 }
 export function sortedHand(hand) {
   const suits = [

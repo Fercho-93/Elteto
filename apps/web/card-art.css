@@ -1,0 +1,15 @@
+.reference-card-art{display:block;width:100%;height:100%;background:#f8f2df;overflow:hidden;}
+.elteto-card-back{display:block;width:100%;height:100%;border-radius:inherit;background-image:url('./assets/decks/elteto-backs.jpg');background-repeat:no-repeat;background-size:246.154% 110.345%;background-position:13.158% 37.5%;}
+.elteto-card-back.deck-blue{background-size:247.742% 110.345%;background-position:87.009% 37.5%;}
+.card-back:has(.elteto-card-back),.catalog-card-back:has(.elteto-card-back){background:#fff6de;padding:0;border:0;overflow:hidden;}
+.card-back .elteto-card-back{font-size:0;}
+.deck-stock{position:relative;width:42px;height:65px;flex:none;margin:4px auto 10px;}
+.deck-stock-card{display:block;position:absolute;inset:0;border-radius:5px;box-shadow:0 2px 3px #0007;overflow:hidden;}
+.deck-stock-card:first-child{transform:translate(-3px,-2px) rotate(-6deg);}
+.deck-stock-card:nth-child(2){transform:rotate(3deg);}
+.deck-stock-count{position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);border-radius:10px;background:#191f2e;color:#fff3d3;border:1px solid #bcac80;padding:1px 6px;font:700 10px/14px system-ui;z-index:2;}
+.mus-board .deck-stock{width:38px;height:56px;}
+.catalog-screen .deck-stock{width:36px;height:54px;margin:0 auto 4px;}
+.poker-table .deck-stock{position:absolute;left:70%;top:25%;margin:0;width:30px;height:45px;z-index:2;}
+.catalog-card-back .elteto-card-back{min-height:0;}
+@media(min-width:600px) and (max-height:699px){.mus-board .deck-stock{width:27px;height:40px;margin:0 auto 5px;}.poker-table .deck-stock{width:25px;height:37px;}}

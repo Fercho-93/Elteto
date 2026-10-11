@@ -6,16 +6,16 @@ import {finishBoardMotion,preparePublicMotion,finishPublicMotion} from './board-
 import {getGamePlan} from './game-core/index.js';
 import {renderRivalRoster,revealActivePlayer} from './rival-portraits.js';
 import {mascotForSeat,MASCOTS,escapeHtml as esc} from './table-view.js';
-import {cardAsset} from './card-art.js';
+import {renderCardArtwork,renderCardBack,renderDrawPile} from './card-art.js';
 
-let pokerSpanishView=false;
+let pokerSpanishView=false,frenchDeckView=false;
 const ui={key:'',cards:new Set(),table:new Set(),path:[],tile:null};
 const symbols={oros:'●',copas:'♜',espadas:'⚔',bastos:'♣',picas:'♠',corazones:'♥',diamantes:'♦',treboles:'♣'};
 const actionButton=(label,action,extra='')=>`<button data-action="${action}" ${extra}>${esc(label)}</button>`;
-function face(card){if(!card)return '<span class="catalog-card-back" aria-label="Carta oculta">✦</span>';
+function face(card){if(!card)return `<span class="catalog-card-back" aria-label="Carta oculta">${renderCardBack(pokerSpanishView===false&&frenchDeckView)}</span>`;
  const pokerSpanish=['oros','copas','espadas','bastos'].includes(card.suit)&&['A','J','Q','K'].includes(card.rank);
  if(card.suit==='joker'||pokerSpanish||card.pokerSpanish||pokerSpanishView)return `<span class="catalog-drawn-face"><b>${esc(card.suit==='joker'?'★':card.rank)}</b><strong>${esc(card.suit==='joker'?'★':symbols[card.suit])}</strong><small>${esc(card.suit==='joker'?'COMODÍN':card.suit)}</small></span>`;
- return `<img src="${cardAsset(card)}" alt="${esc(card.rank)} de ${esc(card.suit)}" draggable="false">`;
+ return renderCardArtwork(card);
 }
 function cardHtml(card,{action,chosen=false,disabled=false,label}={}){const title=label||`${card.rank} de ${card.suit}`,tag=action?'button':'div';return `<${tag} class="catalog-card ${chosen?'is-selected':''} ${disabled?'is-muted':''}" data-public-piece="card-${esc(card.id)}" ${action?`data-action="${action}" data-card-id="${esc(card.id)}" aria-pressed="${chosen}" ${disabled?'disabled':''}`:''} aria-label="${esc(title)}">${face(card)}</${tag}>`;}
 function tile(t){return `<span class="domino-half" aria-label="${t.left}">${pips(t.left)}</span><span class="domino-half" aria-label="${t.right}">${pips(t.right)}</span>`;}
@@ -23,14 +23,14 @@ function pips(n){const positions={0:[],1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,
 function publicCards(cards){return `<div class="catalog-public-cards">${cards.map(c=>c?cardHtml(c):'<div class="catalog-card">'+face(null)+'</div>').join('')}</div>`;}
 function board(view,name,interactive=true,playerId=view.players[0]){
  switch(view.boardKind){
- case 'tricks':return `<div class="catalog-table-meta"><span>Triunfo <b>${esc(view.trump==='none'?'Sin triunfo':view.trump)}</b></span>${view.stockCount?`<span>Mazo <b>${view.stockCount}</b></span>`:''}${view.pinta&&view.stockCount?`<span>Pinta <b>${esc(view.pinta.rank)} de ${esc(view.pinta.suit)}</b></span>`:''}${view.multiplier>1?`<span>×${view.multiplier}</span>`:''}${view.pot?`<span>Plato <b>${view.pot}</b></span>`:''}</div><div class="catalog-trick">${view.trick.map(t=>`<div><small>${esc(name(t.player))}</small>${cardHtml(t.card)}</div>`).join('')||'<p class="catalog-empty">La mesa está lista</p>'}</div><div class="catalog-scoreline">${view.players.map(p=>`<span>${esc(name(p))}<b>${view.predictions[p]!==undefined?`${view.tricks[p]} / ${view.predictions[p]} bazas`:view.points[p]+' tantos'}</b></span>`).join('')}</div>`;
+ case 'tricks':return `${renderDrawPile(view.stockCount,false)}<div class="catalog-table-meta"><span>Triunfo <b>${esc(view.trump==='none'?'Sin triunfo':view.trump)}</b></span>${view.stockCount?`<span>Mazo <b>${view.stockCount}</b></span>`:''}${view.pinta&&view.stockCount?`<span>Pinta <b>${esc(view.pinta.rank)} de ${esc(view.pinta.suit)}</b></span>`:''}${view.multiplier>1?`<span>×${view.multiplier}</span>`:''}${view.pot?`<span>Plato <b>${view.pot}</b></span>`:''}</div><div class="catalog-trick">${view.trick.map(t=>`<div><small>${esc(name(t.player))}</small>${cardHtml(t.card)}</div>`).join('')||'<p class="catalog-empty">La mesa está lista</p>'}</div><div class="catalog-scoreline">${view.players.map(p=>`<span>${esc(name(p))}<b>${view.predictions[p]!==undefined?`${view.tricks[p]} / ${view.predictions[p]} bazas`:view.points[p]+' tantos'}</b></span>`).join('')}</div>`;
  case 'domino':return `<div class="domino-chain">${view.chain.map(t=>`<div class="domino-tile ${t.left===t.right?'is-double':''}" data-public-piece="tile-${esc(t.id)}" aria-label="${t.left} y ${t.right}">${tile(t)}</div>`).join('')||'<p class="catalog-empty">Coloca la primera ficha</p>'}</div>`;
  case 'checkers':return renderCheckersBoard(view,ui.path,playerId,name,interactive);
  case 'oca':return renderGooseBoard(view,name,!interactive);
- case 'capture':return `<div class="catalog-table-meta"><span>Mazo <b>${view.stockCount}</b></span></div><div class="capture-cards">${view.table.map(c=>cardHtml(c,{action:interactive?'catalog-table-card':undefined,chosen:ui.table.has(c.id)})).join('')||'<p class="catalog-empty">Mesa limpia</p>'}</div>${view.lastPlay?.capturedCount?`<div class="capture-receipt">${cardHtml(view.lastPlay.card)}<span><strong>${esc(name(view.lastPlay.player))}</strong><small>${view.lastPlay.sweep?'Escoba · ':''}Recoge ${view.lastPlay.capturedCount} de la mesa</small></span></div>`:''}`;
- case 'bluff':return `<div class="catalog-bluff-pile"><span class="catalog-card-back">✦</span><strong>${view.pileCount} cartas</strong>${view.declaration?`<p>${esc(name(view.declaration.player))}: ${view.declaration.count} de valor ${esc(view.declaration.rank||'—')}</p>`:''}</div>${view.reveal?`<p>${view.reveal.truth?'Decía la verdad':'Era mentira'}</p>${publicCards(view.reveal.cards)}`:''}`;
+ case 'capture':return `${renderDrawPile(view.stockCount,false)}<div class="catalog-table-meta"><span>Mazo <b>${view.stockCount}</b></span></div><div class="capture-cards">${view.table.map(c=>cardHtml(c,{action:interactive?'catalog-table-card':undefined,chosen:ui.table.has(c.id)})).join('')||'<p class="catalog-empty">Mesa limpia</p>'}</div>${view.lastPlay?.capturedCount?`<div class="capture-receipt">${cardHtml(view.lastPlay.card)}<span><strong>${esc(name(view.lastPlay.player))}</strong><small>${view.lastPlay.sweep?'Escoba · ':''}Recoge ${view.lastPlay.capturedCount} de la mesa</small></span></div>`:''}`;
+ case 'bluff':return `<div class="catalog-bluff-pile"><span class="catalog-card-back">${renderCardBack(frenchDeckView)}</span><strong>${view.pileCount} cartas</strong>${view.declaration?`<p>${esc(name(view.declaration.player))}: ${view.declaration.count} de valor ${esc(view.declaration.rank||'—')}</p>`:''}</div>${view.reveal?`<p>${view.reveal.truth?'Decía la verdad':'Era mentira'}</p>${publicCards(view.reveal.cards)}`:''}`;
  case 'burro':return `<div class="catalog-empty"><strong>${view.discardCount/2} parejas fuera</strong><p>${view.hiddenSource?`Robas de ${esc(name(view.hiddenSource))}`:''}</p></div>`;
- case 'melds':return `<div class="catalog-table-meta"><strong>${esc(view.contract)}</strong><span>Mazo ${view.stockCount}</span></div>${view.discard?`<div class="catalog-discard"><small>Descarte</small>${cardHtml(view.discard)}</div>`:''}<div class="catalog-melds">${view.players.filter(p=>view.exposed[p]?.length).map(p=>`<section><small>${esc(name(p))}</small>${view.exposed[p].map(g=>publicCards(g.cards)).join('')}</section>`).join('')}</div>`;
+ case 'melds':return `${renderDrawPile(view.stockCount,frenchDeckView)}<div class="catalog-table-meta"><strong>${esc(view.contract)}</strong><span>Mazo ${view.stockCount}</span></div>${view.discard?`<div class="catalog-discard"><small>Descarte</small>${cardHtml(view.discard)}</div>`:''}<div class="catalog-melds">${view.players.filter(p=>view.exposed[p]?.length).map(p=>`<section><small>${esc(name(p))}</small>${view.exposed[p].map(g=>publicCards(g.cards)).join('')}</section>`).join('')}</div>`;
  case 'poker':return renderPokerTable(view,name,playerId,publicCards);
  case 'bank':return `<div class="catalog-table-meta"><span>Banca <b>${esc(name(view.bank))}</b></span></div><div class="catalog-public-hands">${view.players.map(p=>`<section><small>${esc(name(p))}${view.bets[p]?` · apuesta ${view.bets[p]}`:''}</small>${publicCards(view.publicHands[p])}</section>`).join('')}</div>`;
  default:return '';
@@ -39,7 +39,7 @@ function board(view,name,interactive=true,playerId=view.players[0]){
 export function renderCatalogGame(app,view,playerId,name,error=''){
  const previousPoker=app.pokerSnapshot;
  const publicMotion=preparePublicMotion(app,view);
- pokerSpanishView=view.id==='remigio';
+ pokerSpanishView=view.id==='remigio';frenchDeckView=getGamePlan(view.id).material.includes('french');
  const plan=getGamePlan(view.id),key=`${view.id}:${view.handNumber}:${view.turnPlayer}:${view.phase}:${view.boardKind==='poker'?JSON.stringify(view.street):''}`,amounts=ui.key===key?[...app.querySelectorAll('.catalog-amount input')].map(input=>({id:input.id,value:input.value})):[];if(ui.key!==key){ui.key=key;ui.cards.clear();ui.table.clear();ui.path=[];ui.tile=null;}
  const zoom=app.querySelector('.catalog-zoom')?.open,zoomScroll=app.querySelector('.catalog-zoom-content')?.scrollTop||0;
  const menu=app.querySelector('.game-menu')?.open,menuScroll=app.querySelector('.game-menu-content')?.scrollTop||0,boardScroll=app.querySelector('.catalog-surface')?.scrollTop||0,handScroll=app.querySelector('.catalog-hand')?.scrollLeft||0;
