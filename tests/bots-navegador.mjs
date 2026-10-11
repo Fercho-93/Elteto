@@ -20,7 +20,7 @@ try {
   const page=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block',reducedMotion:'reduce'});
   page.on('pageerror',e=>errors.push(e.message));
   // Exercise the already-activated offline host path; activation has its own emulator suite.
-  await page.addInitScript(()=>localStorage.setItem('elteto.hostAccess.v1',JSON.stringify({uid:'test-host',active:true})));
+  await page.addInitScript(()=>{localStorage.setItem('elteto.profileReady','1');localStorage.setItem('elteto.playerName','Prueba');localStorage.setItem('elteto.character','0');localStorage.setItem('elteto.hostAccess.v1',JSON.stringify({uid:'test-host',active:true}));});
   for(const engine of listGames().filter(g=>["mus","parchis","texas-holdem","damas-espanolas"].includes(g.id))) {
     await page.goto(`http://127.0.0.1:${server.address().port}`);
     await page.locator('[data-action="open-host"]').click();

@@ -104,3 +104,12 @@ html:has(.catalog-screen),body:has(.catalog-screen),body:has(.catalog-screen) #a
 .poker-revealed-hands .poker-showdown{position:static;transform:none;min-width:0;text-align:center;}
 .poker-revealed-hands .poker-showdown>strong{display:block;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .poker-revealed-hands .catalog-card{width:30px!important;}
+
+.poker-chip-pile{gap:10px;padding:3px 0 8px;line-height:1.2;}
+.poker-chip-pile>b{display:block;position:static;min-width:2ch;padding:2px 5px;background:#123d30;border-radius:6px;font-variant-numeric:tabular-nums;}
+.poker-chip-pile .poker-chip{margin-right:2px;flex:none;}
+.poker-pot>small{max-width:110px;white-space:normal;}
+.poker-moving-chip{gap:8px;pointer-events:none;}
+.poker-moving-chip>b{padding:2px 4px;background:#143c30;border-radius:5px;}
+.profile-setup .character-picker-button{margin:14px 0;width:100%;}
+.profile-edit{margin:0 auto;display:block;font-size:12px;}

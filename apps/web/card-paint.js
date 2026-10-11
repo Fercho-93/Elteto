@@ -20,3 +20,21 @@ export function restoreCardPaint(app,pool){
  for(const [url,faces] of pool){for(const image of faces)image.remove();if(!faces.length)pool.delete(url);else pool.set(url,faces.slice(0,2));}
  pools.set(app,pool);
 }
+
+// Keep decoded SVG image nodes alive as well: rebuilding them causes a WebKit flash.
+export function prepareAvatarPaint(app){
+ const pool=new Map();
+ for(const svg of app.querySelectorAll('svg')){
+  const image=svg.querySelector('image[href*="elteto-avatars"]');if(!image)continue;
+  const key=[svg.closest('[data-player-id]')?.dataset.playerId||'',svg.closest('dialog')?.className||'',svg.getAttribute('viewBox'),image.getAttribute('href')].join('|');
+  const nodes=pool.get(key)||[];nodes.push(svg);pool.set(key,nodes);
+ }
+ return pool;
+}
+export function restoreAvatarPaint(app,pool){
+ for(const svg of app.querySelectorAll('svg')){
+  const image=svg.querySelector('image[href*="elteto-avatars"]');if(!image)continue;
+  const key=[svg.closest('[data-player-id]')?.dataset.playerId||'',svg.closest('dialog')?.className||'',svg.getAttribute('viewBox'),image.getAttribute('href')].join('|');
+  const previous=pool.get(key)?.shift();if(previous)svg.replaceWith(previous);
+ }
+}

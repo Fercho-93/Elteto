@@ -41,7 +41,7 @@ async function movil(label) {
     const name = route.request().url().split("/").pop();
     route.fulfill({ contentType: "text/javascript", body: await fs.readFile(path.join(root, "node_modules/firebase", name), "utf8") });
   });
-  await context.addInitScript(() => { globalThis.__ELTETO_FIREBASE_EMULATOR = { auth: "http://127.0.0.1:9099", firestoreHost: "127.0.0.1", firestorePort: 8080 }; });
+  await context.addInitScript(() => { localStorage.setItem('elteto.profileReady','1');localStorage.setItem('elteto.playerName','Prueba');localStorage.setItem('elteto.character','0'); globalThis.__ELTETO_FIREBASE_EMULATOR = { auth: "http://127.0.0.1:9099", firestoreHost: "127.0.0.1", firestorePort: 8080 }; });
   const page = await context.newPage();
   const log = [];
   page.on("pageerror", (error) => log.push(`pageerror ${error.message}`));

@@ -32,7 +32,7 @@ try {
    const body=(await readFile('dist/game-picker.js','utf8')).replace("ids:['parchis','damas-espanolas']","ids:['parchis','damas-espanolas','oca']");
    await route.fulfill({body,contentType:'text/javascript'});
   });
-  await ctx.addInitScript(name=>localStorage.setItem('elteto.playerName',name),name);
+  await ctx.addInitScript(name=>{localStorage.setItem('elteto.profileReady','1');localStorage.setItem('elteto.character','0');localStorage.setItem('elteto.playerName',name);},name);
   await ctx.addInitScript(()=>{window.EltetoActivation={isActivated:()=>true,isOpenAccess:()=>true};});
   const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));return page;
  };

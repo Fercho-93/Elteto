@@ -4,7 +4,7 @@ import {renderAvatarArtwork,CHARACTER_NAMES,renderCharacterButton,renderCharacte
 import {renderGameChoices,updateGamePicker,availableGames} from './game-picker.js';
 import {renderCatalogGame,handleCatalogAction} from './catalog-games.js';
 import {beginParchisRoll} from './parchis-dice.js';
-import {prepareCardPaint,restoreCardPaint} from './card-paint.js';
+import {prepareCardPaint,restoreCardPaint,prepareAvatarPaint,restoreAvatarPaint} from './card-paint.js';
 import {TurnSequence,isTurnAction} from './turn-sequence.js';
 import { getGame, listGames, getGamePlan } from "./game-core/index.js";
 import { LocalGuestSession, LocalHostSession } from "./local-session.js";
@@ -56,6 +56,11 @@ const turnSequence=new TurnSequence({
 function receiveGame(change){if(state.screen==='poker-break'){state.view=change.view;state.players=change.players||state.players;render();return;}turnSequence.receive({...change,gameId:change.gameId||state.gameId,playerId:change.playerId||state.playerId,players:change.players||state.players});}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')turnSequence.flush();});
 
+function renderProfile(){
+ state.screen='profile';
+ app.innerHTML=`<section class="menu-shell"><div class="menu-wrap"><section class="menu-setup profile-setup"><span class="menu-brand">ELTETO ✦</span><h1>¿Quién se sienta a la mesa?</h1><label class="field-label" for="profile-name">Tu nombre</label><input class="text-field" id="profile-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}">${renderCharacterButton(state.character)}<button class="button button-cyan full-button" data-action="profile-confirm">Entrar</button><p class="helper">Usaremos este nombre y personaje en tus partidas.</p></section></div></section>`;
+ app.querySelector('#profile-name').focus({preventScroll:true});
+}
 function renderHome() {
   closeGameHelp();
   if (GUEST) { renderJoinForm(); return; }
@@ -70,7 +75,7 @@ function renderHome() {
 
         </div>
       </div>
-      <footer class="menu-credit">By Fercho&amp;PAS</footer>
+      <button class="text-button profile-edit" data-action="edit-profile">Mi nombre y personaje</button><footer class="menu-credit">By Fercho&amp;PAS</footer>
     </div>
   </section>`;
 }
@@ -209,7 +214,7 @@ let previousSeats = null;
 let shownResult = null;
 function renderGame() {
   if(!turnSequence.busy&&state.view)turnSequence.adopt({view:state.view,gameId:state.gameId,playerId:state.playerId});
-  const paint=prepareCardPaint(app);renderGameContents();mountGameHelp(app,state.gameId);restoreCardPaint(app,paint);turnSequence.decorate(app,state.playerId,playerName);
+  const paint=prepareCardPaint(app),avatars=prepareAvatarPaint(app);renderGameContents();mountGameHelp(app,state.gameId);restoreCardPaint(app,paint);restoreAvatarPaint(app,avatars);turnSequence.decorate(app,state.playerId,playerName);
 }
 function renderGameContents() {
   state.screen = "game";
@@ -347,10 +352,11 @@ async function takePokerBreak(){
 }
 function renderPokerBreak(){
  const chips=state.view?.chips?.[state.playerId]||0;
- app.innerHTML=`<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><span class="menu-brand">ELTETO ✦</span></header><section class="menu-setup"><h1>Tu sitio sigue reservado</h1><p>Conservas tu personaje y tus ${chips.toLocaleString('es-ES')} fichas. Las ciegas siguen contando mientras estás ausente.</p><p>Si te toca y no vuelves en 12 segundos, pasarás cuando sea gratis o te retirarás si hay una apuesta. Si todos están ausentes, se espera.</p><button class="button button-cyan full-button" data-action="poker-return">Volver a la partida</button></section></div></section>`;
+ app.innerHTML=`<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><span class="menu-brand">ELTETO ✦</span></header><section class="menu-setup"><h1>Tu sitio sigue reservado</h1><p>Conservas tu personaje y tus ${chips.toLocaleString('es-ES')} fichas. Las ciegas siguen contando mientras estás ausente.</p><p>Si te toca y no vuelves en 12 segundos, pasarás cuando sea gratis o te retirarás si hay una apuesta. Si todos están ausentes, se espera.</p><button class="button button-cyan full-button" data-action="poker-return">Volver a la partida</button><button class="button full-button" data-action="leave-room">Salir de la partida</button></section></div></section>`;
 }
 function render() {
-  if(state.screen==='poker-break')renderPokerBreak();
+  if(state.screen==='profile')renderProfile();
+  else if(state.screen==='poker-break')renderPokerBreak();
   else if (state.screen === 'access') renderAccess();
   else if (state.screen === 'installation') renderInstallation();
   else if (state.screen === 'guest-ended') renderGuestEnded();
@@ -365,7 +371,7 @@ function resetToHome() {
   turnSequence.reset();
   if (GUEST) { endGuestRoom(); return; }
   previousTableKeys = null; renderedGame = null; previousTurn = null; previousSeats = null; shownResult = null;
-  Object.assign(state, { role: null, name: "", players: [], view: null, host: null, guest: null, online: null, roomCode: "", offerCode: "", answerCode: "", selected: new Set(), error: "", screen: "home" });
+  Object.assign(state, { role: null, players: [], view: null, host: null, guest: null, online: null, roomCode: "", offerCode: "", answerCode: "", selected: new Set(), error: "", screen: "home" });
   renderHome();
 }
 
@@ -412,6 +418,12 @@ app.addEventListener("click", async (event) => {
   const action = button.dataset.action;
   if(turnSequence.busy&&isTurnAction(action))return;
   try {
+    if(action==='profile-confirm'){
+      const name=app.querySelector('#profile-name').value.trim();if(!name){flash('Escribe tu nombre para entrar.');return;}
+      state.name=name;saveCharacter(state.character);try{localStorage.setItem('elteto.playerName',name);localStorage.setItem('elteto.profileReady','1');}catch{}
+      startApplication();return;
+    }
+    if(action==='edit-profile'){renderProfile();return;}
     if(action==='open-mus-panel'){app.querySelector('.game-menu')?.close();openMusPanel(app,button.dataset.kind);return;}
     if(action==='close-mus-panel'){app.querySelector('.mus-detail')?.close();return;}
     if(action==='mus-bet-less'||action==='mus-bet-more'){const input=app.querySelector('#bet-amount');input.value=String(Math.max(Number(input.min),Math.min(Number(input.max),Number(input.value)+(action==='mus-bet-more'?1:-1))));return;}
@@ -462,7 +474,6 @@ app.addEventListener("click", async (event) => {
     else if (action === "open-join") { state.screen = "join-form"; render(); }
     else if (action === "home" || action === "back") {
       event.preventDefault();
-      if(await takePokerBreak())return;
       if (state.online) await state.online.exit(); else { state.host?.close(); state.guest?.leave(); }
       if (GUEST && state.role === 'client') endGuestRoom(); else resetToHome();
     }
@@ -557,8 +568,8 @@ app.addEventListener("click", async (event) => {
       await (state.online||state.host||state.guest)?.setSittingOut(false);
       state.screen='game';state.error='';render();
     }
+    else if (action === "poker-break") { await takePokerBreak(); }
     else if (action === "leave-room") {
-      if(await takePokerBreak())return;
       if (state.online) await state.online.exit(); else { state.host?.close(); state.guest?.leave(); }
       resetToHome();
     }
@@ -571,7 +582,8 @@ app.addEventListener("click", async (event) => {
 });
 
 app.addEventListener("input", (event) => {
-  if (event.target.matches("#host-name")) state.name = event.target.value;
+  if (event.target.matches("#profile-name")) state.name=event.target.value;
+  else if (event.target.matches("#host-name")) state.name = event.target.value;
   else if (event.target.matches("#join-name")) state.name = event.target.value;
   else if (event.target.matches("#room-name")) state.roomName = event.target.value;
 });
@@ -727,6 +739,7 @@ function sendAction(action) {
   else state.guest.sendAction(action);
 }
 const incomingRoom = parseRoomCode(location.search);
+function startApplication(){
 if (incomingRoom) {
   state.offerCode=incomingRoom;
   try{state.name=localStorage.getItem('elteto.playerName') || '';}catch{}
@@ -735,12 +748,17 @@ if (incomingRoom) {
   if(returning)beginOnlineJoin(incomingRoom,state.name || 'Invitado').catch(error=>{state.error=error.message;renderJoinForm();flash(state.error);});
   else renderJoinForm();
 } else renderHome();
-if (!LAN && !GUEST && "serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
-if (GUEST) document.querySelector('link[rel="manifest"]')?.remove();
 if (adminCode && !GUEST && !OPEN_LAN_HOST) {
   app.innerHTML = '<section class="menu-shell"><div class="menu-wrap"><section class="menu-setup access-panel"><p class="menu-kicker">DESARROLLO</p><h1>Entrando<span>…</span></h1></section></div></section>';
   activateDevelopmentAdmin(adminCode).then(() => { adminCode = ''; renderInstallation(); }).catch(error => { adminCode = ''; renderAccess(); app.querySelector('#access-error').textContent = error.message; });
 } else if (activationCode && !GUEST && !OPEN_LAN_HOST) renderAccess();
+
+}
+try{state.name=localStorage.getItem('elteto.playerName')||'';}catch{}
+let profileReady=false;try{profileReady=localStorage.getItem('elteto.profileReady')==='1'&&Boolean(state.name.trim());}catch{}
+if(profileReady)startApplication();else renderProfile();
+if (!LAN && !GUEST && "serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
+if (GUEST) document.querySelector('link[rel="manifest"]')?.remove();
 
 app.addEventListener('submit', async event => {
   if (event.target.id !== 'access-form') return;

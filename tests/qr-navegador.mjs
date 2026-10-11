@@ -8,6 +8,7 @@ const kind=process.env.QR_BROWSER||'chromium',browser=await (kind==='webkit'?web
 try{
  const page=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block'}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(()=>{localStorage.setItem('elteto.profileReady','1');localStorage.setItem('elteto.playerName','Prueba');localStorage.setItem('elteto.character','0');});
  await page.goto(`http://127.0.0.1:${server.address().port}`);
  await page.evaluate(()=>{if(!navigator.mediaDevices)Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{}});});
  // Real QR pixels, production encoder and decoder. Only the camera source is simulated.

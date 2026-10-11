@@ -35,6 +35,7 @@ export function publicTurnEvent(before,after){
  if(!meaningful)return null;
  const actor=roll?.player||checkers?.player||capture?.player||speech?.player||trick?.player||discarded||before.turnPlayer;
  let motion=after.boardKind==='domino'?PIECE_TRANSFER:1200,kind='action',detail=after.log?.at(-1)||'Jugada realizada';
+ if(after.boardKind==='poker'&&before.handNumber!==after.handNumber)motion=1500;
  if(roll){kind='roll';motion=DICE_DURATION;detail=`Dado: ${roll.value}`;}
  if(after.boardKind==='oca'&&roll){kind='goose';motion=Math.max(...gooseFlights(before,after,roll).map(f=>f.delay+f.duration));detail=`Dado ${roll.value} · ${roll.from} → ${roll.to}${roll.to!==roll.landing?' · casilla especial':''}`;}
  if(checkers){kind='checkers';motion=(checkers.path.length-1)*CHECKER_STEP+(checkers.captures.length?CAPTURE_FADE:0);detail=`${checkers.path.map(i=>i+1).join(' → ')}${checkers.captures.length?` · ${checkers.captures.length} capturas`:''}`;}

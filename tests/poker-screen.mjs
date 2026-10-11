@@ -4,7 +4,7 @@ import {readFile,mkdir} from 'node:fs/promises';
 import {getGame} from '../dist/game-core/index.js';
 import {chromium,webkit} from 'playwright';
 let fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1];
-fixture+=`\nwindow.pokerFixture=(game,id)=>{window.testTable('texas-holdem',game,id);state.players.forEach((p,i)=>p.character=i+2);state.host.setSittingOut=value=>window.testAway=value;renderGame();};window.pokerUpdate=view=>receiveGame({kind:'game',view,players:state.players});`;
+fixture+=`\nwindow.pokerFixture=(game,id)=>{window.testTable('texas-holdem',game,id);state.players.forEach((p,i)=>p.character=i+2);state.host.setSittingOut=value=>window.testAway=value;state.host.close=()=>window.testClosed=true;renderGame();};window.pokerUpdate=view=>receiveGame({kind:'game',view,players:state.players});`;
 const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://local').pathname.slice(1)||'index.html';let body=await readFile('dist/'+file);if(file==='app.js')body=Buffer.from(body+fixture);res.setHeader('content-type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.svg')?'image/svg+xml':'text/html');res.end(body);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await (process.env.POKER_BROWSER==='webkit'?webkit:chromium).launch();const errors=[];
 try{
@@ -43,7 +43,7 @@ try{
  }
  await page.setViewportSize({width:390,height:844});let game=engine.createInitialState(['p0','p1','p2'],9);
  await page.evaluate(game=>window.pokerFixture(game,game.players[game.turn]),game);
- await page.locator('.game-menu-button').click();await page.locator('[data-action="leave-room"]').click();
+ await page.locator('.game-menu-button').click();await page.locator('[data-action="poker-break"]').click();
  assert.ok(await page.getByText('Tu sitio sigue reservado').isVisible());assert.equal(await page.evaluate(()=>window.testAway),true);
  game=engine.applyAction(game,game.players[game.turn],{type:'fold'});
  await page.evaluate(view=>window.pokerUpdate(view),engine.view(game,'p0'));
@@ -56,5 +56,6 @@ try{
  game.chips.p0=0;await page.evaluate(game=>window.pokerFixture(game,'p0'),game);
  assert.match(await page.locator('.catalog-surface .self-seat .poker-status').textContent(),/Observador/);
  await mkdir('tests/artifacts/poker',{recursive:true});await page.screenshot({path:'tests/artifacts/poker/table.png'});
+ await page.locator('.game-menu-button').click();await page.locator('[data-action="leave-room"]').click();assert.equal(await page.evaluate(()=>window.testClosed),true);assert.equal(await page.locator('.poker-table').count(),0);
  assert.deepEqual(errors,[]);console.log(`Póker ${process.env.POKER_BROWSER||'chromium'}: ${layouts} layouts, apuestas/bote, observador y ausentarse/volver: OK`);
 }finally{await browser.close();await new Promise(r=>server.close(r));}

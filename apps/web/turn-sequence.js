@@ -42,7 +42,7 @@ export class TurnSequence {
   }
   if(!this.current)return;
   const view=this.current.view,actor=this.busy?this.event.actor:view.finished?null:view.turnPlayer;
-  if((this.busy||root.dataset.motionBusy!=='true')&&(view.phase!=='discard'||this.busy))for(const seat of root.querySelectorAll('.rival-seat,.mus-seat')){
+  if((this.busy||root.dataset.motionBusy!=='true')&&(view.phase!=='discard'||this.busy))for(const seat of root.querySelectorAll('.rival-seat,.mus-seat,.poker-seat')){
    const active=seat.dataset.playerId===actor;seat.classList.toggle('active-seat',active);
    if(active)seat.setAttribute('aria-current','true');else seat.removeAttribute('aria-current');
    const marker=seat.querySelector('.player-turn-marker');

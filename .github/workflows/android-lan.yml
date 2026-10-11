@@ -47,6 +47,8 @@ jobs:
       - run: node tests/card-art-screen.mjs
       - run: node tests/poker-screen.mjs
       - run: POKER_BROWSER=webkit node tests/poker-screen.mjs
+      - run: node tests/player-experience.mjs
+      - run: EXPERIENCE_BROWSER=webkit node tests/player-experience.mjs
       - run: node tests/catalog-screen.mjs
       - run: CATALOG_BROWSER=webkit node tests/catalog-screen.mjs
       - run: node tests/cinquillo-layout.mjs

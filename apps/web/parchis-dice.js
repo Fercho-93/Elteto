@@ -10,7 +10,8 @@ function context(app){if(!contexts.has(app))contexts.set(app,{sequence:null,dead
 const orientation=(value,x=0,y=0)=>{const [rx,ry]=angles[value];return `rotateX(-14deg) rotateY(18deg) rotateX(${rx+x}deg) rotateY(${ry+y}deg)`;};
 export function renderParchisDie(view,name){
  const value=view.lastRoll?.value??view.die??1,rolled=!!(view.lastRoll||view.die);
- const label=view.lastRoll?`${name(view.lastRoll.player)}: ${value}`:rolled?`Resultado: ${value}`:'Sin tirar';
+ const prefix=view.boardKind!=='oca'?(view.lastRoll?.initial?'Inicial · solo orden':view.phase==='roll'?'Última tirada':'Tirada actual'):'';
+ const label=view.lastRoll?`${prefix?prefix+' · ':''}${name(view.lastRoll.player)}: ${value}`:rolled?`Resultado: ${value}`:'Sin tirar';
  return `<div class="parchis-die" aria-label="${esc(label)}" data-result="${rolled?value:0}" data-roll-id="${view.lastRoll?.sequence??0}"><div class="die-stage" aria-hidden="true"><i class="die-shadow"></i><div class="die-flight"><div class="die-cube" style="transform:${orientation(value)}">${[1,2,3,4,5,6].map(n=>`<span class="die-face face-${n}">${pipSlots[n].map(slot=>`<i style="grid-area:${Math.ceil(slot/3)} / ${(slot-1)%3+1}"></i>`).join('')}</span>`).join('')}</div></div></div><small>${esc(label)}</small></div>`;
 }
 function lock(app,busy,targets=PARCHIS_TARGETS){

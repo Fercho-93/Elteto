@@ -71,3 +71,12 @@ for(let seed=1;seed<=90;seed++){
  const view=engine.view(game,ids[0]);view.pieces[ids[0]][0]=-999;assert.notEqual(game.pieces[ids[0]][0],-999);
 }
 console.log('Parchís: 90 full games, starting ties, safe cells, barriers, forced opening, captures, exact finish, bonus chains, third six, immutability and public views: OK');
+
+// A five during opening determines order only; an actual five enables every home pawn.
+let five=dieState(engine.createInitialState(['a','b'],1),5);five=engine.applyAction(five,'a',{type:'roll'});
+assert.equal(five.phase,'start');assert.deepEqual(five.pieces.a,[-1,-1,-1,-1]);
+five=dieState(five,3);five=engine.applyAction(five,'b',{type:'roll'});assert.equal(five.phase,'roll');assert.equal(five.turn,0);
+five=dieState(five,5);five=engine.applyAction(five,'a',{type:'roll'});assert.equal(five.phase,'move');assert.equal(legalParchisMoves(five).filter(m=>m.from===-1).length,4);
+assert.equal(engine.view(five,'b').legalMoves.length,0);
+five=engine.applyAction(five,'a',{type:'move',piece:2});assert.equal(five.pieces.a[2],0);
+console.log('Parchís: opening five, playable five, private turn actions and blocked full starts: OK');
