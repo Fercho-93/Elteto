@@ -1,7 +1,7 @@
 import {speechText} from './table-speech.js';
 import {DICE_DURATION,PAWN_STEP,CHECKER_STEP,PIECE_TRANSFER,CAPTURE_FADE,gooseFlights} from './game-physics.js';
 // Public differences only: never use an opponent's private hand or future options.
-export const TURN_INTRO=350,TURN_RESULT=1100;
+export const TURN_INTRO=1000,TURN_RESULT=2000;
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 export const viewIdentity=(change)=>`${change.gameId||change.view.id}:${change.view.players.join('|')}:${change.playerId||''}:${change.view.handNumber||1}`;
 export function parchisRoutes(before,after){
@@ -15,7 +15,14 @@ export function parchisRoutes(before,after){
  return moved;
 }
 export function publicTurnEvent(before,after){
- if(after?.version===2&&after.ruleset==='eight-kings'&&after.stage)return null;
+ if(after?.version===2&&after.ruleset==='eight-kings'&&after.stage){
+  if(!before||before.revision===after.revision)return null;
+  const fresh=after.events.filter(e=>e.sequence>(before.events.at(-1)?.sequence||0));
+  const played=fresh.find(e=>e.player);
+  if(!played)return null;
+  const action=({mus:'Da MUS',cut:'Corta el mus','discard-confirm':'Confirma descarte',declared:'Declara su jugada',pass:'PASA',BET:`ENVIDA ${played.amount}`,RAISE:`REENVÍA A ${played.amount}`,ORDAGO:'ÓRDAGO',accept:'QUIERO',reject:'NO QUIERO'})[played.type]||'Habla';
+  return {actor:played.player,action,detail:played.text,result:fresh.filter(e=>e.type!=='transition').map(e=>e.text).join(' · '),kind:'mus',motion:1400,pawns:[]};
+ }
  if(!before||!after||!same(before.players,after.players))return null;
  const roll=after.lastRoll&&(after.lastRoll.sequence!==before.lastRoll?.sequence)?after.lastRoll:null;
  const checkers=after.boardKind==='checkers'&&!same(before.lastMove,after.lastMove)?after.lastMove:null;
@@ -27,7 +34,7 @@ export function publicTurnEvent(before,after){
  const meaningful=roll||checkers||speech||pawns.length||!same(before.log,after.log)||before.phase!==after.phase||before.turnPlayer!==after.turnPlayer||!same(before.handSizes,after.handSizes)||!same(before.scores,after.scores);
  if(!meaningful)return null;
  const actor=roll?.player||checkers?.player||capture?.player||speech?.player||trick?.player||discarded||before.turnPlayer;
- let motion=after.boardKind==='domino'?PIECE_TRANSFER:700,kind='action',detail=after.log?.at(-1)||'Jugada realizada';
+ let motion=after.boardKind==='domino'?PIECE_TRANSFER:1200,kind='action',detail=after.log?.at(-1)||'Jugada realizada';
  if(roll){kind='roll';motion=DICE_DURATION;detail=`Dado: ${roll.value}`;}
  if(after.boardKind==='oca'&&roll){kind='goose';motion=Math.max(...gooseFlights(before,after,roll).map(f=>f.delay+f.duration));detail=`Dado ${roll.value} · ${roll.from} → ${roll.to}${roll.to!==roll.landing?' · casilla especial':''}`;}
  if(checkers){kind='checkers';motion=(checkers.path.length-1)*CHECKER_STEP+(checkers.captures.length?CAPTURE_FADE:0);detail=`${checkers.path.map(i=>i+1).join(' → ')}${checkers.captures.length?` · ${checkers.captures.length} capturas`:''}`;}
@@ -35,12 +42,12 @@ export function publicTurnEvent(before,after){
  // Announce the action independently of which player won its result.
  let action=kind==='roll'||kind==='goose'?'Tira el dado':kind==='checkers'||kind==='parchis'?'Mueve ficha':trick?'Juega carta':after.boardKind==='domino'?'Coloca ficha':discarded?'Descarta':before.phase!==after.phase?'Resuelve el turno':'Hace su jugada';
  if(['spanish-40','legacy-french-52'].includes(after.ruleset)&&after.handSizes[actor]<before.handSizes[actor])action='Juega carta';
- if(capture){action='Juega carta';detail=`${capture.card.rank} de ${capture.card.suit}${capture.capturedCount?` · recoge ${capture.capturedCount}${capture.sweep?' · escoba':''}`:' · la deja en la mesa'}`;motion=capture.capturedCount?1200:700;}
+ if(capture){action='Juega carta';detail=`${capture.card.rank} de ${capture.card.suit}${capture.capturedCount?` · recoge ${capture.capturedCount}${capture.sweep?' · escoba':''}`:' · la deja en la mesa'}`;motion=capture.capturedCount?1800:1200;}
  if(after.boardKind==='tricks'&&before.trick?.length&&!after.trick?.length){action='Recoge la baza';detail=`${after.turnPlayer} recoge las cartas`;}
  if(after.boardKind==='burro'){action='Roba boca abajo';detail=`Retira ${(after.discardCount-before.discardCount)/2} parejas`;}
  if(after.boardKind==='oca'&&!roll){action='Pasa turno';detail=before.prison===actor?'Espera en prisión':'Pierde el turno';}
  if(after.bets?.[actor]!==before.bets?.[actor]&&after.bets?.[actor]!==undefined){action='Apuesta';detail=`${after.bets[actor]} fichas`;}
- if(speech){kind='speech';action=speech.kind==='declare'?'Declara cartas':speech.kind==='pass'?'Pasa':'Cuestiona la jugada';detail=speechText(speech);motion=1100;}
+ if(speech){kind='speech';action=speech.kind==='declare'?'Declara cartas':speech.kind==='pass'?'Pasa':'Cuestiona la jugada';detail=speechText(speech);motion=1600;}
  let result=detail;
  if(after.finished)result=after.winner?`${after.winner} gana la partida`:after.winnerTeam?`Gana la pareja ${after.winnerTeam}`:after.loser?`${after.loser} pierde`:'Partida terminada';
  else if(speech?.kind==='challenge')result=after.log?.at(-1)||detail;

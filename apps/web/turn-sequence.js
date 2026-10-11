@@ -11,16 +11,16 @@ export class TurnSequence {
  adopt(change){if(!this.busy){this.current=change;this.latest=change;this.key=viewIdentity(change);}}
  receive(change){
   const key=viewIdentity(change);
-  if(!this.current||key!==this.key||this.reduced()||this.hidden()){
+  if(!this.current||key!==this.key||this.hidden()){
    this.reset();this.key=key;this.current=this.latest=change;this.apply(change);return;
   }
-  const event=publicTurnEvent(this.latest.view,change.view);this.latest=change;
+  const event=publicTurnEvent(this.latest.view,change.view);if(!event&&JSON.stringify(this.latest)===JSON.stringify(change))return;this.latest=change;
   if(!event){if(!this.busy){this.current=change;this.apply(change);}return;}
   this.queue.push({change,event});
   if(!this.busy)this.next();
  }
  next(){
-  const next=this.queue.shift();if(!next){this.event=null;this.phase='idle';this.phaseChanged();this.refresh();return;}
+  const next=this.queue.shift();if(!next){if(this.latest!==this.current){this.current=this.latest;this.apply(this.latest);}this.event=null;this.phase='idle';this.phaseChanged();this.refresh();return;}
   this.event=next.event;this.phase='announce';this.phaseChanged();
   this.timer=this.setTimer(()=>{
    this.phase='move';this.current=next.change;this.apply(next.change);this.phaseChanged();
@@ -42,14 +42,14 @@ export class TurnSequence {
   }
   if(!this.current)return;
   const view=this.current.view,actor=this.busy?this.event.actor:view.finished?null:view.turnPlayer;
-  if((this.busy||root.dataset.motionBusy!=='true')&&(view.phase!=='discard'||this.busy))for(const seat of root.querySelectorAll('.rival-seat')){
+  if((this.busy||root.dataset.motionBusy!=='true')&&(view.phase!=='discard'||this.busy))for(const seat of root.querySelectorAll('.rival-seat,.mus-seat')){
    const active=seat.dataset.playerId===actor;seat.classList.toggle('active-seat',active);
    if(active)seat.setAttribute('aria-current','true');else seat.removeAttribute('aria-current');
    const marker=seat.querySelector('.player-turn-marker');
    if(!active)marker?.remove();else if(!marker){const arrow=document.createElement('span');arrow.className='player-turn-marker';arrow.setAttribute('aria-hidden','true');arrow.textContent='▾';seat.querySelector('.rival-token')?.append(arrow);}
    const label=seat.getAttribute('aria-label')?.replace(/, turno activo$/,'');if(label)seat.setAttribute('aria-label',label+(active?', turno activo':''));
   }
-  let status=root.querySelector('.catalog-instruction,.play-instruction,.turn-story-slot');
+  let status=root.querySelector('.catalog-instruction,.play-instruction,.mus-feedback,.turn-story-slot');
   if(!status&&this.busy){const table=root.querySelector('.game-table,.parchis-table');if(table){status=document.createElement('div');status.className='turn-story-slot';status.setAttribute('aria-live','polite');table.append(status);}}
   if(!status)return;
   if(status.dataset.sequenceOriginal===undefined)status.dataset.sequenceOriginal=status.innerHTML;

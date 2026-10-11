@@ -1,5 +1,5 @@
 // Shared presentation timings; dice results and legal moves come from the engine.
-export const DICE_DURATION=1650,PAWN_STEP=300,CHECKER_STEP=700,PIECE_TRANSFER=850,CAPTURE_FADE=280;
+export const DICE_DURATION=2200,PAWN_STEP=450,CHECKER_STEP=1050,PIECE_TRANSFER=1300,CAPTURE_FADE=450;
 export const gooseSteps=route=>route.slice(1).map((n,i)=>Math.abs(n-route[i])===1?PAWN_STEP:PIECE_TRANSFER);
 export const routeDuration=steps=>steps.reduce((sum,step)=>sum+step,0);
 // Travel, settle briefly on each square, then continue. Never interpolate through a corner.

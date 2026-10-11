@@ -1,10 +1,10 @@
 // Only the authority advances published transition states. Revisions make timers idempotent.
 const delays = {
-  dealing: 1000,
-  "cards-dealt": 650,
-  redeal: 1000,
-  showing: 1600,
-  counting: 1300,
+  dealing: 2200,
+  "cards-dealt": 1600,
+  redeal: 5200,
+  showing: 5200,
+  counting: 4800,
 };
 export class MusFlowRunner {
   constructor(snapshot, apply, onError = () => {}) {

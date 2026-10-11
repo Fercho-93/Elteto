@@ -23,7 +23,7 @@ export function finishPublicMotion(app,view,state){
   if(state.keys&&!state.keys.has(key)&&state.origin)state.flights.set(key,{started:now,origin:state.origin});
   if(dominoAdded&&state.keys.has(key)){const old=state.before.get(key)?.rect,next=card.getBoundingClientRect();if(old&&Math.hypot(old.x-next.x,old.y-next.y)>1)state.flights.set(key,{started:now,origin:old,slide:true});}
   const flight=state.flights.get(key);if(!flight||reduced())continue;
-  const duration=key.startsWith('tile-')?PIECE_TRANSFER:700;
+  const duration=key.startsWith('tile-')?PIECE_TRANSFER:1200;
   const elapsed=now-flight.started;if(elapsed>=duration){state.flights.delete(key);continue;}
   const destination=card.getBoundingClientRect(),origin=flight.origin;
   const frames=flight.slide?[{transform:`translate(${origin.x-destination.x}px,${origin.y-destination.y}px)`},{transform:'none'}]:[{transform:`translate(${origin.x+origin.width/2-destination.x-destination.width/2}px,${origin.y+origin.height/2-destination.y-destination.height/2}px) rotate(-10deg) scale(.75)`,opacity:.7},{transform:'translate(0,0) rotate(3deg) scale(1.05)',offset:.8},{transform:'none',opacity:1}];
@@ -34,12 +34,12 @@ export function finishPublicMotion(app,view,state){
  if(['capture','tricks'].includes(view.boardKind)&&!reduced()){
   const collector=view.boardKind==='tricks'?view.turnPlayer:state.turn;
   const seat=[...app.querySelectorAll('.rival-seat')].find(el=>el.dataset.playerId===collector),target=seat?.getBoundingClientRect();
-  if(target)for(const [key,old] of state.before)if(!keys.has(key)&&!state.ghosts.has(key))state.ghosts.set(key,{...old,target,started:now,delay:view.boardKind==='capture'?700:0});
+  if(target)for(const [key,old] of state.before)if(!keys.has(key)&&!state.ghosts.has(key))state.ghosts.set(key,{...old,target,started:now,delay:view.boardKind==='capture'?1200:0});
   for(const [key,ghost] of state.ghosts){
-   const elapsed=now-ghost.started;if(elapsed>=ghost.delay+500){state.ghosts.delete(key);continue;}
+   const elapsed=now-ghost.started;if(elapsed>=ghost.delay+600){state.ghosts.delete(key);continue;}
    const holder=document.createElement('div');holder.innerHTML=ghost.html;const el=holder.firstElementChild;el.classList.add('turn-public-ghost');el.removeAttribute('data-action');el.removeAttribute('data-public-piece');el.setAttribute('aria-hidden','true');el.tabIndex=-1;
    Object.assign(el.style,{left:ghost.rect.x+'px',top:ghost.rect.y+'px',width:ghost.rect.width+'px',height:ghost.rect.height+'px'});app.append(el);
-   const animation=el.animate([{transform:'none',opacity:1},{transform:`translate(${ghost.target.x+ghost.target.width/2-ghost.rect.x-ghost.rect.width/2}px,${ghost.target.y+ghost.target.height/2-ghost.rect.y-ghost.rect.height/2}px) scale(.35) rotate(10deg)`,opacity:0}],{duration:500,delay:ghost.delay,easing:'ease-in',fill:'both'});animation.currentTime=elapsed;animation.onfinish=()=>el.remove();
+   const animation=el.animate([{transform:'none',opacity:1},{transform:`translate(${ghost.target.x+ghost.target.width/2-ghost.rect.x-ghost.rect.width/2}px,${ghost.target.y+ghost.target.height/2-ghost.rect.y-ghost.rect.height/2}px) scale(.35) rotate(10deg)`,opacity:0}],{duration:600,delay:ghost.delay,easing:'ease-in',fill:'both'});animation.currentTime=elapsed;animation.onfinish=()=>el.remove();
   }
  }
  state.keys=keys;state.turn=view.turnPlayer;

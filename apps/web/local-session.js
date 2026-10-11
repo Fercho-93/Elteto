@@ -1,3 +1,4 @@
+import {BotPacing} from './bot-pacing.js';
 import {MusFlowRunner} from './mus-flow.js';
 import {PokerAbsenceRunner} from './poker-presence.js';
 import {characterProfile} from './avatar-art.js';
@@ -20,9 +21,10 @@ export class LocalHostSession {
     this.started = false;
     this.closed = false;
     this.bots = [];
+    this.botPacing=new BotPacing();
     this.botRunner = new BotRunner(() => this.closed || this.canRunBots?.() === false ? null : nextBotMove(this.engine, this.state, this.bots.map(p => p.id)),
       ({playerId, action}) => { this.state = this.engine.applyAction(this.state, playerId, this.engine.id==='mus'?{...action,at:Date.now()}:action); this.sendViews(); },
-      error => this.onChange({kind: 'error', message: String(error.message || error)}), botTurnDelay(this.engine.id));
+      error => this.onChange({kind: 'error', message: String(error.message || error)}), () => this.botPacing.delay(botTurnDelay(this.engine.id)));
     this.absenceRunner=new PokerAbsenceRunner(()=>this.closed?null:({engine:this.engine,state:this.state,players:this.players()}),move=>{
       const current=this.absenceRunner.candidate();if(!current||current.key!==move.key)return;
       this.state=this.engine.applyAction(this.state,move.playerId,move.action);this.sendViews();
@@ -138,6 +140,7 @@ export class LocalHostSession {
   }
 
   sendViews() {
+    if(this.state)this.botPacing.observe(this.engine.view(this.state,HOST_ID),this.botRunner);
     if (!this.state) return;
     const players = this.players();
     for (const player of players) {

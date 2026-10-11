@@ -67,3 +67,5 @@ body:has(.mus-screen){background:radial-gradient(ellipse at 50% 0,#352a3b,#17171
 
 /* Saved legacy rooms keep every control reachable on compact phones. */
 @media(max-width:599px) and (max-height:699px){.mus-screen:not(.mus-fem){grid-template-columns:minmax(0,1fr);}.mus-screen:not(.mus-fem) .mus-dock{max-height:230px;overflow-y:auto;}.mus-screen:not(.mus-fem) .game-controls button{min-width:0;}}
+
+.mus-seat:not(.active-seat) .mus-speaking{display:none;}

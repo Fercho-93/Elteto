@@ -143,13 +143,13 @@ export function nextBotMove(engine: AnyEngine, state: any, botIds: string[], ran
   return null;
 }
 
-export const botTurnDelay=(gameId:string)=>gameId==='oca'?5200:['parchis','damas_espanolas','damas-espanolas'].includes(gameId)?3600:gameId==='mentiroso'?2900:2400;
+export const botTurnDelay=(gameId:string)=>gameId==='oca'?6500:['parchis','damas_espanolas','damas-espanolas'].includes(gameId)?5500:gameId==='mentiroso'?5200:4800;
 
 // One delayed move at a time. The host can resume from the saved state.
 export class BotRunner {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private generation = 0;
-  constructor(private next: () => ReturnType<typeof nextBotMove>, private apply: (move: NonNullable<ReturnType<typeof nextBotMove>>) => unknown | Promise<unknown>, private onError: (error: unknown) => void, private delay: number | (() => number) = 2400) {}
+  constructor(private next: () => ReturnType<typeof nextBotMove>, private apply: (move: NonNullable<ReturnType<typeof nextBotMove>>) => unknown | Promise<unknown>, private onError: (error: unknown) => void, private delay: number | (() => number) = 4800) {}
   schedule() {
     if (this.timer) return;
     const generation = this.generation;

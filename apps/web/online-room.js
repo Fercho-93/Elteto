@@ -1,3 +1,4 @@
+import {BotPacing} from './bot-pacing.js';
 import {MusFlowRunner} from './mus-flow.js';
 import {PokerAbsenceRunner} from './poker-presence.js';
 import {characterProfile} from './avatar-art.js';
@@ -131,6 +132,7 @@ export class OnlineSession {
     this.acks = {};
     this.queue = Promise.resolve();
     this.actionsStop = null;
+    this.botPacing=new BotPacing();
     this.botRunner = new BotRunner(
       () => this.closed || !this.isHost ? null : nextBotMove(this.engine, this.state, Object.keys(this.room.bots || {})),
       () => this.enqueue(async () => {
@@ -141,7 +143,7 @@ export class OnlineSession {
         this.state = this.engine.applyAction(this.state, move.playerId, move.action);
         await this.publish();
       }),
-      error => this.onChange({kind:'error', message:String(error.message || error)}), () => botTurnDelay(this.engine?.id || this.room?.gameId || ''));
+      error => this.onChange({kind:'error', message:String(error.message || error)}), () => this.botPacing.delay(botTurnDelay(this.engine?.id || this.room?.gameId || '')));
     // Tareas de quien juega.
     this.viewStop = null;
     this.viewRev = -1;
@@ -390,6 +392,7 @@ export class OnlineSession {
 
   /** Guarda el estado, las vistas privadas y sube la versión de la sala, todo en una escritura. */
   async publish(errors = {}, { starting = false } = {}) {
+    this.botPacing.observe(this.engine.view(this.state,this.uid),this.botRunner);
     const rev = ++this.rev;
     const batch = writeBatch(this.db);
     batch.set(doc(this.db, "rooms", this.code, "secret", "state"), { rev, json: JSON.stringify(this.state), acks: this.acks, at: serverTimestamp() });

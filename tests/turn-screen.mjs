@@ -2,7 +2,8 @@
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile,mkdir} from 'node:fs/promises';
-import {getGame,legacyMusEngine,nextBotMove,parchisEngine,captures15} from '../dist/game-core/index.js';
+import {getGame,legacyMusEngine,createMusState,nextBotMove,parchisEngine,captures15} from '../dist/game-core/index.js';
+import {PAWN_STEP} from '../dist/game-physics.js';
 import {publicTurnEvent} from '../dist/turn-events.js';
 import {chromium,webkit} from 'playwright';
 const fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1]+`
@@ -53,7 +54,7 @@ try{
  game=parchisEngine.createInitialState(['a','b','c','d'],22);Object.assign(game,{phase:'bonus',bonuses:[20],die:3,lastRoll:{sequence:1,player:'a',value:3,initial:false,round:1},rollCount:1});game.pieces.a[0]=2;game.pieces.b[0]=5;
  // Yellow square 27 is green progress 5 and is not a safe square.
  await start('parchis',game);const moved=parchisEngine.applyAction(game,'a',{type:'move',piece:0});assert.equal(moved.pieces.b[0],-1);await emit('parchis',moved);await phase('move');await actor('a');await visibleStory();
- for(const page of pages){const timing=await page.locator('.parchis-table [data-pawn="a:0"]').evaluate(el=>{const anim=el.getAnimations()[0];return {frames:anim.effect.getKeyframes().length,duration:anim.effect.getTiming().duration};});assert.equal(timing.frames,41);assert.equal(timing.duration,6000);assert.equal(await page.locator('.parchis-table [data-pawn="b:0"]').evaluate(el=>el.getAnimations()[0].effect.getTiming().delay),6000);}
+ for(const page of pages){const timing=await page.locator('.parchis-table [data-pawn="a:0"]').evaluate(el=>{const anim=el.getAnimations()[0];return {frames:anim.effect.getKeyframes().length,duration:anim.effect.getTiming().duration};});assert.equal(timing.frames,41);assert.equal(timing.duration,20*PAWN_STEP);assert.equal(await page.locator('.parchis-table [data-pawn="b:0"]').evaluate(el=>el.getAnimations()[0].effect.getTiming().delay),20*PAWN_STEP);}
  await phase('result');await actor('a');await pages[0].screenshot({path:`tests/artifacts/turns/parchis-${kind}.png`});await phase('idle');
  // A captured played card is visible in a public receipt; table cards fly to actor.
  const escoba=getGame('escoba');let capture;
@@ -63,8 +64,14 @@ try{
  await phase('result');await actor('a');await phase('idle');
  // Non-catalog card games also have a visible, stable turn announcement.
  for(const id of ['cinquillo','mus']){const engine=id==='mus'?legacyMusEngine:getGame(id);game=engine.createInitialState(['a','b','c','d'],22);await start(id,game);const move=nextBotMove(engine,game,game.players),bounds=await geometry(pages[0]);game=engine.applyAction(game,move.playerId,move.action);await emit(id,game);assert.deepEqual(await geometry(pages[0]),bounds);await phase('move');await actor(move.playerId);await visibleStory();const moving=await geometry(pages[0]);await phase('result');assert.deepEqual(await geometry(pages[0]),moving,'The turn story never resizes the current game phase');await phase('idle');}
- // Reduced motion and entering another POV show the current view immediately.
- for(const page of pages)await page.emulateMedia({reducedMotion:'reduce'});game=domino.createInitialState(['a','b','c','d'],22);await start('domino',game);const move=nextBotMove(domino,game,game.players);game=domino.applyAction(game,move.playerId,move.action);await emit('domino',game);assert.equal((await pages[0].evaluate(()=>window.turnSnapshot())).phase,'idle');
+ // Modern Mus uses the same readable public timeline without exposing other hands.
+ let modern=createMusState(['a','b','c','d'],17);for(let i=0;i<2;i++)modern=getGame('mus').applyAction(modern,'a',{type:'advance'});
+ await start('mus',modern);modern=getGame('mus').applyAction(modern,'a',{type:'mus',wantsMus:false});await emit('mus',modern);await phase('announce');
+ for(const page of pages){assert.equal(await page.locator('.mus-seat[aria-current]').getAttribute('data-player-id'),'a');assert.equal(await page.locator('.mus-cards .playing-card').count(),4);assert.equal(await page.locator('.revealed-hands .playing-card').count(),0);}
+ await phase('move');for(const page of pages){assert.equal(await page.locator('.mus-context h2').textContent(),'GRANDE');assert.ok(await page.locator('[data-action="mus-bet"]').evaluateAll(buttons=>buttons.every(b=>b.disabled)));}
+ await phase('idle');
+ // Reduced motion suppresses travel but keeps the time to read each action.
+ for(const page of pages)await page.emulateMedia({reducedMotion:'reduce'});game=domino.createInitialState(['a','b','c','d'],22);await start('domino',game);const move=nextBotMove(domino,game,game.players);game=domino.applyAction(game,move.playerId,move.action);await emit('domino',game);assert.equal((await pages[0].evaluate(()=>window.turnSnapshot())).phase,'announce');await phase('idle');
  // Leaving during an announcement cancels timers and cannot reopen the game.
  await pages[0].emulateMedia({reducedMotion:'no-preference'});const nextMove=nextBotMove(domino,game,game.players);game=domino.applyAction(game,nextMove.playerId,nextMove.action);await pages[0].evaluate(game=>window.emitTurn('domino',game,'a','host'),game);await pages[0].evaluate(()=>window.cancelTurns());await new Promise(r=>setTimeout(r,500));assert.equal(await pages[0].locator('.catalog-screen').count(),0);
  assert.deepEqual(errors,[]);console.log(`${kind}: ordered network bursts, host/guest POVs, actor through result, locks/privacy, stable damas/Oca, dice, Parchis routes/captures, Escoba and card-game announcements: OK`);

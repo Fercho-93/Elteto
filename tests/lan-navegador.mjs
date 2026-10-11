@@ -14,6 +14,7 @@ try {
  const [output]=await once(server.stdout,'data');const hostUrl=String(output).trim();const base=new URL(hostUrl).origin;
  browser=await (process.env.LAN_BROWSER==='webkit'?webkit:chromium).launch();
  const errors=[];
+ const settled=pages=>Promise.all(pages.map(p=>p.waitForFunction(()=>!document.querySelector('[data-turn-busy="true"]'))));
  const enter=async(page,url)=>{await page.goto(url);await page.locator('[data-action="join-room"]').waitFor();if(await page.locator('[data-action="join-room"]').count()){
   await page.locator('[data-action="choose-character"]').click();await page.locator('[data-action="select-character"][data-character="9"]').click();
   await page.locator('[data-action="join-room"]').click();
@@ -74,6 +75,7 @@ try {
  }
  await guest.screenshot({path:`tests/artifacts/lan-mobile-${process.env.LAN_BROWSER||'chromium'}.png`,fullPage:true});
  for(let i=0;i<8;i++){
+  await settled([host,guest]);
   const activePages=[];
   for(const p of [host,guest])if(await p.locator('.self-seat.active-seat').count())activePages.push(p);
   assert.equal(activePages.length,1,'exactly one player has the turn, including a mandatory pass');
@@ -121,7 +123,7 @@ try {
  const pages=[host,guest,c,d];
  const actor=async action=>{
   for(let attempt=0;attempt<100;attempt++){
-   for(const p of pages) if(await p.locator(`[data-action="${action}"]`).count())return p;
+   for(const p of pages) if(await p.locator(`[data-action="${action}"]:not([disabled])`).count())return p;
    await new Promise(r=>setTimeout(r,100));
   }
   throw Error('No actor for '+action);
@@ -143,6 +145,7 @@ try {
  for(const p of [host,guest,c,d]){await p.locator('.parchis-table [data-pawn]').first().waitFor();assert.equal(await p.locator('.parchis-table [data-pawn]').count(),16);}
  let moved=0;
  for(let step=0;step<100&&(step<16||moved<2);step++){
+  await settled([host,guest,c,d]);
   // Consecutive blocked rolls can legitimately have identical public text.
   // Observe the received render instead of requiring a different log message.
   for(const p of [host,guest,c,d])await p.evaluate(()=>{window.parchisUpdated=false;window.parchisObserver?.disconnect();window.parchisObserver=new MutationObserver(()=>{window.parchisUpdated=true;window.parchisObserver.disconnect();});window.parchisObserver.observe(document.querySelector('#app'),{childList:true});});

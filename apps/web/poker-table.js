@@ -15,7 +15,7 @@ export function collectPokerBets(app,previous,view){
  const frame=table.getBoundingClientRect(),target=pot.getBoundingClientRect();
  for(const id of view.players){if(!(previous.street[id]>0&&view.street[id]===0))continue;const old=previous.positions[id];if(!old)continue;
   const el=document.createElement('span');el.className='poker-moving-chip';el.innerHTML=chip(previous.street[id]);el.style.left=old.x-frame.left+'px';el.style.top=old.y-frame.top+'px';table.append(el);
-  const animation=el.animate([{transform:'translate(-50%,-50%)',opacity:1},{transform:`translate(${target.x+target.width/2-old.x}px,${target.y+target.height/2-old.y}px) scale(.6)`,opacity:0}],{duration:450,easing:'ease-in',fill:'forwards'});animation.finished.then(()=>el.remove()).catch(()=>el.remove());
+  const animation=el.animate([{transform:'translate(-50%,-50%)',opacity:1},{transform:`translate(${target.x+target.width/2-old.x}px,${target.y+target.height/2-old.y}px) scale(.6)`,opacity:0}],{duration:1000,easing:'ease-in',fill:'forwards'});animation.finished.then(()=>el.remove()).catch(()=>el.remove());
  }
 }
 export function pokerSnapshot(app,view){return {handNumber:view.handNumber,street:view.street,positions:Object.fromEntries([...app.querySelectorAll('.catalog-surface .poker-wager')].map(el=>{const r=el.getBoundingClientRect();return [el.dataset.playerId,{x:r.x+r.width/2,y:r.y+r.height/2}];}))};}
