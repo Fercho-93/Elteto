@@ -1,4 +1,3 @@
-import {renderDrawPile} from './card-art.js';
 import {originalPortrait} from './rival-portraits.js';
 import {mascotForSeat,escapeHtml as esc} from './table-view.js';
 // Physical seat order, clockwise from the local player's place at the bottom.
@@ -22,7 +21,7 @@ export function renderPokerTable(view,name,playerId,publicCards){
  const edge=side=>`<div class="poker-edge poker-edge-${side}">${ordered.filter((id,i)=>edges[ordered.length][i]===side).map(seat).join('')}</div>`;
  return `<div class="poker-table" data-seats="${ordered.length}"><div class="poker-level">Ciegas <b>${view.smallBlindAmount}/${view.bigBlindAmount}</b> · suben en mano ${view.nextBlindHand}</div>
   ${edge('top')}${edge('left')}
-  <div class="poker-play-area"><div class="poker-center-meta"><div class="poker-pot" aria-label="${settled?'Bote repartido':'Bote acumulado'}: ${collected} fichas"><span>${settled?'BOTE REPARTIDO':'BOTE'}</span><div class="poker-chip-pile">${chip(collected)}</div>${!settled&&collected!==view.pot?`<small>Total con apuestas: ${format(view.pot)}</small>`:''}</div>${!settled?renderDrawPile(view.stockCount,true):''}</div>
+  <div class="poker-play-area"><div class="poker-center-meta"><div class="poker-pot" aria-label="${settled?'Bote repartido':'Bote acumulado'}: ${collected} fichas"><span>${settled?'BOTE REPARTIDO':'BOTE'}</span><div class="poker-chip-pile">${chip(collected)}</div>${!settled&&collected!==view.pot?`<small>Total con apuestas: ${format(view.pot)}</small>`:''}</div></div>
    <div class="poker-community">${publicCards(Array.from({length:5},(_,i)=>view.board[i]||null))}</div>
    ${view.payouts.length?`<div class="poker-payouts">${view.payouts.map((pay,i)=>`<span>${view.payouts.length>1?(i?'Bote lateral':'Bote principal')+': ':''}${format(pay.pot)} → ${pay.winners.map(id=>esc(name(id))).join(', ')}</span>`).join('')}</div>`:''}
   </div>${edge('right')}${edge('bottom')}</div>`;
@@ -52,7 +51,7 @@ export function collectPokerBets(app,previous,view){
   if(after>before){const to=center([...table.querySelectorAll('.poker-wager')].find(el=>el.dataset.playerId===id));fly(after-before,previous.stacks?.[id]||stack(id),to);}
   if(view.phase==='result'&&previous.phase!=='result')fly(Math.max(0,view.chips[id]-(previous.chips?.[id]??view.chips[id])),previous.pot||target,stack(id));
  }
- const origin=center(table.querySelector('.deck-stock'))||previous.deck;
+ const origin=center(table.querySelector('.poker-community'))||previous.dealOrigin;
  const cards=[...table.querySelectorAll('.poker-community .catalog-card')];
  for(let i=0;i<view.board.length;i++){
   if(sameHand&&previous.board?.[i]===view.board[i].id)continue;
@@ -69,7 +68,7 @@ export function collectPokerBets(app,previous,view){
 }
 export function pokerSnapshot(app,view){
  const table=app.querySelector('.catalog-surface .poker-table');
- return {handNumber:view.handNumber,phase:view.phase,actor:view.turnPlayer,log:view.log?.at(-1),street:{...view.street},chips:{...view.chips},board:view.board.map(c=>c.id),pot:center(table?.querySelector('.poker-pot')),deck:center(table?.querySelector('.deck-stock')),
+ return {handNumber:view.handNumber,phase:view.phase,actor:view.turnPlayer,log:view.log?.at(-1),street:{...view.street},chips:{...view.chips},board:view.board.map(c=>c.id),pot:center(table?.querySelector('.poker-pot')),dealOrigin:center(table?.querySelector('.poker-community')),
   stacks:Object.fromEntries([...app.querySelectorAll('.catalog-surface .poker-seat')].map(el=>[el.dataset.playerId,center(el.querySelector('.poker-stack'))])),
   positions:Object.fromEntries([...app.querySelectorAll('.catalog-surface .poker-wager')].map(el=>[el.dataset.playerId,center(el)]))};
 }

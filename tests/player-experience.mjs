@@ -17,6 +17,7 @@ try{
  await page.locator('[data-action="open-join"]').click();assert.equal(await page.locator('#join-name').inputValue(),'Fer');await page.reload();assert.equal(await page.locator('#profile-name').count(),0);
  const engine=getGame('texas-holdem');let game=engine.createInitialState(['a','b','c','d'],90);
  await page.evaluate(game=>window.testTable('texas-holdem',game,'a'),game);
+ assert.equal(await page.locator('.poker-table .deck-stock').count(),0,'Poker hides the undealt deck and its count');
  const portrait=page.locator('.catalog-surface .poker-seat .avatar-artwork').first();const avatarPixels=await portrait.screenshot();
  await page.evaluate(()=>window.avatarNodes=[...document.querySelectorAll('.catalog-surface .poker-seat .avatar-artwork')]);
  for(let i=0;i<3;i++){
@@ -30,7 +31,7 @@ try{
  const metrics=await page.locator('.catalog-surface .poker-chip-pile').evaluate(el=>{const icon=el.querySelector('.poker-chip').getBoundingClientRect(),n=el.querySelector('b').getBoundingClientRect();return icon.right<n.left&&icon.bottom<=el.getBoundingClientRect().bottom+1;});assert.ok(metrics,'Pot number has a separate lane from chip art');
  while(game.phase!=='result'){const id=game.players[game.turn];game=engine.applyAction(game,id,{type:game.currentBet>game.street[id]?'call':'check'});}
  await page.evaluate(v=>window.directPoker(v),engine.view(game,'a'));
- assert.ok(await page.locator('.catalog-surface .poker-community .catalog-card').evaluateAll(cards=>cards.some(c=>c.getAnimations().length)),'Community cards animate from deck');
+ assert.ok(await page.locator('.catalog-surface .poker-community .catalog-card').evaluateAll(cards=>cards.some(c=>c.getAnimations().length)),'Community cards animate when revealed');
  assert.ok(await page.locator('.poker-moving-chip').count()>0,'Winnings fly to stack');
  assert.deepEqual(errors,[]);console.log('Player experience: first profile, stored identity, stable avatars, animated bets/cards/payout and separated pot label: OK');
 }finally{await browser.close();await new Promise(r=>server.close(r));}
