@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['apps/android-host/**', 'apps/web/**', 'packages/game-core/**', 'tests/table-navegador.mjs', 'tests/turn-screen.mjs', 'tests/physics-screen.mjs', 'tests/turn-sequence.mjs', '.github/workflows/android-lan.yml']
+    paths: ['apps/android-host/**', 'apps/web/**', 'packages/game-core/**', 'tests/lan-navegador.mjs', 'tests/table-navegador.mjs', 'tests/turn-screen.mjs', 'tests/physics-screen.mjs', 'tests/turn-sequence.mjs', '.github/workflows/android-lan.yml']
 permissions:
   contents: read
 jobs:
