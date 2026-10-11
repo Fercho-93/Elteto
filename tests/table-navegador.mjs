@@ -368,6 +368,7 @@ try {
   // Real service worker: all references remain readable after network loss.
   if(process.env.TABLE_BROWSER !== 'webkit') {
     const offlineContext=await browser.newContext();
+    await offlineContext.addInitScript(()=>{localStorage.setItem('elteto.profileReady','1');localStorage.setItem('elteto.playerName','Prueba');localStorage.setItem('elteto.character','0');});
     const page=await offlineContext.newPage();
     await page.goto(base);
     await page.waitForFunction(()=>navigator.serviceWorker.controller);
