@@ -19,7 +19,7 @@ const ASSETS = ['./mus-table.js','./mus-flow.js','./game-core/games/mus-legacy.j
   "./game-core/games/mus.js", "./game-core/games/cinquillo.js"
 ];
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS.map((path) => new Request(new URL(path, self.registration.scope), {cache: "reload"})))));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll([...new Set(ASSETS)].map((path) => new Request(new URL(path, self.registration.scope), {cache: "reload"})))));
   self.skipWaiting();
 });
 self.addEventListener("activate", (event) => {

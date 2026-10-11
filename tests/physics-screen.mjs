@@ -65,7 +65,7 @@ try{
  for(const page of pages)await page.setViewportSize({width:390,height:844});
  // Public declaration/pass/challenge speech is identical in two private views.
  const bluff=getGame('mentiroso');game=bluff.createInitialState(['a','b','c','d'],22);await show('mentiroso',game);
- for(const page of pages){await page.locator('.catalog-hand img').first().evaluate(img=>img.decode());await page.evaluate(()=>{window.faces=[...document.querySelectorAll('.catalog-hand img')];window.faceByUrl=new Map(window.faces.map(img=>[img.src,img]));});}
+ for(const page of pages){await page.evaluate(async()=>{const img=new Image();img.src='./assets/decks/fournier-spanish.jpg';await img.decode();});await page.evaluate(()=>{window.faces=[...document.querySelectorAll('.catalog-hand img')];window.faceByUrl=new Map(window.faces.map(img=>[img.src,img]));});}
  for(const action of [{type:'play-facedown',cards:game.hands.a.slice(0,2).map(c=>c.id),rank:'5'},{type:'trust'},{type:'challenge'}]){
   const actor=game.players[game.turn];game=bluff.applyAction(game,actor,action);const speeches=game.players.map(p=>bluff.view(game,p).lastSpeech);assert.ok(speeches.every(s=>JSON.stringify(s)===JSON.stringify(speeches[0])));assert.ok(!('cards' in speeches[0]),'Declared ranks never reveal the played faces');
   await emit(game);await phase('move');

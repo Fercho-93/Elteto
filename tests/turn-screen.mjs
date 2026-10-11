@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile,mkdir} from 'node:fs/promises';
-import {getGame,nextBotMove,parchisEngine,captures15} from '../dist/game-core/index.js';
+import {getGame,legacyMusEngine,nextBotMove,parchisEngine,captures15} from '../dist/game-core/index.js';
 import {publicTurnEvent} from '../dist/turn-events.js';
 import {chromium,webkit} from 'playwright';
 const fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1]+`
@@ -59,10 +59,10 @@ try{
  const escoba=getGame('escoba');let capture;
  for(let seed=1;seed<100;seed++){game=escoba.createInitialState(['a','b'],seed);const view=escoba.view(game,'a');for(const card of view.myHand){const value=Number(card.rank)>7?Number(card.rank)-2:Number(card.rank),table=captures15(view.table,15-value)[0];if(table?.length){capture={type:'capture',card:card.id,table};break;}}if(capture)break;}
  assert.ok(capture);await start('escoba',game);const captured=escoba.applyAction(game,'a',capture);await emit('escoba',captured);await phase('move');await actor('a');
- for(const page of pages){assert.equal(await page.locator('.catalog-surface .capture-receipt img').getAttribute('alt'),`${captured.lastPlay.card.rank} de ${captured.lastPlay.card.suit}`);assert.equal(await page.locator('.turn-public-ghost').count(),capture.table.length);assert.equal(await page.locator('.catalog-hand').evaluate(el=>el.getAnimations({subtree:true}).length),0);}
+ for(const page of pages){assert.equal(await page.locator('.catalog-surface .capture-receipt .catalog-card').getAttribute('aria-label'),`${captured.lastPlay.card.rank} de ${captured.lastPlay.card.suit}`);assert.equal(await page.locator('.turn-public-ghost').count(),capture.table.length);assert.equal(await page.locator('.catalog-hand').evaluate(el=>el.getAnimations({subtree:true}).length),0);}
  await phase('result');await actor('a');await phase('idle');
  // Non-catalog card games also have a visible, stable turn announcement.
- for(const id of ['cinquillo','mus']){const engine=getGame(id);game=engine.createInitialState(['a','b','c','d'],22);await start(id,game);const move=nextBotMove(engine,game,game.players),bounds=await geometry(pages[0]);game=engine.applyAction(game,move.playerId,move.action);await emit(id,game);assert.deepEqual(await geometry(pages[0]),bounds);await phase('move');await actor(move.playerId);await visibleStory();const moving=await geometry(pages[0]);await phase('result');assert.deepEqual(await geometry(pages[0]),moving,'The turn story never resizes the current game phase');await phase('idle');}
+ for(const id of ['cinquillo','mus']){const engine=id==='mus'?legacyMusEngine:getGame(id);game=engine.createInitialState(['a','b','c','d'],22);await start(id,game);const move=nextBotMove(engine,game,game.players),bounds=await geometry(pages[0]);game=engine.applyAction(game,move.playerId,move.action);await emit(id,game);assert.deepEqual(await geometry(pages[0]),bounds);await phase('move');await actor(move.playerId);await visibleStory();const moving=await geometry(pages[0]);await phase('result');assert.deepEqual(await geometry(pages[0]),moving,'The turn story never resizes the current game phase');await phase('idle');}
  // Reduced motion and entering another POV show the current view immediately.
  for(const page of pages)await page.emulateMedia({reducedMotion:'reduce'});game=domino.createInitialState(['a','b','c','d'],22);await start('domino',game);const move=nextBotMove(domino,game,game.players);game=domino.applyAction(game,move.playerId,move.action);await emit('domino',game);assert.equal((await pages[0].evaluate(()=>window.turnSnapshot())).phase,'idle');
  // Leaving during an announcement cancels timers and cannot reopen the game.

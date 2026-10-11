@@ -59,6 +59,7 @@ try{
  const {LocalHostSession}=await import('../dist/local-session.js');
  for(const id of ['cinquillo','mus','tute','chinchon','texas-holdem']){
   let session;const events=[];session=new LocalHostSession(id,'Ana','Mesa',e=>{if(e.kind==='game')events.push(e);});session.fillWithBots();session.startGame(22);session.botRunner.stop();
+  if(id==='mus'){session.musFlow.close();for(let i=0;i<2;i++)session.state=session.engine.applyAction(session.state,'host',{type:'advance'});session.sendViews();session.botRunner.stop();}
   for(let step=0;step<6;step++){
    const e=events.at(-1);assert.deepEqual(e.view.myHand,session.state.hands.host);assert.equal(e.view.hands,undefined);assert.equal(e.view.revealedHands,undefined);
    const move=nextBotMove(session.engine,session.state,session.bots.map(p=>p.id));if(!move)break;

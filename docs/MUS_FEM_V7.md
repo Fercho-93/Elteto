@@ -41,5 +41,6 @@ Validar cuatro jugadores/cartas y conservación de baraja, turno y acciones lega
 - Motor: 100 partidas completas FEM a 30/40, comparadores y empates por mano; seis rondas consecutivas de descarte; envites, negadas, reenvites y órdagos; límites de postre; recuento interrumpido al ganar y determinismo.
 - LAN: cuatro sesiones independientes, confirmaciones simultáneas, estados de reparto ocultos, mensajes sin manos ajenas, desconexión y vuelta al mismo asiento y mano.
 - Online: sesiones reales contra emuladores Auth/Firestore, cuatro manos privadas y aceptación sincronizada; permisos del estado secreto y vistas individuales; recuperación de la autoridad.
-- Navegador Chromium: 24 perspectivas y tamaños, controles reales, selección previa al descarte, cartas enseñadas, historial y vuelta desde las reglas. En pantallas cortas se comprueba que lance y nombres no se solapan.
-- Regresiones: suite npm, reglas de Firestore y acceso. Las pruebas WebKit están incorporadas al flujo de GitHub Actions. No se sustituyen por pruebas en cuatro teléfonos físicos.
+- Navegadores Chromium y WebKit (GitHub Actions): 24 perspectivas y tamaños, controles reales, selección previa al descarte, cartas enseñadas, historial y vuelta desde las reglas. En pantallas cortas se comprueba que lance y nombres no se solapan.
+- Regresiones: suite npm, reglas de Firestore y acceso. Las pruebas WebKit han pasado en GitHub Actions. No se sustituyen por pruebas en cuatro teléfonos físicos.
+- Sin conexión: instalación real del service worker, recarga sin red, cartas españolas y guía FEM con vuelta a la mesa. Se deduplican los recursos antes de cachearlos.

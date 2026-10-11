@@ -57,6 +57,7 @@ jobs:
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run build:web
       - run: node --no-warnings tests/mus-mobile.mjs
+      - run: node --no-warnings tests/mus-offline.mjs
       - run: MUS_BROWSER=webkit node --no-warnings tests/mus-mobile.mjs
       - uses: actions/upload-artifact@v4
         if: always()

@@ -370,13 +370,12 @@ try {
     const offlineContext=await browser.newContext();
     const page=await offlineContext.newPage();
     await page.goto(base);
-    await page.evaluate(()=>navigator.serviceWorker.ready);
     await page.waitForFunction(()=>navigator.serviceWorker.controller);
-    assert.equal(await page.locator('.menu-actions > *').count(),3);
+    assert.equal(await page.locator('.menu-actions > *').count(),2);
     assert.equal(await page.locator('.menu-games,.menu-cast,.menu-extras').count(),0);
     await offlineContext.setOffline(true);
-    await page.getByRole('link',{name:'Ver reglas',exact:true}).click();
-    assert.equal(await page.locator('li a').count(),20);
+    await page.goto(base+'reglas_juegos/biblioteca.html');
+    assert.equal(await page.locator('li a').count(),4);
     await page.goto(base+'reglas_juegos/lectura/cinquillo.html');
     assert.match(await page.locator('.rules-steps').textContent(),/cinco de oros/);
     const cached = await page.evaluate(async()=>{

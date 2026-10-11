@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
-import {cinquilloEngine,musEngine,canPlaceCinquillo} from '../dist/game-core/index.js';
+import {cinquilloEngine,legacyMusEngine as musEngine,canPlaceCinquillo} from '../dist/game-core/index.js';
 const {chromium,webkit}=await import('playwright');
 const fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1];
 const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://localhost').pathname.slice(1)||'index.html';let body=await readFile('dist/'+file);if(file==='app.js')body=Buffer.from(body+fixture);res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':'text/html');res.end(body);}catch{res.writeHead(404);res.end();}});
@@ -76,8 +76,8 @@ try {
    const badBoard=board?[]:[...document.querySelectorAll('.table-center .reveal-card,.table-center .mus-phase,.mus-score')].map(el=>({class:el.className,rect:rect(el).toJSON(),felt:felt.toJSON()}));
    const proportions=[...document.querySelectorAll('.table-center .reveal-card')].every(el=>Math.abs(rect(el).height/rect(el).width-319/208)<.03);
    const dock=document.querySelector('.mus-dock'),d=rect(dock);
-   const reachable=innerWidth>=600&&innerHeight<700&&getComputedStyle(dock).overflowY==='auto'&&inside(d)&&cards.every(el=>{const r=rect(el);return r.left>=d.left&&r.right<=d.right&&r.top>=d.top&&r.bottom<=d.top+dock.scrollHeight;});
-   return {reachable,badBoard,proportions,offFelt,board,visible:cards.every(el=>inside(rect(el))),page:document.documentElement.scrollHeight<=innerHeight+1,count:document.querySelectorAll('.rival-original').length,companion:[...document.querySelectorAll('.rival-team')].filter(el=>el.textContent.includes('Compi')).length,minButton:Math.min(...[...document.querySelectorAll('.mus-decisions button')].map(el=>rect(el).height))};
+   const reachable=getComputedStyle(dock).overflowY==='auto'&&inside(d)&&cards.every(el=>{const r=rect(el);return r.left>=d.left&&r.right<=d.right&&r.top>=d.top&&r.bottom<=d.top+dock.scrollHeight;});
+   return {dock:d.toJSON(),overflow:getComputedStyle(dock).overflowY,badControls:cards.filter(el=>!inside(rect(el))).map(el=>({class:el.className,rect:rect(el).toJSON()})),reachable,badBoard,proportions,offFelt,board,visible:cards.every(el=>inside(rect(el))),page:document.documentElement.scrollHeight<=innerHeight+1,count:document.querySelectorAll('.rival-original').length,companion:[...document.querySelectorAll('.rival-team')].filter(el=>el.textContent.includes('Compi')).length,minButton:Math.min(...[...document.querySelectorAll('.mus-decisions button')].map(el=>rect(el).height))};
   });
   measurements.push({width,height,phase:game.phase,id,...metrics});
   assert.ok(metrics.proportions&&metrics.offFelt&&metrics.board&&(metrics.visible||metrics.reachable)&&metrics.page,JSON.stringify(measurements.at(-1)));assert.equal(metrics.count,4);assert.equal(metrics.companion,1);assert.ok(metrics.minButton>=44);

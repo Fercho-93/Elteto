@@ -56,6 +56,7 @@ let done;
 handlers.get('install')({waitUntil(promise) { done = promise; }});
 await done;
 assert.ok(requests.length > 20);
+assert.equal(new Set(requests.map(r=>r.url)).size,requests.length,'Duplicate assets must not prevent service-worker installation');
 assert.ok(requests.every(request => request.cache === 'reload'));
 handlers.get('activate')({waitUntil(promise) { done = promise; }});
 await done;

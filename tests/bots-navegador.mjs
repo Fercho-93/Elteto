@@ -31,6 +31,12 @@ try {
     await page.locator(`input[value="${engine.id}"]`).check();
     await page.locator('[data-action="create-room"]').click();
     assert.ok(await page.locator('[data-action="start-game"]').isDisabled());
+    if(engine.id==='mus') {
+      assert.equal(await page.getByRole('button',{name:'Completar mesa con IA',exact:true}).count(),0);
+      assert.equal(await page.locator('.player-row').count(),1);
+      console.log(`${kind}: Mus requiere cuatro jugadores humanos`);
+      continue;
+    }
     await page.getByRole('button',{name:'Completar mesa con IA',exact:true}).click();
     assert.equal(await page.locator('.player-row').count(),engine.maxPlayers);
     assert.equal(await page.locator('.player-row').first().locator('.lobby-character').getAttribute('aria-label'),'Gota');
@@ -46,7 +52,7 @@ try {
     }
     await page.locator('[data-action="start-game"]').click();
     await page.locator('.play-header').waitFor();
-    assert.equal(await page.locator('[data-player-id="host"] .rival-original').getAttribute('data-character'),'7');
+    assert.equal(await page.locator('[data-player-id="host"] .rival-original').first().getAttribute('data-character'),'7');
     if(engine.id==='mus') {
       await page.locator('[data-action="mus-yes"]').click();
       await page.waitForFunction(()=>!document.querySelector('[data-action="mus-yes"]'));

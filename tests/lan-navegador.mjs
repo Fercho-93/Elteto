@@ -64,7 +64,7 @@ try {
   assert.ok(hand.y>=0 && hand.y+hand.height<=664, 'Full-size own cards stay visible in the compact mobile viewport');
   assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+1),'LAN screen needs no vertical page scrolling');
   assert.ok(await page.locator('.hand .playing-card').evaluateAll(async cards=>{
-   await Promise.all(cards.map(card=>card.querySelector('img').decode()));
+   await Promise.all(cards.map(card=>card.querySelector('img')?.decode()));
    return cards.every(card=>{const rect=card.getBoundingClientRect();return Math.abs(rect.width/rect.height-208/319)<.02;});
   }));
   await page.locator('[data-action="open-table-zoom"]').click();
@@ -114,9 +114,9 @@ try {
  for(const p of [host,guest,c,d]) {
   await p.locator('.hand .playing-card').first().waitFor();
   assert.equal(await p.locator('.hand .playing-card').count(),4);
-  assert.equal(await p.locator('.rival-original').count(),4);
-  assert.equal(await p.locator('.self-seat').count(),1);
-  assert.equal(await p.locator('.rival-count').evaluateAll(els=>els.reduce((sum,el)=>sum+Number(el.dataset.count),0)),16);
+  assert.equal(await p.locator('.mus-seat').count(),4);
+  assert.equal(await p.locator('.mus-seat[data-position="self"]').count(),1);
+  assert.equal(await p.locator('.mus-seat:not([data-position="self"]) .playing-card').count(),0);
  }
  const pages=[host,guest,c,d];
  const actor=async action=>{
@@ -124,11 +124,11 @@ try {
   throw Error('No actor for '+action);
  };
  await (await actor('mus-no')).locator('[data-action="mus-no"]').click();
- await host.waitForFunction(()=>document.querySelector('.mus-phase strong').textContent==='Grande');
+ await host.waitForFunction(()=>document.querySelector('.mus-context h2')?.textContent==='GRANDE');
  await (await actor('mus-bet')).locator('[data-action="mus-bet"]').click();
  for(let i=0;i<50;i++) {await new Promise(r=>setTimeout(r,10));if((await Promise.all(pages.map(p=>p.locator('[data-action="mus-accept"]').count()))).some(Boolean))break;}
  await (await actor('mus-accept')).locator('[data-action="mus-accept"]').click();
- for(const p of pages) await p.waitForFunction(()=>document.querySelector('.mus-phase strong').textContent==='Chica');
+ for(const p of pages) await p.waitForFunction(()=>document.querySelector('.mus-context h2')?.textContent==='CHICA');
  await host.locator('.game-menu-button').click();
  await host.locator('[data-action="leave-room"]').click();
  for(const p of [guest,c,d]) await p.getByText('Hasta la próxima.',{exact:true}).waitFor();
