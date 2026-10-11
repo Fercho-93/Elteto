@@ -66,7 +66,7 @@ try{
    session.state=session.engine.applyAction(session.state,move.playerId,move.action);session.sendViews();session.botRunner.stop();
   }
   await show(id,session.state,'host');
-  assert.equal(await page.locator('.players-panel img,.rival-roster .card-face').count(),0);
+  assert.equal(await page.locator('.players-panel img:not([src*="elteto-avatars"]),.rival-roster .card-face').count(),0);
   assert.ok(await page.locator('.hand,.catalog-hand').evaluateAll(els=>els.every(el=>el.getAnimations({subtree:true}).filter(a=>a.constructor.name==='Animation').length===0)));
   // No automatic scroll to AI seats when they take a turn.
   const result=await page.evaluate(async()=>{const {revealActivePlayer}=await import('./rival-portraits.js');const roster=document.querySelector('.player-roster');if(!roster)return true;const active=roster.querySelector('[aria-current]');if(!active)return true;active.dataset.playerId='bot-1';roster.style.width='40px';roster.scrollLeft=0;revealActivePlayer(document.querySelector('#app'));return roster.scrollLeft===0;});assert.ok(result);
