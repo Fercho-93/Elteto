@@ -1,3 +1,4 @@
+import {renderAvatarArtwork,CHARACTER_NAMES,renderCharacterButton,renderCharacterDialog,validCharacter,savedCharacter,saveCharacter} from './avatar-art.js';
 import {renderGameChoices,updateGamePicker,availableGames} from './game-picker.js';
 import {renderCatalogGame,handleCatalogAction} from './catalog-games.js';
 import {beginParchisRoll} from './parchis-dice.js';
@@ -12,7 +13,7 @@ import { parseRoomCode } from "./room-code.js";
 import { activateHost, activateDevelopmentAdmin, activatePublicDevelopmentAdmin, requireHostAccess, recoverHostPassword, leaveHostAccount, cachedHostAccess } from './host-access.js';
 import { distributionConfig } from './distribution-config.js';
 
-import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, animateTable, animateSeats } from "./table-view.js";
+import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, animateTable, animateSeats,mascotForSeat } from "./table-view.js";
 
 const LAN = window.ELTETO_LAN;
 const OPEN_LAN_HOST = Boolean(LAN?.hostKey && window.EltetoActivation?.isOpenAccess?.());
@@ -24,7 +25,7 @@ if (activationCode || adminCode) history.replaceState(null, '', location.pathnam
 const app = document.querySelector("#app");
 const toastEl = document.querySelector("#toast");
 const state = {
-  screen: "home", role: null, name: "", roomName: "", gameId: "", playerId: null,
+  character: savedCharacter(), screen: "home", role: null, name: "", roomName: "", gameId: "", playerId: null,
   players: [], view: null, host: null, guest: null, online: null, roomCode: "", offerCode: "", answerCode: "",
   selected: new Set(), error: "", started: false, inviteMode: "offline", handSuit: 'all',
 };
@@ -95,6 +96,7 @@ function renderInstallation() {
   </section></div></section>`;
 }
 function endGuestRoom(message = 'La sala ha terminado.') {
+  try{sessionStorage.removeItem(`elteto.joined.${state.roomCode}`);if(LAN)sessionStorage.removeItem(`elteto.lan.${location.host}.${state.roomCode}`);}catch{}
   turnSequence.reset();
   const session = state.online, guest = state.guest;
   Object.assign(state, { screen: 'guest-ended', view: null, players: [], host: null, guest: null, online: null, selected: new Set(), offerCode: '', answerCode: '', roomCode: '' });
@@ -119,7 +121,7 @@ function renderHostForm() {
   const games = renderGameChoices(availableGames(listGames()),state.gameId,playerCountLabel);
   app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="back">← <span>Volver</span></button><button class="text-button" data-action="access-install">Mi acceso</button></header><section class="menu-setup" aria-labelledby="setup-title">
     <p class="menu-kicker">TÚ PONES LA MESA</p><h1 id="setup-title">Crear partida<span>.</span></h1>
-    <div class="menu-fields"><div><label class="field-label" for="host-name">Tu nombre</label><input class="text-field" id="host-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}"></div>
+    <div class="menu-fields"><div><label class="field-label" for="host-name">Tu nombre</label><div class="name-character-field"><input class="text-field" id="host-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}">${renderCharacterButton(state.character)}</div></div>
     <div><label class="field-label" for="room-name">Nombre de la sala <span>opcional</span></label><input class="text-field" id="room-name" maxlength="30" placeholder="La de siempre" value="${esc(state.roomName)}"></div></div>
     <fieldset class="menu-game-fieldset"><legend>Elige el juego</legend>${games}</fieldset>
     <button class="menu-button menu-primary menu-create" data-action="create-room">Crear sala <span aria-hidden="true">↗</span></button>
@@ -132,7 +134,7 @@ function renderJoinForm() {
   app.innerHTML = `${header()}<section class="panel">
     <div class="eyebrow">Te guardaron sitio… y fruta 🍑</div><h2>Busca tu mesa</h2>
     <p class="helper">Abre el enlace o escanea el QR del anfitrión. Entras como invitado, sin instalar nada.</p>
-    <label class="field-label" for="join-name">Tu nombre</label><input class="text-field" id="join-name" maxlength="24" placeholder="Donde las dan, las toman" value="${esc(state.name)}">
+    <label class="field-label" for="join-name">Tu nombre</label><div class="name-character-field"><input class="text-field" id="join-name" maxlength="24" autocomplete="nickname" placeholder="Donde las dan, las toman" value="${esc(state.name)}">${renderCharacterButton(state.character)}</div>
     <label class="field-label" for="offer-code">Enlace online o código offline</label><div class="scan-row"><button class="button button-paper" data-action="scan-offer">Abrir cámara</button><span>o pega el enlace</span></div><textarea class="code-field" id="offer-code" rows="3" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Código de sala (ABCD2345) o enlace https://fercho-93.github.io/Elteto/?join=…">${esc(state.offerCode)}</textarea>
     ${state.error ? `<p class="error-message" role="alert">${esc(state.error)}</p>` : ''}
     <button class="button button-cyan full-button" data-action="join-room">Entrar en la sala 🍑</button>
@@ -158,7 +160,8 @@ function renderLobby() {
   const game = state.gameId ? getGame(state.gameId) : null;
   const host = state.role === "host";
   const connected = state.role === "client" && state.players.some((player) => player.id === state.playerId);
-  const rows = state.players.map((player, index) => `<div class="player-row"><span class="seat">${String(index + 1).padStart(2, "0")}</span><strong>${esc(player.name)}</strong>${player.isHost ? '<span class="host-pill">ANFITRIÓN</span>' : `<span class="ready-pill">${player.isBot ? "IA" : player.away ? "SIN SEÑAL" : "EN LA MESA"}</span>`}${host && !player.isHost && (state.online || player.isBot) ? `<button class="text-button" data-action="kick-player" data-player-id="${esc(player.id)}" aria-label="Expulsar a ${esc(player.name)}"><span aria-hidden="true">×</span></button>` : ""}</div>`).join("");
+  const rosterIds=state.players.map(player=>player.id),characters=Object.fromEntries(state.players.map(player=>[player.id,player.character]));
+  const rows = state.players.map((player, index) => `<div class="player-row"><span class="lobby-character" role="img" aria-label="${CHARACTER_NAMES[mascotForSeat(rosterIds,index,characters)]}">${renderAvatarArtwork(mascotForSeat(rosterIds,index,characters),"lobby")}</span><strong>${esc(player.name)}</strong>${player.isHost ? '<span class="host-pill">ANFITRIÓN</span>' : `<span class="ready-pill">${player.isBot ? "IA" : player.away ? "SIN SEÑAL" : "EN LA MESA"}</span>`}${host && !player.isHost && (state.online || player.isBot) ? `<button class="text-button" data-action="kick-player" data-player-id="${esc(player.id)}" aria-label="Expulsar a ${esc(player.name)}"><span aria-hidden="true">×</span></button>` : ""}</div>`).join("");
   const enoughPlayers = game && state.players.length <= game.maxPlayers && getGamePlan(game.id).players.includes(state.players.length);
   const connectionTools = host
     ? `<div class="invite-grid">
@@ -204,7 +207,7 @@ function renderGame() {
 }
 function renderGameContents() {
   state.screen = "game";
-  const game = getGame(state.gameId), view = state.view;
+  const game = getGame(state.gameId), view = state.view ? {...state.view,characters:Object.fromEntries(state.players.map(p=>[p.id,p.character]))} : null;
   if (!view) { app.innerHTML = `${header()}<section class="panel"><p>Esperando el estado de la partida…</p></section>`; return; }
   if(!['cinquillo','mus','parchis'].includes(state.gameId)){renderCatalogGame(app,view,state.playerId,playerName,state.error);return;}
   if(state.gameId==='parchis'){renderParchisScreen(app,view,state.playerId,playerName,state.error);return;}
@@ -392,6 +395,19 @@ app.addEventListener("click", async (event) => {
   const action = button.dataset.action;
   if(turnSequence.busy&&isTurnAction(action))return;
   try {
+    if (action === 'choose-character') {
+      app.insertAdjacentHTML('beforeend',renderCharacterDialog(state.character));
+      const dialog=app.querySelector('.character-dialog');
+      dialog.addEventListener('close',()=>{dialog.remove();app.querySelector('.character-picker-button')?.focus();},{once:true});
+      dialog.showModal();return;
+    }
+    if (action === 'close-character-picker') {app.querySelector('.character-dialog')?.close();return;}
+    if (action === 'select-character') {
+      const character=Number(button.dataset.character);if(!validCharacter(character))return;
+      state.character=character;saveCharacter(character);
+      app.querySelector('.character-picker-button').outerHTML=renderCharacterButton(character);
+      app.querySelector('.character-dialog').close();return;
+    }
     if(action.startsWith("catalog-") && handleCatalogAction(app,button,state.view,sendAction,renderGame))return;
     if (action === "open-table-zoom") { openTableZoom(); return; }
     if (action === "open-game-menu") { app.querySelector('.game-menu')?.showModal(); return; }
@@ -437,11 +453,11 @@ app.addEventListener("click", async (event) => {
       state.name = name; state.roomName = roomName || `Partida de ${name}`; state.gameId = gameId; state.role = "host"; state.playerId = "host"; state.error = "";
       if (LAN) {
         const { LanSession } = await import("./lan-session.js");
-        const session = await LanSession.create({gameId, hostName:name, roomName:state.roomName}, onOnlineChange);
+        const session = await LanSession.create({gameId, hostName:name, character:state.character, roomName:state.roomName}, onOnlineChange);
         Object.assign(state, {host:session,online:session,inviteMode:"online",roomCode:session.roomCode,offerCode:session.inviteUrl});
         renderLobby(); return;
       }
-      state.host = new LocalHostSession(gameId, name, state.roomName, onHostChange);
+      state.host = new LocalHostSession(gameId, name, state.roomName, onHostChange, state.character);
       state.inviteMode = "offline"; state.offerCode = ""; state.answerCode = "";
       state.screen = "lobby"; renderLobby();
     } else if (action === "join-room") {
@@ -526,6 +542,7 @@ app.addEventListener("click", async (event) => {
 
 app.addEventListener("input", (event) => {
   if (event.target.matches("#host-name")) state.name = event.target.value;
+  else if (event.target.matches("#join-name")) state.name = event.target.value;
   else if (event.target.matches("#room-name")) state.roomName = event.target.value;
 });
 
@@ -634,7 +651,7 @@ async function openOnlineRoom() {
   if (state.online) { renderLobby(); return; }
   if (state.host?.connections?.size) throw new Error("Ya hay jugadores conectados sin internet. Cierra la sala y crea otra para invitar con internet.");
   const { OnlineSession } = await import("./online-room.js");
-  const session = await OnlineSession.create({ gameId: state.gameId, roomName: state.roomName, hostName: state.name, fillWithAI: Boolean(state.host?.bots?.length) }, onOnlineChange);
+  const session = await OnlineSession.create({ gameId: state.gameId, roomName: state.roomName, hostName: state.name, character: state.character, fillWithAI: Boolean(state.host?.bots?.length) }, onOnlineChange);
   state.host?.close();
   Object.assign(state, { host: session, online: session, role: "host", playerId: session.playerId, inviteMode: "online", roomCode: session.roomCode, offerCode: session.inviteUrl, answerCode: "", error: "" });
   renderLobby();
@@ -646,9 +663,13 @@ async function beginOnlineJoin(code, name) {
   render();
   try {
     const { OnlineSession, LanSession } = await import(LAN ? "./lan-session.js" : "./online-room.js");
-    const session = await (LAN ? LanSession : OnlineSession).join(code, state.name, onOnlineChange);
+    const session = LAN
+      ? await LanSession.join(code,state.name,onOnlineChange,state.character)
+      : await OnlineSession.join(code,state.name,onOnlineChange,undefined,state.character);
     state.online = session;
     state.guest = session;
+    const roomUrl=new URL(location.href);roomUrl.searchParams.set("join",code);history.replaceState(null,"",roomUrl.pathname+roomUrl.search);
+    try { sessionStorage.setItem(`elteto.joined.${code}`, "1"); } catch {}
     if (LAN) state.host = session;
   } catch (error) {
     Object.assign(state, { role: null, screen: "join-form", roomCode: "" });
@@ -663,7 +684,7 @@ async function beginOfflineGuestJoin(offerCode, name) {
   try { localStorage.setItem("elteto.playerName", state.name); } catch {}
   Object.assign(state, { role: "client", inviteMode: "offline", error: "", screen: "lobby", players: [], offerCode: "", answerCode: "" });
   render();
-  const guest = new LocalGuestSession(state.name, handleGuestChange);
+  const guest = new LocalGuestSession(state.name, handleGuestChange, state.character);
   state.guest = guest;
   state.answerCode = await guest.connectOffline(offerCode);
   renderLobby();
@@ -676,7 +697,12 @@ function sendAction(action) {
 }
 const incomingRoom = parseRoomCode(location.search);
 if (incomingRoom) {
-  beginOnlineJoin(incomingRoom, localStorage.getItem("elteto.playerName") || "Invitado").catch((error) => { state.error = error.message || "No se pudo entrar en la sala."; renderJoinForm(); flash(state.error); });
+  state.offerCode=incomingRoom;
+  try{state.name=localStorage.getItem('elteto.playerName') || '';}catch{}
+  let returning=false;
+  try{returning=Boolean(sessionStorage.getItem(`elteto.joined.${incomingRoom}`) || (LAN && sessionStorage.getItem(`elteto.lan.${location.host}.${incomingRoom}`)));}catch{}
+  if(returning)beginOnlineJoin(incomingRoom,state.name || 'Invitado').catch(error=>{state.error=error.message;renderJoinForm();flash(state.error);});
+  else renderJoinForm();
 } else renderHome();
 if (!LAN && !GUEST && "serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
 if (GUEST) document.querySelector('link[rel="manifest"]')?.remove();

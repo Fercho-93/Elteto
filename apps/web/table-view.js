@@ -1,3 +1,4 @@
+import {validCharacter} from './avatar-art.js';
 // Presentation only: consumes a private engine view, never the host's hidden state.
 import { FRENCH_RANKS, SPANISH_RANKS, SPANISH_SUITS, canPlaceCinquillo } from "./game-core/index.js";
 import { renderRivalRoster, revealActivePlayer } from "./rival-portraits.js";
@@ -64,9 +65,10 @@ const SIDE_ARMS = [
  '84% 59%,94% 58%,99% 63%,98% 69%,91% 73%,84% 71%,82% 66%',
 ];
 const sideArms = character => SIDE_ARMS.map(contour=>character<5 ? contour : contour.replace(/(\d+)% (\d+)%/g,(_,x,y)=>`${x}% ${Number(y)-7}%`));
-// A public roster gives every device the same, unique identities without sending
-// cosmetic state or touching the room protocol. Identity never depends on POV.
-export function mascotForSeat(players, seat) {
+// Explicit public choices follow player IDs; older rooms retain the deterministic fallback.
+export function mascotForSeat(players, seat, characters = {}) {
+  const selected=characters[players[seat]];
+  if(validCharacter(selected))return selected;
   const hash = [...players.join("|")].reduce((value, ch) => (Math.imul(value, 31) + ch.charCodeAt(0)) >>> 0, 0);
   return (hash + seat * 3) % MASCOTS.length;
 }
@@ -92,7 +94,7 @@ export function renderSeats(view, playerId, name, gameId) {
   if(gameId==='cinquillo' || gameId==='mus') {
     const own=view.players.indexOf(playerId),n=view.players.length;
     const players=Array.from({length:n},(_,offset)=>{
-      const index=(own+offset)%n,id=view.players[index],character=mascotForSeat(view.players,index);
+      const index=(own+offset)%n,id=view.players[index],character=mascotForSeat(view.players,index,view.characters);
       const isMus=gameId==='mus',team=index%2?'B':'A',partner=isMus&&index%2===own%2;
       return {id,isSelf:id===playerId,character,mascot:MASCOTS[character],name:name(id),count:view.handSizes?.[id]||0,teamLabel:isMus?(id===playerId?team:`${team} · ${partner?'Compi':'Rival'}`):'',active:!view.finished&&!view.handWinner&&(isMus&&view.phase==='discard'?view.awaitingDiscardFrom?.includes(id):view.turnPlayer===id)};
     });
@@ -107,7 +109,7 @@ export function renderSeats(view, playerId, name, gameId) {
       if (own) return '';
       const [x, y] = seatPosition(n, relative);
       const mobile = [gameId==='cinquillo'?x:x<20?12:x>80?88:x,y];
-      const character = mascotForSeat(view.players, index);
+      const character = mascotForSeat(view.players, index,view.characters);
       const direction = gameId === 'cinquillo' && x !== 50 ? (x < 50 ? 'right' : 'left') : 'front';
       const side = direction !== 'front';
       const active =

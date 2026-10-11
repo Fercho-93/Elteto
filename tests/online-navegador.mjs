@@ -1,5 +1,5 @@
 // Recorrido de la interfaz con dos «móviles» en Chromium contra los emuladores de Auth y
-// Firestore: crear sala con internet, leer el QR con la cámara interna, empezar y jugar cuatro turnos.
+// Firestore: crear sala con internet, leer el QR con la cámara interna, elegir personajes, empezar y reconectar.
 // No forma parte de `npm test` (necesita Playwright y Chromium). Uso:
 //   npm run build:web
 //   PLAYWRIGHT_MODULE=/ruta/a/playwright/index.mjs \
@@ -100,10 +100,11 @@ try {
   await host.waitText(/Tu mesa está lista/);
   await host.page.click('[data-action="open-host"]');
   await host.page.fill("#host-name", "Ana");
+  await host.page.locator('[data-action="choose-character"]').click();
+  await host.page.locator('[data-action="select-character"][data-character="2"]').click();
   await host.page.fill("#room-name", "Mesa online");
   await host.page.locator('.game-category:has(input[value="cinquillo"]) summary').click();
   await host.page.locator('input[value="cinquillo"]').check();
-  await host.page.fill("#host-name", "Ana");
   await host.page.click('[data-action="create-room"]');
   await host.page.click('[data-action="new-invite"]');
   await host.waitText(/Código de la sala/);
@@ -116,6 +117,8 @@ try {
   await guest.page.goto(base);
   await guest.page.click('[data-action="open-join"]');
   await guest.page.fill("#join-name", "Bea");
+  await guest.page.locator('[data-action="choose-character"]').click();
+  await guest.page.locator('[data-action="select-character"][data-character="9"]').click();
   // Feed the host's actual QR into a real video MediaStream; do not mock decoding.
   const qrImage = await host.page.locator('canvas.invite-qr').evaluate(canvas=>canvas.toDataURL());
   await guest.page.evaluate(async image=>{
@@ -135,6 +138,7 @@ try {
   // Entrar por el enlace de invitación (QR) con una tercera persona.
   const third = await movil("tercera");
   await third.page.goto(`${base}?join=${code}`);
+  await third.page.locator('[data-action="join-room"]').click();
   await third.waitText(/Conectado a la sala/);
   await host.waitText(/3 \/ 6/);
   await third.page.click('[data-action="leave-room"]');
@@ -144,28 +148,20 @@ try {
   await host.page.click('[data-action="start-game"]');
   await host.page.locator(".hand .playing-card").first().waitFor();
   await guest.page.locator(".hand .playing-card").first().waitFor();
+  assert.equal(await host.page.locator('[data-player-id] .rival-original').first().getAttribute("data-character"),"2");
+  assert.equal(await guest.page.locator('.self-seat .rival-original').getAttribute("data-character"),"9");
   const hostCards = await host.page.locator(".hand .playing-card").count();
   const guestCards = await guest.page.locator(".hand .playing-card").count();
   assert.ok(hostCards >= 20 && guestCards >= 20, `manos repartidas (${hostCards}/${guestCards})`);
   console.log(`  ok  partida en marcha: ${hostCards} y ${guestCards} cartas`);
 
-  // Juega quien tiene el turno: una carta si puede colocarla; si no, pasa.
-  const turnos = [host, guest];
-  for (let i = 0; i < 4; i++) {
-    const jugador = await (async () => {
-      for (const p of turnos) {
-        if (await p.page.locator(".self-seat.active-seat").count()) return p;
-      }
-      return null;
-    })();
-    assert.ok(jugador, "alguien tiene el turno");
-    const antes = await host.page.locator(".history li").count().catch(() => 0);
-    const carta = jugador.page.locator(".hand .playing-card:not([disabled])").first();
-    if (await carta.count()) await carta.click(); else await jugador.page.click('[data-action="cinquillo-pass"]');
-    await host.page.waitForFunction((n) => document.querySelectorAll(".history li").length > n, antes, { timeout: 15000 });
-    await guest.page.waitForTimeout(300);
-  }
-  console.log("  ok  cuatro turnos jugados desde la interfaz");
+  // Reload resumes the same seat and character without opening the identity form again.
+  await guest.page.reload();
+  await guest.page.locator('.hand .playing-card').first().waitFor();
+  assert.equal(await guest.page.locator('.hand .playing-card').count(),guestCards);
+  assert.equal(await guest.page.locator('.self-seat .rival-original').getAttribute('data-character'),'9');
+  assert.equal(await guest.page.locator('[data-action="choose-character"]').count(),0);
+  console.log('  ok  recarga conserva la plaza, las cartas y el personaje elegido');
 
   await host.page.click('[data-action="open-game-menu"]');
   await host.page.click('[data-action="leave-room"]');

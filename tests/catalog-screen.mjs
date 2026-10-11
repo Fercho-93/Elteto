@@ -4,7 +4,7 @@ import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {listGames,getGame,buildCardMaterial,captures15} from '../dist/game-core/index.js';
 const {chromium,webkit}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1]+'\nwindow.testHostForm = () => renderHostForm();';
+const fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1]+'\nwindow.testHostForm = () => renderHostForm(); window.testJoinForm = () => renderJoinForm();';
 const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://localhost').pathname.slice(1)||'index.html';let body=await readFile('dist/'+file);if(file==='app.js')body=Buffer.from(body+fixture);res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':file.endsWith('.svg')?'image/svg+xml':'text/html');res.end(body);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const kind=process.env.CATALOG_BROWSER||'chromium',browser=await (kind==='webkit'?webkit:chromium).launch();
@@ -33,6 +33,31 @@ try{
   assert.equal(await page.locator('#host-name').inputValue(),'Nombre conservado');
   assert.equal(await page.locator('input[name="game"]:checked').inputValue(),'texas-holdem');
   if(width===390)await page.screenshot({path:`tests/artifacts/catalog/game-picker-${kind}.png`,fullPage:true});
+ }
+ // Character picker preserves typed identity, exposes all ten choices, and persists locally.
+ for(const width of [320,390,844]){
+  await page.setViewportSize({width,height:844});await page.evaluate(()=>window.testHostForm());
+  await page.locator('#host-name').fill('Ana sin perder el nombre');
+  assert.equal(await page.locator('#host-name').inputValue(),'Ana sin perder el nombre','initial fill '+width);
+  await page.locator('#room-name').fill('Mesa elegida');
+  for(let character=0;character<10;character++){
+   await page.locator('[data-action="choose-character"]').click();
+   assert.equal(await page.locator('.character-option').count(),10);
+   await page.locator(`.character-option[data-character="${character}"]`).click();
+   await page.locator('.character-dialog').waitFor({state:'detached'});
+   assert.equal(await page.locator('#host-name').inputValue(),'Ana sin perder el nombre',JSON.stringify({width,character}));
+   assert.equal(await page.locator('#room-name').inputValue(),'Mesa elegida');
+   assert.equal(await page.evaluate(()=>localStorage.getItem('elteto.character')),String(character));
+  }
+  await page.evaluate(()=>window.testJoinForm());
+  assert.equal(await page.locator('#join-name').inputValue(),'Ana sin perder el nombre');
+  await page.locator('#join-name').fill('Bea');
+  await page.locator('[data-action="choose-character"]').click();
+  assert.ok(await page.locator('.character-option[data-character="9"]').getAttribute('aria-pressed')==='true');
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  if(width===390)await page.screenshot({path:`tests/artifacts/catalog/character-picker-${kind}.png`,fullPage:true});
+  await page.locator('.character-option[data-character="4"]').click();
+  assert.equal(await page.locator('#join-name').inputValue(),'Bea');
  }
  for(const engine of listGames().filter(g=>!['cinquillo','mus','parchis'].includes(g.id))){
   for(const count of [...new Set([engine.minPlayers,engine.maxPlayers])]){

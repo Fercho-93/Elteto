@@ -101,7 +101,8 @@ service cloud.firestore {
       // abandonadas.
       function bumped() { return after().version == before().version + 1 && after().updatedAt == request.time; }
       function validName(name) { return name is string && name.size() >= 1 && name.size() <= 24; }
-      function validPlayer(p) { return p.keys().hasOnly(['name','joinedAt']) && validName(p.name) && p.joinedAt is int; }
+      function validPlayer(p) { return p.keys().hasOnly(['name','joinedAt','character']) && validName(p.name) && p.joinedAt is int
+        && (!('character' in p) || (p.character is int && p.character >= 0 && p.character < 10)); }
       // Bots are seats controlled by the host, never authenticated participants.
       function validBot(bots, id) { return !(id in bots) || validName(bots[id]); }
       function validBots() {

@@ -56,10 +56,11 @@ async function open(gameId, names) {
   const conns = await Promise.all(names.map(() => connect()));
   const events = names.map(() => listener());
   await admin.withSecurityRulesDisabled(ctx => setDoc(doc(ctx.firestore(), 'hostAccess', conns[0].uid), {status:'active'}));
-  const host = track(await OnlineSession.create({ gameId, roomName: "Mesa de prueba", hostName: names[0] }, events[0].onChange, conns[0]));
+  const host = track(await OnlineSession.create({ gameId, roomName: "Mesa de prueba", hostName: names[0], character: 2 }, events[0].onChange, conns[0]));
   const guests = [];
-  for (let i = 1; i < names.length; i++) guests.push(track(await OnlineSession.join(host.roomCode, names[i], events[i].onChange, conns[i])));
+  for (let i = 1; i < names.length; i++) guests.push(track(await OnlineSession.join(host.roomCode, names[i], events[i].onChange, conns[i], i+3)));
   await until("todos en el vestíbulo", () => [host, ...guests].every((s, i) => events[i].last("lobby")?.players.length === names.length));
+  assert.deepEqual(events[0].last('lobby').players.map(p=>p.character),names.map((_,i)=>i===0?2:i+3));
   return { host, guests, all: [host, ...guests], events, conns };
 }
 

@@ -1,3 +1,4 @@
+import {characterProfile} from './avatar-art.js';
 import { getGame, fillBotSeats, BotRunner, botTurnDelay, nextBotMove } from "./game-core/index.js";
 import { acceptOffer, decodeSignal, makeOffer } from "./local-transport.js";
 
@@ -5,7 +6,8 @@ const HOST_ID = "host";
 const say = (type, data = {}) => ({ type, data });
 
 export class LocalHostSession {
-  constructor(gameId, hostName, roomName, onChange) {
+  constructor(gameId, hostName, roomName, onChange, character) {
+    this.hostCharacter = characterProfile(character);
     this.engine = getGame(gameId);
     this.hostName = hostName;
     this.roomName = roomName;
@@ -24,8 +26,8 @@ export class LocalHostSession {
 
   players() {
     return [
-      { id: HOST_ID, name: this.hostName, isHost: true },
-      ...[...this.connections.values()].map(({ id, name }) => ({ id, name, isHost: false })),
+      { id: HOST_ID, name: this.hostName, ...this.hostCharacter, isHost: true },
+      ...[...this.connections.values()].map(({ id, name, character }) => ({ id, name, ...characterProfile(character), isHost: false })),
       ...this.bots,
     ];
   }
@@ -84,7 +86,7 @@ export class LocalHostSession {
         this.peers.delete(peerId);
         return;
       }
-      this.connections.set(peerId, { id: peerId, name, peer: this.peers.get(peerId) });
+      this.connections.set(peerId, { id: peerId, name, ...characterProfile(message.data?.character), peer: this.peers.get(peerId) });
       this.peers.get(peerId)?.send(say("welcome", { playerId: peerId, gameId: this.engine.id }));
       this.publishLobby();
       if (this.started) this.sendViews();
@@ -158,7 +160,8 @@ export class LocalHostSession {
 }
 
 export class LocalGuestSession {
-  constructor(playerName, onChange) {
+  constructor(playerName, onChange, character) {
+    this.character = characterProfile(character);
     this.playerName = playerName;
     this.onChange = onChange;
     this.peer = null;
@@ -171,7 +174,7 @@ export class LocalGuestSession {
     const peer = await acceptOffer(
       offerCode,
       (message) => this.handleMessage(message),
-      () => this.peer?.send(say("hello", { name: this.playerName })),
+      () => this.peer?.send(say("hello", { name: this.playerName, ...this.character })),
       () => this.onChange({ kind: "disconnected", message: "Se perdió la conexión local. Comprueba que ambos móviles siguen en la misma Wi-Fi." })
     );
     this.peer = peer;

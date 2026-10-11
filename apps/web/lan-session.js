@@ -1,3 +1,4 @@
+import {characterProfile} from './avatar-art.js';
 import { LocalHostSession } from './local-session.js';
 
 function randomToken() {
@@ -15,15 +16,16 @@ export class LanSession {
     // siguiente mesa, aunque siga abierta la misma app anfitriona.
     Object.assign(window.ELTETO_LAN, await fetch('./lan-config', { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error('No se pudo abrir la mesa.'); return r.json(); }));
     const session = new LanSession(onChange, true);
-    session.local = new LocalHostSession(options.gameId, options.hostName, options.roomName, change => session.emitHost(change));
+    session.local = new LocalHostSession(options.gameId, options.hostName, options.roomName, change => session.emitHost(change), options.character);
     session.local.canRunBots = () => [...session.local.connections.values()].every(c => c.peer.connected);
     await session.connect();
     session.local.publishLobby();
     return session;
   }
-  static async join(code, name, onChange) {
+  static async join(code, name, onChange, character) {
     if (code !== window.ELTETO_LAN.roomCode) throw new Error('El código pertenece a otra mesa. Abre el enlace del anfitrión.');
     const session = new LanSession(onChange, false);
+    session.character = characterProfile(character);
     session.name = String(name).trim().slice(0, 24) || 'Invitado';
     const key = `elteto.lan.${location.host}.${code}`;
     session.resume = sessionStorage.getItem(key) || randomToken();
@@ -64,7 +66,7 @@ export class LanSession {
         if (packet.type === 'connected') {
           accepted = true;
           clearTimeout(timeout);
-          if (!this.isHost) this.send({ type: 'hello', data: { name: this.name } });
+          if (!this.isHost) this.send({ type: 'hello', data: { name: this.name, ...this.character } });
           resolve();
         } else if (packet.type === 'fatal') {
           clearTimeout(timeout);

@@ -78,6 +78,15 @@ try {
   await seed();
   await ok("entrar en el vestíbulo", join("cris"));
   await seed();
+  for(const character of [0,9]){
+    await seed();
+    await ok('elegir personaje '+character,join('cris',lobby,{players:{...lobby.players,cris:{...player('Cris'),character}}}));
+  }
+  for(const character of [-1,10,1.5,'2',null]){
+    await seed();
+    await no('rechazar personaje inválido '+character,join('cris',lobby,{players:{...lobby.players,cris:{...player('Cris'),character}}}));
+  }
+  await seed();
   await no("entrar con otro uid en el mapa", updateDoc(room("cris"), bump(lobby, { players: { ...lobby.players, dani: player("Dani") }, playerOrder: [...lobby.playerOrder, "cris"] })));
   await no("colarse en medio del orden", updateDoc(room("cris"), bump(lobby, { players: { ...lobby.players, cris: player("Cris") }, playerOrder: ["cris", ...lobby.playerOrder] })));
   await no("entrar sin subir la versión", updateDoc(room("cris"), { players: { ...lobby.players, cris: player("Cris") }, playerOrder: [...lobby.playerOrder, "cris"], updatedAt: serverTimestamp() }));

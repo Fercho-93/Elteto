@@ -14,6 +14,10 @@ try {
  const [output]=await once(server.stdout,'data');const hostUrl=String(output).trim();const base=new URL(hostUrl).origin;
  browser=await (process.env.LAN_BROWSER==='webkit'?webkit:chromium).launch();
  const errors=[];
+ const enter=async(page,url)=>{await page.goto(url);await page.locator('[data-action="join-room"]').waitFor();if(await page.locator('[data-action="join-room"]').count()){
+  await page.locator('[data-action="choose-character"]').click();await page.locator('[data-action="select-character"][data-character="9"]').click();
+  await page.locator('[data-action="join-room"]').click();
+ }};
  const context=async name=>{
   const ctx=await browser.newContext({viewport:{width:390,height:664},serviceWorkers:'block',reducedMotion:'reduce'});
   await ctx.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
@@ -35,15 +39,18 @@ try {
  assert.equal(await host.locator('[data-action="development-admin"]').count(),0);
  assert.equal(await host.locator('#access-form').count(),0);
  await host.locator('[data-action="open-host"]').click();await host.locator('#host-name').fill('Ana');
+ await host.locator('[data-action="choose-character"]').click();await host.locator('[data-action="select-character"][data-character="2"]').click();
  await host.locator('[data-action="create-room"]').click();
  await host.locator('.room-code').waitFor();const code=(await host.locator('.room-code').textContent()).trim();
  assert.match(code,/^[A-HJ-NP-Z2-9]{8}$/);assert.equal(await host.locator('canvas.invite-qr').count(),1);
- const guest=await context('Bea');await guest.goto(base+'/?join='+code);
+ const guest=await context('Bea');await enter(guest,base+'/?join='+code);
  assert.equal(await guest.locator('[data-action="development-admin"]').count(),0);
  await guest.waitForFunction(()=>document.querySelector('#app').textContent.includes('Ya estás en la mesa'));
  await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===2);
  await host.locator('[data-action="start-game"]').click();
  await guest.locator('.hand .playing-card').first().waitFor();
+ assert.equal(await host.locator('[data-player-id="host"] .rival-original').getAttribute('data-character'),'2');
+ assert.equal(await guest.locator('.self-seat .rival-original').getAttribute('data-character'),'9');
  assert.equal(await host.locator('.hand .playing-card').count()+await guest.locator('.hand .playing-card').count(),40);
  // Exercise the actual LAN entry page: a correct index.html does not cover lan.html.
  for(const page of [host,guest]) {
@@ -97,11 +104,11 @@ try {
  await host.locator('[data-action="create-room"]').click();
  const musCode=(await host.locator('.room-code').textContent()).trim();
  assert.notEqual(musCode,code,'cada mesa tiene una invitación distinta');
- const old=await context('Enlace antiguo');await old.goto(base+'/?join='+code);
+ const old=await context('Enlace antiguo');await enter(old,base+'/?join='+code);
  await old.waitForFunction(()=>document.querySelector('#app').textContent.includes('otra mesa'));
- await guest.goto(base+'/?join='+musCode);
+ await enter(guest,base+'/?join='+musCode);
  const c=await context('Cris'),d=await context('Dani');
- await c.goto(base+'/?join='+musCode);await d.goto(base+'/?join='+musCode);
+ await enter(c,base+'/?join='+musCode);await enter(d,base+'/?join='+musCode);
  await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===4);
  await host.locator('[data-action="start-game"]').click();
  for(const p of [host,guest,c,d]) {
@@ -128,7 +135,7 @@ try {
  // The same room, QR, messages and reconnection path also carry a public board game.
  await host.locator('[data-action="open-host"]').click();await host.locator('#host-name').fill('Ana');
  await host.locator('.game-category:has(input[value="parchis"]) summary').click();await host.locator('input[value="parchis"]').check();await host.locator('[data-action="create-room"]').click();
- const boardCode=(await host.locator('.room-code').textContent()).trim();await guest.goto(base+'/?join='+boardCode);await c.goto(base+'/?join='+boardCode);await d.goto(base+'/?join='+boardCode);
+ const boardCode=(await host.locator('.room-code').textContent()).trim();await enter(guest,base+'/?join='+boardCode);await enter(c,base+'/?join='+boardCode);await enter(d,base+'/?join='+boardCode);
  await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===4);await host.locator('[data-action="start-game"]').click();
  for(const p of [host,guest,c,d]){await p.locator('.parchis-table [data-pawn]').first().waitFor();assert.equal(await p.locator('.parchis-table [data-pawn]').count(),16);}
  let moved=0;
@@ -156,7 +163,7 @@ try {
  for(const gameId of ['oca','damas-espanolas']){
   await host.locator('[data-action="open-host"]').click();await host.locator('#host-name').fill('Ana');
   await host.locator(`.game-category:has(input[value="${gameId}"]) summary`).click();await host.locator(`input[value="${gameId}"]`).check();await host.locator('[data-action="create-room"]').click();
-  const invitation=(await host.locator('.room-code').textContent()).trim();await guest.goto(base+'/?join='+invitation);
+  const invitation=(await host.locator('.room-code').textContent()).trim();await enter(guest,base+'/?join='+invitation);
   await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===2);await host.locator('[data-action="start-game"]').click();
   for(const p of [host,guest]){await p.locator('.catalog-surface').waitFor();assert.ok(await p.locator('.catalog-surface').evaluate(el=>el.scrollHeight<=el.clientHeight+1&&el.scrollWidth<=el.clientWidth+1));}
   if(gameId==='oca'){

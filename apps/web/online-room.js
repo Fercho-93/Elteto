@@ -1,3 +1,4 @@
+import {characterProfile} from './avatar-art.js';
 import { getGame, fillBotSeats, nextBotMove, BotRunner, botTurnDelay } from "./game-core/index.js";
 import { connectFirebase } from "./firebase-client.js";
 import { createRoomCode, inviteUrlFor } from "./room-code.js";
@@ -46,7 +47,7 @@ const millis = (timestamp) => (typeof timestamp?.toMillis === "function" ? times
 
 export class OnlineSession {
   /** Crea una sala nueva y deja a esta persona como anfitriona. */
-  static async create({ gameId, roomName, hostName, fillWithAI = false }, onChange, connection = connectFirebase()) {
+  static async create({ gameId, roomName, hostName, character, fillWithAI = false }, onChange, connection = connectFirebase()) {
     try {
       const name = String(hostName || "").trim().slice(0, 24);
       if (!validName(name)) throw new Error("Indica tu nombre para abrir la sala.");
@@ -60,7 +61,7 @@ export class OnlineSession {
       batch.set(doc(db, "rooms", code), {
         roomCode: code, gameId: engine.id, roomName: String(roomName || "").trim().slice(0, 40) || `Partida de ${name}`,
         hostUid: uid, status: "lobby", version: 1, minPlayers: engine.minPlayers, maxPlayers: engine.maxPlayers,
-        playerOrder: [uid], players: { [uid]: { name, joinedAt: Date.now() } },
+        playerOrder: [uid], players: { [uid]: { name, ...characterProfile(character), joinedAt: Date.now() } },
         bots: fillWithAI ? Object.fromEntries(fillBotSeats([{id:uid}], engine.maxPlayers).map(p => [p.id,p.name])) : {},
         createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
       });
@@ -70,7 +71,7 @@ export class OnlineSession {
   }
 
   /** Entra en una sala existente (o vuelve a ella si ya estaba dentro). */
-  static async join(code, playerName, onChange, connection = connectFirebase()) {
+  static async join(code, playerName, onChange, connection = connectFirebase(), character) {
     try {
       const name = String(playerName || "").trim().slice(0, 24);
       if (!validName(name)) throw new Error("Indica tu nombre para entrar.");
@@ -87,7 +88,7 @@ export class OnlineSession {
         if (data.status !== "lobby") throw new Error("ALREADY_STARTED");
         if (data.playerOrder.length + Object.keys(data.bots || {}).length >= data.maxPlayers) throw new Error("ROOM_FULL");
         transaction.update(reference, {
-          players: { ...data.players, [uid]: { name, joinedAt: Date.now() } },
+          players: { ...data.players, [uid]: { name, ...characterProfile(character), joinedAt: Date.now() } },
           playerOrder: [...data.playerOrder, uid],
           version: data.version + 1,
           updatedAt: serverTimestamp(),
@@ -279,7 +280,7 @@ export class OnlineSession {
   players() {
     if (!this.room) return [];
     return [...this.room.playerOrder.map((uid) => ({
-      id: uid, name: this.room.players[uid]?.name || "Jugador", isHost: uid === this.room.hostUid, away: this.isAway(uid),
+      id: uid, name: this.room.players[uid]?.name || "Jugador", ...characterProfile(this.room.players[uid]?.character), isHost: uid === this.room.hostUid, away: this.isAway(uid),
     })), ...Object.entries(this.room.bots || {}).map(([id, name]) => ({id, name, isHost:false, isBot:true, away:false}))];
   }
 

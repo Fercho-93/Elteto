@@ -4,13 +4,12 @@ import {renderParchisDie,beginParchisRoll,finishDiceRender,OCA_DICE_TARGETS} fro
 import {finishBoardMotion,preparePublicMotion,finishPublicMotion} from './board-motion.js';
 import {getGamePlan} from './game-core/index.js';
 import {renderRivalRoster,revealActivePlayer} from './rival-portraits.js';
-import {mascotForSeat,escapeHtml as esc} from './table-view.js';
+import {mascotForSeat,MASCOTS,escapeHtml as esc} from './table-view.js';
 import {cardAsset} from './card-art.js';
 
 let pokerSpanishView=false;
 const ui={key:'',cards:new Set(),table:new Set(),path:[],tile:null};
 const symbols={oros:'●',copas:'♜',espadas:'⚔',bastos:'♣',picas:'♠',corazones:'♥',diamantes:'♦',treboles:'♣'};
-const characters=['Berenjena','Melocotón','Plátano','Japón','Aguacate','Cerdito','Seta','Gota','Caca','Huevos'];
 const actionButton=(label,action,extra='')=>`<button data-action="${action}" ${extra}>${esc(label)}</button>`;
 function face(card){if(!card)return '<span class="catalog-card-back" aria-label="Carta oculta">✦</span>';
  const pokerSpanish=['oros','copas','espadas','bastos'].includes(card.suit)&&['A','J','Q','K'].includes(card.rank);
@@ -43,7 +42,7 @@ export function renderCatalogGame(app,view,playerId,name,error=''){
  const zoom=app.querySelector('.catalog-zoom')?.open,zoomScroll=app.querySelector('.catalog-zoom-content')?.scrollTop||0;
  const menu=app.querySelector('.game-menu')?.open,menuScroll=app.querySelector('.game-menu-content')?.scrollTop||0,boardScroll=app.querySelector('.catalog-surface')?.scrollTop||0,handScroll=app.querySelector('.catalog-hand')?.scrollLeft||0;
  const own=view.players.indexOf(playerId),ordered=Array.from({length:view.players.length},(_,i)=>view.players[(own+i)%view.players.length]);
- const players=ordered.map(id=>{const seat=view.players.indexOf(id),character=mascotForSeat(view.players,seat);return {id,name:name(id),character,mascot:characters[character],count:view.handSizes[id],unit:view.unit||'cartas',active:!view.finished&&view.turnPlayer===id,isSelf:id===playerId,teamLabel:view.teamLabels?.[id]||'',...(view.boardKind==='oca'?{pieceColor:GOOSE_COLORS[seat],pieceNumber:seat+1,pieceLabel:GOOSE_COLOR_NAMES[seat]}:{})};});
+ const players=ordered.map(id=>{const seat=view.players.indexOf(id),character=mascotForSeat(view.players,seat,view.characters);return {id,name:name(id),character,mascot:MASCOTS[character],count:view.handSizes[id],unit:view.unit||'cartas',active:!view.finished&&view.turnPlayer===id,isSelf:id===playerId,teamLabel:view.teamLabels?.[id]||'',...(view.boardKind==='oca'?{pieceColor:GOOSE_COLORS[seat],pieceNumber:seat+1,pieceLabel:GOOSE_COLOR_NAMES[seat]}:{})};});
  const isTurn=view.turnPlayer===playerId&&!view.finished;
  const selectable=isTurn&&(view.selectable||view.boardKind==='tricks'&&view.phase==='play'||view.boardKind==='melds'&&['show','layoff'].includes(view.phase));
  const ranks=plan.material.includes('french')||plan.material.includes('poker')?['A','2','3','4','5','6','7','8','9','10','J','Q','K']:['1','2','3','4','5','6','7','8','9','10','11','12'];
