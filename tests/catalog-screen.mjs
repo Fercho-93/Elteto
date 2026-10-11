@@ -81,7 +81,7 @@ try{
     });
     results.push({id:engine.id,count,width,height,...metrics});assert.ok(metrics.page&&metrics.inside&&metrics.separate&&metrics.buttons,JSON.stringify(results.at(-1)));assert.ok(metrics.boardHeight>=70,JSON.stringify(results.at(-1)));
     // The three common surfaces remain usable at every size.
-    await page.locator('.game-menu-button').click();assert.equal(await page.locator('.game-menu [data-action="leave-room"]').textContent(),engine.id==='texas-holdem'?'Ausentarme y volver':'Salir de la partida');assert.ok(await page.locator('.game-menu').evaluate(el=>el.open));
+    await page.locator('.game-menu-button').click();assert.equal(await page.locator('.game-menu [data-action="leave-room"]').textContent(),'Salir de la partida');assert.ok(await page.locator('.game-menu').evaluate(el=>el.open));if(engine.id==='texas-holdem')assert.equal(await page.locator('.game-menu [data-action="poker-break"]').textContent(),'Ausentarme y volver');
     await page.locator('.game-menu details').first().locator('summary').click();
     const rules=await page.locator('.game-menu a').getAttribute('href');assert.ok((await page.request.get(new URL(rules,page.url()).href)).ok());
     await page.locator('.game-menu [data-action="close-game-menu"]').click();
