@@ -181,7 +181,7 @@ try {
    const engine=getGame(gameId);let board=engine.createInitialState(['a','b'],22);
    for(const [p,id] of [[host,'a'],[guest,'b']]){
     const move=engine.view(board,id).moves[0];await p.locator(`.catalog-surface [data-square="${move.path[0]}"]`).click();
-    assert.ok((await p.locator('.catalog-surface .checkers-cancel').boundingBox()).height<=44);
+    assert.ok((await p.locator('.catalog-dock .checkers-cancel').boundingBox()).height<=44);
     await p.locator(`.catalog-surface [data-square="${move.path[1]}"]`).click();board=engine.applyAction(board,id,{type:'move',path:move.path});
     const target=move.path[1];for(const q of [host,guest])await q.waitForFunction(target=>!!document.querySelector(`.catalog-surface [data-checker-at="${target}"]`),target);
    }
