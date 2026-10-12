@@ -111,7 +111,6 @@ html:has(.catalog-screen),body:has(.catalog-screen),body:has(.catalog-screen) #a
 .poker-pot>small{max-width:110px;white-space:normal;}
 .poker-moving-chip{gap:8px;pointer-events:none;}
 .poker-moving-chip>b{padding:2px 4px;background:#143c30;border-radius:5px;}
-.profile-setup .character-picker-button{margin:14px 0;width:100%;}
 .profile-edit{margin:0 auto;display:block;font-size:12px;}
 /* Stable seat slots prevent cards, labels and wagers from moving the avatar. */
 .poker-seat-head{display:flex;align-items:center;justify-content:center;gap:3px;height:40px;width:100%;flex:none;}

@@ -59,8 +59,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 
 function renderProfile(){
  state.screen='profile';
- app.innerHTML=`<section class="menu-shell"><div class="menu-wrap"><section class="menu-setup profile-setup"><span class="menu-brand">ELTETO ✦</span><h1>¿Quién se sienta a la mesa?</h1><label class="field-label" for="profile-name">Tu nombre</label><input class="text-field" id="profile-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}">${renderCharacterButton(state.character)}<button class="button button-cyan full-button" data-action="profile-confirm">Entrar</button><p class="helper">Usaremos este nombre y personaje en tus partidas.</p></section></div></section>`;
- app.querySelector('#profile-name').focus({preventScroll:true});
+ app.innerHTML=`<section class="menu-shell profile-shell"><div class="menu-wrap profile-wrap"><header class="profile-brand"><div class="menu-logo" role="img" aria-label="ELTETO"></div></header><section class="menu-setup profile-setup" aria-labelledby="profile-title"><h1 id="profile-title">¿Quién se sienta a la mesa?</h1><div class="profile-fields"><div class="profile-field"><label class="field-label" for="profile-name">Tu nombre</label><input class="text-field" id="profile-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}"></div><div class="profile-field">${renderCharacterButton(state.character)}</div></div><div class="profile-entry"><button class="menu-button menu-secondary full-button" data-action="profile-confirm">Entrar <span aria-hidden="true">↗</span></button><p class="helper">Usaremos este nombre y personaje en tus partidas.</p></div></section></div></section>`;
 }
 function renderHome() {
   closeGameHelp();
