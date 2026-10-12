@@ -171,3 +171,10 @@ html:has(.catalog-screen),body:has(.catalog-screen),body:has(.catalog-screen) #a
 .poker-table[data-seats="7"] .poker-edge-top .rival-original,.poker-table[data-seats="8"] .poker-edge-top .rival-original{width:24px;height:24px;}
 .poker-table[data-seats="7"] .poker-edge-top .poker-card-zone,.poker-table[data-seats="8"] .poker-edge-top .poker-card-zone{min-width:20px;width:20px;}
 .poker-table[data-seats="7"] .poker-edge-top .poker-pocket-back,.poker-table[data-seats="8"] .poker-edge-top .poker-pocket-back,.poker-table[data-seats="7"] .poker-edge-top .catalog-card,.poker-table[data-seats="8"] .poker-edge-top .catalog-card{width:15px!important;}
+@container (max-height:420px){
+ .poker-table .poker-status{display:none;}
+ .poker-last-action:empty::after{content:attr(data-seat-status);}
+}
+@container (max-height:420px){
+ .poker-table[data-seats="6"] .poker-edge-right,.poker-table[data-seats="7"] .poker-edge-right,.poker-table[data-seats="8"] .poker-edge-right{justify-content:flex-end;}
+}

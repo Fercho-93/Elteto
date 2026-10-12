@@ -11,7 +11,7 @@ try{
  const page=await browser.newPage({serviceWorkers:'block',reducedMotion:'reduce'});page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:'+server.address().port);await page.waitForFunction(()=>window.pokerFixture);
  await mkdir('tests/artifacts/poker',{recursive:true});
- const measure=()=>page.evaluate(()=>{
+ const measure=async()=>{await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));return page.evaluate(()=>{
    const rect=el=>{const r=el.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};};
    const overlap=(a,b)=>a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5;
    const table=rect(document.querySelector('.catalog-surface'));
@@ -21,7 +21,7 @@ try{
     inside:seats.every(s=>s.left>=table.left&&s.right<=table.right&&s.top>=table.top&&s.bottom<=table.bottom),
     clear:seats.every(s=>protectedAreas.every(p=>!overlap(s,p))),
     distinct:seats.every((s,i)=>seats.slice(i+1).every(p=>!overlap(s,p))),table,seats,protectedAreas};
-  });
+  });};
  const engine=getGame('texas-holdem');let layouts=0;
  for(let count=2;count<=7;count++)for(const [width,height] of [[320,568],[353,768],[390,664],[390,844],[667,375],[844,390],[1280,800]]){
   let game=engine.createInitialState(Array.from({length:count},(_,i)=>'p'+i),91);
