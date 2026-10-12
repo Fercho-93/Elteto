@@ -1,6 +1,6 @@
 const CACHE = "elteto-shell-v30";
 const ASSETS = ['./mus-table.js','./mus-flow.js','./game-core/games/mus-legacy.js','./game-core/games/mus-evaluation.js','./game-core/games/mus-scoring.js',"./game-help.js", "./game-help.css","./card-art.js", "./card-art.css",
-  "./poker-presence.js", "./poker-table.js",
+  "./poker-presence.js", "./poker-table.js", "./poker-controls.js", "./poker-events.js",
   './guest.html', './activation-code.js', './host-access.js', './distribution-config.js', './firebase-sdk.js',
   "./game-picker.js", "./board-games.js", "./board-games.css", "./board-motion.js", "./turn-events.js", "./turn-sequence.js", "./turn-sequence.css", "./game-physics.js", "./bot-pacing.js", "./card-paint.js", "./table-speech.js",
   "./catalog-games.js", "./catalog-games.css", "./game-core/games/shared.js", "./game-core/games/boards.js", "./game-core/games/social-cards.js", "./game-core/games/tricks.js", "./game-core/games/melds.js", "./game-core/games/holdem.js",

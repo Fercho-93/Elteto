@@ -1,3 +1,4 @@
+import {handlePokerUI,syncPokerAmounts} from './poker-controls.js';
 import {renderMusScreen,openMusPanel} from './mus-table.js';
 import {mountGameHelp,openGameHelp,closeGameHelp} from './game-help.js';
 import {renderAvatarArtwork,CHARACTER_NAMES,renderCharacterButton,renderCharacterDialog,validCharacter,savedCharacter,saveCharacter} from './avatar-art.js';
@@ -166,6 +167,7 @@ function codePanel(label, code, action, compact = false) {
 }
 
 function renderLobby() {
+ delete app.pokerSnapshot;
   state.screen = "lobby";
   const game = state.gameId ? getGame(state.gameId) : null;
   const host = state.role === "host";
@@ -213,6 +215,7 @@ let renderedGame = null;
 let previousSeats = null;
 let shownResult = null;
 function renderGame() {
+  app.pokerMotionFinished=()=>turnSequence.decorate(app,state.playerId,playerName);
   if(!turnSequence.busy&&state.view)turnSequence.adopt({view:state.view,gameId:state.gameId,playerId:state.playerId});
   const paint=prepareCardPaint(app),avatars=prepareAvatarPaint(app);renderGameContents();mountGameHelp(app,state.gameId);restoreCardPaint(app,paint);restoreAvatarPaint(app,avatars);turnSequence.decorate(app,state.playerId,playerName);
 }
@@ -368,7 +371,7 @@ function render() {
 }
 
 function resetToHome() {
-  turnSequence.reset();
+  delete app.pokerSnapshot;turnSequence.reset();
   if (GUEST) { endGuestRoom(); return; }
   previousTableKeys = null; renderedGame = null; previousTurn = null; previousSeats = null; shownResult = null;
   Object.assign(state, { role: null, players: [], view: null, host: null, guest: null, online: null, roomCode: "", offerCode: "", answerCode: "", selected: new Set(), error: "", screen: "home" });
@@ -416,7 +419,7 @@ app.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-action]");
   if (!button) return;
   const action = button.dataset.action;
-  if(turnSequence.busy&&isTurnAction(action))return;
+  if((turnSequence.busy||app.querySelector('.catalog-screen')?.dataset.motionBusy==='true')&&isTurnAction(action))return;
   try {
     if(action==='profile-confirm'){
       const name=app.querySelector('#profile-name').value.trim();if(!name){flash('Escribe tu nombre para entrar.');return;}
@@ -442,6 +445,7 @@ app.addEventListener("click", async (event) => {
       app.querySelector('.character-picker-button').outerHTML=renderCharacterButton(character);
       app.querySelector('.character-dialog').close();return;
     }
+    if(state.view?.boardKind==='poker'&&handlePokerUI(app,button,state.view,sendAction))return;
     if(action.startsWith("catalog-") && handleCatalogAction(app,button,state.view,sendAction,renderGame))return;
     if (action === "open-table-zoom") { openTableZoom(); return; }
     if (action === "open-game-menu") { app.querySelector('.game-menu')?.showModal(); return; }
@@ -582,6 +586,8 @@ app.addEventListener("click", async (event) => {
 });
 
 app.addEventListener("input", (event) => {
+  if(event.target.matches('[data-poker-range]')){const input=app.querySelector('#'+event.target.dataset.ref);input.value=event.target.value;syncPokerAmounts(app,state.view);return;}
+  if(event.target.matches('[data-poker-amount]')){syncPokerAmounts(app,state.view,false);return;}
   if (event.target.matches("#profile-name")) state.name=event.target.value;
   else if (event.target.matches("#host-name")) state.name = event.target.value;
   else if (event.target.matches("#join-name")) state.name = event.target.value;

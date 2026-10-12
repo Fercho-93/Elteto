@@ -1,0 +1,47 @@
+import assert from 'node:assert/strict';
+import {createServer} from 'node:http';
+import {readFile} from 'node:fs/promises';
+import {chromium,webkit} from 'playwright';
+import {getGame} from '../dist/game-core/index.js';
+let fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1];
+fixture+=`\nwindow.directPoker=(view,game)=>{testGame=game;state.view=view;renderGame();};`;
+const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://local').pathname.slice(1)||'index.html';let b=await readFile('dist/'+file);if(file==='app.js')b=Buffer.from(b+fixture);res.setHeader('content-type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':'text/html');res.end(b);}catch{res.writeHead(404);res.end();}});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await(process.env.POKER_BROWSER==='webkit'?webkit:chromium).launch();
+try{
+ const page=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(`http://127.0.0.1:${server.address().port}`);await page.waitForFunction(()=>window.testTable);
+ const engine=getGame('texas-holdem');let game=engine.createInitialState(['a','b','c'],90),self=game.players[game.turn];
+ await page.evaluate(({game,self})=>window.testTable('texas-holdem',game,self),{game,self});
+ const idle=()=>page.waitForFunction(()=>document.querySelector('.catalog-screen').dataset.motionBusy!=='true');await idle();
+ assert.equal(await page.locator('.catalog-surface .poker-pocket-back').count(),4);
+ assert.equal(await page.locator('.deck-stock').count(),0);
+ await page.locator('[data-action="catalog-poker-open-bet"]').click();
+ assert.ok(await page.locator('.poker-bet-dialog button').evaluateAll(buttons=>buttons.every(b=>b.getBoundingClientRect().height>=44)));
+ const amount=page.locator('[data-poker-amount]');await amount.fill('65');await amount.dispatchEvent('input');assert.equal(await amount.inputValue(),'65');
+ await page.locator('[data-action="catalog-poker-step"][data-step="10"]').click();assert.equal(await amount.inputValue(),'75');
+ assert.equal((await page.evaluate(()=>window.tableSnapshot())).lastAction,undefined,'Changing sizes never bets');
+ await page.locator('[data-poker-range]').fill('80');assert.equal(await amount.inputValue(),'80');
+ await page.locator('[data-action="catalog-poker-close-bet"]').click();
+ const other=game.players.find(id=>id!==self);await page.locator(`.catalog-surface [data-action="poker-info"][data-player="${other}"]`).click();
+ assert.equal(await page.locator(`.poker-player-info [data-info-player="${other}"] .catalog-card`).count(),0);
+ await page.locator('[data-action="poker-info-close"]').click();
+ await page.locator('[data-action="open-game-menu"]').click();assert.equal(await page.locator('[data-action="poker-sound-toggle"]').getAttribute('aria-pressed'),'false');
+ await page.locator('[data-action="poker-bb-toggle"]').click();assert.match(await page.locator('.catalog-surface .poker-stack b').first().textContent(),/BB/);
+ await page.locator('[data-action="close-game-menu"]').click();
+ game=engine.applyAction(game,self,{type:'raise',amount:80});await page.evaluate(({v,g})=>window.directPoker(v,g),{v:engine.view(game,self),g:game});
+ assert.equal(await page.locator(`.catalog-surface .poker-wager[data-player-id="${self}"]`).count(),0,'Committed wager is absent before chips arrive');
+ assert.ok(await page.locator('.poker-moving-chip').count()>0);
+ await idle();assert.match(await page.locator(`.catalog-surface .poker-wager[data-player-id="${self}"]`).textContent(),/80/);
+ assert.match(await page.locator(`.catalog-surface [data-last-player="${self}"]`).textContent(),/Sube a 80/);
+ const folder=game.players[game.turn];game=engine.applyAction(game,folder,{type:'fold'});await page.evaluate(({v,g})=>window.directPoker(v,g),{v:engine.view(game,self),g:game});
+ assert.equal(await page.locator(`.catalog-surface .poker-seat[data-player-id="${folder}"] .poker-pocket-back`).count(),0);
+ assert.equal(await page.locator(`.catalog-surface .poker-seat[data-player-id="${folder}"] .avatar-artwork`).count(),1);
+ assert.ok(await page.locator('.poker-fold-ghost').count()>0);await idle();
+ game=engine.applyAction(game,game.players[game.turn],{type:'fold'});await page.evaluate(({v,g})=>window.directPoker(v,g),{v:engine.view(game,self),g:game});await idle();
+ assert.equal(await page.locator('.catalog-surface .poker-card-zone .catalog-card').count(),0);
+ await page.locator('.catalog-hand .catalog-card').first().click();await page.locator('[data-action="catalog-poker-show"]').click();
+ // Fixture actions run through the production engine and UI handler.
+ assert.equal((await page.evaluate(()=>window.tableSnapshot())).shownHands[self].length,1);
+ assert.equal(await page.locator(`.catalog-surface .poker-seat[data-player-id="${self}"] .catalog-card`).count(),1);
+ assert.deepEqual(errors,[]);console.log('Poker interactions: legal sizing, private player info, chip/BB toggle, delayed wager, fold animation and voluntary reveal: OK');
+}finally{await browser.close();await new Promise(r=>server.close(r));}

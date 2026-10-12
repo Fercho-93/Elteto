@@ -45,6 +45,8 @@ jobs:
       - run: node tests/game-help-screen.mjs
       - run: HELP_BROWSER=webkit node tests/game-help-screen.mjs
       - run: node tests/card-art-screen.mjs
+      - run: node tests/poker-interactions.mjs
+      - run: POKER_BROWSER=webkit node tests/poker-interactions.mjs
       - run: node tests/poker-screen.mjs
       - run: POKER_BROWSER=webkit node tests/poker-screen.mjs
       - run: node tests/player-experience.mjs

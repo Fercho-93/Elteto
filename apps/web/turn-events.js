@@ -1,9 +1,10 @@
+import {pokerPublicEvent} from './poker-events.js';
 import {speechText} from './table-speech.js';
 import {DICE_DURATION,PAWN_STEP,CHECKER_STEP,PIECE_TRANSFER,CAPTURE_FADE,gooseFlights} from './game-physics.js';
 // Public differences only: never use an opponent's private hand or future options.
 export const TURN_INTRO=1000,TURN_RESULT=2000;
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
-export const viewIdentity=(change)=>`${change.gameId||change.view.id}:${change.view.players.join('|')}:${change.playerId||''}:${change.view.handNumber||1}`;
+export const viewIdentity=(change)=>`${change.gameId||change.view.id}:${change.view.players.join('|')}:${change.playerId||''}:${change.view.boardKind==='poker'?'session':change.view.handNumber||1}`;
 export function parchisRoutes(before,after){
  if(!before?.pieces||!after.pieces)return [];
  const moved=[];
@@ -24,6 +25,7 @@ export function publicTurnEvent(before,after){
   return {actor:played.player,action,detail:played.text,result:fresh.filter(e=>e.type!=='transition').map(e=>e.text).join(' · '),kind:'mus',motion:1400,pawns:[]};
  }
  if(!before||!after||!same(before.players,after.players))return null;
+ if(after.boardKind==='poker')return pokerPublicEvent(before,after);
  const roll=after.lastRoll&&(after.lastRoll.sequence!==before.lastRoll?.sequence)?after.lastRoll:null;
  const checkers=after.boardKind==='checkers'&&!same(before.lastMove,after.lastMove)?after.lastMove:null;
  const capture=after.boardKind==='capture'&&after.lastPlay?.sequence!==before.lastPlay?.sequence?after.lastPlay:null;

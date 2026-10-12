@@ -1,5 +1,5 @@
 import {publicTurnEvent,viewIdentity,TURN_INTRO,TURN_RESULT,readableTurn} from './turn-events.js';
-const navigation=new Set(['catalog-zoom','catalog-close-zoom','catalog-clear','parchis-zoom-open','parchis-zoom-close']);
+const navigation=new Set(['catalog-zoom','catalog-close-zoom','catalog-poker-close-bet','catalog-clear','parchis-zoom-open','parchis-zoom-close']);
 export const isTurnAction=action=>action==='play-card'||action==='cinquillo-pass'||action==='cinquillo-next-hand'||action.startsWith('mus-')&&!['mus-bet-less','mus-bet-more','mus-target'].includes(action)||action.startsWith('parchis-')&&!navigation.has(action)||action.startsWith('catalog-')&&!navigation.has(action);
 // Each device queues only its own redacted snapshots. The host remains authoritative.
 export class TurnSequence {
@@ -34,7 +34,7 @@ export class TurnSequence {
  decorate(app,playerId,name){
   const root=app.querySelector('.catalog-screen,.game-page,.parchis-screen');if(!root)return;
   root.dataset.turnBusy=String(this.busy);root.dataset.turnPhase=this.phase;
-  for(const button of root.querySelectorAll('button[data-action],input[type="number"]')){
+  for(const button of root.querySelectorAll('button[data-action],input[type="number"],.poker-bet-controls input')){
    if(button.tagName==='BUTTON'&&!isTurnAction(button.dataset.action))continue;
    if(!this.busy){if(button.dataset.sequenceLocked==='true'){button.disabled=button.dataset.sequenceAllowed!=='true'||root.dataset.motionBusy==='true';delete button.dataset.sequenceAllowed;delete button.dataset.sequenceLocked;}continue;}
    if(button.dataset.sequenceAllowed===undefined)button.dataset.sequenceAllowed=button.dataset.diceAllowed??button.dataset.motionAllowed??String(!button.disabled);
@@ -58,7 +58,7 @@ export class TurnSequence {
   status.replaceChildren();status.classList.add('turn-story');status.setAttribute('role','status');
   const label=document.createElement('strong'),detail=document.createElement('span'),progress=document.createElement('i');
   label.className='turn-story-label';label.textContent=`${event.actor===playerId?'Tú':name(event.actor)} · ${this.phase==='announce'?event.action:this.phase==='move'?'En movimiento':'Resultado'}`;
-  detail.className='turn-story-detail';detail.textContent=read(this.phase==='announce'?'Sigue la jugada en la mesa':this.phase==='result'?event.result:event.detail);
+  detail.className='turn-story-detail';detail.textContent=read(this.phase==='announce'?(event.kind==='poker'?event.detail:'Sigue la jugada en la mesa'):this.phase==='result'?event.result:event.detail);
   progress.className='turn-story-progress';progress.setAttribute('aria-hidden','true');for(const step of ['announce','move','result']){const dot=document.createElement('b');dot.classList.toggle('current',step===this.phase);progress.append(dot);}
   status.append(label,detail,progress);
  }

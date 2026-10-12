@@ -66,6 +66,7 @@ try{
    session.state=session.engine.applyAction(session.state,move.playerId,move.action);session.sendViews();session.botRunner.stop();
   }
   await show(id,session.state,'host');
+  if(id==='texas-holdem')await page.waitForFunction(()=>document.querySelector('.catalog-screen').dataset.motionBusy!=='true');
   assert.equal(await page.locator('.players-panel img:not([src*="elteto-avatars"]),.rival-roster .card-face').count(),0);
   assert.ok(await page.locator('.hand,.catalog-hand').evaluateAll(els=>els.every(el=>el.getAnimations({subtree:true}).filter(a=>a.constructor.name==='Animation').length===0)));
   // No automatic scroll to AI seats when they take a turn.
