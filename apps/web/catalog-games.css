@@ -177,3 +177,45 @@ html:has(.catalog-screen),body:has(.catalog-screen),body:has(.catalog-screen) #a
 @container (max-height:420px){
  .poker-table[data-seats="6"] .poker-edge-right,.poker-table[data-seats="7"] .poker-edge-right,.poker-table[data-seats="8"] .poker-edge-right{justify-content:flex-end;}
 }
+/* Poker: a dedicated hand column and a clear action panel. */
+.catalog-screen[data-game="texas_holdem"] .catalog-dock{display:grid;grid-template-columns:106px minmax(0,1fr);padding:10px;gap:12px;min-height:156px;max-height:34dvh;border-radius:20px 20px 0 0;background:linear-gradient(140deg,#36283f,#231e2c);border-color:#dac38b45;}
+.poker-private-hand{display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 0;border-radius:12px;background:#171d2480;min-width:0;}
+.poker-private-hand>span{font:750 9px system-ui;color:#dbcba5;letter-spacing:.09em;}
+.catalog-screen[data-game="texas_holdem"] .catalog-hand{position:static;justify-content:center;gap:4px;padding:2px;overflow:visible;}
+.catalog-screen[data-game="texas_holdem"] .catalog-hand .catalog-card{width:47px;}
+.poker-action-panel{display:flex;flex-direction:column;gap:10px;min-width:0;}
+.poker-action-panel .catalog-instruction{min-height:40px;max-height:62px;overflow:auto;font-size:10px;line-height:1.35;color:#cec0d4;}
+.poker-action-panel .catalog-turn{font-size:14px;font-weight:850;color:#92eee2;}
+.poker-action-panel .turn-story-label{color:#f6dc9d;font-size:12px;}
+.poker-action-panel .turn-story-detail{font-size:10px;color:#ede1ed;}
+.poker-action-panel .turn-story-progress{margin-top:5px;}
+.poker-action-panel .catalog-options{gap:6px;}
+.poker-table{padding-top:32px;}
+.poker-seat.active-seat:before{display:none;}
+.poker-turn-badge{position:absolute;top:-13px;left:50%;translate:-50% 0;padding:2px 5px;border-radius:5px;background:#9df7e5;color:#12382f;font:900 8px/10px system-ui;white-space:nowrap;visibility:hidden;z-index:5;}
+.poker-turn-badge:after{content:attr(data-turn-label);}
+.poker-seat.active-seat .poker-turn-badge{visibility:visible;}
+.catalog-screen[data-motion-busy="true"] .poker-turn-badge:after,.catalog-screen[data-turn-busy="true"] .poker-turn-badge:after{content:'JUGANDO';}
+.catalog-screen[data-turn-phase="result"] .poker-turn-badge:after{content:'JUGADA';}
+.poker-seat.active-seat .poker-portrait-button .rival-original{outline:2px solid #92ffe3;outline-offset:2px;box-shadow:0 0 12px #92ffe35c;}
+.poker-seat.active-seat .poker-name{color:#12382f;background:#9df7e5;font-weight:900;}
+.poker-celebration{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:radial-gradient(ellipse,#121323e0,#101b2266 75%);pointer-events:none;overflow:hidden;}
+.poker-win-card{position:relative;z-index:2;width:min(85%,350px);max-height:88%;overflow:auto;padding:22px 16px;text-align:center;border:1px solid #f9d578;border-radius:22px;background:linear-gradient(140deg,#4b3057f5,#1d2634f5);box-shadow:0 0 32px #f5cc6b55,0 10px 30px #0006;animation:poker-win-enter .45s cubic-bezier(.2,.8,.2,1) both;}
+.poker-win-kicker{font:850 10px system-ui;letter-spacing:.14em;color:#f4d180;}
+.poker-win-card h2{font:900 clamp(18px,5vw,26px)/1.15 system-ui;color:#fff3c5;margin:10px 0 18px;overflow-wrap:anywhere;}
+.poker-win-players{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;}
+.poker-win-players>div{display:flex;flex-direction:column;align-items:center;gap:5px;max-width:130px;}
+.poker-win-avatar{display:block;width:58px;height:62px;}
+.poker-win-players strong{font-size:12px;color:#f9efd7;overflow-wrap:anywhere;}
+.poker-win-players b{font-size:14px;color:#9df7e5;}
+.poker-win-card p{font-size:11px;line-height:1.4;color:#ddd0dd;margin:14px 0 0;}
+.poker-win-rays{position:absolute;inset:0;background:conic-gradient(from 0deg,transparent 0deg 22deg,#edce7640 24deg 28deg,transparent 30deg 60deg);mask-image:radial-gradient(circle,transparent 5%,#000 25%,transparent 70%);animation:poker-win-rays 8s linear infinite;}
+.poker-win-spark{position:absolute;left:50%;top:50%;font:800 20px system-ui;color:#ffde8a;opacity:0;animation:poker-win-spark 1.8s var(--spark-delay) ease-out infinite;}
+@keyframes poker-win-enter{from{opacity:0;transform:scale(.75) translateY(12px);}to{opacity:1;transform:none;}}
+@keyframes poker-win-rays{to{rotate:360deg;}}
+@keyframes poker-win-spark{0%{opacity:0;transform:rotate(var(--spark-angle)) translateY(-45px) scale(.3);}30%{opacity:1;}100%{opacity:0;transform:rotate(var(--spark-angle)) translateY(-180px) scale(1);}}
+@media(max-width:359px){.catalog-screen[data-game="texas_holdem"] .catalog-dock{grid-template-columns:90px minmax(0,1fr);gap:8px;padding:8px;}.catalog-screen[data-game="texas_holdem"] .catalog-hand .catalog-card{width:39px;}}
+@media(min-width:600px) and (max-height:699px){.catalog-screen[data-game="texas_holdem"]>.catalog-dock{grid-template-columns:minmax(0,1fr);padding:8px;max-height:none;}.poker-private-hand{padding:4px;gap:3px;}.poker-win-card{padding:12px;}.poker-win-avatar{width:42px;height:44px;}.poker-win-card h2{font-size:18px;margin:5px 0 8px;}}
+@media(prefers-reduced-motion:reduce){.poker-celebration *{animation:none!important;}.poker-win-spark{display:none;}}
+.catalog-screen[data-game="texas_holdem"][data-phase="result"][data-turn-busy="true"] .poker-turn-badge,.catalog-screen[data-game="texas_holdem"][data-phase="finished"] .poker-turn-badge{visibility:hidden;}
+.catalog-screen[data-game="texas_holdem"][data-phase="result"][data-turn-busy="false"] .poker-turn-badge:after{content:'NUEVA MANO';}

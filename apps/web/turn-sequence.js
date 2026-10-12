@@ -1,4 +1,4 @@
-import {publicTurnEvent,viewIdentity,TURN_INTRO,TURN_RESULT,readableTurn} from './turn-events.js';
+import {publicTurnEvent,viewIdentity,TURN_INTRO,TURN_RESULT,turnTiming,readableTurn} from './turn-events.js';
 const navigation=new Set(['catalog-zoom','catalog-close-zoom','catalog-poker-close-bet','catalog-clear','parchis-zoom-open','parchis-zoom-close']);
 export const isTurnAction=action=>action==='play-card'||action==='cinquillo-pass'||action==='cinquillo-next-hand'||action.startsWith('mus-')&&!['mus-bet-less','mus-bet-more','mus-target'].includes(action)||action.startsWith('parchis-')&&!navigation.has(action)||action.startsWith('catalog-')&&!navigation.has(action);
 // Each device queues only its own redacted snapshots. The host remains authoritative.
@@ -21,14 +21,14 @@ export class TurnSequence {
  }
  next(){
   const next=this.queue.shift();if(!next){if(this.latest!==this.current){this.current=this.latest;this.apply(this.latest);}this.event=null;this.phase='idle';this.phaseChanged();this.refresh();return;}
-  this.event=next.event;this.phase='announce';this.phaseChanged();
+  const timing=turnTiming(next.event);this.event=next.event;this.phase='announce';this.phaseChanged();
   this.timer=this.setTimer(()=>{
    this.phase='move';this.current=next.change;this.apply(next.change);this.phaseChanged();
    this.timer=this.setTimer(()=>{
     this.phase='result';this.phaseChanged();
-    this.timer=this.setTimer(()=>this.next(),TURN_RESULT);
+    this.timer=this.setTimer(()=>this.next(),timing.result);
    },next.event.motion);
-  },TURN_INTRO);
+  },timing.intro);
  }
  flush(){const latest=this.latest;this.reset();if(latest){this.key=viewIdentity(latest);this.current=this.latest=latest;this.apply(latest);}}
  decorate(app,playerId,name){
@@ -59,6 +59,7 @@ export class TurnSequence {
   const label=document.createElement('strong'),detail=document.createElement('span'),progress=document.createElement('i');
   label.className='turn-story-label';label.textContent=`${event.actor===playerId?'Tú':name(event.actor)} · ${this.phase==='announce'?event.action:this.phase==='move'?'En movimiento':'Resultado'}`;
   detail.className='turn-story-detail';detail.textContent=read(this.phase==='announce'?(event.kind==='poker'?event.detail:'Sigue la jugada en la mesa'):this.phase==='result'?event.result:event.detail);
+  if(event.kind==='poker'&&this.phase==='result'&&['result','finished'].includes(view.phase)){label.textContent='Mano resuelta';detail.textContent='Premios entregados · resultado sobre la mesa';}
   progress.className='turn-story-progress';progress.setAttribute('aria-hidden','true');for(const step of ['announce','move','result']){const dot=document.createElement('b');dot.classList.toggle('current',step===this.phase);progress.append(dot);}
   status.append(label,detail,progress);
  }

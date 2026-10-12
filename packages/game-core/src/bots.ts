@@ -143,7 +143,7 @@ export function nextBotMove(engine: AnyEngine, state: any, botIds: string[], ran
   return null;
 }
 
-export const botTurnDelay=(gameId:string)=>gameId==='oca'?6500:['parchis','damas_espanolas','damas-espanolas'].includes(gameId)?5500:gameId==='mentiroso'?5200:4800;
+export const botTurnDelay=(gameId:string)=>gameId==='oca'?6500:['damas_espanolas','damas-espanolas'].includes(gameId)?1500:gameId==='parchis'?5500:gameId==='mentiroso'?5200:4800;
 
 // One delayed move at a time. The host can resume from the saved state.
 export class BotRunner {

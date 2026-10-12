@@ -15,6 +15,10 @@ try{
  const idle=()=>page.waitForFunction(()=>document.querySelector('.catalog-screen').dataset.motionBusy!=='true');await idle();
  assert.equal(await page.locator('.catalog-surface .poker-pocket-back').count(),4);
  assert.equal(await page.locator('.deck-stock').count(),0);
+ assert.equal(await page.locator('.poker-private-hand .catalog-card').count(),2);
+ assert.equal(await page.locator('.poker-action-panel .catalog-instruction').count(),1);
+ assert.equal(await page.locator('.catalog-surface .poker-seat.active-seat .poker-turn-badge').count(),1);
+ assert.equal(await page.locator('.catalog-surface .poker-seat.active-seat .poker-turn-badge').getAttribute('data-turn-label'),'TU TURNO');
  await page.locator('[data-action="catalog-poker-open-bet"]').click();
  assert.ok(await page.locator('.poker-bet-dialog button').evaluateAll(buttons=>buttons.every(b=>b.getBoundingClientRect().height>=44)));
  const amount=page.locator('[data-poker-amount]');await page.locator('[data-action="catalog-poker-size"]').filter({hasText:'3 BB'}).click();assert.equal(await amount.inputValue(),'30');await amount.fill('65');await amount.dispatchEvent('input');assert.equal(await amount.inputValue(),'65');
@@ -37,7 +41,13 @@ try{
  assert.equal(await page.locator(`.catalog-surface .poker-seat[data-player-id="${folder}"] .poker-pocket-back`).count(),0);
  assert.equal(await page.locator(`.catalog-surface .poker-seat[data-player-id="${folder}"] .avatar-artwork`).count(),1);
  assert.ok(await page.locator('.poker-fold-ghost').count()>0);await idle();
- game=engine.applyAction(game,game.players[game.turn],{type:'fold'});await page.evaluate(({v,g})=>window.directPoker(v,g),{v:engine.view(game,self),g:game});await idle();
+ game=engine.applyAction(game,game.players[game.turn],{type:'fold'});await page.evaluate(({v,g})=>window.directPoker(v,g),{v:engine.view(game,self),g:game});
+ await page.waitForSelector('.catalog-surface .poker-celebration');
+ await page.screenshot({path:'tests/artifacts/poker/winner-splash.png'});
+ assert.match(await page.locator('.poker-celebration h2').textContent(),/ganado|gana|repartida/);
+ assert.match(await page.locator('.poker-win-players b').first().textContent(),/fichas/);
+ assert.equal(await page.locator('.catalog-dock .catalog-result').count(),0);
+ await idle();
  assert.equal(await page.locator('.catalog-surface .poker-card-zone .catalog-card').count(),0);
  await page.locator('.catalog-hand .catalog-card').first().click();await page.locator('[data-action="catalog-poker-show"]').click();
  // Fixture actions run through the production engine and UI handler.

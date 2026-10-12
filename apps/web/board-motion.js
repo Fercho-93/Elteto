@@ -1,5 +1,5 @@
 import {DICE_DURATION,PAWN_STEP,CHECKER_STEP,PIECE_TRANSFER,CAPTURE_FADE,settledFrames,gooseFlights} from './game-physics.js';
-import {goosePoint,gooseRadius} from './board-games.js';
+import {goosePoint,gooseRadius,renderCheckerPiece} from './board-games.js';
 import {finishDiceRender,OCA_DICE_TARGETS} from './parchis-dice.js';
 
 const contexts=new WeakMap();
@@ -93,7 +93,7 @@ export function finishBoardMotion(app,view,playerId,name,error){
   }else{
    const route=move.path,steps=route.slice(1).map(()=>CHECKER_STEP),duration=steps.length*CHECKER_STEP;
    state.timeline={started,route,steps,duration,captured:move.captures.map((square,i)=>({square,piece:before.board[square],delay:(i+1)*CHECKER_STEP}))};
-   state.deadline=started+duration+(move.captures.length?CAPTURE_FADE:0)+500;
+   state.deadline=started+duration+(move.captures.length?CAPTURE_FADE:0)+150;
   }
  }
  if(error||reduced())state.deadline=0;
@@ -119,7 +119,7 @@ export function finishBoardMotion(app,view,playerId,name,error){
   for(const capture of captured){
    if(elapsed>=capture.delay+CAPTURE_FADE)continue;
    const stage=app.querySelector('.catalog-surface .checkers-stage'),square=stage.querySelector(`[data-square="${capture.square}"]`),rect=square.getBoundingClientRect(),origin=stage.getBoundingClientRect(),ghost=document.createElement('span');
-   ghost.className=`checker-piece checker-captured ${capture.piece>0?'white':'black'}`;ghost.setAttribute('aria-hidden','true');ghost.textContent=Math.abs(capture.piece)===2?'♛':'';
+   ghost.className=`checker-piece checker-captured ${capture.piece>0?'white':'black'}`;ghost.setAttribute('aria-hidden','true');ghost.innerHTML=renderCheckerPiece(view,capture.piece,true);
    Object.assign(ghost.style,{left:rect.x-origin.x+rect.width/2+'px',top:rect.y-origin.y+rect.height/2+'px',width:(node?.getBoundingClientRect().width||rect.width*.8)+'px',height:(node?.getBoundingClientRect().height||rect.height*.8)+'px'});stage.append(ghost);
    const animation=ghost.animate([{opacity:1,scale:'1',transform:'translateY(0)'},{opacity:0,scale:'.6',transform:'translateY(3px)'}],{delay:capture.delay,duration:CAPTURE_FADE,fill:'both',easing:'ease-in'});animation.currentTime=elapsed;animation.onfinish=()=>ghost.remove();
   }

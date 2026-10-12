@@ -7,7 +7,7 @@ body:has(.parchis-screen){background:radial-gradient(ellipse at 50% 0,#352a3b,#1
 .parchis-table{position:relative;min-height:0;container-type:size;display:flex;align-items:center;justify-content:center;padding-top:44px;padding-bottom:4px;}
 .parchis-board{position:relative;flex:none;width:min(100cqw,100cqh);aspect-ratio:1;container-type:inline-size;}
 .parchis-board>svg{display:block;width:100%;height:100%;filter:drop-shadow(0 4px 8px #0004);}
-.parchis-pawn{position:absolute;translate:-50% -50%;width:4.3%;height:4.3%;min-width:0;min-height:0;margin:0;padding:0;border:1px solid #fff9;border-radius:50%;color:#fff;text-shadow:0 1px 1px #000b;font:750 clamp(8px,2.3cqw,16px)/1 system-ui,sans-serif;background:radial-gradient(circle at 32% 24%,#fff9,transparent 40%),var(--pawn-color);box-shadow:inset 0 -2px 2px #0005,0 1px 2px #0008;opacity:1;filter:none;z-index:2;}
+.parchis-pawn{position:absolute;translate:-50% -50%;width:4.1%;height:4.1%;min-width:0;min-height:0;margin:0;padding:0;border:1px solid #fff9;border-radius:50%;color:#fff;text-shadow:0 1px 1px #000b;font:750 clamp(8px,2.3cqw,16px)/1 system-ui,sans-serif;background:radial-gradient(circle at 32% 24%,#fff9,transparent 40%),var(--pawn-color);box-shadow:inset 0 -2px 2px #0005,0 1px 2px #0008;opacity:1;filter:none;z-index:2;}
 .parchis-pawn.in-nest{width:7%;height:7%;font-size:clamp(11px,3.3cqw,22px);border-width:2px;}.parchis-pawn:disabled{opacity:1;cursor:default;}.parchis-pawn.can-move{outline:2px solid #fff5ce;outline-offset:2px;cursor:pointer;z-index:3;}.parchis-pawn.stacked{width:2.7%;height:2.7%;font-size:clamp(4px,1.5cqw,9px);}.parchis-pawn.at-goal{width:2.2%;height:2.2%;font-size:clamp(4px,1.3cqw,8px);}
 .parchis-screen .rival-roster{max-width:600px;left:8px;right:8px;}.parchis-screen .table-seat.rival-seat{position:static;inset:auto;transform:none;width:auto;height:auto;min-width:0;display:flex;align-items:center;gap:6px;text-align:left;color:#e5ded0;}
 .parchis-screen .rival-count i{display:none;}.parchis-screen .rival-count::before{content:'Meta';font-size:9px;}.parchis-screen .rival-count.last-card{color:#bfb6a4;}
@@ -22,3 +22,21 @@ body:has(.parchis-screen){background:radial-gradient(ellipse at 50% 0,#352a3b,#1
 .parchis-pawn{box-shadow:inset 0 1px 2px #fff9,inset 0 -3px 2px #0005,0 3px 0 color-mix(in srgb,var(--pawn-color),#17131b 45%),0 5px 5px #0006;}
 .parchis-pawn:after{content:'';position:absolute;inset:12%;border:1px solid #ffffff66;border-radius:50%;box-shadow:inset 0 1px 1px #0003;pointer-events:none;}
 .parchis-pawn.parchis-last-move{box-shadow:0 0 0 2px #ffe2a0,inset 0 1px 2px #fff9,inset 0 -3px 2px #0005,0 3px 0 color-mix(in srgb,var(--pawn-color),#17131b 45%),0 5px 5px #0006;}
+.parchis-pawn-avatar{position:absolute;inset:8%;border-radius:50%;overflow:hidden;pointer-events:none;}
+.parchis-pawn-number{position:absolute;right:-1px;bottom:-1px;min-width:42%;height:42%;display:grid;place-items:center;background:#fff4d7;border-radius:50%;color:#302234;font:800 clamp(5px,1.7cqw,10px)/1 system-ui;text-shadow:none;z-index:2;}
+.parchis-pawn.stacked{width:2.2%;height:2.2%;}
+.parchis-pawn:after{display:none;}
+.parchis-piece-choices i{position:relative;overflow:hidden;}
+.parchis-piece-choices .parchis-pawn-number{font-size:8px;}
+.parchis-screen .parchis-info .player-roster.rival-roster{--player-avatar-size:44px;padding-top:8px;}
+.player-order{position:absolute;left:-6px;bottom:-2px;min-width:23px;height:23px;display:grid;place-items:center;border:2px solid #21172b;border-radius:8px;background:#fff0c4;color:#302234;font:800 11px system-ui;}
+.parchis-round-banner{height:36px;min-width:0;padding:2px 8px;border:1px solid #e8cf9433;border-radius:10px;background:#ffffff05;display:flex;flex-direction:column;justify-content:center;}
+.parchis-round-banner strong{font:800 11px/14px system-ui;color:#ddcfaa;}
+.parchis-round-banner p{font:500 10px/12px system-ui;margin:0;color:#ded3de;max-height:24px;overflow:auto;}
+.parchis-round-banner.is-sortition{border-color:#75ddd077;background:#75ddd010;}
+.parchis-round-banner.is-sortition strong{color:#94fff0;font-size:12px;}
+.parchis-screen[data-phase="start"] .rival-count{visibility:hidden;height:12px;}
+.parchis-screen .parchis-actions{min-height:52px;}
+.parchis-screen .parchis-info{padding:4px 10px 2px;}
+.parchis-screen .parchis-actions{min-height:50px;}
+.parchis-screen .parchis-info .player-roster.rival-roster{--token-size:44px;}

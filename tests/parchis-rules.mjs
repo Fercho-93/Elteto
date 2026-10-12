@@ -80,3 +80,15 @@ five=dieState(five,5);five=engine.applyAction(five,'a',{type:'roll'});assert.equ
 assert.equal(engine.view(five,'b').legalMoves.length,0);
 five=engine.applyAction(five,'a',{type:'move',piece:2});assert.equal(five.pieces.a[2],0);
 console.log('Parchís: opening five, playable five, private turn actions and blocked full starts: OK');
+// The start roll selects the first player; the circular legal order is preserved.
+for(let seed=1;seed<=30;seed++){
+ let game=engine.createInitialState(['a','b','c','d'],seed);
+ for(let i=0;game.phase==='start'&&i<40;i++)game=engine.applyAction(game,game.players[game.turn],{type:'roll'});
+ assert.equal(game.phase,'roll');const view=engine.view(game,'a');assert.equal(view.turnOrder[0],game.startingPlayer);
+ assert.equal(view.turnOrder[0],view.turnPlayer);
+ assert.deepEqual(view.turnOrder,Array.from({length:4},(_,i)=>game.players[(game.players.indexOf(game.startingPlayer)+i)%4]));
+ assert.ok(Object.values(game.pieces).flat().every(p=>p===-1),'The start roll never moves or opens pieces');
+ const previousOrder=[...view.turnOrder];let moved=game;
+ for(let i=0;i<20&&!moved.finished;i++){const actor=moved.players[moved.turn],v=engine.view(moved,actor);moved=engine.applyAction(moved,actor,v.phase==='roll'?{type:'roll'}:{type:'move',piece:v.legalMoves[0].piece});assert.deepEqual(engine.view(moved,'a').turnOrder,previousOrder);}
+}
+console.log('Parchís: starting player, fixed clockwise turn order and no movement during sortition: OK');

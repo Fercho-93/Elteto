@@ -3,6 +3,7 @@ import {speechText} from './table-speech.js';
 import {DICE_DURATION,PAWN_STEP,CHECKER_STEP,PIECE_TRANSFER,CAPTURE_FADE,gooseFlights} from './game-physics.js';
 // Public differences only: never use an opponent's private hand or future options.
 export const TURN_INTRO=1000,TURN_RESULT=2000;
+export const turnTiming=event=>event?.kind==='checkers'?{intro:180,result:250,padding:150}:{intro:TURN_INTRO,result:TURN_RESULT,padding:800};
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 export const viewIdentity=(change)=>`${change.gameId||change.view.id}:${change.view.players.join('|')}:${change.playerId||''}:${change.view.boardKind==='poker'?'session':change.view.handNumber||1}`;
 export function parchisRoutes(before,after){

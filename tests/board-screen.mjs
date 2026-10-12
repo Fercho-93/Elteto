@@ -6,7 +6,7 @@ import {GOOSE_PATH,GOOSE_COLORS,gooseRadius} from '../dist/board-games.js';
 import {chromium,webkit} from 'playwright';
 assert.equal(GOOSE_PATH.length,63);assert.equal(new Set(GOOSE_PATH.map(p=>p.join(','))).size,63);
 for(let i=1;i<63;i++)assert.equal(Math.abs(GOOSE_PATH[i][0]-GOOSE_PATH[i-1][0])+Math.abs(GOOSE_PATH[i][1]-GOOSE_PATH[i-1][1]),1);
-assert.ok(botTurnDelay('oca')>=3200);assert.ok(botTurnDelay(checkersId())>=3200);
+assert.ok(botTurnDelay('oca')>=3200);assert.ok(botTurnDelay(checkersId())>=1000&&botTurnDelay(checkersId())<=1600);
 function checkersId(){return getGame('damas-espanolas').id;}assert.ok(botTurnDelay('mus')>=2000);
 const oca=getGame('oca'),checkers=getGame('damas-espanolas');
 let initial=oca.createInitialState(['a','b','c','d'],22);
@@ -32,9 +32,11 @@ try{
   await page.setViewportSize({width,height});
   let game=checkers.createInitialState(['a','b'],22);await show('damas-espanolas',game);
   const geometry=()=>page.evaluate(()=>{const rect=s=>document.querySelector(s).getBoundingClientRect().toJSON();return {table:rect('.catalog-surface'),board:rect('.checkers-stage'),dock:rect('.catalog-dock')};});
-  const before=await geometry();assert.ok(await page.locator('.catalog-surface .checker-square').last().evaluate(el=>{const a=el.getBoundingClientRect(),b=el.closest('.checkers-stage').getBoundingClientRect();return a.right<=b.right+1&&a.bottom<=b.bottom+1;}),'All checker squares fit inside the board');const move=checkers.view(game,'a').moves[0];
+  assert.equal(await page.locator('.catalog-surface .checker-avatar .avatar-artwork').count(),24);
+  assert.ok(await page.locator('.catalog-surface').evaluate(el=>getComputedStyle(el).backgroundColor==='rgba(0, 0, 0, 0)'&&getComputedStyle(el).backgroundImage==='none'),'Board games have no green felt');
+  const before=await geometry();if(width===390&&height===844)assert.ok(before.board.width>=370,'Damas board uses the mobile width');assert.ok(await page.locator('.catalog-surface .checker-square').last().evaluate(el=>{const a=el.getBoundingClientRect(),b=el.closest('.checkers-stage').getBoundingClientRect();return a.right<=b.right+1&&a.bottom<=b.bottom+1;}),'All checker squares fit inside the board');const move=checkers.view(game,'a').moves[0];
   await page.locator(`.catalog-surface [data-square="${move.path[0]}"]`).click();const selected=await geometry();assert.deepEqual(selected,before,'Selecting a checker never resizes the screen');
-  const cancel=page.locator('.catalog-surface .checkers-cancel');assert.ok(await cancel.isVisible());const size=await cancel.boundingBox();assert.ok(size.height<=44&&size.width<=110);
+  const cancel=page.locator('.catalog-dock .checkers-cancel');assert.ok(await cancel.isVisible());const size=await cancel.boundingBox();assert.ok(size.height<=44&&size.width<=110);
   await cancel.click();assert.deepEqual(await geometry(),before);
   // The complete path of the rival is visible, including multi-captures.
   game=checkers.applyAction(game,'a',{type:'move',path:move.path});const rivalMove=checkers.view(game,'b').moves[0];game=checkers.applyAction(game,'b',{type:'move',path:rivalMove.path});await show('damas-espanolas',game,'a');

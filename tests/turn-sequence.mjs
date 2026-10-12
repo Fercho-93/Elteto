@@ -57,3 +57,21 @@ sequence.reset();display=[];sequence.receive(snapshots[0]);sequence.receive(snap
 const automatic={...snapshots[1],view:{...snapshots[1].view,revision:42}};
 sequence.receive(automatic);advance(20000);assert.equal(sequence.current.view.revision,42);
 console.log('Pacing: slow ordered moves, complete-route AI waits, public Mus announcements and automatic-state retention: OK');
+
+// A simple checker move releases the opponent in under a second, after visible motion.
+sequence.reset();sequence.apply=()=>{};display=[];const checkers=getGame('damas-espanolas');let c=checkers.createInitialState(['a','b'],11);
+const checkerChange=g=>({gameId:'damas-espanolas',playerId:'a',view:checkers.view(g,'a')});
+sequence.receive(checkerChange(c));const cm=nextBotMove(checkers,c,c.players);c=checkers.applyAction(c,cm.playerId,cm.action);sequence.receive(checkerChange(c));
+assert.equal(sequence.phase,'announce');advance(180);assert.equal(sequence.phase,'move');advance(500);assert.equal(sequence.phase,'result');advance(250);assert.equal(sequence.busy,false);
+console.log('Damas: complete simple move and opponent turn in 930 ms: OK');
+
+// Pieces retain chosen player characters, including crowns and pawn identifiers.
+const {renderCheckerPiece}=await import('../dist/board-games.js');
+const {renderPawnFace}=await import('../dist/parchis-board.js');
+const characters={a:4,b:7},avatarView={players:['a','b'],characters};
+assert.match(renderCheckerPiece(avatarView,1),/data-avatar="4"/);
+assert.match(renderCheckerPiece(avatarView,-1),/data-avatar="7"/);
+assert.match(renderCheckerPiece(avatarView,-2),/checker-crown/);
+assert.match(renderPawnFace(avatarView,'b',3),/data-avatar="7"/);
+assert.match(renderPawnFace(avatarView,'b',3),/parchis-pawn-number">4/);
+console.log('Board pieces: chosen characters, owner identity, king crowns and numbered pawns: OK');

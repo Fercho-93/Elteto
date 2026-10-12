@@ -8,8 +8,8 @@ export function pokerTimeline(before,after){
  const collect=Object.values(before.street||{}).some(n=>n>0)&&Object.values(after.street||{}).every(n=>n===0)?900:0;
  const added=Math.max(0,after.board.length-before.board.length),board=added?900+pokerBoardDelay(after.board.length-1,before.board.length):0;
  const result=['result','finished'].includes(after.phase)&&!['result','finished'].includes(before.phase),show=result&&Object.values(after.publicHands||{}).some(h=>h.length)?900:0;
- const payout=result?(after.payouts?.length||1)*950:0;
- return {fresh:false,bet,collect,board,show,payout,total:Math.max(900,bet+collect+board+show+payout)};
+ const payout=result?(after.payouts?.length||1)*950:0,celebration=result?2800:0;
+ return {fresh:false,bet,collect,board,show,payout,celebration,total:Math.max(900,bet+collect+board+show+payout+celebration)};
 }
 export function pokerPublicEvent(before,after){
  const fresh=before.handNumber!==after.handNumber,a=after.lastAction;
