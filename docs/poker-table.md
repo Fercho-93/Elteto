@@ -24,7 +24,7 @@ Durante los movimientos se bloquean las acciones de juego. La información, las 
 
 ## Controles
 
-La subida se prepara en un diálogo con deslizador, entrada numérica, incrementos de ciega grande y cantidades rápidas. Abrir o ajustar el selector no apuesta. Solo confirmar envía una acción validada por el motor. El saldo puede mostrarse en fichas o ciegas grandes. El sonido discreto es opcional y empieza desactivado.
+La subida se prepara en un diálogo con deslizador, entrada numérica, incrementos de ciega grande y cantidades rápidas legales. Las fracciones del bote al subir se calculan sobre el bote después de igualar; el total incluye la apuesta que se iguala. Abrir o ajustar el selector no apuesta. Solo confirmar envía una acción validada por el motor. El saldo puede mostrarse en fichas o ciegas grandes. El sonido discreto es opcional y empieza desactivado.
 
 ## Verificación
 

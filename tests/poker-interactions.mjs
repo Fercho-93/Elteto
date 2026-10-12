@@ -17,7 +17,7 @@ try{
  assert.equal(await page.locator('.deck-stock').count(),0);
  await page.locator('[data-action="catalog-poker-open-bet"]').click();
  assert.ok(await page.locator('.poker-bet-dialog button').evaluateAll(buttons=>buttons.every(b=>b.getBoundingClientRect().height>=44)));
- const amount=page.locator('[data-poker-amount]');await amount.fill('65');await amount.dispatchEvent('input');assert.equal(await amount.inputValue(),'65');
+ const amount=page.locator('[data-poker-amount]');await page.locator('[data-action="catalog-poker-size"]').filter({hasText:'3 BB'}).click();assert.equal(await amount.inputValue(),'30');await amount.fill('65');await amount.dispatchEvent('input');assert.equal(await amount.inputValue(),'65');
  await page.locator('[data-action="catalog-poker-step"][data-step="10"]').click();assert.equal(await amount.inputValue(),'75');
  assert.equal((await page.evaluate(()=>window.tableSnapshot())).lastAction,undefined,'Changing sizes never bets');
  await page.locator('[data-poker-range]').fill('80');assert.equal(await amount.inputValue(),'80');
