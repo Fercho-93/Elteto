@@ -63,3 +63,5 @@ La prueba física pendiente debe cubrir Android anfitrión + Safari iPhone, Andr
 ### Elegir el modo desde la APK (0.2.10)
 
 En «Crear partida» puedes elegir **Sin internet** (misma Wi-Fi/hotspot, servidor Android y QR local) o **Con internet** (sala Firebase, enlace público y QR para jugar desde cualquier red). La mesa local sigue disponible sin activar una cuenta ni tener conexión. El modo online valida el acceso con Firebase; durante las pruebas usa el acceso de desarrollo autorizado por el servidor. Si está deshabilitado, activa tu cuenta en «Mi acceso». No se mezclan conexiones locales y online en una misma sala.
+
+La APK 0.2.11 solicita permiso de cámara al abrir el escáner QR. Android muestra la solicitud la primera vez; solo se habilita vídeo para la página local de la app. Si se rechaza, puedes seguir entrando con un código y habilitar la cámara posteriormente en Ajustes → Aplicaciones → Elteto → Permisos.

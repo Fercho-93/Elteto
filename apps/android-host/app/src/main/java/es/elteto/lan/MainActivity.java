@@ -1,6 +1,11 @@
 package es.elteto.lan;
 
 import android.app.Activity;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.webkit.WebChromeClient;
+import android.webkit.PermissionRequest;
+import android.widget.Toast;
 import android.os.Bundle;
 import android.graphics.Color;
 import android.view.WindowManager;
@@ -18,6 +23,9 @@ public class MainActivity extends Activity {
     private LanServer server;
     private WebView web;
     private TextView addresses;
+    private static final int CAMERA_REQUEST = 1001;
+    private PermissionRequest pendingCamera;
+    private boolean cameraPromptOpen;
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -29,6 +37,14 @@ public class MainActivity extends Activity {
         web=new WebView(this);web.getSettings().setJavaScriptEnabled(true);web.getSettings().setDomStorageEnabled(true);
         web.getSettings().setAllowFileAccess(false);web.getSettings().setAllowContentAccess(false);
         web.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView v,String url){return server==null || !"127.0.0.1".equals(android.net.Uri.parse(url).getHost()) || android.net.Uri.parse(url).getPort()!=server.getListeningPort();}});
+        web.setWebChromeClient(new WebChromeClient() {
+            @Override public void onPermissionRequest(PermissionRequest request) {
+                runOnUiThread(() -> requestCamera(request));
+            }
+            @Override public void onPermissionRequestCanceled(PermissionRequest request) {
+                runOnUiThread(() -> { if (pendingCamera == request) pendingCamera = null; });
+            }
+        });
         web.addJavascriptInterface(new ActivationBridge(), "EltetoActivation");
         layout.addView(web,new LinearLayout.LayoutParams(-1,0,1));setContentView(layout);
         new Thread(()->{
@@ -38,6 +54,39 @@ public class MainActivity extends Activity {
                 runOnUiThread(()->{showAddresses();web.loadUrl(server.hostUrl());});
             }catch(Exception e){runOnUiThread(()->addresses.setText("No se pudo iniciar el servidor: "+e.getMessage()));}
         }).start();
+    }
+    private boolean trustedCameraOrigin(PermissionRequest request) {
+        android.net.Uri origin = request.getOrigin();
+        return server != null && "http".equals(origin.getScheme())
+            && "127.0.0.1".equals(origin.getHost()) && origin.getPort() == server.getListeningPort();
+    }
+    private void requestCamera(PermissionRequest request) {
+        boolean video = java.util.Arrays.asList(request.getResources()).contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE);
+        if (!video || !trustedCameraOrigin(request) || isFinishing() || isDestroyed()) { request.deny(); return; }
+        if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            request.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE}); return;
+        }
+        if (pendingCamera != null) pendingCamera.deny();
+        pendingCamera = request;
+        if (!cameraPromptOpen) {
+            cameraPromptOpen = true;
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_REQUEST);
+        }
+    }
+    @Override public void onRequestPermissionsResult(int code, String[] permissions, int[] results) {
+        super.onRequestPermissionsResult(code, permissions, results);
+        if (code != CAMERA_REQUEST) return;
+        cameraPromptOpen = false;
+        PermissionRequest request = pendingCamera;
+        pendingCamera = null;
+        if (request == null) return;
+        if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+                && trustedCameraOrigin(request) && !isFinishing() && !isDestroyed()) {
+            request.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE});
+        } else {
+            request.deny();
+            Toast.makeText(this, "Permite la cámara para escanear QR. Puedes activarla en Ajustes > Aplicaciones > Elteto > Permisos.", Toast.LENGTH_LONG).show();
+        }
     }
     private boolean localAccessAllowed() {
         return FirebaseLicenseVerifier.allowsLocal(getPreferences(MODE_PRIVATE).getBoolean("activated",false),
@@ -71,5 +120,5 @@ public class MainActivity extends Activity {
         if(children!=null && children.length>0){destination.mkdirs();for(String child:children)copyAssets(name.isEmpty()?child:name+"/"+child,new File(destination,child));}
         else{destination.getParentFile().mkdirs();try(InputStream in=getAssets().open(name);OutputStream out=new FileOutputStream(destination)){byte[] buffer=new byte[8192];int count;while((count=in.read(buffer))!=-1)out.write(buffer,0,count);}}
     }
-    @Override protected void onDestroy(){if(server!=null)server.stop();if(web!=null)web.destroy();super.onDestroy();}
+    @Override protected void onDestroy(){if(pendingCamera!=null){pendingCamera.deny();pendingCamera=null;}if(server!=null)server.stop();if(web!=null)web.destroy();super.onDestroy();}
 }
