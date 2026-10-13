@@ -77,6 +77,11 @@ sus participantes y que no se crean salas en ráfaga.
 
 1. **Authentication → Método de acceso**: habilita **Anónimo**. No hacen falta más proveedores.
 2. **Authentication → Configuración → Dominios autorizados**: añade `fercho-93.github.io`.
+   Si la clave de API tiene **restricciones de sitio web** (Google Cloud Console → APIs y
+   servicios → Credenciales → la clave del navegador), la lista debe incluir
+   `https://fercho-93.github.io/*` **y** `http://127.0.0.1:3000/*`: la app Android sirve la
+   web desde esa dirección local y, sin ella, las salas con internet fallan con
+   `auth/requests-from-referer-http://127.0.0.1:3000/-are-blocked`.
 3. **Firestore Database**: crea la base de datos (modo producción) en una región europea.
 4. **Publica las reglas** (una sola vez; añadir juegos no obliga a republicarlas):
    - desde la consola, pestaña **Reglas**: pega el contenido de `firestore.rules` y publica; o

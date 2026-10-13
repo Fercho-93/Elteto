@@ -14,6 +14,13 @@ function openDb(app) {
   catch { return getFirestore(app); }
 }
 
+// La clave de API tiene restricción por sitio web: la app Android sirve la web desde
+// http://127.0.0.1:3000, que también tiene que estar en la lista.
+function explain(error) {
+  if (!String(error?.code || error?.message).includes("requests-from-referer")) return error;
+  return new Error(`La clave de Firebase no acepta peticiones desde ${location.origin}. Añade ${location.origin}/* a las restricciones de sitio web de la clave de API (ver CONFIGURAR_ONLINE.md).`);
+}
+
 export async function connectFirebase() {
   connection ||= (async () => {
     const required = ["apiKey", "authDomain", "projectId", "appId"];
@@ -38,9 +45,9 @@ export async function connectFirebase() {
     if (error?.code === "auth/operation-not-allowed") {
       throw new Error("Activa el inicio de sesión anónimo en Firebase Authentication.");
     }
-    throw error;
+    throw explain(error);
   });
   const result = await connection;
-  const user = result.auth.currentUser || (await signInAnonymously(result.auth)).user;
+  const user = result.auth.currentUser || (await signInAnonymously(result.auth).catch((error) => { throw explain(error); })).user;
   return { ...result, uid: user.uid };
 }

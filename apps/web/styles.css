@@ -924,8 +924,8 @@ body:has(.game-page) {
 .profile-field .character-picker-button>span:nth-child(2){min-width:0;flex:1;}
 
 .room-mode { display:grid; gap:10px; }
-.room-mode label { display:flex; align-items:center; gap:12px; padding:14px 16px; border:2px solid #21172b; border-radius:12px; background:var(--paper); cursor:pointer; }
+.room-mode label { display:flex; align-items:center; gap:12px; padding:14px 16px; border:2px solid #21172b; border-radius:12px; background:var(--paper); color:#21172b; cursor:pointer; }
 .room-mode label:has(input:checked) { background:var(--cyan, #79e4de); box-shadow:3px 3px 0 #21172b; }
 .room-mode input { accent-color:#21172b; width:20px; height:20px; }
 .room-mode strong,.room-mode small { display:block; }
-.room-mode small { margin-top:4px; font-size:12px; }
+.room-mode small { margin-top:4px; font-size:12px; color:#4a3a52; }
