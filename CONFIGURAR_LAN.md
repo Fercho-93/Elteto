@@ -59,3 +59,7 @@ gradle -p apps/android-host assembleDebug
 El flujo `android-lan.yml` realiza estas pruebas y compila el APK. Los recursos web se generan antes de compilar y se incluyen como assets. Las pruebas del servidor usan exactamente la clase Java que ejecuta Android, con dos conexiones WebSocket independientes. La prueba de navegador bloquea los recursos ajenos al servidor local.
 
 La prueba física pendiente debe cubrir Android anfitrión + Safari iPhone, Android anfitrión + Chrome Android, Wi-Fi sin internet, hotspot sin datos, reconexión, y cierre del anfitrión. Los tests automáticos no certifican por sí solos el funcionamiento en cada modelo de móvil.
+
+### Elegir el modo desde la APK (0.2.10)
+
+En «Crear partida» puedes elegir **Sin internet** (misma Wi-Fi/hotspot, servidor Android y QR local) o **Con internet** (sala Firebase, enlace público y QR para jugar desde cualquier red). La mesa local sigue disponible sin activar una cuenta ni tener conexión. El modo online valida el acceso con Firebase; durante las pruebas usa el acceso de desarrollo autorizado por el servidor. Si está deshabilitado, activa tu cuenta en «Mi acceso». No se mezclan conexiones locales y online en una misma sala.

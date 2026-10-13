@@ -41,6 +41,8 @@ try {
  assert.equal(await host.locator('#access-form').count(),0);
  await host.locator('[data-action="open-host"]').click();await host.locator('#host-name').fill('Ana');
  await host.locator('[data-action="choose-character"]').click();await host.locator('[data-action="select-character"][data-character="2"]').click();
+ assert.equal(await host.locator('input[name="room-mode"]').count(),2);
+ assert.equal(await host.locator('input[name="room-mode"]:checked').inputValue(),'lan');
  await host.locator('[data-action="create-room"]').click();
  await host.locator('.room-code').waitFor();const code=(await host.locator('.room-code').textContent()).trim();
  assert.match(code,/^[A-HJ-NP-Z2-9]{8}$/);assert.equal(await host.locator('canvas.invite-qr').count(),1);

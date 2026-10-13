@@ -25,3 +25,7 @@ assert.equal(parseRoomCode("ABCD2345EXTRA"), null);
 assert.equal(parseRoomCode("https://fercho-93.github.io/Elteto/?join=" + "a".repeat(32)), null);
 assert.equal(parseRoomCode("eJxVjsEKwjAQRH9lyblQIgpR4kXx4MmL4DFkm9jQJCvZjRbEf7fVHgS9DPMGZubNtFd8yuXHjmpMn4K0JkU8Wv4gHQ0mwj7AfvAhONJcoqL5JyYk6oR8QUCyBHkL8c3fL0Ae"), null);
 console.log("Códigos de sala e invitaciones: OK");
+
+globalThis.window = { ELTETO_LAN: { hostKey: 'test' } };
+globalThis.location = new URL('http://127.0.0.1:3000/lan.html');
+assert.equal(inviteUrlFor('ABCD2345'), 'https://fercho-93.github.io/Elteto/guest.html?join=ABCD2345', 'APK online invitations must not point to loopback');

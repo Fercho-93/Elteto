@@ -19,7 +19,7 @@ export function parseRoomCode(value) {
 }
 
 export function inviteUrlFor(code) {
-  const url = new URL('./guest.html', globalThis.location.href);
+  const url = new URL('./guest.html', globalThis.window?.ELTETO_LAN ? 'https://fercho-93.github.io/Elteto/' : globalThis.location.href);
   url.searchParams.set("join", code);
   return url.toString();
 }
