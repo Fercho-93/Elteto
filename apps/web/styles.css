@@ -506,11 +506,12 @@ body:has(.game-page) {
    wobbles under a static lettering layer, so the words stay readable while it burns. */
 .menu-actions { justify-items:center; }
 .fuegote-button {
- position:relative; isolation:isolate; display:block; width:clamp(210px,min(76vw,36svh),340px); aspect-ratio:840 / 846; padding:0;
+ position:relative; isolation:isolate; display:block; width:clamp(210px,min(76vw,36svh),340px); aspect-ratio:744 / 740; padding:0;
  border:0; background:none; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .18s;
 }
 .fuegote-art { position:relative; display:block; width:100%; height:100%; overflow:visible; animation:fuegote-glow 1.9s ease-in-out infinite; }
 .fuegote-fire { filter:url(#fuegote-fire); transform-box:fill-box; transform-origin:50% 96%; animation:fuegote-lick 1.25s ease-in-out infinite; }
+.fuegote-words { transform-box:fill-box; transform-origin:50% 55%; animation:fuegote-press 1.9s ease-in-out infinite; }
 .fuegote-heat { position:absolute; inset:14% 12% 4%; z-index:-1; border-radius:50%; background:radial-gradient(closest-side,#ffb13b8c,#ff4d6d40 55%,transparent); filter:blur(14px); animation:fuegote-heat 1.9s ease-in-out infinite; }
 .fuegote-embers { position:absolute; inset:0 10% 40%; pointer-events:none; }
 .fuegote-embers i { position:absolute; left:var(--x); bottom:0; width:var(--size); height:var(--size); border-radius:50%; background:radial-gradient(circle,#fff6c4,#ffb13b 45%,#ff5a2a); box-shadow:0 0 8px 2px #ff8a3a99; opacity:0; animation:fuegote-ember var(--time) ease-out var(--delay) infinite; }
@@ -519,9 +520,10 @@ body:has(.game-page) {
 @media(hover:hover) { .fuegote-button:hover { transform:translateY(-3px) scale(1.03); } }
 @keyframes fuegote-glow { 0%,100% { filter:drop-shadow(0 0 10px #ff3fb455) drop-shadow(0 6px 5px #160d2680); } 50% { filter:drop-shadow(0 0 22px #ff6a3dbb) drop-shadow(0 6px 5px #160d2680); } }
 @keyframes fuegote-lick { 0%,100% { transform:scale(1,1); } 25% { transform:scale(1.012,1.035) skewX(-.8deg); } 55% { transform:scale(.992,1.015) skewX(.6deg); } 80% { transform:scale(1.008,1.045) skewX(-.4deg); } }
+@keyframes fuegote-press { 0%,100% { transform:scale(1); } 50% { transform:scale(1.025); } }
 @keyframes fuegote-heat { 0%,100% { opacity:.65; transform:scale(.96); } 50% { opacity:1; transform:scale(1.06); } }
 @keyframes fuegote-ember { 0% { opacity:0; transform:translate(0,0) scale(1); } 15% { opacity:1; } 100% { opacity:0; transform:translate(var(--drift),-110px) scale(.3); } }
-@media(prefers-reduced-motion:reduce) { .fuegote-art,.fuegote-fire,.fuegote-heat { animation:none; } .fuegote-fire { filter:none; } .fuegote-embers { display:none; } }
+@media(prefers-reduced-motion:reduce) { .fuegote-art,.fuegote-fire,.fuegote-heat,.fuegote-words { animation:none; } .fuegote-fire { filter:none; } .fuegote-embers { display:none; } }
 @media(min-width:701px) { .menu-actions { justify-items:start; } }
 .menu-home .menu-wrap { min-height:100svh; display:grid; align-items:center; }
 .menu-home .menu-hero { width:100%; padding-block:40px; }

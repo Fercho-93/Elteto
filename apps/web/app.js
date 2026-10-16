@@ -75,13 +75,13 @@ const FUEGOTE_EMBERS = [[18,0,7,2.6,-14],[30,1.1,5,3.1,-6],[44,.5,8,2.3,4],[56,1
 function renderFuegote() {
   const embers = FUEGOTE_EMBERS.map(([x, delay, size, time, drift]) => `<i style="--x:${x}%;--delay:${delay}s;--size:${size}px;--time:${time}s;--drift:${drift}px"></i>`).join('');
   return `<button class="fuegote-button" data-action="open-host" aria-label="Que se haga el fuegote"><span class="fuegote-heat" aria-hidden="true"></span>
-    <svg class="fuegote-art" viewBox="0 0 840 846" aria-hidden="true" focusable="false"><defs>
+    <svg class="fuegote-art" viewBox="0 0 744 740" aria-hidden="true" focusable="false"><defs>
       <filter id="fuegote-fire" x="-6%" y="-6%" width="112%" height="112%" color-interpolation-filters="sRGB">
         <feTurbulence type="fractalNoise" baseFrequency="0.005 0.013" numOctaves="1" seed="7"><animate attributeName="baseFrequency" values="0.005 0.013;0.0065 0.018;0.0045 0.015;0.005 0.013" dur="2.4s" repeatCount="indefinite"/></feTurbulence>
         <feDisplacementMap in="SourceGraphic" scale="30" xChannelSelector="R" yChannelSelector="G"><animate attributeName="scale" values="22;40;28;36;22" dur="1.7s" repeatCount="indefinite"/></feDisplacementMap>
       </filter>
-      <mask id="fuegote-letters" maskUnits="userSpaceOnUse" x="0" y="0" width="840" height="846"><image href="./assets/fuegote-text-mask.png" width="840" height="846" preserveAspectRatio="none"/></mask>
-    </defs><image class="fuegote-fire" href="./assets/fuegote-fire.webp" width="840" height="846"/><image href="./assets/fuegote.webp" width="840" height="846" mask="url(#fuegote-letters)"/></svg>
+      <mask id="fuegote-letters" maskUnits="userSpaceOnUse" x="0" y="0" width="744" height="740"><image href="./assets/fuegote-text-mask.png" width="744" height="740" preserveAspectRatio="none"/></mask>
+    </defs><image class="fuegote-fire" href="./assets/fuegote-fire.webp" width="744" height="740"/><g class="fuegote-words"><image href="./assets/fuegote.webp" width="744" height="740" mask="url(#fuegote-letters)"/></g></svg>
     <span class="fuegote-embers" aria-hidden="true">${embers}</span></button>`;
 }
 function renderHome() {
