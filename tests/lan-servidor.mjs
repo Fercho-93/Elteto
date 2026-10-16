@@ -29,6 +29,10 @@ try {
  assert.equal((await invalid.wait('fatal')).message,'Invitación local no válida.');
  const host=await connect(wsBase+'?host='+new URLSearchParams(new URL(hostUrl).hash.slice(1)).get('host'));
  await host.wait('connected');
+ // The host publishes seated avatars so guests can hide them before joining; junk is ignored.
+ host.ws.send(JSON.stringify({taken:[2,9,42,-1]}));
+ for(let i=0;i<50&&!(await fetch(base+'/lan-config').then(r=>r.json())).takenCharacters.length;i++)await new Promise(r=>setTimeout(r,20));
+ assert.deepEqual((await fetch(base+'/lan-config').then(r=>r.json())).takenCharacters,[2,9]);
  const g1=await connect(wsBase+'?code='+config.roomCode+'&resume='+'a'.repeat(48));await g1.wait('connected');
  const g2=await connect(wsBase+'?code='+config.roomCode+'&resume='+'b'.repeat(48));await g2.wait('connected');
  g1.ws.send(JSON.stringify({type:'hello',data:{name:'A'}}));

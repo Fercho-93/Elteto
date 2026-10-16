@@ -71,3 +71,5 @@ La APK 0.2.12 hace legibles las opciones «Sin internet» y «Con internet». Pa
 La APK 0.2.13 quita «Unirme a partida» de la pantalla principal y deja de pedir permiso de cámara: los invitados entran escaneando el QR del anfitrión con la cámara normal de su móvil, sin abrir la app. La partida se crea tocando la llama **Que se haga el fuegote**, que abre directamente «Crear partida» sin pedir acceso ni contraseña.
 
 La APK 0.2.14 respeta el gesto y el botón «atrás» de Android: cierra el diálogo abierto, vuelve a la pantalla anterior o, dentro de una sala o partida, pregunta antes de salir. Solo en la pantalla principal deja Elteto en segundo plano, sin cerrar la mesa local.
+
+A partir de la APK 0.2.15 cada avatar es único en la mesa: el formulario del invitado muestra los ya elegidos como no seleccionables y, si dos personas eligen el mismo a la vez, la segunda vuelve al formulario con un aviso. El anfitrión publica los avatares ocupados en `/lan-config` (`takenCharacters`).

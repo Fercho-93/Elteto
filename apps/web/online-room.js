@@ -1,7 +1,7 @@
 import {BotPacing} from './bot-pacing.js';
 import {MusFlowRunner} from './mus-flow.js';
 import {PokerAbsenceRunner} from './poker-presence.js';
-import {characterProfile} from './avatar-art.js';
+import {characterProfile, AVATAR_TAKEN_MESSAGE} from './avatar-art.js';
 import { getGame, createMusState, fillBotSeats, nextBotMove, BotRunner, botTurnDelay } from "./game-core/index.js";
 import { connectFirebase } from "./firebase-client.js";
 import { createRoomCode, inviteUrlFor } from "./room-code.js";
@@ -45,6 +45,7 @@ function roomError(error, fallback) {
   return error instanceof Error && error.message ? error : new Error(fallback);
 }
 
+const takenCharacters = (players = {}, except) => Object.entries(players).filter(([id]) => id !== except).map(([, player]) => player.character).filter(Number.isInteger);
 const validName = (name) => typeof name === "string" && name.length >= 1 && name.length <= 24;
 const millis = (timestamp) => (typeof timestamp?.toMillis === "function" ? timestamp.toMillis() : null);
 
@@ -90,6 +91,8 @@ export class OnlineSession {
         if (data.playerOrder.includes(uid)) return;
         if (data.status !== "lobby") throw new Error("ALREADY_STARTED");
         if (data.playerOrder.length + Object.keys(data.bots || {}).length >= data.maxPlayers) throw new Error("ROOM_FULL");
+        const taken = takenCharacters(data.players);
+        if (characterProfile(character).character !== undefined && taken.includes(character)) throw Object.assign(new Error(AVATAR_TAKEN_MESSAGE), { code: "AVATAR_TAKEN", taken });
         transaction.update(reference, {
           players: { ...data.players, [uid]: { name, ...characterProfile(character), joinedAt: Date.now() } },
           playerOrder: [...data.playerOrder, uid],
@@ -101,9 +104,19 @@ export class OnlineSession {
     } catch (error) {
       // Una sala que ya empezó solo la leen sus participantes: para quien llega tarde es
       // un permiso denegado, no un error de reglas.
+      if (error?.code === "AVATAR_TAKEN") throw error;
       if (error?.code === "permission-denied") throw new Error("La sala no existe, está cerrada o la partida ya ha empezado.");
       throw roomError(error, "No se pudo entrar en la sala.");
     }
+  }
+
+  /** Avatares ya ocupados en una sala abierta (sin contar el tuyo si ya estás dentro). */
+  static async takenCharacters(code, connection = connectFirebase()) {
+    const { db, uid } = await connection;
+    const snapshot = await getDoc(doc(db, "rooms", code));
+    const data = snapshot.exists() ? snapshot.data() : null;
+    if (!data || data.status !== "lobby") return [];
+    return takenCharacters(data.players, uid);
   }
 
   constructor({ db, uid, code, onChange }) {

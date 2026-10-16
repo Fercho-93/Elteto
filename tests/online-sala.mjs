@@ -76,6 +76,13 @@ try {
   assert.match(host.inviteUrl, /\?join=[A-Z2-9]{8}$/);
   console.log("  ok  tres personas entran en la sala");
 
+  // Avatares únicos: la lista de ocupados y el rechazo atómico de un duplicado.
+  assert.deepEqual((await OnlineSession.takenCharacters(host.roomCode, await connect())).sort(), [2, 4, 5]);
+  assert.deepEqual(await OnlineSession.takenCharacters(host.roomCode, conns[1]), [2, 5]);
+  await assert.rejects(OnlineSession.join(host.roomCode, "Dani", () => {}, await connect(), 4), error => error.code === "AVATAR_TAKEN" && /ya está elegido/.test(error.message) && error.taken.length === 3);
+  assert.equal(events[0].last("lobby").players.length, 3);
+  console.log("  ok  avatares únicos en la sala online");
+
   // Una cuarta, ya sin hueco por la regla de maxPlayers, no depende del cliente: cinquillo admite 6.
   // Quien llega a un código que no existe recibe un aviso legible.
   await assert.rejects(OnlineSession.join("ZZZZ9999", "Dani", () => {}, await connect()), /No existe ninguna sala/);

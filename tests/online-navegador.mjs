@@ -34,6 +34,12 @@ await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const base = `http://127.0.0.1:${server.address().port}/`;
 const browser = await chromium.launch();
 
+// The lobby's back button asks before leaving once other people are at the table.
+async function leaveLobby(page) {
+  await page.click('.menu-back[data-action="back"]');
+  const confirm = page.locator('[data-leave="go"]');
+  if (await confirm.waitFor({ state: 'visible', timeout: 1500 }).then(() => true, () => false)) await confirm.click();
+}
 async function movil(label) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
   // El SDK se sirve desde node_modules en lugar de gstatic, y la app apunta a los emuladores.
@@ -86,7 +92,7 @@ try {
   assert.equal(await quick.page.locator('input[type="password"]').count(),0);
   await quick.page.click('[data-action="new-invite"]');
   await quick.waitText(/Código de la sala/);
-  await quick.page.click('[data-action="leave-room"]');
+  await leaveLobby(quick.page);
   await quick.context.close();
   await settings.withSecurityRulesDisabled(ctx=>setDoc(doc(ctx.firestore(),'configuration','development'),{enabled:false}));
   await settings.cleanup();
@@ -136,12 +142,38 @@ try {
   // Entrar por el enlace de invitación (QR) con una tercera persona.
   const third = await movil("tercera");
   await third.page.goto(`${base}?join=${code}`);
+  await third.page.locator('.menu-setup[data-avatars="ready"]').waitFor();
+  assert.equal(await third.page.locator('[data-action="join-room"]').innerText().then(t=>t.replace(/\s+/g,' ').trim().replace(/ →$/,'')),'Guardar y entrar en la sala');
+  // Avatars are unique: the host's (2) and Bea's (9) are listed but cannot be chosen.
+  const avatarOptions=async page=>{await page.locator('[data-action="choose-character"]').click();return page.locator('.character-option').evaluateAll(options=>options.map(o=>o.disabled));};
+  const closePicker=page=>page.locator('[data-action="close-character-picker"]').click();
+  let disabled=await avatarOptions(third.page);
+  assert.deepEqual(disabled.map((d,i)=>d?i:-1).filter(i=>i>=0),[2,9]);
+  await closePicker(third.page);
+  // Someone else takes avatar 6 while this guest still holds an old list.
+  const fourth = await movil("cuarta");
+  await fourth.page.goto(`${base}?join=${code}`);
+  await fourth.page.locator('.menu-setup[data-avatars="ready"]').waitFor();
+  await fourth.page.locator('[data-action="choose-character"]').click();
+  await fourth.page.locator('[data-action="select-character"][data-character="6"]').click();
+  await fourth.page.locator('[data-action="join-room"]').click();
+  await fourth.waitText(/Conectado a la sala/);
+  await host.waitText(/3 \/ 6/);
+  await third.page.locator('[data-action="choose-character"]').click();
+  await third.page.locator('[data-action="select-character"][data-character="6"]').click();
+  await third.page.locator('[data-action="join-room"]').click();
+  await third.waitText(/ya está elegido/);
+  assert.equal(await third.page.locator('#join-name').count(),1,'vuelve a la pantalla de entrada');
+  disabled=await avatarOptions(third.page);
+  assert.deepEqual(disabled.map((d,i)=>d?i:-1).filter(i=>i>=0),[2,6,9]);
+  await closePicker(third.page);
   await third.page.locator('[data-action="join-room"]').click();
   await third.waitText(/Conectado a la sala/);
-  await host.waitText(/3 \/ 6/);
-  await third.page.click('[data-action="leave-room"]');
+  await host.waitText(/4 \/ 6/);
+  await leaveLobby(third.page);
+  await leaveLobby(fourth.page);
   await host.waitText(/2 \/ 6/);
-  console.log("  ok  el enlace de invitación mete en la sala y salir deja la plaza libre");
+  console.log("  ok  avatares únicos: los ocupados no se pueden elegir y un choque devuelve al formulario");
 
   await host.page.click('[data-action="start-game"]');
   await host.page.locator(".hand .playing-card").first().waitFor();

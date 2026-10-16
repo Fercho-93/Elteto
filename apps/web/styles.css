@@ -873,6 +873,8 @@ body:has(.game-page) {
 .character-option>span{display:block;height:70px;}
 .character-option svg{width:100%;height:100%;}
 .character-option strong{display:block;font:600 10px/1.3 system-ui;overflow-wrap:anywhere;margin-top:4px;}
+.character-option:disabled{opacity:.38;filter:grayscale(.85);cursor:not-allowed;}
+.character-option small{display:block;margin-top:2px;font:600 8px/1.2 system-ui;color:var(--menu-muted);}
 .character-option:focus-visible,.character-picker-button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
 @media(max-width:360px){.character-grid{grid-template-columns:repeat(3,minmax(0,1fr));}.character-picker-button{width:118px;gap:4px;padding:4px;}.character-preview{width:30px;}.character-picker-button strong{font-size:10px;}}
 .lobby-character{width:44px;height:48px;flex:none;display:block;}

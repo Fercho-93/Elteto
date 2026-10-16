@@ -1,6 +1,8 @@
 package es.elteto.lan;
 
 import fi.iki.elonen.NanoWSD;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.*;
@@ -18,6 +20,7 @@ public class LanServer extends NanoWSD {
     private final Map<String, Peer> guests = new HashMap<>();
     private final Map<String, String> guestIds = new HashMap<>();
     private Peer host;
+    private JsonArray takenCharacters = new JsonArray();
     public LanServer(File root, int port) {
         super("0.0.0.0", port);
         this.root = root;
@@ -62,6 +65,7 @@ public class LanServer extends NanoWSD {
             String authority = session.getHeaders().get("host");
             String base = session.getRemoteIpAddress().equals("127.0.0.1") ? ip + ":" + getListeningPort() : authority;
             config.addProperty("inviteBase", "http://" + base);
+            synchronized (this) { config.add("takenCharacters", takenCharacters); }
             Response response = newFixedLengthResponse(Response.Status.OK,"application/json",config.toString());
             response.addHeader("Cache-Control","no-store"); return response;
         }
@@ -122,7 +126,11 @@ public class LanServer extends NanoWSD {
                     String text=frame.getTextPayload();
                     if(text.length()>150000){fatal("Mensaje demasiado grande.");return;}
                     JsonObject data=JsonParser.parseString(text).getAsJsonObject();
-                    if(wantsHost) {
+                    if(wantsHost && data.has("taken")) {
+                        JsonArray list=new JsonArray();
+                        for(JsonElement item:data.getAsJsonArray("taken")) { int value=item.getAsInt(); if(value>=0 && value<10) list.add(value); }
+                        takenCharacters=list;
+                    } else if(wantsHost) {
                         Peer target=guests.get(data.get("target").getAsString());
                         if(target!=null) {
                             if(data.has("close")){target.fatal("Has salido de esta mesa.");}
@@ -140,7 +148,7 @@ public class LanServer extends NanoWSD {
                 if(host==this) {
                     host=null;
                     rotateRoomCode();
-                    List<Peer> remaining=new ArrayList<>(guests.values());guests.clear();guestIds.clear();
+                    List<Peer> remaining=new ArrayList<>(guests.values());guests.clear();guestIds.clear();takenCharacters=new JsonArray();
                     for(Peer peer:remaining)peer.fatal("El anfitrión ha cerrado la mesa. Abre una nueva partida.");
                 } else if(guests.get(id)==this) {
                     guests.remove(id);

@@ -40,6 +40,23 @@ await tick();await tick();
 assert.equal(host.local.players().length,2);
 assert.deepEqual(host.local.players().map(p=>p.character),[2,9]);
 assert.equal(guest.playerId,guest.resume);
+// Avatars are unique: a second guest asking for a seated one is refused and told which are taken.
+{
+ const first=globalThis.sessionStorage,other=new Map(),rival=[];
+ globalThis.sessionStorage={getItem:k=>other.get(k)||null,setItem:(k,v)=>other.set(k,v)};
+ const dup=await LanSession.join('ABCD2345','Cris',e=>rival.push(e),9);await tick();await tick();
+ const refusal=rival.find(e=>e.kind==='avatar-taken');
+ assert.deepEqual(refusal.taken,[2,9]);assert.match(refusal.message,/ya está elegido/);
+ assert.equal(host.local.players().length,2);assert.ok(!host.local.connections.has(dup.playerId));
+ await dup.exit();
+ const hostDup=await LanSession.join('ABCD2345','Dani',()=>{},2);await tick();await tick();
+ assert.equal(host.local.players().length,2,'the host avatar cannot be copied either');await hostDup.exit();
+ const free=await LanSession.join('ABCD2345','Cris',e=>rival.push(e),5);await tick();await tick();
+ assert.deepEqual(host.local.players().map(p=>p.character),[2,9,5]);
+ await free.exit();await tick();await tick();
+ assert.deepEqual(host.local.players().map(p=>p.character),[2,9]);
+ globalThis.sessionStorage=first;
+}
 await host.startGame();await tick();
 const last=i=>events[i].findLast(e=>e.kind==='game')?.view;
 assert.equal(last(0).myHand.length+last(1).myHand.length,40);

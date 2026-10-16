@@ -1,7 +1,7 @@
 import {handlePokerUI,syncPokerAmounts} from './poker-controls.js';
 import {renderMusScreen,openMusPanel} from './mus-table.js';
 import {mountGameHelp,openGameHelp,closeGameHelp} from './game-help.js';
-import {renderAvatarArtwork,CHARACTER_NAMES,renderCharacterButton,renderCharacterDialog,validCharacter,savedCharacter,saveCharacter} from './avatar-art.js';
+import {renderAvatarArtwork,CHARACTER_NAMES,renderCharacterButton,renderCharacterDialog,freeCharacter,validCharacter,savedCharacter,saveCharacter} from './avatar-art.js';
 import {renderGameChoices,updateGamePicker,availableGames} from './game-picker.js';
 import {renderCatalogGame,handleCatalogAction} from './catalog-games.js';
 import {beginParchisRoll} from './parchis-dice.js';
@@ -31,7 +31,7 @@ const app = document.querySelector("#app");
 const toastEl = document.querySelector("#toast");
 const state = {
   roomMode:"lan", musTarget:40, character: savedCharacter(), screen: "home", role: null, name: "", roomName: "", gameId: "", playerId: null,
-  players: [], view: null, host: null, online: null, roomCode: "", offerCode: "", joinCode: "",
+  players: [], view: null, host: null, online: null, roomCode: "", offerCode: "", joinCode: "", takenAvatars: [],
   selected: new Set(), error: "", started: false, inviteMode: "local", handSuit: 'all',
 };
 
@@ -161,17 +161,42 @@ function renderHostForm() {
   updateGamePicker(app);
 }
 
+// Avatars are unique per table: the guest form hides the ones already taken, and the
+// host (LAN) or the room transaction (online) rejects a clash that slips through.
+async function fetchTakenAvatars(code) {
+  try {
+    if (LAN) return (await fetch('./lan-config', { cache: 'no-store' }).then(r => r.json())).takenCharacters || [];
+    const { OnlineSession } = await import("./online-room.js");
+    return await OnlineSession.takenCharacters(code);
+  } catch { return []; }
+}
+function applyTakenAvatars(taken) {
+  state.takenAvatars = taken;
+  state.character = freeCharacter(state.character, taken);
+}
+async function refreshTakenAvatars(code) {
+  const taken = await fetchTakenAvatars(code);
+  const form = app.querySelector('.menu-setup');
+  if (state.screen !== "join-form" || !form) return;
+  form.dataset.avatars = "ready";
+  if (app.querySelector('.character-dialog') || JSON.stringify(taken) === JSON.stringify(state.takenAvatars)) return;
+  applyTakenAvatars(taken);
+  const picker = app.querySelector('.character-picker-button');
+  if (picker) picker.outerHTML = renderCharacterButton(state.character);
+}
 function renderJoinForm() {
   state.screen = "join-form";
   const code = parseRoomCode(state.offerCode);
+  applyTakenAvatars(state.takenAvatars);
   app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><span class="menu-brand">ELTETO<span>✦</span></span></header><section class="menu-setup" aria-labelledby="join-title">
     <p class="menu-kicker">TE GUARDARON SITIO</p><h1 id="join-title">Entra en la sala<span>.</span></h1>
     ${code ? `<p class="helper">Sala <strong>${esc(code)}</strong>. Entras como invitado, sin instalar nada.</p>` : `<p class="helper">Escanea con la cámara del móvil el QR del anfitrión o escribe el código de su sala.</p>
     <label class="field-label" for="join-code">Código de la sala</label><input class="text-field join-code" id="join-code" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD2345" value="${esc(state.joinCode || "")}">`}
     <label class="field-label" for="join-name">Tu nombre de guerra</label><div class="name-character-field"><input class="text-field" id="join-name" maxlength="24" autocomplete="nickname" placeholder="Donde las dan, las toman" value="${esc(state.name)}">${renderCharacterButton(state.character)}</div>
     ${state.error ? `<p class="error-message" role="alert">${esc(state.error)}</p>` : ''}
-    <button class="menu-button menu-primary menu-create" data-action="join-room">Entrar en la sala <span aria-hidden="true">→</span></button>
+    <button class="menu-button menu-primary menu-create" data-action="join-room">Guardar y entrar en la sala <span aria-hidden="true">→</span></button>
   </section></div></section>`;
+  if (code) refreshTakenAvatars(code);
 }
 
 function invitePanel(code) {
@@ -502,14 +527,14 @@ app.addEventListener("click", async (event) => {
     if(action==='mus-target'){state.musTarget=Number(button.dataset.target);app.querySelectorAll('[data-action=mus-target]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.target)===state.musTarget)));return;}
     if(action==='open-game-help'){event.preventDefault();await openGameHelp(state.gameId,state.view);return;}
     if (action === 'choose-character') {
-      app.insertAdjacentHTML('beforeend',renderCharacterDialog(state.character));
+      app.insertAdjacentHTML('beforeend',renderCharacterDialog(state.character,state.screen==='join-form'?state.takenAvatars:[]));
       const dialog=app.querySelector('.character-dialog');
       dialog.addEventListener('close',()=>{dialog.remove();app.querySelector('.character-picker-button')?.focus();},{once:true});
       dialog.showModal();return;
     }
     if (action === 'close-character-picker') {app.querySelector('.character-dialog')?.close();return;}
     if (action === 'select-character') {
-      const character=Number(button.dataset.character);if(!validCharacter(character))return;
+      const character=Number(button.dataset.character);if(!validCharacter(character)||(state.screen==='join-form'&&state.takenAvatars.includes(character)))return;
       state.character=character;saveCharacter(character);
       app.querySelector('.character-picker-button').outerHTML=renderCharacterButton(character);
       app.querySelector('.character-dialog').close();return;
@@ -670,6 +695,15 @@ function onOnlineChange(change) {
   } else if (change.kind === "error") {
     state.error = change.message;
     flash(change.message);
+  } else if (change.kind === "avatar-taken") {
+    // The LAN host refused our avatar; leave quietly and let the guest pick another.
+    const code = state.roomCode;
+    state.online?.exit?.();
+    applyTakenAvatars(change.taken);
+    Object.assign(state, { role: null, online: null, host: null, screen: "join-form", roomCode: "", offerCode: code, error: change.message, players: [] });
+    flash(change.message);
+    render();
+    return;
   } else if (change.kind === "disconnected") {
     flash(change.message);
     if (state.role === 'client' || GUEST) endGuestRoom(change.message); else resetToHome();
@@ -707,6 +741,7 @@ async function beginOnlineJoin(code, name) {
     try { sessionStorage.setItem(`elteto.joined.${code}`, "1"); } catch {}
     if (local) state.host = session;
   } catch (error) {
+    if (error?.code === "AVATAR_TAKEN") applyTakenAvatars(error.taken);
     Object.assign(state, { role: null, screen: "join-form", roomCode: "", offerCode: code });
     throw error;
   }

@@ -50,6 +50,7 @@ export class LanSession {
   }
   emitHost(change) {
     if (change.kind === 'lobby' || change.kind === 'game') {
+      if (change.kind === 'lobby') { try { this.send({ taken: change.players.map(player => player.character).filter(Number.isInteger) }); } catch {} }
       change.players = change.players.map(player => ({ ...player, away: player.away || (!player.isBot && player.id !== 'host' && !this.local.connections.get(player.id)?.peer.connected) }));
       this.onChange({ ...change, isHost: true, playerId: 'host', roomCode: this.roomCode, inviteUrl: this.inviteUrl });
     } else this.onChange(change);
@@ -151,7 +152,8 @@ export class LanSession {
       this.onChange({ kind: 'lobby', ...data, playerId: this.playerId, isHost: false, roomCode: this.roomCode });
     } else if (message.type === 'state') {
       this.onChange({ kind: 'game', players: this.players, gameId: this.gameId, roomName: this.roomName, playerId: this.playerId, isHost: false, view: data.view });
-    } else if (message.type === 'error') this.onChange({ kind: 'error', message: data.message });
+    } else if (message.type === 'error' && data.code === 'avatar-taken') this.onChange({ kind: 'avatar-taken', message: data.message, taken: data.taken || [] });
+    else if (message.type === 'error') this.onChange({ kind: 'error', message: data.message });
     else if (message.type === 'ack') this.pending = false;
   }
   async setSittingOut(value){this.sittingOut=Boolean(value);if(this.isHost)this.local.setSittingOut(value);else this.send({type:"sit-out",data:{value:Boolean(value)}});}

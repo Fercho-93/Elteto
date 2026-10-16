@@ -1,7 +1,7 @@
 import {BotPacing} from './bot-pacing.js';
 import {MusFlowRunner} from './mus-flow.js';
 import {PokerAbsenceRunner} from './poker-presence.js';
-import {characterProfile} from './avatar-art.js';
+import {characterProfile, AVATAR_TAKEN_MESSAGE} from './avatar-art.js';
 import { getGame, createMusState, fillBotSeats, BotRunner, botTurnDelay, nextBotMove } from "./game-core/index.js";
 
 const HOST_ID = "host";
@@ -66,6 +66,13 @@ export class LocalHostSession {
       const name = String(message.data?.name || "").trim();
       if (!name) {
         this.peers.get(peerId)?.send(say("error", { message: "Indica tu nombre para entrar." }));
+        return;
+      }
+      const wanted = characterProfile(message.data?.character).character;
+      const taken = this.players().map(player => player.character).filter(Number.isInteger);
+      if (wanted !== undefined && taken.includes(wanted)) {
+        this.peers.get(peerId)?.send(say("error", { message: AVATAR_TAKEN_MESSAGE, code: "avatar-taken", taken }));
+        this.peers.delete(peerId);
         return;
       }
       if (this.started || this.players().length >= this.engine.maxPlayers) {

@@ -15,8 +15,10 @@ try {
  browser=await (process.env.LAN_BROWSER==='webkit'?webkit:chromium).launch();
  const errors=[];
  const settled=pages=>Promise.all(pages.map(p=>p.waitForFunction(()=>!document.querySelector('[data-turn-busy="true"]'))));
- const enter=async(page,url)=>{await page.goto(url);await page.locator('[data-action="join-room"]').waitFor();if(await page.locator('[data-action="join-room"]').count()){
-  await page.locator('[data-action="choose-character"]').click();await page.locator('[data-action="select-character"][data-character="9"]').click();
+ const enter=async(page,url)=>{await page.goto(url);await page.locator('[data-action="join-room"]').waitFor();await page.locator('.menu-setup[data-avatars="ready"]').waitFor();if(await page.locator('[data-action="join-room"]').count()){
+  // Avatars are unique per table: take 9 when free, otherwise the first free one.
+  await page.locator('[data-action="choose-character"]').click();const nine=page.locator('[data-character="9"]:not(:disabled)');
+  await (await nine.count()?nine:page.locator('.character-option:not(:disabled)').first()).click();
   await page.locator('[data-action="join-room"]').click();
  }};
  const context=async name=>{
