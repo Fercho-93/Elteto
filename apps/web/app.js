@@ -64,7 +64,15 @@ const turnSequence=new TurnSequence({
  hidden:()=>document.visibilityState==='hidden'
 });
 function receiveGame(change){if(state.screen==='poker-break'){state.view=change.view;state.players=change.players||state.players;render();return;}turnSequence.receive({...change,gameId:change.gameId||state.gameId,playerId:change.playerId||state.playerId,players:change.players||state.players});}
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')turnSequence.flush();});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')turnSequence.flush();else syncScreenWake();});
+// Like a video: the screen stays on while a table is open, even without touching it.
+let screenWake=null;
+async function syncScreenWake(){
+  const wanted=['lobby','game','poker-break'].includes(state.screen)&&document.visibilityState==='visible';
+  if(!wanted){const lock=screenWake;screenWake=null;await lock?.release().catch(()=>{});return;}
+  if(screenWake&&!screenWake.released||!navigator.wakeLock)return;
+  try{screenWake=await navigator.wakeLock.request('screen');}catch{screenWake=null;}
+}
 
 function renderProfile(){
  state.screen='profile';
@@ -386,7 +394,7 @@ async function takePokerBreak(){
 }
 function renderPokerBreak(){
  const chips=state.view?.chips?.[state.playerId]||0;
- app.innerHTML=`<section class="menu-shell"><div class="menu-wrap"><header class="menu-header">${backButton('Volver a la partida')}<span class="menu-brand">ELTETO ✦</span></header><section class="menu-setup"><h1>Tu sitio sigue reservado</h1><p>Conservas tu personaje y tus ${chips.toLocaleString('es-ES')} fichas. Las ciegas siguen contando mientras estás ausente.</p><p>Si te toca y no vuelves en 12 segundos, pasarás cuando sea gratis o te retirarás si hay una apuesta. Si todos están ausentes, se espera.</p><button class="button button-cyan full-button" data-action="poker-return">Volver a la partida</button><button class="button full-button" data-action="leave-room">Salir de la partida</button></section></div></section>`;
+ app.innerHTML=`<section class="menu-shell"><div class="menu-wrap"><header class="menu-header">${backButton('Volver a la partida')}<span class="menu-brand">ELTETO ✦</span></header><section class="menu-setup"><h1>Tu sitio sigue reservado</h1><p>Conservas tu personaje y tus ${chips.toLocaleString('es-ES')} fichas. Las ciegas siguen contando mientras estás ausente.</p><p>No hay cronómetro: cuando te toque, la mesa te esperará hasta que vuelvas y decidas.</p><button class="button button-cyan full-button" data-action="poker-return">Volver a la partida</button><button class="button full-button" data-action="leave-room">Salir de la partida</button></section></div></section>`;
 }
 function render() {
   if(state.screen==='profile')renderProfile();
@@ -399,6 +407,7 @@ function render() {
   else if (state.screen === "lobby") renderLobby();
   else if (state.screen === "game") renderGame();
   else renderHome();
+  void syncScreenWake();
 }
 
 // Qué significa "volver" en cada pantalla. La principal (y la entrada de un invitado) no

@@ -55,11 +55,3 @@ export const holdemEngine={...holdemBase,applyAction(state:State,p:string,a:any)
  s.lastAction={sequence:(s.actionSequence||0)+1,handNumber:s.handNumber,player:p,type:'show-cards',amount:0,target:0};s.actionSequence=s.lastAction.sequence;s.playerActions||={};s.playerActions[p]=s.lastAction;note(s,`${p}: enseña ${s.shownHands[p].length} cartas.`);return s;
 }};
 
-// Absent seats never call or raise on a player's behalf. All-ins remain eligible for the pot.
-export function pokerAbsentAction(s:State){
- if(s.finished)return null;
- if(s.phase==='result')return {type:'next-hand'};
- const p=s.players[s.turn];
- if(s.folded[p]||s.chips[p]<=0)return null;
- return {type:s.currentBet>s.street[p]?'fold':'check'};
-}

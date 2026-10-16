@@ -1,6 +1,5 @@
 import {BotPacing} from './bot-pacing.js';
 import {MusFlowRunner} from './mus-flow.js';
-import {PokerAbsenceRunner} from './poker-presence.js';
 import {characterProfile, AVATAR_TAKEN_MESSAGE} from './avatar-art.js';
 import { getGame, createMusState, fillBotSeats, BotRunner, botTurnDelay, nextBotMove } from "./game-core/index.js";
 
@@ -24,11 +23,6 @@ export class LocalHostSession {
     this.botRunner = new BotRunner(() => this.closed || this.canRunBots?.() === false ? null : nextBotMove(this.engine, this.state, this.bots.map(p => p.id)),
       ({playerId, action}) => { this.state = this.engine.applyAction(this.state, playerId, this.engine.id==='mus'?{...action,at:Date.now()}:action); this.sendViews(); },
       error => this.onChange({kind: 'error', message: String(error.message || error)}), () => this.botPacing.delay(botTurnDelay(this.engine.id)));
-    this.absenceRunner=new PokerAbsenceRunner(()=>this.closed?null:({engine:this.engine,state:this.state,players:this.players()}),move=>{
-      const current=this.absenceRunner.candidate();if(!current||current.key!==move.key)return;
-      this.state=this.engine.applyAction(this.state,move.playerId,move.action);this.sendViews();
-    },{onError:error=>this.onChange({kind:'error',message:String(error.message||error)})});
-    this.absenceRunner.start();
     this.musFlow=new MusFlowRunner(()=>({engine:this.engine,state:this.state,paused:[...this.connections.values()].some(c=>c.peer.connected===false)}),action=>this.applyAction(HOST_ID,action),error=>this.onChange({kind:"error",message:error.message}));
     this.publishLobby();
   }
@@ -158,7 +152,6 @@ export class LocalHostSession {
   close() {
     this.closed = true;this.musFlow?.close();
     this.botRunner.stop();
-    this.absenceRunner.stop();
     this.broadcast(say('closed', { message: 'El anfitrión ha cerrado la sala.' }));
     for (const peer of this.peers.values()) peer.close();
     this.peers.clear();
