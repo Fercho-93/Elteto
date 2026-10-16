@@ -16,6 +16,24 @@ for(let hand=1;hand<=7;hand++){
  state=engine.applyAction(state,state.players[state.turn],{type:'next-hand'});
 }
 console.log('Póker: 1.000 fichas, ciegas que suben cada vuelta y bote verificados.');
+{
+ // Salir de la mesa: la mano se retira, toda la mesa lo ve en `departed`, no se le vuelve a repartir y gana el último que queda.
+ const {departGame}=await import('../dist/game-core/index.js');
+ let g=engine.createInitialState(['ana','bea','carla'],7);const leaver=g.players[g.turn];
+ g=departGame('texas-holdem',g,leaver,'Bea');
+ assert.equal(g.folded[leaver],true);assert.notEqual(g.players[g.turn],leaver,'el turno pasa al siguiente');
+ for(const id of g.players)assert.equal(engine.view(g,id).departed[leaver],'Bea','todos ven quién se ha ido');
+ while(g.phase!=='result'&&!g.finished)g=engine.applyAction(g,g.players[g.turn],{type:g.currentBet>g.street[g.players[g.turn]]?'call':'check'});
+ assert.notEqual(g.players[g.turn],leaver,'quien se fue no reparte la siguiente mano');
+ g=engine.applyAction(g,g.players[g.turn],{type:'next-hand'});
+ assert.equal(g.hands[leaver].length,0,'no recibe cartas');assert.equal(g.folded[leaver],true);
+ const other=g.players.find(id=>id!==leaver&&id!==g.players[g.turn]);
+ g=departGame('texas-holdem',g,other,'Otra');
+ assert.equal(g.finished,true);assert.ok(g.winner&&g.winner!==leaver&&g.winner!==other,'gana quien queda en la mesa');
+ const c=getGame('cinquillo');let cs=c.createInitialState(['a','b','c'],3);cs=departGame('cinquillo',cs,'b','Bea');
+ assert.equal(c.view(cs,'a').departed.b,'Bea');assert.equal(cs.finished,false,'con tres jugadores la partida sigue');
+ console.log('Salir de la partida: aviso para toda la mesa, mano retirada y último jugador ganador: OK');
+}
 const {evaluatePokerHand,pokerPayout}=await import('../dist/game-core/index.js');
 const card=(rank,suit='clubs')=>({id:`${suit}-${rank}`,rank,suit});
 const royal=[card('A','hearts'),card('K','hearts'),card('Q','hearts'),card('J','hearts'),card('10','hearts')];

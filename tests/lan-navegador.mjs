@@ -48,7 +48,7 @@ try {
  await host.locator('[data-action="create-room"]').click();
  await host.locator('.room-code').waitFor();const code=(await host.locator('.room-code').textContent()).trim();
  assert.match(code,/^[A-HJ-NP-Z2-9]{8}$/);assert.equal(await host.locator('canvas.invite-qr').count(),1);
- const guest=await context('Bea');await enter(guest,base+'/?join='+code);
+ let guest=await context('Bea');await enter(guest,base+'/?join='+code);
  assert.equal(await guest.locator('[data-action="development-admin"]').count(),0);
  await guest.waitForFunction(()=>document.querySelector('#app').textContent.includes('Ya estás en la mesa'));
  assert.equal((await guest.locator('#invite-title').textContent()).trim(),'Aviso!','el invitado ve «Aviso!» en la sala de espera');
@@ -115,6 +115,8 @@ try {
  assert.notEqual(musCode,code,'cada mesa tiene una invitación distinta');
  const old=await context('Enlace antiguo');await enter(old,base+'/?join='+code);
  await old.waitForFunction(()=>document.querySelector('#app').textContent.includes('otra mesa'));
+ // Same browser, new tab: WebKit can crash navigating away from the closed-room screen.
+ { const tab=await guest.context().newPage();tab.on('pageerror',e=>errors.push(e.message));await guest.close();guest=tab; }
  await enter(guest,base+'/?join='+musCode);
  const c=await context('Cris'),d=await context('Dani');
  await enter(c,base+'/?join='+musCode);await enter(d,base+'/?join='+musCode);

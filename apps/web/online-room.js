@@ -1,7 +1,7 @@
 import {BotPacing} from './bot-pacing.js';
 import {MusFlowRunner} from './mus-flow.js';
 import {characterProfile, AVATAR_TAKEN_MESSAGE} from './avatar-art.js';
-import { getGame, createMusState, fillBotSeats, nextBotMove, BotRunner, botTurnDelay, forfeitGame } from "./game-core/index.js";
+import { getGame, createMusState, fillBotSeats, nextBotMove, BotRunner, botTurnDelay, departGame } from "./game-core/index.js";
 import { connectFirebase } from "./firebase-client.js";
 import { createRoomCode, inviteUrlFor } from "./room-code.js";
 import {
@@ -390,8 +390,7 @@ export class OnlineSession {
         const name = this.room.players[playerUid]?.name || 'Un jugador';
         if (!this.state.finished) {
           this.onChange({ kind: 'notice', message: `${name} ha salido de la partida.` });
-          const next = forfeitGame(this.engine.id, this.state, playerUid, name);
-          if (next) this.state = next;
+          this.state = departGame(this.engine.id, this.state, playerUid, name);
         }
         await this.publish(errors);
         return;

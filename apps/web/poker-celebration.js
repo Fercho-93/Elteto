@@ -2,25 +2,23 @@ import {renderAvatarArtwork} from './avatar-art.js';
 import {escapeHtml as esc,mascotForSeat} from './table-view.js';
 import {POKER_CATEGORIES} from './poker-events.js';
 export const POKER_CELEBRATION=2800;
-// El resultado se queda en el panel inferior para toda la mesa hasta que quien ha ganado la mano pulsa «Continuar»
+// El resultado se queda en pantalla para toda la mesa hasta que quien ha ganado la mano pulsa «Continuar»
 // (eso reparte la siguiente mano y el aviso desaparece a la vez para todos). Al terminar la partida no hay
 // siguiente mano: cada persona lo cierra por su cuenta.
+// A repaint of the same result shows the notice still: the entrance and sparks play once.
 // Public results only; refunds are not victories. No private hand is read here.
 export function showPokerCelebration(app,view,name,playerId){
- const table=app.querySelector('.catalog-surface .poker-table'),panel=app.querySelector('.catalog-dock .poker-action-panel');if(!table||!panel)return;
+ const table=app.querySelector('.catalog-surface .poker-table');if(!table)return;
  const pots=view.payouts.filter(p=>!p.refund),winners=[...new Set(pots.flatMap(p=>p.winners))];if(!winners.length)return;
  const key=`${view.handNumber}:${view.phase}`;if(app.pokerSplashClosed===key)return;
- if(panel.querySelector('.poker-celebration')?.dataset.key===key)return;
- app.querySelector('.poker-celebration')?.remove();
- // The sparks play once over the felt; the notice itself lives in the dock so the revealed hands stay visible.
- const fresh=app.pokerCelebrated!==key;app.pokerCelebrated=key;
- if(fresh&&!table.querySelector('.poker-win-flash')){const flash=document.createElement('div');flash.className='poker-win-flash';flash.setAttribute('aria-hidden','true');flash.innerHTML=`<div class="poker-win-rays"></div>${Array.from({length:12},(_,i)=>`<i class="poker-win-spark" style="--spark-angle:${i*30}deg;--spark-delay:${i%3*120}ms">✦</i>`).join('')}`;table.append(flash);flash.addEventListener('animationend',e=>{if(e.target===flash)flash.remove();});}
+ if(table.querySelector('.poker-celebration')?.dataset.key===key)return;
+ table.querySelector('.poker-celebration')?.remove();
  const next=view.options.findIndex(option=>option.action?.type==='next-hand');
  const control=view.finished?'<button class="poker-win-continue" data-action="poker-splash-close">Cerrar</button>':next>=0?'<button class="poker-win-continue" data-action="poker-splash-continue">Continuar</button>':`<p class="poker-win-waiting">Esperando a que ${esc(name(view.turnPlayer))} continúe…</p>`;
- const banner=document.createElement('section');banner.className='poker-celebration'+(fresh?'':' poker-celebration-settled');banner.dataset.key=key;banner.setAttribute('role','status');
+ const banner=document.createElement('section');banner.className='poker-celebration'+(app.pokerCelebrated===key?' poker-celebration-settled':'');app.pokerCelebrated=key;banner.dataset.key=key;banner.setAttribute('role','status');
  const title=winners.length>1?'¡Mano repartida!':winners[0]===playerId?'¡Has ganado la mano!':'¡'+name(winners[0])+' gana!';
- banner.innerHTML=`<div class="poker-win-card"><span class="poker-win-kicker">${view.finished?'PARTIDA TERMINADA':'MANO GANADA'}</span><h2>${esc(title)}</h2><div class="poker-win-players">${winners.map(id=>{const earned=pots.flatMap(p=>p.awards||[]).filter(a=>a.player===id).reduce((s,a)=>s+a.amount,0);return `<div><span class="poker-win-avatar">${renderAvatarArtwork(mascotForSeat(view.players,view.players.indexOf(id),view.characters))}</span><strong>${esc(name(id))}</strong><b>+${earned.toLocaleString('es-ES')} fichas</b></div>`;}).join('')}</div><p class="poker-win-hand">${esc(pots[0]?.category===undefined?'Los demás jugadores se han retirado':POKER_CATEGORIES[pots[0].category])}</p>${app.pokerResultDetail||''}${control}</div>`;
- panel.append(banner);
+ banner.innerHTML=`<div class="poker-win-rays" aria-hidden="true"></div><div class="poker-win-card"><span class="poker-win-kicker">${view.finished?'PARTIDA TERMINADA':'MANO GANADA'}</span><h2>${esc(title)}</h2><div class="poker-win-players">${winners.map(id=>{const earned=pots.flatMap(p=>p.awards||[]).filter(a=>a.player===id).reduce((s,a)=>s+a.amount,0);return `<div><span class="poker-win-avatar">${renderAvatarArtwork(mascotForSeat(view.players,view.players.indexOf(id),view.characters))}</span><strong>${esc(name(id))}</strong><b>+${earned.toLocaleString('es-ES')} fichas</b></div>`;}).join('')}</div><p class="poker-win-hand">${esc(pots[0]?.category===undefined?'Los demás jugadores se han retirado':POKER_CATEGORIES[pots[0].category])}</p>${app.pokerResultDetail||''}${control}</div>${Array.from({length:12},(_,i)=>`<i class="poker-win-spark" style="--spark-angle:${i*30}deg;--spark-delay:${i%3*120}ms" aria-hidden="true">✦</i>`).join('')}`;
+ table.append(banner);
 }
 export function organizePokerDock(app){
  const dock=app.querySelector('.catalog-dock');if(!dock)return;

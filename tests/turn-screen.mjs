@@ -8,7 +8,7 @@ import {publicTurnEvent} from '../dist/turn-events.js';
 import {chromium,webkit} from 'playwright';
 const fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1]+`
 window.startTurns=(id,game,player)=>{turnSequence.reset();window.testTable(id,game,player);window.sentTurns=0;state.host.applyLocalAction=()=>window.sentTurns++;};
-window.emitTurn=(id,game,player,source)=>{const change={kind:'game',gameId:id,playerId:player,players:state.players,view:getGame(id).view(game,player),isHost:source!=='guest'};(source==='guest'?handleGuestChange:source==='online'?onOnlineChange:onHostChange)(change);};
+window.emitTurn=(id,game,player,source)=>{const change={kind:'game',gameId:id,playerId:player,players:state.players,view:getGame(id).view(game,player),isHost:source!=='guest'};(source==='guest'||source==='online'?onOnlineChange:onHostChange)(change);};
 window.turnSnapshot=()=>({phase:turnSequence.phase,event:turnSequence.event,queued:turnSequence.queue.length,view:state.view});
 window.redrawTurns=()=>renderGame();
 window.cancelTurns=()=>{turnSequence.reset();state.screen='home';renderHome();};

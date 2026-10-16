@@ -319,7 +319,7 @@ try {
   assert.equal(JSON.stringify(pokerRoom.host.state.hands[guestId]),hole);
   assert.equal(pokerRoom.host.players().find(p=>p.id===guestId).character,4);
   await pokerRoom.host.exit();
-  console.log('  ok  Póker: ausente, partida continúa y misma identidad/fichas al reenganchar');
+  console.log('  ok  Póker: ausente, la mesa espera sin cronómetro y misma identidad/fichas al reenganchar');
   console.log("Salas online de punta a punta: OK");
 } finally {
   for (const session of sessions) if (!session.closed) session.teardown();

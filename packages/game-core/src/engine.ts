@@ -30,7 +30,8 @@ export function registerGame(engine: AnyEngine): void {
   const view = engine.view.bind(engine);
   engine.view = (state, playerId) => {
     const result = view(state, playerId);
-    return state?.forfeit ? { ...result, forfeitBy: state.forfeit, forfeitName: state.forfeitName } : result;
+    const departed = state?.departed ? { departed: state.departed } : {};
+    return state?.forfeit ? { ...result, ...departed, forfeitBy: state.forfeit, forfeitName: state.forfeitName } : { ...result, ...departed };
   };
   registry.set(engine.id, engine);
 }
@@ -53,6 +54,21 @@ export function forfeitGame(engineId: string, state: any, leaver: PlayerId, leav
     drawOffer: null, forfeit: leaver, forfeitName: name,
     log: [...(state.log || []), `${name} ha salido de la partida. Gana ${rest[0]}.`],
   };
+}
+
+/**
+ * Alguien sale a propósito de una partida en marcha. Queda anotado en `departed`, que llega
+ * en la vista de todos los jugadores para que toda la mesa reciba el aviso. En una mesa de dos
+ * gana quien se queda; el póker además retira su mano y deja de repartirle.
+ */
+export function departGame(engineId: string, state: any, leaver: PlayerId, leaverName = ""): any {
+  if (!state || !Array.isArray(state.players) || !state.players.includes(leaver)) return state;
+  const name = leaverName || leaver;
+  const marked = { ...state, departed: { ...(state.departed || {}), [leaver]: name } };
+  if (state.finished) return marked;
+  const id = engineId.replace(/_/g, "-");
+  if (id === "texas-holdem") return getGame(id).applyAction(marked, leaver, { type: "leave" });
+  return forfeitGame(id, marked, leaver, name) || marked;
 }
 
 export function getGame(id: string): AnyEngine {
