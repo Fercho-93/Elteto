@@ -17,7 +17,7 @@ try{
   assert.equal(await page.locator('.menu-actions > *').count(),1);
   assert.equal(await page.locator('.menu-actions .fuegote-button[data-action="open-host"]').getAttribute('aria-label'),'Que se haga el fuegote');
   assert.equal(await page.locator('[data-action="open-join"],[data-action="development-admin"]').count(),0);
-  assert.equal(await page.locator('.fuegote-art > image, .fuegote-art > g > image').count(),2,'animated fire layer under static lettering');
+  assert.equal(await page.locator('.fuegote-block > img').count(),3,'bouncing artwork, poking finger and the O hole above it');
   assert.equal(await page.locator('.profile-edit').textContent(),'Mi nombre de guerra y avatar');
   const [flame,profile,credit]=await Promise.all(['.fuegote-button','.profile-edit','.menu-credit'].map(s=>page.locator(s).boundingBox()));
   assert.ok(flame.x>=0&&flame.x+flame.width<=width,'flame button fits the screen');
