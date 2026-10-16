@@ -502,42 +502,34 @@ body:has(.game-page) {
 .menu-button span { font-size:23px; }
 .menu-button:active { transform:translate(3px,4px); box-shadow:2px 2px var(--black); }
 @media(hover:hover) { .menu-button:hover { transform:translateY(-3px) rotate(-.5deg); box-shadow:6px 9px var(--black); } }
-/* Home action: the "Que se haga el FUEGOTE!!" artwork is the button. The whole artwork bounces
-   as one block while the finger pokes into the hole of the "O". */
+/* Transparent layers let the page gradient show through, including around the glow.
+   The hand moves with the artwork, then independently into and out of the O. */
 .menu-actions { justify-items:center; }
 .fuegote-button {
  position:relative; isolation:isolate; display:block; width:clamp(210px,min(76vw,36svh),340px); aspect-ratio:744 / 740; padding:0;
  border:0; background:none; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .18s;
 }
-.fuegote-block { position:absolute; inset:0; transform-origin:50% 96%; animation:fuegote-bounce .9s cubic-bezier(.45,0,.55,1) infinite; }
+.fuegote-block { position:absolute; inset:0; transform-origin:50% 88%; animation:fuegote-bounce 1.8s ease-in-out infinite; }
 .fuegote-block img { position:absolute; display:block; pointer-events:none; user-select:none; -webkit-user-drag:none; }
-.fuegote-art { inset:0; width:100%; height:100%; filter:drop-shadow(0 0 14px #ff4fb066) drop-shadow(0 6px 5px #160d2680); }
-.fuegote-hand { left:55.34%; top:57.74%; width:18.82%; transform-origin:4% 3%; filter:drop-shadow(0 3px 2px #160d2666); animation:fuegote-poke 1.8s ease-in-out infinite; }
-.fuegote-hole { left:54.57%; top:55.41%; width:3.63%; }
-.fuegote-heat { position:absolute; inset:14% 12% 4%; z-index:-1; border-radius:50%; background:radial-gradient(closest-side,#ffb13b8c,#ff4d6d40 55%,transparent); filter:blur(14px); animation:fuegote-heat .9s ease-in-out infinite; }
-.fuegote-embers { position:absolute; inset:0 10% 40%; pointer-events:none; }
-.fuegote-embers i { position:absolute; left:var(--x); bottom:0; width:var(--size); height:var(--size); border-radius:50%; background:radial-gradient(circle,#fff6c4,#ffb13b 45%,#ff5a2a); box-shadow:0 0 8px 2px #ff8a3a99; opacity:0; animation:fuegote-ember var(--time) ease-out var(--delay) infinite; }
+.fuegote-art { inset:0; width:100%; height:100%; object-fit:contain; animation:fuegote-glow 1.2s ease-in-out infinite; }
+.fuegote-hand { left:53.38%; top:53.25%; width:22.14%; transform-origin:18% 18%; filter:drop-shadow(0 2px 2px #160d2640); animation:fuegote-poke 1.5s ease-in-out infinite; }
+.fuegote-heat { position:absolute; inset:14% 12% 4%; z-index:-1; pointer-events:none; border-radius:50%; background:radial-gradient(closest-side,#ffb13b35,#ff4d6d18 55%,transparent); filter:blur(18px); animation:fuegote-heat 1.2s ease-in-out infinite; }
 .fuegote-button:active { transform:scale(.95); }
 .fuegote-button:focus-visible { outline:3px solid var(--paper); outline-offset:2px; border-radius:28px; }
 @media(hover:hover) { .fuegote-button:hover { transform:translateY(-3px) scale(1.03); } }
 @keyframes fuegote-bounce {
- 0%,100% { transform:translateY(0) scale(1.05,.95); }
- 18% { transform:translateY(-3%) scale(.97,1.04); }
- 48% { transform:translateY(-8%) scale(1,1); }
- 78% { transform:translateY(-2%) scale(.99,1.02); }
+ 0%,100% { transform:translateY(0) rotate(-1.2deg) scale(1.01,.99); }
+ 28% { transform:translateY(-3%) rotate(.8deg) scale(.985,1.025); }
+ 54% { transform:translateY(-1%) rotate(1.2deg) scale(1.015,.985); }
+ 78% { transform:translateY(-3.5%) rotate(-.6deg) scale(.99,1.02); }
 }
 @keyframes fuegote-poke {
- 0%,8% { transform:translate(38%,42%) rotate(4deg); }
- 34% { transform:translate(0,0) rotate(0); }
- 44% { transform:translate(-7%,-8%) scale(.96); }
- 54% { transform:translate(0,0); }
- 64% { transform:translate(-7%,-8%) scale(.96); }
- 76% { transform:translate(0,0); }
- 100% { transform:translate(38%,42%) rotate(4deg); }
+ 0%,100% { transform:translate(0,0); }
+ 50% { transform:translate(17.65%,15.88%) rotate(2deg); }
 }
+@keyframes fuegote-glow { 0%,100% { filter:brightness(1) drop-shadow(0 0 3px #ff4fb030); } 50% { filter:brightness(1.07) drop-shadow(0 0 8px #ff4fb050); } }
 @keyframes fuegote-heat { 0%,100% { opacity:.6; transform:scale(.96); } 48% { opacity:1; transform:scale(1.07); } }
-@keyframes fuegote-ember { 0% { opacity:0; transform:translate(0,0) scale(1); } 15% { opacity:1; } 100% { opacity:0; transform:translate(var(--drift),-110px) scale(.3); } }
-@media(prefers-reduced-motion:reduce) { .fuegote-block,.fuegote-hand,.fuegote-heat { animation:none; } .fuegote-embers { display:none; } }
+@media(prefers-reduced-motion:reduce) { .fuegote-block,.fuegote-art,.fuegote-hand,.fuegote-heat { animation:none; } }
 @media(min-width:701px) { .menu-actions { justify-items:start; } }
 .menu-home .menu-wrap { min-height:100svh; display:grid; align-items:center; }
 .menu-home .menu-hero { width:100%; padding-block:40px; }

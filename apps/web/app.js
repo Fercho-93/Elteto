@@ -71,7 +71,10 @@ function renderProfile(){
  app.innerHTML=`<section class="menu-shell profile-shell"><div class="menu-wrap profile-wrap">${menuTrail.length ? `<header class="menu-header profile-nav">${backButton()}</header>` : ''}<header class="profile-brand"><div class="menu-logo" role="img" aria-label="ELTETO"></div></header><section class="menu-setup profile-setup" aria-labelledby="profile-title"><h1 id="profile-title">¿Quién se sienta a la mesa?</h1><div class="profile-fields"><div class="profile-field"><label class="field-label" for="profile-name">Tu nombre de guerra</label><input class="text-field" id="profile-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}"></div><div class="profile-field">${renderCharacterButton(state.character)}</div></div><div class="profile-entry"><button class="menu-button menu-secondary full-button" data-action="profile-confirm">Guardar <span aria-hidden="true">↗</span></button><p class="helper">Usaremos este nombre de guerra y avatar en tus partidas.</p></div></section></div></section>`;
 }
 function renderFuegote() {
-  return `<button class="fuegote-button" data-action="open-host" aria-label="Que se haga el fuegote"><img class="fuegote-art" src="./assets/fuegote-dedo-en-movimiento.gif" alt="" draggable="false"></button>`;
+  return `<button class="fuegote-button" data-action="open-host" aria-label="Que se haga el fuegote">
+    <span class="fuegote-heat" aria-hidden="true"></span>
+    <span class="fuegote-block" aria-hidden="true"><img class="fuegote-art" src="./assets/fuegote-transparent-v2.webp" alt="" draggable="false"><img class="fuegote-hand" src="./assets/fuegote-finger-v2.webp" alt="" draggable="false"></span>
+  </button>`;
 }
 function renderHome() {
   closeGameHelp();
