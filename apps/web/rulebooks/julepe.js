@@ -9,8 +9,8 @@ export default {
       { list: [
         'Baraja española de 40 cartas. Con **7 jugadores**, el que está justo antes del que reparte **descansa** esa mano; el descanso rota.',
         'Se reparten **cinco cartas** a cada jugador (con 5 jugadores se dan **seis** y hay que descartar al menos una). La carta del fondo del mazo, boca arriba, es la **pinta**: su palo es el triunfo.',
-        '**Puesta**: en la primera mano, todos ponen **1 punto** al bote. En las siguientes, solo lo pone el que reparte.',
-        'Reparte uno distinto en cada mano, por turnos. Empieza hablando el jugador siguiente al que reparte.',
+        '**Puesta**: cuando el bote está vacío (la primera mano, o tras cobrarse), todos ponen **1 punto**. En las demás manos, solo lo pone el que reparte.',
+        'El reparto rota en cada mano. Habla primero el jugador siguiente al que reparte.',
       ] },
     ] },
     { title: 'Fuerza de las cartas', blocks: [
@@ -20,8 +20,8 @@ export default {
     { title: 'Cómo se juega una mano', blocks: [
       { steps: [
         '**Juego o paso**: por orden, cada jugador decide si juega o se retira. Quien se retira tira sus cartas. **El que reparte tiene que jugar** y habla el último.',
-        '**Descarte**: quien juega puede cambiar cartas del mazo. Marca las que descartas y confirma; recibes otras hasta tener cinco. Puedes cambiar ninguna o todas.',
-        '**Bazas**: sale el primer jugador que juega a la izquierda del que reparte. Se juegan cinco bazas.',
+        '**Descarte**: quien juega puede cambiar cartas del mazo. Marca las que descartas y confirma; recibes otras hasta tener cinco. Puedes cambiar hasta las cinco.',
+        '**Bazas**: sale el primer jugador que juega después del que reparte. Se juegan cinco bazas y el ganador de cada una sale en la siguiente.',
         '**Recuento**: cada jugador que ha entrado y ha hecho **menos de dos bazas** se lleva el julepe.',
       ] },
     ] },
@@ -34,28 +34,29 @@ export default {
       ] },
     ] },
     { title: 'Si solo juega el que reparte', blocks: [
-      'Si todos se retiran, el que reparte no puede jugar solo. Entonces **entra a la fuerza** el primer jugador después de él (el que habla primero), como **sustituto**.',
+      'Si todos se retiran, el que reparte no juega solo. Entra a la fuerza, como **sustituto**, el primer jugador que habla (el siguiente al que reparte).',
       { list: [
-        'El sustituto devuelve su mano y recibe **seis cartas nuevas**, de las que luego descarta hasta quedarse con cinco.',
-        'Si pierde el que reparte, paga a la mesa. Si gana el que reparte y pierde el sustituto, el que reparte cobra la puesta.',
+        'El sustituto devuelve su mano al mazo y recibe **seis cartas nuevas**, de las que luego descarta hasta quedarse con cinco.',
+        'El sustituto **nunca paga**. Si pierde el que reparte, paga el bote y ese pago **se queda en el bote**.',
+        'Si gana el que reparte y pierde el sustituto, el que reparte **cobra el bote entero**. Si ganan los dos, el que reparte cobra **la mitad** y la otra mitad queda en el bote.',
       ] },
     ] },
     { title: 'La pinta del que reparte', blocks: [
-      'En su turno de descarte, el que reparte puede **tomar la pinta** y añadirla a su mano. A cambio, si luego se lleva el julepe, **paga el doble**.',
+      'En su turno de descarte, el que reparte puede **tomar la pinta** y añadirla a su mano (el triunfo no cambia). A cambio, si luego se lleva el julepe, **paga el doble**.',
     ] },
     { title: 'Cobros y pagos', blocks: [
       { list: [
         'El **bote** es la puesta acumulada. Cada jugador que se lleva el julepe **paga el bote entero**; el pago se reparte entre quienes han hecho dos o más bazas.',
         'Si **nadie** se lleva el julepe, quienes han jugado se reparten el bote y el bote vuelve a cero.',
-        'Si todos los que juegan pierden, los pagos **se quedan en el bote**.',
-        'Mientras el bote no se cobre entero, se queda en la mesa y crece: el que reparte pone 1 más en cada mano.',
+        'Si todos los que juegan pierden, los pagos **se suman al bote**.',
+        'Si hay ganadores y perdedores, el bote **no baja**: sigue en la mesa y el que reparte añade 1 en cada mano. Solo se vacía cuando nadie se lleva el julepe.',
       ] },
     ] },
     { title: 'Así se juega en Elteto', blocks: [
       { list: [
-        'Todo se hace con botones: **«Juego»** o **«Paso»**, y después **«Confirmar descarte»**, tras marcar las cartas que cambias (puedes confirmar sin marcar ninguna). El que reparte tiene además **«Tomar la pinta · riesgo doble»**.',
+        'Todo se hace con botones: **«Juego»** o **«Paso»**, y después **«Confirmar descarte»**, tras marcar las cartas que cambias. El que reparte tiene además **«Tomar la pinta · riesgo doble»**.',
         'En la baza solo puedes tocar las cartas que son legales según las reglas anteriores.',
-        'El marcador muestra tus puntos de partida (pueden ser negativos), el bote y quién descansa.',
+        'El marcador muestra tus puntos de partida (pueden ser negativos) y el bote.',
         'La partida dura exactamente **diez manos**. Después gana quien tiene más puntos.',
         'Se juega con puntos de la partida, no con dinero real.',
       ] },
