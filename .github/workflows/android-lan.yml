@@ -7,6 +7,7 @@ on:
 permissions:
   contents: read
 jobs:
+  # La APK se compila por su cuenta: un fallo en las pruebas de navegador no impide descargarla.
   apk:
     runs-on: ubuntu-latest
     steps:
@@ -25,6 +26,37 @@ jobs:
           java-version: 17
       - run: bash tests/prepare-lan-java.sh
       - run: node tests/lan-servidor.mjs
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - run: gradle -p apps/android-host assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Elteto-LAN-Android-prueba
+          path: apps/android-host/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+  navegador:
+    name: Pruebas de pantalla (Chromium y WebKit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build:web
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: bash tests/prepare-lan-java.sh
       - run: npm install --no-save --package-lock=false playwright@1.56.1
       - run: npx playwright install --with-deps chromium webkit
       - run: node tests/lan-navegador.mjs
@@ -67,17 +99,3 @@ jobs:
         with:
           name: capturas-y-medidas-mesa
           path: tests/artifacts/
-      - uses: android-actions/setup-android@v3
-        with:
-          packages: platform-tools
-          log-accepted-android-sdk-licenses: false
-      - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
-      - run: gradle -p apps/android-host assembleDebug
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Elteto-LAN-Android-prueba
-          path: apps/android-host/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error

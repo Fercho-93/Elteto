@@ -1,7 +1,7 @@
 import {BotPacing} from './bot-pacing.js';
 import {MusFlowRunner} from './mus-flow.js';
 import {characterProfile, AVATAR_TAKEN_MESSAGE} from './avatar-art.js';
-import { getGame, createMusState, fillBotSeats, BotRunner, botTurnDelay, nextBotMove, forfeitGame } from "./game-core/index.js";
+import { getGame, createMusState, fillBotSeats, BotRunner, botTurnDelay, nextBotMove, departGame } from "./game-core/index.js";
 
 const HOST_ID = "host";
 const say = (type, data = {}) => ({ type, data });
@@ -102,9 +102,8 @@ export class LocalHostSession {
   leaveGame(peerId) {
     if (!this.started || !this.state || this.state.finished) return;
     const name = this.connections.get(peerId)?.name || "Un jugador";
-    const next = forfeitGame(this.engine.id, this.state, peerId, name);
     this.notify(`${name} ha salido de la partida.`);
-    if (next) { this.state = next; this.sendViews(); }
+    this.state = departGame(this.engine.id, this.state, peerId, name); this.sendViews();
   }
 
   handleClose(peerId) {

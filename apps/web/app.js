@@ -37,6 +37,9 @@ const state = {
 
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
 function flash(message) {
+  // The same notice can arrive twice (host event and table view): show it once.
+  if (message === flash.last && Date.now() - flash.at < 6000) return;
+  flash.last = message; flash.at = Date.now();
   toastEl.textContent = message;
   toastEl.classList.add("show");
   clearTimeout(flash.timer);
@@ -65,7 +68,14 @@ const turnSequence=new TurnSequence({
 });
 // Presence pings resend the same table; repainting it would restart the result notice and make the screen blink.
 const visibleSignature=(view,players)=>JSON.stringify([view,(players||[]).map(p=>[p.id,p.name,p.character,Boolean(p.away),Boolean(p.isBot),Boolean(p.isHost)])]);
-function receiveGame(change){if(state.screen==='poker-break'){state.view=change.view;state.players=change.players||state.players;render();return;}
+// Everyone at the table hears when someone leaves. Departures already in the first view of a table are history.
+let departures=null;
+function announceDepartures(change){
+ const key=`${state.roomCode||''}:${change.gameId||state.gameId}`,gone=change.view?.departed||{};
+ if(departures?.key!==key){departures={key,seen:new Set(Object.keys(gone))};return;}
+ for(const [id,name] of Object.entries(gone))if(!departures.seen.has(id)){departures.seen.add(id);if(id!==(change.playerId||state.playerId))flash(`${name} ha salido de la partida.`);}
+}
+function receiveGame(change){announceDepartures(change);if(state.screen==='poker-break'){state.view=change.view;state.players=change.players||state.players;render();return;}
  if(state.screen==='game'&&!turnSequence.busy&&change.view&&visibleSignature(change.view,change.players||state.players)===visibleSignature(state.view,state.players)){state.players=change.players||state.players;return;}
  turnSequence.receive({...change,gameId:change.gameId||state.gameId,playerId:change.playerId||state.playerId,players:change.players||state.players});}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')turnSequence.flush();else syncScreenWake();});

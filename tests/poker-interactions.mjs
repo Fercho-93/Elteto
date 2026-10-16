@@ -55,13 +55,13 @@ try{
  assert.equal(await page.locator(`.catalog-surface .poker-seat[data-player-id="${folder}"] .avatar-artwork`).count(),1);
  assert.ok(await page.locator('.poker-fold-ghost').count()>0);await idle();
  game=engine.applyAction(game,game.players[game.turn],{type:'fold'});await page.evaluate(({v,g})=>window.directPoker(v,g),{v:engine.view(game,self),g:game});
- await page.waitForSelector('.catalog-dock .poker-celebration');
+ await page.waitForSelector('.catalog-surface .poker-celebration');
  await page.screenshot({path:'tests/artifacts/poker/winner-splash.png'});
  assert.match(await page.locator('.poker-celebration h2').textContent(),/ganado|gana|repartida/);
  assert.match(await page.locator('.poker-win-players b').first().textContent(),/fichas/);
  assert.equal(await page.locator('.catalog-dock .catalog-result').count(),0);
- // El resultado vive en el aviso del panel inferior, que no tapa el tapete: sin «Ver detalle de la mano», con el detalle de los botes, y se queda hasta que continúa quien ganó.
- assert.equal(await page.locator('.poker-action-panel>.poker-result-details,.poker-action-panel details').count(),0);
+ // El resultado vive en el aviso, no en la mesa: sin «Ver detalle de la mano», con el detalle de los botes, y se queda hasta que continúa quien ganó.
+ assert.equal(await page.locator('.catalog-dock .poker-result-details,.poker-action-panel details').count(),0);
  assert.doesNotMatch(await page.locator('#app').innerText(),/Ver detalle de la mano/);
  assert.equal(await page.locator('.poker-celebration .poker-result-details .poker-result-breakdown p').count()>=1,true,'el aviso incluye el detalle de la mano');
  await page.waitForTimeout(3300);

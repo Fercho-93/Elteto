@@ -200,7 +200,7 @@ html:has(.catalog-screen),body:has(.catalog-screen),body:has(.catalog-screen) #a
 .poker-win-players b{font-size:14px;color:#9df7e5;}
 .poker-win-card p{font-size:11px;line-height:1.4;color:#ddd0dd;margin:14px 0 0;}
 .poker-win-rays{position:absolute;inset:0;background:conic-gradient(from 0deg,transparent 0deg 22deg,#edce7640 24deg 28deg,transparent 30deg 60deg);mask-image:radial-gradient(circle,transparent 5%,#000 25%,transparent 70%);animation:poker-win-rays 8s linear infinite;}
-.poker-win-spark{position:absolute;left:50%;top:50%;font:800 20px system-ui;color:#ffde8a;opacity:0;animation:poker-win-spark 1.8s var(--spark-delay) ease-out infinite;}
+.poker-win-spark{position:absolute;left:50%;top:50%;font:800 20px system-ui;color:#ffde8a;opacity:0;animation:poker-win-spark 1.8s var(--spark-delay) ease-out 2 both;}
 @keyframes poker-win-enter{from{opacity:0;transform:scale(.75) translateY(12px);}to{opacity:1;transform:none;}}
 @keyframes poker-win-rays{to{rotate:360deg;}}
 @keyframes poker-win-spark{0%{opacity:0;transform:rotate(var(--spark-angle)) translateY(-45px) scale(.3);}30%{opacity:1;}100%{opacity:0;transform:rotate(var(--spark-angle)) translateY(-180px) scale(1);}}
@@ -257,28 +257,7 @@ html:has(.catalog-screen),body:has(.catalog-screen),body:has(.catalog-screen) #a
  .poker-table:is([data-seats="2"],[data-seats="3"],[data-seats="4"],[data-seats="5"]){row-gap:6px;}
  .poker-table:is([data-seats="2"],[data-seats="3"],[data-seats="4"],[data-seats="5"]):has(.poker-payouts) .poker-street-label{display:none;}
 }
-/* The hand result sits in the dock, leaving the felt and every revealed hand in view. */
-.poker-action-panel:has(.poker-celebration)>.catalog-instruction{display:none;}
-.poker-action-panel .poker-celebration{position:static;inset:auto;display:block;background:none;overflow:visible;pointer-events:auto;min-width:0;}
-.poker-action-panel .poker-win-card{width:100%;max-height:none;padding:8px 10px;border-radius:14px;text-align:left;display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;align-items:center;}
-.poker-action-panel .poker-win-kicker{grid-column:1/-1;font-size:8px;}
-.poker-action-panel .poker-win-card h2{grid-column:1/-1;font-size:17px;margin:2px 0 4px;}
-.poker-action-panel .poker-win-players{grid-column:1/-1;justify-content:flex-start;gap:10px;}
-.poker-action-panel .poker-win-players>div{flex-direction:row;max-width:none;gap:6px;}
-.poker-action-panel .poker-win-avatar{width:30px;height:32px;}
-.poker-action-panel .poker-win-players strong{font-size:11px;}.poker-action-panel .poker-win-players b{font-size:13px;}
-.poker-action-panel .poker-win-card .poker-win-hand{grid-column:1/-1;margin:3px 0 0;font-size:12px;}
-.poker-action-panel .poker-win-card .poker-result-details{grid-column:1/-1;margin:6px 0 0;padding-top:6px;}
-.poker-action-panel .poker-win-continue{grid-column:1/-1;min-height:44px;margin:8px 0 0;}
-.poker-action-panel .poker-win-waiting{grid-column:1/-1;margin:6px 0 0;}
-.poker-celebration-settled .poker-win-card{animation:none;}
-.poker-win-flash{position:absolute;inset:0;z-index:20;pointer-events:none;overflow:hidden;animation:poker-win-flash 2.8s ease-out forwards;}
-@keyframes poker-win-flash{0%,70%{opacity:1;}100%{opacity:0;}}
-@media(prefers-reduced-motion:reduce){.poker-win-flash{display:none;}}
-.poker-action-panel:has(.poker-celebration){overflow:auto;min-height:0;}
-.catalog-screen[data-game="texas_holdem"] .catalog-dock:has(.poker-celebration){max-height:min(34dvh,170px);}
-.poker-action-panel .poker-win-kicker{display:none;}
-.poker-action-panel .poker-revealed-hands{display:none;}
-.poker-action-panel:has(.poker-celebration)>.catalog-options:not(:has(button:not(.poker-action-next-hand))){display:none;}
-.poker-action-panel .poker-win-card .poker-result-details{order:5;}
 .poker-table .poker-level{top:9px;}
+.poker-celebration-settled *,.poker-celebration-settled{animation:none!important;}
+.poker-celebration-settled .poker-win-spark{display:none;}
+.poker-departed .poker-stack{opacity:.6;}
