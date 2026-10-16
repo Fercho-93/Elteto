@@ -18,8 +18,8 @@ export default function RootLayout() {
         <Stack.Screen name="index" options={{ title: "Elteto", headerShown: false }} />
         <Stack.Screen name="host" options={{ title: "Prepara la mesa" }} />
         <Stack.Screen name="join" options={{ title: "Busca tu mesa" }} />
-        <Stack.Screen name="lobby" options={{ title: "Que empiece el pique" }} />
-        <Stack.Screen name="game" options={{ title: "Partida", headerShown: false, headerBackVisible: false }} />
+        <Stack.Screen name="lobby" options={{ title: "Que empiece el pique", headerBackVisible: false, gestureEnabled: false }} />
+        <Stack.Screen name="game" options={{ title: "Partida", headerShown: false, headerBackVisible: false, gestureEnabled: false }} />
       </Stack>
     </GameSessionProvider>
   );

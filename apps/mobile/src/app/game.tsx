@@ -1,14 +1,14 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { COLORS } from "../theme";
-import { useRouter } from "expo-router";
+import { useLeaveGuard } from "../hooks/useLeaveGuard";
 import type { MusView, CinquilloView } from "game-core";
 import { useGameSession } from "../state/GameSession";
 import { MusScreen } from "../components/MusScreen";
 import { CinquilloScreen } from "../components/CinquilloScreen";
 
 export default function GameScreen() {
-  const router = useRouter();
   const { gameId, view, leave } = useGameSession();
+  const confirmLeave = useLeaveGuard(leave, "¿Salir de la partida?");
 
   if (!view) {
     return (
@@ -26,10 +26,7 @@ export default function GameScreen() {
 
       <Pressable
         style={styles.leaveButton}
-        onPress={() => {
-          leave();
-          router.replace("/");
-        }}
+        onPress={confirmLeave}
       >
         <Text style={styles.leaveButtonText}>Salir de la partida</Text>
       </Pressable>

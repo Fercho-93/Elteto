@@ -1,7 +1,9 @@
 package es.elteto.lan;
 
 import android.app.Activity;
+import android.os.Build;
 import android.os.Bundle;
+import android.window.OnBackInvokedDispatcher;
 import android.graphics.Color;
 import android.view.WindowManager;
 import android.webkit.WebView;
@@ -31,6 +33,7 @@ public class MainActivity extends Activity {
         web.setWebViewClient(new WebViewClient(){@Override public boolean shouldOverrideUrlLoading(WebView v,String url){return server==null || !"127.0.0.1".equals(android.net.Uri.parse(url).getHost()) || android.net.Uri.parse(url).getPort()!=server.getListeningPort();}});
         web.addJavascriptInterface(new ActivationBridge(), "EltetoActivation");
         layout.addView(web,new LinearLayout.LayoutParams(-1,0,1));setContentView(layout);
+        if(Build.VERSION.SDK_INT>=33)getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT,this::handleBack);
         new Thread(()->{
             try {
                 File root=new File(getFilesDir(),"web");copyAssets("",root);
@@ -65,6 +68,18 @@ public class MainActivity extends Activity {
         if(ips.isEmpty())text.append("Activa el hotspot o conecta a una Wi-Fi local y vuelve aquí.");
         addresses.setText(text.toString().trim());
     }
+    // El gesto o botón atrás del sistema hace lo mismo que el botón "Volver" de la web:
+    // cierra diálogos, vuelve a la pantalla anterior o pide confirmación antes de dejar la mesa.
+    // Solo en la pantalla principal se sale, dejando la app en segundo plano para no cortar la mesa local.
+    private void handleBack(){
+        if(web==null||web.getUrl()==null){moveTaskToBack(true);return;}
+        web.evaluateJavascript("(function(){try{return Boolean(window.EltetoNav&&window.EltetoNav.back());}catch(e){return false;}})()",handled->{
+            if("true".equals(handled))return;
+            if(web.canGoBack())web.goBack();else moveTaskToBack(true);
+        });
+    }
+    @SuppressWarnings("deprecation")
+    @Override public void onBackPressed(){handleBack();}
     @Override protected void onResume(){super.onResume();showAddresses();}
     private void copyAssets(String name,File destination)throws IOException{
         String[] children=getAssets().list(name);

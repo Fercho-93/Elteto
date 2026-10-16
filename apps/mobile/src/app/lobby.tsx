@@ -4,10 +4,12 @@ import { View, Text, Pressable, StyleSheet, FlatList } from "react-native";
 import { useRouter } from "expo-router";
 import { getGame, getGamePlan } from "game-core";
 import { useGameSession } from "../state/GameSession";
+import { useLeaveGuard } from "../hooks/useLeaveGuard";
 
 export default function LobbyScreen() {
   const router = useRouter();
   const { role, gameId, players, started, error, hostAddress, roomName, startGame, fillWithBots, removeBot, leave } = useGameSession();
+  const confirmLeave = useLeaveGuard(leave, "¿Salir de la sala?");
 
   useEffect(() => {
     if (started) router.replace("/game");
@@ -63,10 +65,7 @@ export default function LobbyScreen() {
 
       <Pressable
         style={styles.leaveButton}
-        onPress={() => {
-          leave();
-          router.replace("/");
-        }}
+        onPress={confirmLeave}
       >
         <Text style={styles.leaveButtonText}>Salir de la sala</Text>
       </Pressable>

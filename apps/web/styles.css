@@ -912,3 +912,26 @@ body:has(.game-page) {
 .room-mode input { accent-color:#21172b; width:20px; height:20px; }
 .room-mode strong,.room-mode small { display:block; }
 .room-mode small { margin-top:4px; font-size:12px; color:#4a3a52; }
+
+/* Volver: el mismo botón, bien visible y con zona táctil de 44px, en todas las pantallas. */
+.menu-back { gap:8px; min-height:44px; padding:0 16px 0 12px; border:2px solid #ffffff3d; border-radius:999px; background:#ffffff14; color:var(--menu-text); font-size:20px; font-weight:800; line-height:1; cursor:pointer; flex:none; }
+.menu-back span { font-size:14px; font-weight:800; }
+.menu-back:hover { background:#ffffff24; border-color:#ffffff66; }
+.menu-back:active { transform:translateY(1px); }
+.menu-back:focus-visible, .screen-back:focus-visible { outline:3px solid var(--cyan); outline-offset:2px; }
+.profile-nav { min-height:64px; border-bottom:0; }
+.play-header > .screen-back { display:grid; place-items:center; width:44px; min-width:44px; height:44px; padding:0; font-size:22px; font-weight:800; line-height:1; }
+/* Cabeceras en rejilla: la flecha va primero y los demás botones se colocan detrás. */
+.play-header.play-header:has(> .screen-back) { grid-template-columns:44px minmax(0,1fr) !important; grid-auto-flow:column; grid-auto-columns:auto; }
+.leave-confirm { width:min(360px, calc(100vw - 32px)); padding:22px 20px 18px; border:3px solid var(--black); border-radius:18px; background:var(--plum); color:var(--paper); box-shadow:6px 7px 0 var(--black); }
+.leave-confirm::backdrop { background:#0b0710b8; }
+.leave-confirm h2 { margin:0 0 8px; font-size:21px; font-weight:900; }
+.leave-confirm p { margin:0 0 18px; color:#d7c9dc; font-size:14px; line-height:1.45; }
+.leave-confirm-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.leave-confirm-actions button { min-height:48px; border:2px solid var(--black); border-radius:12px; font-size:15px; font-weight:900; color:var(--black); background:var(--cyan); box-shadow:3px 3px 0 var(--black); cursor:pointer; }
+.leave-confirm-actions [data-leave="go"] { background:var(--pink); }
+.leave-confirm-actions button:focus-visible { outline:3px solid var(--paper); outline-offset:2px; }
+/* iPhone con Elteto en la pantalla de inicio: indicador del deslizamiento desde el borde. */
+.edge-back-hint { --pull:0; position:fixed; z-index:2147483647; left:6px; top:50%; display:grid; place-items:center; width:44px; height:44px; margin-top:-22px; border-radius:50%; background:var(--paper); color:var(--black); font-size:22px; font-weight:900; box-shadow:0 4px 14px #0008; opacity:0; pointer-events:none; transform:translateX(calc(-56px + var(--pull) * 56px)) scale(calc(.7 + var(--pull) * .3)); transition:opacity .15s; }
+.edge-back-hint.active { opacity:calc(.35 + var(--pull) * .65); }
+.edge-back-hint.ready { background:var(--cyan); }

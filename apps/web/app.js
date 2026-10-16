@@ -15,6 +15,7 @@ import { renderParchisScreen } from './parchis-board.js';
 import { parseRoomCode } from "./room-code.js";
 import { activateHost, activateDevelopmentAdmin, activatePublicDevelopmentAdmin, readHostAccess, recoverHostPassword, leaveHostAccount, cachedHostAccess } from './host-access.js';
 import { distributionConfig } from './distribution-config.js';
+import { installBackNavigation } from './back-navigation.js';
 
 import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, animateTable, animateSeats,mascotForSeat } from "./table-view.js";
 
@@ -25,7 +26,7 @@ const GUEST = Boolean(window.ELTETO_GUEST || (LAN && !LAN.hostKey) || parseRoomC
 let accessLogin = false, accessBusy = false;
 let activationCode = new URLSearchParams(location.hash.slice(1)).get('activate') || '';
 let adminCode = new URLSearchParams(location.hash.slice(1)).get('admin') || '';
-if (activationCode || adminCode) history.replaceState(null, '', location.pathname + location.search);
+if (activationCode || adminCode) history.replaceState(history.state, '', location.pathname + location.search);
 const app = document.querySelector("#app");
 const toastEl = document.querySelector("#toast");
 const state = {
@@ -40,6 +41,13 @@ function flash(message) {
   toastEl.classList.add("show");
   clearTimeout(flash.timer);
   flash.timer = setTimeout(() => toastEl.classList.remove("show"), 2800);
+}
+// Mismo botón de volver en todas las pantallas de menú; en partida, la misma flecha en la cabecera.
+const backButton = (label = 'Volver') => `<button class="menu-back" data-action="back">← <span>${label}</span></button>`;
+function mountScreenBack(root) {
+  const header = root.querySelector('.play-header');
+  if (!header || root.querySelector('[data-action="back"]')) return;
+  header.insertAdjacentHTML('afterbegin', '<button class="screen-back" data-action="back" aria-label="Salir de la partida"><span aria-hidden="true">←</span></button>');
 }
 function header(back = "home") {
   return `<header class="topbar"><button class="icon-btn" data-action="back" aria-label="Volver">←</button><a class="brand" href="./" data-action="home"><span aria-hidden="true">🍆</span> ELTETO <span aria-hidden="true">🍑</span></a><span class="topbar-tag">FRUTA Y PIQUE*</span></header>`;
@@ -60,7 +68,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 
 function renderProfile(){
  state.screen='profile';
- app.innerHTML=`<section class="menu-shell profile-shell"><div class="menu-wrap profile-wrap"><header class="profile-brand"><div class="menu-logo" role="img" aria-label="ELTETO"></div></header><section class="menu-setup profile-setup" aria-labelledby="profile-title"><h1 id="profile-title">¿Quién se sienta a la mesa?</h1><div class="profile-fields"><div class="profile-field"><label class="field-label" for="profile-name">Tu nombre de guerra</label><input class="text-field" id="profile-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}"></div><div class="profile-field">${renderCharacterButton(state.character)}</div></div><div class="profile-entry"><button class="menu-button menu-secondary full-button" data-action="profile-confirm">Guardar <span aria-hidden="true">↗</span></button><p class="helper">Usaremos este nombre de guerra y avatar en tus partidas.</p></div></section></div></section>`;
+ app.innerHTML=`<section class="menu-shell profile-shell"><div class="menu-wrap profile-wrap">${menuTrail.length ? `<header class="menu-header profile-nav">${backButton()}</header>` : ''}<header class="profile-brand"><div class="menu-logo" role="img" aria-label="ELTETO"></div></header><section class="menu-setup profile-setup" aria-labelledby="profile-title"><h1 id="profile-title">¿Quién se sienta a la mesa?</h1><div class="profile-fields"><div class="profile-field"><label class="field-label" for="profile-name">Tu nombre de guerra</label><input class="text-field" id="profile-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}"></div><div class="profile-field">${renderCharacterButton(state.character)}</div></div><div class="profile-entry"><button class="menu-button menu-secondary full-button" data-action="profile-confirm">Guardar <span aria-hidden="true">↗</span></button><p class="helper">Usaremos este nombre de guerra y avatar en tus partidas.</p></div></section></div></section>`;
 }
 // Embers: left %, delay s, size px, duration s, sideways drift px.
 const FUEGOTE_EMBERS = [[18,0,7,2.6,-14],[30,1.1,5,3.1,-6],[44,.5,8,2.3,4],[56,1.7,5,2.9,-4],[67,.3,6,2.5,10],[78,1.3,7,3.3,16],[38,2.1,4,2.7,-10],[62,2.4,4,3,8]];
@@ -79,7 +87,7 @@ function renderFuegote() {
 function renderHome() {
   closeGameHelp();
   if (GUEST) { renderJoinForm(); return; }
-  state.screen = "home";
+  state.screen = "home"; menuTrail.length = 0;
   app.innerHTML = `<section class="menu-shell menu-home">
     <div class="menu-wrap">
       <div class="menu-hero">
@@ -96,7 +104,7 @@ function renderHome() {
 
 function renderAccess() {
   state.screen = 'access';
-  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="back">← <span>Volver</span></button><span class="menu-brand">ELTETO<span>✦</span></span></header><section class="menu-setup access-panel">
+  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header">${backButton()}<span class="menu-brand">ELTETO<span>✦</span></span></header><section class="menu-setup access-panel">
     <p class="menu-kicker">TU INVITACIÓN</p><h1>${accessLogin ? 'Vuelve a tu mesa' : 'Activa Elteto'}<span>.</span></h1>
     <form id="access-form"><label class="field-label" for="access-email">Correo</label><input class="text-field" id="access-email" type="email" autocomplete="username" required value="${esc(cachedHostAccess()?.email || '')}">
     <label class="field-label" for="access-password">Contraseña</label><input class="text-field" id="access-password" type="password" minlength="${accessLogin ? 6 : 8}" autocomplete="${accessLogin ? 'current-password' : 'new-password'}" required>
@@ -109,7 +117,7 @@ function renderAccess() {
 }
 function renderInstallation() {
   state.screen = 'installation';
-  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><span class="menu-brand">ELTETO<span>✦</span></span><button class="text-button" data-action="access-logout">Cerrar sesión</button></header><section class="menu-setup access-panel">
+  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header">${backButton()}<span class="menu-brand">ELTETO<span>✦</span></span><button class="text-button" data-action="access-logout">Cerrar sesión</button></header><section class="menu-setup access-panel">
     <p class="menu-kicker">YA ESTÁS DENTRO</p><h1>Tu mesa está lista<span>.</span></h1>
     <button class="menu-button menu-primary" data-action="open-host">Crear partida <span aria-hidden="true">↗</span></button>
     ${LAN ? '<p class="helper">Puedes abrir mesas locales sin internet. Para recuperar tu cuenta online, entra aquí.</p><button class="button button-paper" data-action="online-access">Mi cuenta online</button>' : `<div class="install-options"><h2>En tu móvil</h2>
@@ -124,7 +132,7 @@ function endGuestRoom(message = 'La sala ha terminado.') {
   const session = state.online;
   Object.assign(state, { screen: 'guest-ended', view: null, players: [], host: null, online: null, selected: new Set(), offerCode: '', roomCode: '' });
   session?.teardown?.();
-  history.replaceState(null, '', location.pathname);
+  history.replaceState(history.state, '', location.pathname);
   renderGuestEnded(message);
 }
 function renderGuestEnded(message = 'La sala ha terminado.') {
@@ -141,7 +149,7 @@ function renderHostForm() {
   state.screen = "host-form";
   if (!availableGames(listGames()).some(game=>game.id===state.gameId)) state.gameId = "";
   const games = renderGameChoices(availableGames(listGames()),state.gameId,playerCountLabel);
-  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="back">← <span>Volver</span></button><a class="menu-brand" href="./" data-action="home">ELTETO<span>✦</span></a><button class="text-button" data-action="access-install">Mi acceso</button></header><section class="menu-setup" aria-labelledby="setup-title">
+  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header">${backButton()}<a class="menu-brand" href="./" data-action="home">ELTETO<span>✦</span></a><button class="text-button" data-action="access-install">Mi acceso</button></header><section class="menu-setup" aria-labelledby="setup-title">
     <p class="menu-kicker">TÚ PONES LA MESA</p><h1 id="setup-title">Crear partida<span>.</span></h1>
     <div class="menu-fields"><div><label class="field-label" for="host-name">Tu nombre de guerra</label><div class="name-character-field"><input class="text-field" id="host-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}">${renderCharacterButton(state.character)}</div></div>
     <div><label class="field-label" for="room-name">Nombre de la sala <span>opcional</span></label><input class="text-field" id="room-name" maxlength="30" placeholder="La de siempre" value="${esc(state.roomName)}"></div></div>
@@ -194,7 +202,7 @@ function renderLobby() {
   const startButton = host
     ? `<button class="menu-button menu-primary menu-create" data-action="start-game" ${!enoughPlayers ? "disabled" : ""}>${enoughPlayers ? 'Empezar partida <span aria-hidden="true">↗</span>' : `Se necesitan ${game ? playerCountLabel(game) : "más"} jugadores`}</button>`
     : "";
-  app.innerHTML = `<section class="menu-shell menu-room-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="leave-room">← <span>Salir de la sala</span></button><a class="menu-brand" href="./" data-action="home">ELTETO<span>✦</span></a></header><section class="menu-setup menu-lobby" aria-labelledby="lobby-title">
+  app.innerHTML = `<section class="menu-shell menu-room-shell"><div class="menu-wrap"><header class="menu-header">${backButton('Salir de la sala')}<a class="menu-brand" href="./" data-action="home">ELTETO<span>✦</span></a></header><section class="menu-setup menu-lobby" aria-labelledby="lobby-title">
     <p class="menu-kicker">${host ? "SALA CREADA" : "TU SALA"}</p>
     <h1 id="lobby-title">${esc(state.roomName || game?.label || "Sala")}<span>.</span></h1>
     ${game ? `<p class="lobby-game">${esc(game.label)} <span>· ${playerCountLabel(game)} jugadores</span></p>` : ''}
@@ -224,7 +232,7 @@ let shownResult = null;
 function renderGame() {
   app.pokerMotionFinished=()=>turnSequence.decorate(app,state.playerId,playerName);
   if(!turnSequence.busy&&state.view)turnSequence.adopt({view:state.view,gameId:state.gameId,playerId:state.playerId});
-  const paint=prepareCardPaint(app),avatars=prepareAvatarPaint(app);renderGameContents();mountGameHelp(app,state.gameId);restoreCardPaint(app,paint);restoreAvatarPaint(app,avatars);turnSequence.decorate(app,state.playerId,playerName);
+  const paint=prepareCardPaint(app),avatars=prepareAvatarPaint(app);renderGameContents();mountScreenBack(app);mountGameHelp(app,state.gameId);restoreCardPaint(app,paint);restoreAvatarPaint(app,avatars);turnSequence.decorate(app,state.playerId,playerName);
 }
 function renderGameContents() {
   state.screen = "game";
@@ -362,7 +370,7 @@ async function takePokerBreak(){
 }
 function renderPokerBreak(){
  const chips=state.view?.chips?.[state.playerId]||0;
- app.innerHTML=`<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><span class="menu-brand">ELTETO ✦</span></header><section class="menu-setup"><h1>Tu sitio sigue reservado</h1><p>Conservas tu personaje y tus ${chips.toLocaleString('es-ES')} fichas. Las ciegas siguen contando mientras estás ausente.</p><p>Si te toca y no vuelves en 12 segundos, pasarás cuando sea gratis o te retirarás si hay una apuesta. Si todos están ausentes, se espera.</p><button class="button button-cyan full-button" data-action="poker-return">Volver a la partida</button><button class="button full-button" data-action="leave-room">Salir de la partida</button></section></div></section>`;
+ app.innerHTML=`<section class="menu-shell"><div class="menu-wrap"><header class="menu-header">${backButton('Volver a la partida')}<span class="menu-brand">ELTETO ✦</span></header><section class="menu-setup"><h1>Tu sitio sigue reservado</h1><p>Conservas tu personaje y tus ${chips.toLocaleString('es-ES')} fichas. Las ciegas siguen contando mientras estás ausente.</p><p>Si te toca y no vuelves en 12 segundos, pasarás cuando sea gratis o te retirarás si hay una apuesta. Si todos están ausentes, se espera.</p><button class="button button-cyan full-button" data-action="poker-return">Volver a la partida</button><button class="button full-button" data-action="leave-room">Salir de la partida</button></section></div></section>`;
 }
 function render() {
   if(state.screen==='profile')renderProfile();
@@ -375,6 +383,56 @@ function render() {
   else if (state.screen === "lobby") renderLobby();
   else if (state.screen === "game") renderGame();
   else renderHome();
+}
+
+// Qué significa "volver" en cada pantalla. La principal (y la entrada de un invitado) no
+// tienen vuelta: ahí el gesto del sistema sale de Elteto como en cualquier app.
+const menuTrail = [];
+const MENU_SCREENS = new Set(['profile', 'access', 'installation', 'host-form']);
+const IN_ROOM = new Set(['lobby', 'game', 'poker-break']);
+function backStep() {
+  const screen = state.screen;
+  if (MENU_SCREENS.has(screen)) {
+    while (menuTrail.at(-1) === screen) menuTrail.pop();
+    if (GUEST || (screen === 'profile' && !menuTrail.length)) return null;
+    return () => {
+      if (screen === 'profile') { try { state.name = localStorage.getItem('elteto.playerName') || state.name; } catch {} }
+      state.error = ''; state.screen = menuTrail.pop() || 'home'; render();
+    };
+  }
+  if (screen === 'poker-break') return () => returnFromPokerBreak().catch(showError);
+  if (screen === 'lobby' || screen === 'game') return confirmLeave;
+  return null;
+}
+function showError(error) { state.error = error?.message || 'Algo se torció.'; flash(state.error); }
+async function returnFromPokerBreak() {
+  await (state.online||state.host)?.setSittingOut(false);
+  state.screen='game';state.error='';render();
+}
+async function leaveRoom() {
+  document.querySelector('.leave-confirm')?.close();
+  if (state.online) await state.online.exit(); else state.host?.close();
+  resetToHome();
+}
+function confirmLeave() {
+  const inGame = state.screen !== 'lobby', host = state.role === 'host';
+  const others = state.players.some(player => player.id !== state.playerId && !player.isBot);
+  if (!inGame && !others) { leaveRoom().catch(showError); return; }
+  document.querySelector('.leave-confirm')?.remove();
+  const dialog = document.createElement('dialog');
+  dialog.className = 'leave-confirm';
+  dialog.setAttribute('aria-labelledby', 'leave-confirm-title');
+  dialog.innerHTML = `<h2 id="leave-confirm-title">${inGame ? '¿Salir de la partida?' : '¿Salir de la sala?'}</h2>
+    <p>${host ? 'Has abierto tú la mesa: si sales, el resto puede quedarse sin partida.' : 'Dejarás tu sitio en la mesa.'}</p>
+    <div class="leave-confirm-actions"><button data-leave="stay" autofocus>${inGame ? 'Seguir jugando' : 'Quedarme'}</button><button data-leave="go">Salir</button></div>`;
+  dialog.addEventListener('click', event => {
+    const choice = event.target.closest('[data-leave]')?.dataset.leave;
+    if (choice === 'stay') dialog.close();
+    else if (choice === 'go') leaveRoom().catch(showError);
+  });
+  dialog.addEventListener('close', () => dialog.remove(), { once: true });
+  document.body.append(dialog);
+  dialog.showModal();
 }
 
 function resetToHome() {
@@ -433,7 +491,8 @@ app.addEventListener("click", async (event) => {
       state.name=name;saveCharacter(state.character);try{localStorage.setItem('elteto.playerName',name);localStorage.setItem('elteto.profileReady','1');}catch{}
       startApplication();return;
     }
-    if(action==='edit-profile'){renderProfile();return;}
+    if(action==='edit-profile'){menuTrail.push(state.screen);renderProfile();return;}
+    if(action==='back'){event.preventDefault();window.EltetoNav?.back();return;}
     if(action==='open-mus-panel'){app.querySelector('.game-menu')?.close();openMusPanel(app,button.dataset.kind);return;}
     if(action==='close-mus-panel'){app.querySelector('.mus-detail')?.close();return;}
     if(action==='mus-bet-less'||action==='mus-bet-more'){const input=app.querySelector('#bet-amount');input.value=String(Math.max(Number(input.min),Math.min(Number(input.max),Number(input.value)+(action==='mus-bet-more'?1:-1))));return;}
@@ -474,18 +533,18 @@ app.addEventListener("click", async (event) => {
       finally { accessBusy = false; }
     }
     else if (action === 'access-switch') { accessLogin = !accessLogin; renderAccess(); }
-    else if (action === 'access-install') { renderInstallation(); }
-    else if (action === 'online-access') { accessLogin = true; renderAccess(); }
+    else if (action === 'access-install') { menuTrail.push(state.screen); renderInstallation(); }
+    else if (action === 'online-access') { menuTrail.push(state.screen); accessLogin = true; renderAccess(); }
     else if (action === 'access-logout') { await leaveHostAccount(); renderHome(); }
     else if (action === 'access-recover') { const email = app.querySelector('#access-email').value; if (!email) throw new Error('Escribe tu correo.'); await recoverHostPassword(email); flash('Si tienes cuenta, recibirás un correo para recuperar el acceso.'); }
     else if (action === "open-host") {
       if (GUEST) throw new Error('Esta invitación solo permite entrar en la sala.');
-      state.screen = "host-form"; state.gameId = state.gameId || ""; render();
+      menuTrail.push(state.screen); state.screen = "host-form"; state.gameId = state.gameId || ""; render();
     }
-    else if (action === "home" || action === "back") {
+    else if (action === "home") {
       event.preventDefault();
-      if (state.online) await state.online.exit(); else state.host?.close();
-      if (GUEST && state.role === 'client') endGuestRoom(); else resetToHome();
+      if (IN_ROOM.has(state.screen)) confirmLeave();
+      else if (GUEST && state.role === 'client') endGuestRoom(); else resetToHome();
     }
     else if (action === "create-room") {
       if (GUEST) throw new Error('Esta invitación solo permite entrar en la sala.');
@@ -554,15 +613,9 @@ app.addEventListener("click", async (event) => {
     else if (action === "mus-reject") sendAction({ type: "reject" });
     else if (action === "cinquillo-next-hand") sendAction({ type: "next-hand" });
     else if (action === "cinquillo-pass") sendAction({ type: "pass" });
-    else if(action==='poker-return'){
-      await (state.online||state.host)?.setSittingOut(false);
-      state.screen='game';state.error='';render();
-    }
+    else if(action==='poker-return') await returnFromPokerBreak();
     else if (action === "poker-break") { await takePokerBreak(); }
-    else if (action === "leave-room") {
-      if (state.online) await state.online.exit(); else state.host?.close();
-      resetToHome();
-    }
+    else if (action === "leave-room") await leaveRoom();
   } catch (error) {
     state.error = error instanceof Error ? error.message : "Algo se torció al preparar la jugada.";
     flash(state.error);
@@ -647,7 +700,7 @@ async function beginOnlineJoin(code, name) {
       ? await LanSession.join(code,state.name,onOnlineChange,state.character)
       : await OnlineSession.join(code,state.name,onOnlineChange,undefined,state.character);
     state.online = session;
-    const roomUrl=new URL(location.href);roomUrl.searchParams.set("join",code);history.replaceState(null,"",roomUrl.pathname+roomUrl.search);
+    const roomUrl=new URL(location.href);roomUrl.searchParams.set("join",code);history.replaceState(history.state,"",roomUrl.pathname+roomUrl.search);
     try { sessionStorage.setItem(`elteto.joined.${code}`, "1"); } catch {}
     if (local) state.host = session;
   } catch (error) {
@@ -680,6 +733,7 @@ if (adminCode && !GUEST && !OPEN_LAN_HOST) {
 try{state.name=localStorage.getItem('elteto.playerName')||'';}catch{}
 let profileReady=false;try{profileReady=localStorage.getItem('elteto.profileReady')==='1'&&Boolean(state.name.trim());}catch{}
 if(profileReady)startApplication();else renderProfile();
+installBackNavigation({ resolve: backStep });
 if (!LAN && !GUEST && "serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
 if (GUEST) document.querySelector('link[rel="manifest"]')?.remove();
 
