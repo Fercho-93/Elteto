@@ -74,14 +74,10 @@ function renderProfile(){
 const FUEGOTE_EMBERS = [[18,0,7,2.6,-14],[30,1.1,5,3.1,-6],[44,.5,8,2.3,4],[56,1.7,5,2.9,-4],[67,.3,6,2.5,10],[78,1.3,7,3.3,16],[38,2.1,4,2.7,-10],[62,2.4,4,3,8]];
 function renderFuegote() {
   const embers = FUEGOTE_EMBERS.map(([x, delay, size, time, drift]) => `<i style="--x:${x}%;--delay:${delay}s;--size:${size}px;--time:${time}s;--drift:${drift}px"></i>`).join('');
+  // One block bounces as a whole; the finger pokes into the hole of the "O" (the hole image sits
+  // above the finger, so its tip sinks in).
   return `<button class="fuegote-button" data-action="open-host" aria-label="Que se haga el fuegote"><span class="fuegote-heat" aria-hidden="true"></span>
-    <svg class="fuegote-art" viewBox="0 0 840 846" aria-hidden="true" focusable="false"><defs>
-      <filter id="fuegote-fire" x="-6%" y="-6%" width="112%" height="112%" color-interpolation-filters="sRGB">
-        <feTurbulence type="fractalNoise" baseFrequency="0.005 0.013" numOctaves="1" seed="7"><animate attributeName="baseFrequency" values="0.005 0.013;0.0065 0.018;0.0045 0.015;0.005 0.013" dur="2.4s" repeatCount="indefinite"/></feTurbulence>
-        <feDisplacementMap in="SourceGraphic" scale="30" xChannelSelector="R" yChannelSelector="G"><animate attributeName="scale" values="22;40;28;36;22" dur="1.7s" repeatCount="indefinite"/></feDisplacementMap>
-      </filter>
-      <mask id="fuegote-letters" maskUnits="userSpaceOnUse" x="0" y="0" width="840" height="846"><image href="./assets/fuegote-text-mask.png" width="840" height="846" preserveAspectRatio="none"/></mask>
-    </defs><image class="fuegote-fire" href="./assets/fuegote-fire.webp" width="840" height="846"/><image href="./assets/fuegote.webp" width="840" height="846" mask="url(#fuegote-letters)"/></svg>
+    <span class="fuegote-block" aria-hidden="true"><img class="fuegote-art" src="./assets/fuegote.webp" alt="" draggable="false"><img class="fuegote-hand" src="./assets/fuegote-hand.webp" alt="" draggable="false"><img class="fuegote-hole" src="./assets/fuegote-hole.webp" alt="" draggable="false"></span>
     <span class="fuegote-embers" aria-hidden="true">${embers}</span></button>`;
 }
 function renderHome() {

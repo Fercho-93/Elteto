@@ -27,3 +27,5 @@ Edit target: the attached ten-character Elteto sprite atlas. Create a sibling di
 Prompt de la edición final, utilizada en el juego:
 
 Precise object edit of this sprite atlas for implementation in a card game. Preserve all ten exact characters, their clearly right-facing three-quarter poses, chairs, shading, positions and the EXACT 5x2 evenly spaced grid and 1536x1024 dimensions. ONLY REMOVE EVERY PURPLE PLAYING CARD from all ten hands. Keep the two hands gently curled in their same positions, with EMPTY TRANSPARENT AIR between and above the hands where the cards were, so the game can insert its live card backs there. Do not leave any card edge, suit or purple paper. Do not change expressions, direction or sizes. Entire background must be actual transparent alpha, no colored backdrop. Every sprite remains complete within its own exact grid cell with transparent padding.
+
+`fuegote-hand.webp` es el emoji 👆 de Noto Color Emoji (licencia SIL Open Font License 1.1), girado y escalado para el botón de la pantalla principal.

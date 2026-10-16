@@ -51,8 +51,7 @@ try{
    assert.equal(await page.evaluate(()=>localStorage.getItem('elteto.character')),String(character));
   }
   await page.evaluate(()=>window.testJoinForm());
-  // The guest entry mirrors the profile screen: Elteto logo above the name and avatar.
-  assert.ok(hostBrand);assert.equal(await page.locator('.profile-brand .menu-logo').count(),1);
+  assert.equal(await page.locator('.profile-brand .menu-logo').count(),1,'join form shows the logo like the profile screen');
   assert.equal(await page.locator('.topbar-tag').count(),0);
   assert.ok(!/fruta y pique/i.test(await page.locator('#app').innerText()));
   assert.ok(await page.locator('.menu-setup').isVisible());
