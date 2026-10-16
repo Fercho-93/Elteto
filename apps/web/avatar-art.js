@@ -1,6 +1,6 @@
-export const CHARACTER_NAMES = ['Berenjeno','Melocotoncillo','Banana','Ohio','Guacameño','Cerdaco','Boletus','Gotelé','Moñigo','Huevada'];
+export const CHARACTER_NAMES = ['Berenjeno','Peluson','Banana','Ohio','Guacameño','Cerdaco','Boletus','Gotelé','Moñigo','Huevada'];
 // Visible labels break long names with a soft hyphen in the narrow picker cells.
-const CHARACTER_LABELS = CHARACTER_NAMES.map(name => ({Melocotoncillo:'Meloco&shy;toncillo',Guacameño:'Guaca&shy;meño'})[name] || name);
+const CHARACTER_LABELS = CHARACTER_NAMES.map(name => ({Guacameño:'Guaca&shy;meño'})[name] || name);
 export function validCharacter(value){return Number.isInteger(value) && value >= 0 && value < CHARACTER_NAMES.length;}
 export function characterProfile(value){return validCharacter(value)?{character:value}:{};}
 export function savedCharacter(){try {const value=localStorage.getItem('elteto.character');return value!==null&&validCharacter(Number(value))?Number(value):0;}catch{return 0;}}

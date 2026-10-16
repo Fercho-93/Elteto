@@ -4,7 +4,7 @@ La mesa principal usa las diez mascotas ilustradas del atlas, tanto en web como 
 
 `elteto-mascots-v1.png`: atlas RGBA de 1536 × 1024, diez personajes sentados en una cuadrícula de 5 × 2. Creado con la herramienta de generación de imágenes a partir de las referencias aportadas por el usuario (conservadas en `design/references/`). Se muestra mediante CSS; no depende de servidores externos y se incluye en la caché sin conexión y en Android LAN.
 
-Orden: Berenjeno, Melocotoncillo, Banana, Ohio, Guacameño, Cerdaco, Boletus, Gotelé, Moñigo y Huevada. La selección única se deriva del listado público de jugadores y del asiento original; todos los dispositivos ven la misma identidad, aunque miren desde posiciones diferentes. La portada permite ver los diez personajes.
+Orden: Berenjeno, Peluson, Banana, Ohio, Guacameño, Cerdaco, Boletus, Gotelé, Moñigo y Huevada. La selección única se deriva del listado público de jugadores y del asiento original; todos los dispositivos ven la misma identidad, aunque miren desde posiciones diferentes. La portada permite ver los diez personajes.
 
 Las ilustraciones tienen volumen, silla de madera y tapicería verde, respiración suave y reacciones al actuar o recibir el turno. No son modelos articulados ni una simulación física 3D. El abanico superpuesto utiliza exclusivamente el número público real de cartas; nunca recibe los valores rivales. Las vistas de tablero sin `handSizes` dejan las manos vacías. El movimiento se desactiva con la preferencia de movimiento reducido. Para sustituir el atlas se debe conservar la distribución 5 × 2, proporción de celda 3:5 y márgenes. `table-players-v1.png` es el recurso humano anterior, ya sin uso en la mesa.
 
