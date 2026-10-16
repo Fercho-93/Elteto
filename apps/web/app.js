@@ -63,7 +63,11 @@ const turnSequence=new TurnSequence({
  reduced:()=>matchMedia('(prefers-reduced-motion: reduce)').matches,
  hidden:()=>document.visibilityState==='hidden'
 });
-function receiveGame(change){if(state.screen==='poker-break'){state.view=change.view;state.players=change.players||state.players;render();return;}turnSequence.receive({...change,gameId:change.gameId||state.gameId,playerId:change.playerId||state.playerId,players:change.players||state.players});}
+// Presence pings resend the same table; repainting it would restart the result notice and make the screen blink.
+const visibleSignature=(view,players)=>JSON.stringify([view,(players||[]).map(p=>[p.id,p.name,p.character,Boolean(p.away),Boolean(p.isBot),Boolean(p.isHost)])]);
+function receiveGame(change){if(state.screen==='poker-break'){state.view=change.view;state.players=change.players||state.players;render();return;}
+ if(state.screen==='game'&&!turnSequence.busy&&change.view&&visibleSignature(change.view,change.players||state.players)===visibleSignature(state.view,state.players)){state.players=change.players||state.players;return;}
+ turnSequence.receive({...change,gameId:change.gameId||state.gameId,playerId:change.playerId||state.playerId,players:change.players||state.players});}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')turnSequence.flush();else syncScreenWake();});
 // Like a video: the screen stays on while a table is open, even without touching it.
 let screenWake=null;
@@ -153,7 +157,7 @@ function renderHostForm() {
     <p class="menu-kicker">TÚ PONES LA MESA</p><h1 id="setup-title">Crear partida<span>.</span></h1>
     <div class="menu-fields"><div><label class="field-label" for="host-name">Tu nombre de guerra</label><div class="name-character-field"><input class="text-field" id="host-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}">${renderCharacterButton(state.character)}</div></div>
     <div><label class="field-label" for="room-name">Nombre de la sala <span>opcional</span></label><input class="text-field" id="room-name" maxlength="30" placeholder="La de siempre" value="${esc(state.roomName)}"></div></div>
-    ${LAN?.hostKey ? `<fieldset class="menu-game-fieldset room-mode"><legend>Cómo vais a jugar</legend><label><input type="radio" name="room-mode" value="lan" ${state.roomMode==='lan'?'checked':''}><span><strong>Sin internet</strong><small>Misma Wi-Fi o hotspot · QR local</small></span></label><label><input type="radio" name="room-mode" value="online" ${state.roomMode==='online'?'checked':''}><span><strong>Con internet</strong><small>Desde cualquier lugar · enlace y QR</small></span></label></fieldset>` : ''}
+    ${LAN?.hostKey ? `<fieldset class="menu-game-fieldset room-mode"><legend>Cómo vais a jugar</legend><label><input type="radio" name="room-mode" value="lan" ${state.roomMode==='lan'?'checked':''}><span><strong>Sin internet</strong><small>Misma Wi-Fi o hotspot · QR local</small></span></label><label><input type="radio" name="room-mode" value="online" ${state.roomMode==='online'?'checked':''}><span><strong>Con internet</strong><small>Desde cualquier lugar · enlace y QR</small></span></label></fieldset>` : `<fieldset class="menu-game-fieldset room-mode"><legend>Cómo vais a jugar</legend><label class="room-mode-unavailable"><input type="radio" name="room-mode" value="lan" disabled><span><strong>Sin internet</strong><small>Abre la mesa desde la app Elteto LAN de un Android. Desde este móvil puedes unirte escaneando su QR, sin datos.</small></span></label><label><input type="radio" name="room-mode" value="online" checked><span><strong>Con internet</strong><small>Desde cualquier lugar · enlace y QR</small></span></label></fieldset>`}
     <fieldset class="menu-game-fieldset"><legend>Elige el juego</legend>${games}</fieldset>
     ${state.error ? `<p class="error-message" role="alert">${esc(state.error)}</p>` : ""}
     <button class="menu-button menu-primary menu-create" data-action="create-room">Crear sala <span aria-hidden="true">↗</span></button>

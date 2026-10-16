@@ -281,3 +281,4 @@ html:has(.catalog-screen),body:has(.catalog-screen),body:has(.catalog-screen) #a
 .poker-action-panel .poker-revealed-hands{display:none;}
 .poker-action-panel:has(.poker-celebration)>.catalog-options:not(:has(button:not(.poker-action-next-hand))){display:none;}
 .poker-action-panel .poker-win-card .poker-result-details{order:5;}
+.poker-table .poker-level{top:9px;}
