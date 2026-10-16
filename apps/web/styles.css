@@ -937,3 +937,5 @@ body:has(.game-page) {
 .edge-back-hint { --pull:0; position:fixed; z-index:2147483647; left:6px; top:50%; display:grid; place-items:center; width:44px; height:44px; margin-top:-22px; border-radius:50%; background:var(--paper); color:var(--black); font-size:22px; font-weight:900; box-shadow:0 4px 14px #0008; opacity:0; pointer-events:none; transform:translateX(calc(-56px + var(--pull) * 56px)) scale(calc(.7 + var(--pull) * .3)); transition:opacity .15s; }
 .edge-back-hint.active { opacity:calc(.35 + var(--pull) * .65); }
 .edge-back-hint.ready { background:var(--cyan); }
+.boot-message { margin:0; padding:max(32px,env(safe-area-inset-top)) 24px; color:#fff8e8; font:600 16px/1.5 system-ui,sans-serif; text-align:center; }
+.boot-message button { display:block; margin:16px auto 0; padding:12px 20px; border:2px solid #000; border-radius:12px; background:#6fe7e0; color:#000; font:inherit; }

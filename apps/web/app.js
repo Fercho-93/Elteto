@@ -598,7 +598,9 @@ app.addEventListener("click", async (event) => {
     } else if (action === "join-room") {
       const roomCode = parseRoomCode(state.offerCode) || parseRoomCode(state.joinCode);
       if (!roomCode) throw new Error("Escanea el QR del anfitrión o escribe el código de 8 letras de su sala.");
-      await beginOnlineJoin(roomCode, document.querySelector("#join-name")?.value.trim() || "Invitado");
+      const name = document.querySelector("#join-name")?.value.trim();
+      if (!name) { flash("Escribe tu nombre para entrar."); return; }
+      await beginOnlineJoin(roomCode, name);
     } else if (action === "new-invite") {
       await openOnlineRoom();
       flash("Sala con internet lista. Comparte el enlace, el QR o el código.");
@@ -725,7 +727,8 @@ async function openOnlineRoom() {
 }
 async function beginOnlineJoin(code, name) {
   state.name = name || "Invitado";
-  try { localStorage.setItem("elteto.playerName", state.name); } catch {}
+  saveCharacter(state.character);
+  try { localStorage.setItem("elteto.playerName", state.name); localStorage.setItem("elteto.profileReady", "1"); } catch {}
   Object.assign(state, { role: "client", inviteMode: "online", error: "", screen: "lobby", players: [], roomCode: code });
   render();
   try {
@@ -769,7 +772,8 @@ if (adminCode && !GUEST && !OPEN_LAN_HOST) {
 }
 try{state.name=localStorage.getItem('elteto.playerName')||'';}catch{}
 let profileReady=false;try{profileReady=localStorage.getItem('elteto.profileReady')==='1'&&Boolean(state.name.trim());}catch{}
-if(profileReady)startApplication();else renderProfile();
+// Quien llega por el QR elige nombre y avatar en la propia pantalla de entrada a la sala.
+if(profileReady||incomingRoom)startApplication();else renderProfile();
 installBackNavigation({ resolve: backStep });
 if (!LAN && !GUEST && "serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
 if (GUEST) document.querySelector('link[rel="manifest"]')?.remove();

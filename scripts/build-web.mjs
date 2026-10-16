@@ -54,6 +54,20 @@ const menuHash = createHash('sha256');
 const versionFiles = [...menuFiles, 'back-navigation.js', 'manifest.webmanifest', 'icon-32.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png', 'firebase-sdk.js', 'host-access.js', 'activation-code.js', 'online-room.js', 'room-code.js', 'distribution-config.js', 'guest.html', 'mus-table.js', 'mus-flow.js', 'mus-screen.js', 'mus-screen.css', 'game-core/games/parchis.js', 'game-core/games/mus.js', 'game-core/games/mus-legacy.js', 'game-core/games/mus-evaluation.js', 'game-core/games/mus-scoring.js', 'game-help.js', 'game-help.css', 'reglas_juegos/consulta/parchis.html', 'reglas_juegos/consulta/mus.html', 'card-art.js', 'card-art.css', 'assets/decks/fournier-spanish.jpg', 'assets/decks/elteto-backs.jpg', 'catalog-games.js', 'catalog-games.css', 'board-games.js', 'board-games.css', 'board-motion.js', 'bot-pacing.js', 'turn-events.js', 'turn-sequence.js', 'turn-sequence.css', 'game-picker.js', 'avatar-art.js', 'poker-presence.js', 'poker-table.js', 'poker-controls.js', 'poker-events.js', 'poker-celebration.js', 'rival-portraits.js', 'rival-portraits.css', 'game-physics.js', 'card-paint.js', 'table-speech.js', 'parchis-board.js', 'parchis-board.css', 'table-view.js', 'parchis-dice.js', 'parchis-dice.css', 'game-core/catalog.js', 'game-core/engine.js', 'game-core/index.js', 'game-core/bots.js', 'local-session.js', 'lan-session.js', ...['shared','boards','social-cards','tricks','melds','holdem'].map(name => `game-core/games/${name}.js`)];
 for (const file of versionFiles) menuHash.update(await readFile(path.join(output, file)));
 const menuVersion = menuHash.digest('hex').slice(0, 12);
+// Every module import carries the same version: a phone that still caches one old module
+// would otherwise mix it with the new app.js and stop before painting anything.
+async function versionModuleImports(directory) {
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const fullPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) { if (entry.name !== 'reglas_juegos' && entry.name !== 'assets') await versionModuleImports(fullPath); }
+    else if (entry.name.endsWith(".js") && entry.name !== 'sw.js') {
+      const source = await readFile(fullPath, "utf8");
+      const updated = source.replace(/((?:from\s*|import\s*|import\(\s*)["'])(\.{1,2}\/[^"'?]+\.js)(["'])/g, `$1$2?v=${menuVersion}$3`);
+      if (updated !== source) await writeFile(fullPath, updated);
+    }
+  }
+}
+await versionModuleImports(output);
 const indexPath = path.join(output, 'index.html');
 let index = await readFile(indexPath, 'utf8');
 for (const file of menuFiles) index = index.replaceAll(`./${file}"`, `./${file}?v=${menuVersion}"`);

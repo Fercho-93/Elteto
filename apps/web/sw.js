@@ -37,5 +37,5 @@ self.addEventListener("fetch", (event) => {
     const copy = response.clone();
     caches.open(CACHE).then((cache) => cache.put(request, copy));
     return response;
-  }).catch(async () => (await caches.match(request)) || Response.error()));
+  }).catch(async () => (await caches.match(request)) || (await caches.match(request, {ignoreSearch: true})) || Response.error()));
 });

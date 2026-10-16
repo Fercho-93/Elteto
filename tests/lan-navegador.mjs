@@ -30,7 +30,7 @@ try {
    body=body.replaceAll('availableGames(listGames())','listGames()').replace('state.gameId || ""; render();','state.gameId || "cinquillo"; render();');
    await route.fulfill({body,contentType:'text/javascript'});
   });
-  await ctx.route('**/game-picker.js',async route=>{
+  await ctx.route('**/game-picker.js*',async route=>{
    const body=(await readFile('dist/game-picker.js','utf8')).replace("ids:['parchis','damas-espanolas']","ids:['parchis','damas-espanolas','oca']");
    await route.fulfill({body,contentType:'text/javascript'});
   });
@@ -104,7 +104,8 @@ try {
  await guest.getByText('Hasta la próxima.',{exact:true}).waitFor();
  assert.equal(await guest.locator('[data-action="open-host"]').count(),0);
  // Open another LAN table using the unchanged generic transport, now choosing Mus.
- await host.locator('[data-action="open-host"]').click();
+ // Leaving the table returns the host to "Crear partida" with the name kept.
+ await host.locator('#host-name').waitFor();
  await host.locator('#host-name').fill('Ana');
  await host.locator('.game-category:has(input[value="mus"]) summary').click();await host.locator('input[value="mus"]').check();
  await host.locator('[data-action="create-room"]').click();
@@ -142,7 +143,7 @@ try {
  await host.locator('[data-action="leave-room"]').click();
  for(const p of [guest,c,d]) await p.getByText('Hasta la próxima.',{exact:true}).waitFor();
  // The same room, QR, messages and reconnection path also carry a public board game.
- await host.locator('[data-action="open-host"]').click();await host.locator('#host-name').fill('Ana');
+ await host.locator('#host-name').waitFor();await host.locator('#host-name').fill('Ana');
  await host.locator('.game-category:has(input[value="parchis"]) summary').click();await host.locator('input[value="parchis"]').check();await host.locator('[data-action="create-room"]').click();
  const boardCode=(await host.locator('.room-code').textContent()).trim();await enter(guest,base+'/?join='+boardCode);await enter(c,base+'/?join='+boardCode);await enter(d,base+'/?join='+boardCode);
  await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===4);await host.locator('[data-action="start-game"]').click();
@@ -171,7 +172,7 @@ try {
  await host.locator('.game-menu-button').click();await host.locator('[data-action="leave-room"]').click();await guest.getByText('Hasta la próxima.',{exact:true}).waitFor();
  console.log('Parchís LAN: initial dice, rolls, legal moves, board synchronization and reload/reconnection: OK');
  for(const gameId of ['oca','damas-espanolas']){
-  await host.locator('[data-action="open-host"]').click();await host.locator('#host-name').fill('Ana');
+  await host.locator('#host-name').waitFor();await host.locator('#host-name').fill('Ana');
   await host.locator(`.game-category:has(input[value="${gameId}"]) summary`).click();await host.locator(`input[value="${gameId}"]`).check();await host.locator('[data-action="create-room"]').click();
   const invitation=(await host.locator('.room-code').textContent()).trim();await enter(guest,base+'/?join='+invitation);
   await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===2);await host.locator('[data-action="start-game"]').click();
