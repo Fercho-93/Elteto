@@ -39,7 +39,7 @@ try{
   const shown=await measure();
   assert.ok(shown.page&&shown.inside&&shown.clear&&shown.distinct,JSON.stringify({showdown:true,count,width,height,...shown}));
   await page.locator('.poker-celebration').waitFor();
-  assert.equal(await page.locator('.poker-celebration .poker-showdown').count(),count);
+  assert.equal(await page.locator('.catalog-surface .poker-showdown-hand').count(),count,'las manos enseñadas quedan en el tapete');
   if(count===7&&width===390&&height===844)await page.screenshot({path:'tests/artifacts/poker/showdown.png'});
  }
  await page.setViewportSize({width:390,height:844});let game=engine.createInitialState(['p0','p1','p2'],9);

@@ -1,6 +1,5 @@
 import {BotPacing} from './bot-pacing.js';
 import {MusFlowRunner} from './mus-flow.js';
-import {PokerAbsenceRunner} from './poker-presence.js';
 import {characterProfile, AVATAR_TAKEN_MESSAGE} from './avatar-art.js';
 import { getGame, createMusState, fillBotSeats, nextBotMove, BotRunner, botTurnDelay, forfeitGame } from "./game-core/index.js";
 import { connectFirebase } from "./firebase-client.js";
@@ -163,11 +162,6 @@ export class OnlineSession {
     this.lastErrorSeq = 0;
     this.seq = null;
     this.claiming = false;
-    this.absenceRunner=new PokerAbsenceRunner(()=>this.isHost?{engine:this.engine,state:this.state,players:this.players()}:null,move=>this.enqueue(async()=>{
-      await this.hostReady;const current=this.absenceRunner.candidate();if(!current||current.key!==move.key)return;
-      this.state=this.engine.applyAction(this.state,move.playerId,move.action);await this.publish();
-    }),{onError:error=>this.onChange({kind:'error',message:String(error.message||error)})});
-    this.absenceRunner.start();
     this.musFlow=new MusFlowRunner(()=>this.isHost?({engine:this.engine,state:this.state,paused:this.players().some(p=>!p.isBot&&p.away)}):null,action=>this.enqueue(async()=>{await this.hostReady;if(!this.isHost||this.players().some(p=>!p.isBot&&p.away)||this.state?.revision!==action.expectedRevision)return;this.state=this.engine.applyAction(this.state,this.state.players[0],this.engine.id==='mus'?{...action,at:Date.now()}:action);await this.publish();}),error=>this.onChange({kind:"error",message:error.message}));
     this.onVisibility = () => { if (document.visibilityState === "visible") void this.heartbeat(); };
   }
@@ -565,7 +559,7 @@ export class OnlineSession {
   teardown() {
     this.closed = true;
     this.botRunner.stop();
-    this.absenceRunner.stop();this.musFlow?.close();
+    this.musFlow?.close();
     for (const timer of this.timers) clearInterval(timer);
     this.timers = [];
     document.removeEventListener("visibilitychange", this.onVisibility);

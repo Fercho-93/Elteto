@@ -308,9 +308,9 @@ try {
   await until('póker ausente',()=>pokerRoom.host.players().find(p=>p.id===guestId)?.away);
   await pokerRoom.host.sendAction({type:'call'});
   await until('turno del ausente',()=>pokerRoom.host.state.players[pokerRoom.host.state.turn]===guestId);
-  const absence=pokerRoom.host.absenceRunner;absence.stop();absence.delay=0;
-  await absence.tick();await absence.tick();
-  await until('ausente pasa, juego continúa',()=>pokerRoom.host.state.phase==='flop');
+  await new Promise(r=>setTimeout(r,200));
+  assert.equal(pokerRoom.host.state.phase,'preflop','sin cronómetro: nadie actúa por el ausente');
+  assert.equal(pokerRoom.host.state.players[pokerRoom.host.state.turn],guestId,'la mesa espera al ausente');
   const remaining=pokerRoom.host.state.chips[guestId],hole=JSON.stringify(pokerRoom.host.state.hands[guestId]);
   pokerGuest.teardown();
   const returned=track(await OnlineSession.join(pokerRoom.host.roomCode,'Bea',pokerRoom.events[1].onChange,pokerRoom.conns[1],4));

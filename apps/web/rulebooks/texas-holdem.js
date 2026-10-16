@@ -57,7 +57,7 @@ export default {
       ] },
     ] },
     { title: 'Ciegas', blocks: [
-      'Al empezar, la ciega pequeña es **5** y la grande **10**. Cada **dos manos completas** ambas suben **5**: 5/10, 10/15, 15/20, 20/25...',
+      'Al empezar, la ciega pequeña es **5** y la grande **10**. Cada **vuelta completa a la mesa** (tantas manos como jugadores con fichas) ambas suben **5**: 5/10, 10/15, 15/20, 20/25... Encima de la mesa se ve cuántas manos faltan para la subida.',
       'El botón de reparto **rota** cada mano entre los jugadores que aún tienen fichas.',
       { note: 'Mano a mano (dos jugadores): el botón paga la ciega pequeña y habla primero antes del flop; después del flop habla primero la grande.' },
       'Si no tienes fichas para toda la ciega, pones las que te queden y estás all-in.',
