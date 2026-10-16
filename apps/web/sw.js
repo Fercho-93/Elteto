@@ -4,7 +4,7 @@ const ASSETS = ['./mus-table.js','./mus-flow.js','./game-core/games/mus-legacy.j
   './guest.html', './activation-code.js', './host-access.js', './distribution-config.js', './firebase-sdk.js',
   "./game-picker.js", "./board-games.js", "./board-games.css", "./board-motion.js", "./turn-events.js", "./turn-sequence.js", "./turn-sequence.css", "./game-physics.js", "./bot-pacing.js", "./card-paint.js", "./table-speech.js",
   "./catalog-games.js", "./catalog-games.css", "./game-core/games/shared.js", "./game-core/games/boards.js", "./game-core/games/social-cards.js", "./game-core/games/tricks.js", "./game-core/games/melds.js", "./game-core/games/holdem.js",
-  "./assets/elteto-cover-balanced-v5.png", "./assets/fuegote.webp", "./assets/fuegote-hand.webp", "./assets/fuegote-hole.webp",
+  "./assets/elteto-cover-balanced-v5.png", "./assets/fuegote-transparent-v2.webp", "./assets/fuegote-finger-v2.webp",
   "./avatar-art.js", "./assets/elteto-logo-neon-v3.png", "./assets/elteto-avatars-v3.png",
   "./parchis-dice.js", "./parchis-dice.css",
   "./parchis-board.js", "./parchis-board.css", "./game-core/games/parchis.js",
