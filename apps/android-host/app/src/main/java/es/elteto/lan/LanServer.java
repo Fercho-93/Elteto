@@ -73,7 +73,7 @@ public class LanServer extends NanoWSD {
             File file = new File(root, uri.substring(1)).getCanonicalFile();
             if (!file.toPath().startsWith(root.getCanonicalFile().toPath()) || !file.isFile()) return newFixedLengthResponse(Response.Status.NOT_FOUND,"text/plain","No encontrado");
             String name = file.getName();
-            String mime = name.endsWith(".js") ? "text/javascript" : name.endsWith(".css") ? "text/css" : name.endsWith(".svg") ? "image/svg+xml" : name.endsWith(".html") ? "text/html; charset=utf-8" : "application/octet-stream";
+            String mime = name.endsWith(".js") ? "text/javascript" : name.endsWith(".css") ? "text/css" : name.endsWith(".svg") ? "image/svg+xml" : name.endsWith(".png") ? "image/png" : name.endsWith(".webp") ? "image/webp" : name.endsWith(".jpg") ? "image/jpeg" : name.endsWith(".html") ? "text/html; charset=utf-8" : "application/octet-stream";
             Response response = newFixedLengthResponse(Response.Status.OK,mime,new FileInputStream(file),file.length());
             response.addHeader("Cache-Control","no-store"); return response;
         } catch (IOException e) { return newFixedLengthResponse(Response.Status.INTERNAL_ERROR,"text/plain","Error al cargar el juego"); }

@@ -52,15 +52,6 @@ export async function readHostAccess() {
   const access = remember(user, grant);
   return access.active ? access : null;
 }
-export async function requireHostAccess() {
-  if (globalThis.window?.ELTETO_LAN?.hostKey && globalThis.window?.EltetoActivation?.isActivated()) return true;
-  // Una Wi-Fi sin salida a internet puede seguir indicando navigator.onLine=true.
-  // El permiso local ya concedido permite abrir la mesa sin esperar a la red;
-  // OnlineSession.create vuelve a comprobar la licencia en el servidor.
-  if (cachedHostAccess()) return true;
-  if (!(await readHostAccess())) throw new Error('Activa tu invitación para crear partidas.');
-  return true;
-}
 export async function activateHost({ email, password, code, login = false }) {
   try {
     if (!login) {

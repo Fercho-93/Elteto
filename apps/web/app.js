@@ -13,7 +13,7 @@ import { arrangeCinquilloScreen } from './cinquillo-screen.js';
 import { arrangeMusScreen } from './mus-screen.js';
 import { renderParchisScreen } from './parchis-board.js';
 import { parseRoomCode } from "./room-code.js";
-import { activateHost, activateDevelopmentAdmin, activatePublicDevelopmentAdmin, requireHostAccess, recoverHostPassword, leaveHostAccount, cachedHostAccess } from './host-access.js';
+import { activateHost, activateDevelopmentAdmin, activatePublicDevelopmentAdmin, readHostAccess, recoverHostPassword, leaveHostAccount, cachedHostAccess } from './host-access.js';
 import { distributionConfig } from './distribution-config.js';
 
 import { cardKey, renderHandCard, renderSeats, renderCinquilloBoard, renderMusBoard, sortedHand, animateTable, animateSeats,mascotForSeat } from "./table-view.js";
@@ -62,6 +62,20 @@ function renderProfile(){
  state.screen='profile';
  app.innerHTML=`<section class="menu-shell profile-shell"><div class="menu-wrap profile-wrap"><header class="profile-brand"><div class="menu-logo" role="img" aria-label="ELTETO"></div></header><section class="menu-setup profile-setup" aria-labelledby="profile-title"><h1 id="profile-title">¿Quién se sienta a la mesa?</h1><div class="profile-fields"><div class="profile-field"><label class="field-label" for="profile-name">Tu nombre</label><input class="text-field" id="profile-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}"></div><div class="profile-field">${renderCharacterButton(state.character)}</div></div><div class="profile-entry"><button class="menu-button menu-secondary full-button" data-action="profile-confirm">Entrar <span aria-hidden="true">↗</span></button><p class="helper">Usaremos este nombre y personaje en tus partidas.</p></div></section></div></section>`;
 }
+// Embers: left %, delay s, size px, duration s, sideways drift px.
+const FUEGOTE_EMBERS = [[18,0,7,2.6,-14],[30,1.1,5,3.1,-6],[44,.5,8,2.3,4],[56,1.7,5,2.9,-4],[67,.3,6,2.5,10],[78,1.3,7,3.3,16],[38,2.1,4,2.7,-10],[62,2.4,4,3,8]];
+function renderFuegote() {
+  const embers = FUEGOTE_EMBERS.map(([x, delay, size, time, drift]) => `<i style="--x:${x}%;--delay:${delay}s;--size:${size}px;--time:${time}s;--drift:${drift}px"></i>`).join('');
+  return `<button class="fuegote-button" data-action="open-host" aria-label="Que se haga el fuegote"><span class="fuegote-heat" aria-hidden="true"></span>
+    <svg class="fuegote-art" viewBox="0 0 840 846" aria-hidden="true" focusable="false"><defs>
+      <filter id="fuegote-fire" x="-6%" y="-6%" width="112%" height="112%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.005 0.013" numOctaves="1" seed="7"><animate attributeName="baseFrequency" values="0.005 0.013;0.0065 0.018;0.0045 0.015;0.005 0.013" dur="2.4s" repeatCount="indefinite"/></feTurbulence>
+        <feDisplacementMap in="SourceGraphic" scale="30" xChannelSelector="R" yChannelSelector="G"><animate attributeName="scale" values="22;40;28;36;22" dur="1.7s" repeatCount="indefinite"/></feDisplacementMap>
+      </filter>
+      <mask id="fuegote-letters" maskUnits="userSpaceOnUse" x="0" y="0" width="840" height="846"><image href="./assets/fuegote-text-mask.png" width="840" height="846" preserveAspectRatio="none"/></mask>
+    </defs><image class="fuegote-fire" href="./assets/fuegote-fire.webp" width="840" height="846"/><image href="./assets/fuegote.webp" width="840" height="846" mask="url(#fuegote-letters)"/></svg>
+    <span class="fuegote-embers" aria-hidden="true">${embers}</span></button>`;
+}
 function renderHome() {
   closeGameHelp();
   if (GUEST) { renderJoinForm(); return; }
@@ -71,8 +85,7 @@ function renderHome() {
       <div class="menu-hero">
         <div class="menu-art"><div class="menu-logo" role="img" aria-label="Elteto: personajes, dados y coche morado entre palmeras de neón"></div></div>
         <div class="menu-intro"><h1>Se viene<br> <span>PIQUE!</span></h1>
-          <nav class="menu-actions" aria-label="Menú principal"><button class="fuegote-button" data-action="open-host"><span class="fuegote-label">Que se haga<br> el fuegote</span></button></nav>
-          ${!LAN && distributionConfig.developmentAdminEnabled ? '<button class="text-button access-switch" data-action="development-admin">Entrar como administrador</button>' : ''}
+          <nav class="menu-actions" aria-label="Menú principal">${renderFuegote()}</nav>
 
         </div>
       </div>
@@ -467,7 +480,6 @@ app.addEventListener("click", async (event) => {
     else if (action === 'access-recover') { const email = app.querySelector('#access-email').value; if (!email) throw new Error('Escribe tu correo.'); await recoverHostPassword(email); flash('Si tienes cuenta, recibirás un correo para recuperar el acceso.'); }
     else if (action === "open-host") {
       if (GUEST) throw new Error('Esta invitación solo permite entrar en la sala.');
-      try { await requireHostAccess(); } catch { renderAccess(); return; }
       state.screen = "host-form"; state.gameId = state.gameId || ""; render();
     }
     else if (action === "home" || action === "back") {
@@ -477,7 +489,6 @@ app.addEventListener("click", async (event) => {
     }
     else if (action === "create-room") {
       if (GUEST) throw new Error('Esta invitación solo permite entrar en la sala.');
-      await requireHostAccess();
       const gameId = document.querySelector('input[name="game"]:checked')?.value;
       const name = document.querySelector("#host-name")?.value.trim();
       const roomName = document.querySelector("#room-name")?.value.trim();
@@ -612,9 +623,9 @@ function onOnlineChange(change) {
 }
 async function openOnlineRoom() {
   if (state.online) { renderLobby(); return; }
-  if (LAN?.hostKey && !cachedHostAccess()) {
-    if (!distributionConfig.developmentAdminEnabled) throw new Error('Activa tu acceso online desde «Mi acceso».');
-    await activatePublicDevelopmentAdmin();
+  if (!cachedHostAccess()) {
+    if (distributionConfig.developmentAdminEnabled) await activatePublicDevelopmentAdmin();
+    else if (LAN?.hostKey || !(await readHostAccess())) throw new Error('Activa tu acceso online desde «Mi acceso».');
   }
   const { OnlineSession } = await import("./online-room.js");
   state.inviteMode = "online";

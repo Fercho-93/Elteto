@@ -11,7 +11,7 @@ for (const mode of ['lan','online']) {
  const state={character:0};
  const context=vm.createContext({state,LAN:{hostKey:'local'},GUEST:false,Boolean,
   document:{querySelector(selector){return {value:selector.includes('room-mode')?mode:selector.includes('game')?'mus':selector.includes('name')?'Ana':'Mesa'};}},
-  availableGames:x=>x,listGames:()=>[{id:'mus'}],requireHostAccess:async()=>{},cachedHostAccess:()=>null,
+  availableGames:x=>x,listGames:()=>[{id:'mus'}],readHostAccess:async()=>null,cachedHostAccess:()=>null,
   distributionConfig:{developmentAdminEnabled:true},activatePublicDevelopmentAdmin:async()=>calls.push('authorize'),
   onOnlineChange(){},renderLobby(){calls.push('lobby')},
   LanSession:{create:async()=>{calls.push('lan');return session;}},OnlineSession:{create:async()=>{calls.push('online');return session;}}

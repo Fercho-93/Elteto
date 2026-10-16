@@ -2,7 +2,11 @@
 
 ## Recorrido
 
-La llama «Que se haga el fuegote» (crear partida) pide una invitación si la cuenta no tiene acceso. Se introduce
+La llama «Que se haga el fuegote» abre directamente «Crear partida», sin cuenta,
+contraseña ni modo administrador. Solo «Invitar con internet» necesita acceso de
+anfitrión: mientras `developmentAdminEnabled` esté activo y Firestore tenga
+`configuration/development` habilitado, se concede solo al pulsarlo; si no, hay
+que activar una invitación (enlace `#activate=…` o «Mi acceso»). Se introduce
 correo, contraseña y código. El canje consume la invitación y crea la licencia en
 una única transacción. «Ya tengo acceso» recupera esa licencia en otro dispositivo
 sin gastar otro código. «Recuperar contraseña» usa Firebase Auth.

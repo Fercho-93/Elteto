@@ -68,4 +68,4 @@ La APK 0.2.11 solicita permiso de cámara al abrir el escáner QR. Android muest
 
 La APK 0.2.12 hace legibles las opciones «Sin internet» y «Con internet». Para que las salas con internet funcionen desde la app, la clave de API de Firebase debe aceptar `http://127.0.0.1:3000/*` (ver CONFIGURAR_ONLINE.md).
 
-La APK 0.2.13 quita «Unirme a partida» de la pantalla principal y deja de pedir permiso de cámara: los invitados entran escaneando el QR del anfitrión con la cámara normal de su móvil, sin abrir la app. La partida se crea tocando la llama **Que se haga el fuegote**.
+La APK 0.2.13 quita «Unirme a partida» de la pantalla principal y deja de pedir permiso de cámara: los invitados entran escaneando el QR del anfitrión con la cámara normal de su móvil, sin abrir la app. La partida se crea tocando la llama **Que se haga el fuegote**, que abre directamente «Crear partida» sin pedir acceso ni contraseña.

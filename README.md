@@ -12,7 +12,9 @@ Las salas viven en Firestore, con invitados anónimos de Firebase Authentication
 
 Arquitectura, modelo de datos, reglas, configuración de Firebase y pruebas: [CONFIGURAR_ONLINE.md](CONFIGURAR_ONLINE.md).
 
-El anfitrión se activa con una invitación de un solo uso y una cuenta recuperable.
+Crear una partida no pide cuenta ni contraseña: basta con tocar la llama de la pantalla principal.
+Las salas con internet usan el acceso de desarrollo mientras esté habilitado; después,
+el anfitrión se activa con una invitación de un solo uso y una cuenta recuperable.
 Los invitados entran por navegador, sin instalación ni código de activación, y su
 acceso termina con la sala. Flujo, administración, configuración y límites
 offline: [Distribución y acceso](DISTRIBUCION_Y_ACCESO.md).
