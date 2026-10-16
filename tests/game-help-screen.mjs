@@ -17,7 +17,7 @@ try{
   assert.equal(await page.locator('.menu-actions > *').count(),1);
   assert.equal(await page.locator('.menu-actions .fuegote-button[data-action="open-host"]').getAttribute('aria-label'),'Que se haga el fuegote');
   assert.equal(await page.locator('[data-action="open-join"],[data-action="development-admin"]').count(),0);
-  assert.equal(await page.locator('.fuegote-block > img').count(),3,'bouncing artwork, poking finger and the O hole above it');
+  assert.equal(await page.locator('.fuegote-block > img').count(),2,'transparent artwork and the pointing hand');
   assert.equal(await page.locator('.profile-edit').textContent(),'Mi nombre de guerra y avatar');
   const [flame,profile,credit]=await Promise.all(['.fuegote-button','.profile-edit','.menu-credit'].map(s=>page.locator(s).boundingBox()));
   assert.ok(flame.x>=0&&flame.x+flame.width<=width,'flame button fits the screen');
@@ -32,21 +32,24 @@ try{
   for(const [width,height] of [[320,568],[390,844],[844,390]]){
    await page.setViewportSize({width,height});await page.evaluate(({id,game})=>window.testTable(id,game,'p0'),{id,game});
    assert.equal(await page.locator('.game-info-button').count(),1);
-   await page.locator('.game-info-button').click();await page.locator('.help-original').waitFor();
-   if(id==='oca'){const expected=(await readFile('reglas_juegos/consulta/oca.html','utf8')).match(/<body>([\s\S]*)<\/body>/)[1].replace(/<[^>]+>/g,'');assert.equal((await page.locator('.help-original').textContent()).trim(),expected.trim());}else assert.ok((await page.locator('.help-original').textContent()).length>1000);
-   assert.equal(await page.locator('.help-source>a').getAttribute('href'),(getGamePlan(id).activeRules||getGamePlan(id).rules).url);
+   await page.locator('.game-info-button').click();await page.locator('.help-rulebook').waitFor();
+   // Un único reglamento: sin pestañas, sin enlaces a fuentes y con las secciones del juego.
+   assert.equal(await page.locator('.help-tabs,.help-source,.help-table-rules').count(),0);
+   assert.equal(await page.locator('.game-help a').count(),0,'el reglamento no lleva enlaces');
+   assert.ok((await page.locator('.help-rulebook').textContent()).length>2500);
+   assert.ok(await page.locator('.help-section h2').filter({hasText:/Objetivo/}).count()>=1);
+   assert.ok(await page.locator('.help-section h2').filter({hasText:/Elteto/}).count()>=1);
+   assert.equal(await page.locator('.help-section h2').last().textContent(),'Si alguien sale de la partida');
    assert.ok(await page.locator('.game-help').evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight;}));
-   await page.locator('[data-help-jump=".help-source"]').click();assert.ok(await page.locator('.help-scroll').evaluate(el=>el.scrollTop>0));
-   await page.locator('[data-help-jump=".help-table-rules"]').click();
+   await page.locator('.help-index summary').click();await page.locator('[data-help-section]').last().click();assert.ok(await page.locator('.help-scroll').evaluate(el=>el.scrollTop>0));
    assert.deepEqual(await page.evaluate(()=>window.tableSnapshot()),game,'opening information never changes the game');
    await page.evaluate(({id,game})=>window.testTable(id,game,'p0'),{id,game});
    assert.ok(await page.locator('.game-help').evaluate(el=>el.open),'game refresh preserves the open rulebook');
    if(width===390)await page.screenshot({path:`tests/artifacts/help/${id}.png`});
    await page.locator('.help-return').click();await page.locator('.game-help').waitFor({state:'detached'});assert.equal(await page.locator('.game-help').count(),0);assert.ok(await page.locator('.game-info-button').isVisible());
   }
-  await page.evaluate(id=>window.testLobby(id),id);await page.locator('.game-info-button').click();await page.locator('.help-original').waitFor();await page.locator('.help-return').click();await page.locator('.game-help').waitFor({state:'detached'});assert.ok(await page.locator('.menu-lobby').isVisible());
+  await page.evaluate(id=>window.testLobby(id),id);await page.locator('.game-info-button').click();await page.locator('.help-rulebook').waitFor();await page.locator('.help-return').click();await page.locator('.game-help').waitFor({state:'detached'});assert.ok(await page.locator('.menu-lobby').isVisible());
  }
- const safe=await page.evaluate(async()=>{const {cleanRulebook}=await import('./game-help.js');const doc=cleanRulebook('<script>window.pwned=true</script><p onclick="evil()">Regla</p><a href="javascript:evil()">Enlace</a><iframe src="https://example.com"></iframe>');return {html:doc.innerHTML,pwned:window.pwned};});
- assert.equal(safe.pwned,undefined);assert.ok(!/script|onclick|javascript|iframe/.test(safe.html));assert.deepEqual(errors,[]);
- console.log('Inicio + reglas: cinco juegos, 15 layouts, reglamentos completos, sanitización y vuelta sin perder partida: OK');
+ assert.deepEqual(errors,[]);
+ console.log('Inicio + reglas: cinco juegos, 15 layouts, reglamento único sin enlaces y vuelta sin perder partida: OK');
 }finally{await browser.close();await new Promise(r=>server.close(r));}

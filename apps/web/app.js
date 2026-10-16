@@ -228,14 +228,14 @@ function renderLobby() {
     : "";
   app.innerHTML = `<section class="menu-shell menu-room-shell"><div class="menu-wrap"><header class="menu-header">${backButton('Salir de la sala')}<a class="menu-brand" href="./" data-action="home">ELTETO<span>✦</span></a></header><section class="menu-setup menu-lobby" aria-labelledby="lobby-title">
     <p class="menu-kicker">${host ? "SALA CREADA" : "TU SALA"}</p>
-    <h1 id="lobby-title">${esc(state.roomName || game?.label || "Sala")}<span>.</span></h1>
+    <h1 id="lobby-title">${esc(state.roomName || game?.label || "Sala")}</h1>
     ${game ? `<p class="lobby-game">${esc(game.label)} <span>· ${playerCountLabel(game)} jugadores</span></p>` : ''}
     <div class="lobby-grid"><section class="lobby-players" aria-labelledby="players-title"><div class="players-head"><h2 id="players-title">En la mesa</h2><span>${state.players.length}${game ? ` / ${game.maxPlayers}` : ""}</span></div>
     <div class="player-list">${rows || '<div class="empty-seat">Todavía no se ha sentado nadie. Dale al código.</div>'}</div>
     ${state.error ? `<p class="error-message">${esc(state.error)}</p>` : ""}
     ${host && game && game.id!=='mus' && state.players.length < game.maxPlayers ? '<button class="button button-paper full-button" data-action="fill-bots">Completar mesa con IA</button><p class="helper">La IA ocupará las plazas libres. Puedes quitarla antes de empezar.</p>' : ''}
     ${state.gameId==='mus'?`<section class="mus-setup" aria-label="Configuración de Mus"><p>4 jugadores · parejas enfrentadas</p><h3>¿A CUÁNTOS TANTOS JUGAMOS?</h3>${host?`<div>${[30,40].map(n=>`<button data-action="mus-target" data-target="${n}" aria-pressed="${state.musTarget===n}">${n}</button>`).join('')}</div>`:`<p>El anfitrión elige 30 o 40 antes de repartir. Verás el objetivo al comenzar.</p>`}<p>Una partida · 8 reyes y 8 ases · sin vacas</p></section>`:''}${startButton}
-    </section><section class="lobby-invite" aria-labelledby="invite-title"><h2 id="invite-title">${host ? "Invita a la mesa" : "Tu conexión"}</h2>
+    </section><section class="lobby-invite" aria-labelledby="invite-title"><h2 id="invite-title">${host ? "Invita a la mesa" : "Aviso!"}</h2>
     <p class="helper ${host && state.online && !isLocalRoom() ? 'compact-help' : ''}">${host ? (state.online ? (isLocalRoom() ? "Comparte el QR o enlace local. Todos debéis estar en la misma Wi-Fi o hotspot. Mantén Elteto abierto en este Android." : "Pásales el enlace, el QR o el código de la sala. Todos necesitáis internet.") : "Pulsa «Invitar con internet» y enséñales el QR: lo escanean con la cámara del móvil.") : (isLocalRoom() ? "Mesa local: deja esta página abierta. Si pierdes la señal, intentaremos recuperar tu plaza." : "Deja Elteto abierto: la sala se mantiene mientras el anfitrión siga conectado.")}</p>
     <div class="connection-box">${connectionTools}</div>
     </section></div>
@@ -256,7 +256,17 @@ let shownResult = null;
 function renderGame() {
   app.pokerMotionFinished=()=>turnSequence.decorate(app,state.playerId,playerName);
   if(!turnSequence.busy&&state.view)turnSequence.adopt({view:state.view,gameId:state.gameId,playerId:state.playerId});
-  const paint=prepareCardPaint(app),avatars=prepareAvatarPaint(app);renderGameContents();mountScreenBack(app);mountGameHelp(app,state.gameId);restoreCardPaint(app,paint);restoreAvatarPaint(app,avatars);turnSequence.decorate(app,state.playerId,playerName);
+  const paint=prepareCardPaint(app),avatars=prepareAvatarPaint(app);renderGameContents();mountScreenBack(app);mountGameHelp(app,state.gameId);restoreCardPaint(app,paint);restoreAvatarPaint(app,avatars);mountForfeitNotice();turnSequence.decorate(app,state.playerId,playerName);
+}
+// Quien se queda en una mesa de dos tras la salida del otro ve el motivo de su victoria.
+function mountForfeitNotice() {
+  const view = state.view;
+  if (!view?.forfeitBy || !view.finished) return;
+  const mine = view.winner === state.playerId;
+  const notice = document.createElement("div");
+  notice.className = "forfeit-notice";notice.setAttribute("role", "status");
+  notice.innerHTML = `<strong>${esc(view.forfeitName || playerName(view.forfeitBy))} ha salido de la partida</strong><span>${mine ? "¡Victoria para ti!" : `Gana ${esc(playerName(view.winner))}.`}</span>`;
+  app.append(notice);
 }
 function renderGameContents() {
   state.screen = "game";
@@ -451,7 +461,7 @@ function confirmLeave(to = 'host-form') {
   dialog.className = 'leave-confirm';
   dialog.setAttribute('aria-labelledby', 'leave-confirm-title');
   dialog.innerHTML = `<h2 id="leave-confirm-title">${inGame ? '¿Salir de la partida?' : '¿Salir de la sala?'}</h2>
-    <p>${host ? 'Has abierto tú la mesa: si sales, el resto puede quedarse sin partida.' : 'Dejarás tu sitio en la mesa.'}</p>
+    <p>${host ? 'Has abierto tú la mesa: si sales, el resto puede quedarse sin partida.' : inGame && state.view?.players?.length === 2 && !['mus', 'texas-holdem'].includes(state.gameId) ? 'Si sales, la partida termina y gana quien se queda.' : 'Dejarás tu sitio en la mesa.'}</p>
     <div class="leave-confirm-actions"><button data-leave="stay" autofocus>${inGame ? 'Seguir jugando' : 'Quedarme'}</button><button data-leave="go">Salir</button></div>`;
   dialog.addEventListener('click', event => {
     const choice = event.target.closest('[data-leave]')?.dataset.leave;
@@ -477,6 +487,9 @@ function onHostChange(change) {
     state.gameId = change.gameId;
   } else if (change.kind === "game") {
     receiveGame(change);return;
+  } else if (change.kind === "notice") {
+    flash(change.message);
+    return;
   } else if (change.kind === "error") {
     state.error = change.message;
     flash(change.message);
@@ -656,8 +669,7 @@ app.addEventListener("click", async (event) => {
 });
 
 app.addEventListener("input", (event) => {
-  if(event.target.matches('[data-poker-range]')){const input=app.querySelector('#'+event.target.dataset.ref);input.value=event.target.value;syncPokerAmounts(app,state.view);return;}
-  if(event.target.matches('[data-poker-amount]')){syncPokerAmounts(app,state.view,false);return;}
+  if(event.target.matches('[data-poker-amount]')){syncPokerAmounts(app,state.view);return;}
   if (event.target.matches("#profile-name")) state.name=event.target.value;
   else if (event.target.matches("#host-name")) state.name = event.target.value;
   else if (event.target.matches("#join-name")) state.name = event.target.value;

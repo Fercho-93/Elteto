@@ -51,6 +51,8 @@ try {
  const guest=await context('Bea');await enter(guest,base+'/?join='+code);
  assert.equal(await guest.locator('[data-action="development-admin"]').count(),0);
  await guest.waitForFunction(()=>document.querySelector('#app').textContent.includes('Ya estás en la mesa'));
+ assert.equal((await guest.locator('#invite-title').textContent()).trim(),'Aviso!','el invitado ve «Aviso!» en la sala de espera');
+ assert.ok(!/\.$/.test((await guest.locator('#lobby-title').textContent()).trim()),'el nombre de la sala no lleva punto final');
  await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===2);
  await host.locator('[data-action="start-game"]').click();
  await guest.locator('.hand .playing-card').first().waitFor();
@@ -193,6 +195,20 @@ try {
    assert.equal(await host.locator('.catalog-surface .checker-last-move').count(),1);
   }
   await host.locator('.game-menu-button').click();await host.locator('[data-action="leave-room"]').click();await guest.getByText('Hasta la próxima.',{exact:true}).waitFor();
+ }
+ // Salir de una partida de dos avisa y da la victoria a quien se queda.
+ {
+  await host.locator('#host-name').waitFor();await host.locator('#host-name').fill('Ana');
+  await host.locator('.game-category:has(input[value="damas-espanolas"]) summary').click();await host.locator('input[value="damas-espanolas"]').check();await host.locator('[data-action="create-room"]').click();
+  const exitCode=(await host.locator('.room-code').textContent()).trim();await enter(guest,base+'/?join='+exitCode);
+  await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===2);await host.locator('[data-action="start-game"]').click();
+  await guest.locator('.catalog-surface').waitFor();await host.locator('.catalog-surface').waitFor();
+  await guest.locator('.game-menu-button').click();await guest.locator('[data-action="leave-room"]').click();
+  await guest.getByText('Hasta la próxima.',{exact:true}).waitFor();
+  await host.locator('.forfeit-notice').waitFor();
+  assert.match(await host.locator('.forfeit-notice').innerText(),/Bea ha salido de la partida[\s\S]*Victoria para ti/);
+  assert.match(await host.locator('.catalog-surface').innerText(),/Ana gana|gana/i);
+  await host.locator('.game-menu-button').click();await host.locator('[data-action="leave-room"]').click();
  }
  console.log('Damas y oca LAN: compact controls, complete boards, public roll and opponent movement synchronized across both POVs: OK');
  assert.deepEqual(errors,[]);

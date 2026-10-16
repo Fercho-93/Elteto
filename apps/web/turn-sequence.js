@@ -34,7 +34,7 @@ export class TurnSequence {
  decorate(app,playerId,name){
   const root=app.querySelector('.catalog-screen,.game-page,.parchis-screen');if(!root)return;
   root.dataset.turnBusy=String(this.busy);root.dataset.turnPhase=this.phase;
-  for(const button of root.querySelectorAll('button[data-action],input[type="number"],.poker-bet-controls input')){
+  for(const button of root.querySelectorAll('button[data-action],input[type="number"],.poker-bet-inline input')){
    if(button.tagName==='BUTTON'&&!isTurnAction(button.dataset.action))continue;
    if(!this.busy){if(button.dataset.sequenceLocked==='true'){button.disabled=button.dataset.sequenceAllowed!=='true'||root.dataset.motionBusy==='true';delete button.dataset.sequenceAllowed;delete button.dataset.sequenceLocked;}continue;}
    if(button.dataset.sequenceAllowed===undefined)button.dataset.sequenceAllowed=button.dataset.diceAllowed??button.dataset.motionAllowed??String(!button.disabled);

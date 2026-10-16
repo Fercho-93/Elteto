@@ -947,3 +947,6 @@ body:has(.game-page) {
 .edge-back-hint.ready { background:var(--cyan); }
 .boot-message { margin:0; padding:max(32px,env(safe-area-inset-top)) 24px; color:#fff8e8; font:600 16px/1.5 system-ui,sans-serif; text-align:center; }
 .boot-message button { display:block; margin:16px auto 0; padding:12px 20px; border:2px solid #000; border-radius:12px; background:#6fe7e0; color:#000; font:inherit; }
+.forfeit-notice{position:fixed;z-index:8;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);width:max-content;max-width:calc(100vw - 32px);display:grid;gap:2px;padding:12px 18px;text-align:center;color:var(--black);background:var(--citrus);border:2px solid var(--black);border-radius:14px;box-shadow:3px 4px var(--black);pointer-events:none;}
+.forfeit-notice strong{font-size:15px;font-weight:900;}
+.forfeit-notice span{font-size:13px;font-weight:700;}
