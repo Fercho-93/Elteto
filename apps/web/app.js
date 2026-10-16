@@ -401,7 +401,7 @@ function backStep() {
     };
   }
   if (screen === 'poker-break') return () => returnFromPokerBreak().catch(showError);
-  if (screen === 'lobby' || screen === 'game') return confirmLeave;
+  if (screen === 'lobby' || screen === 'game') return () => confirmLeave();
   return null;
 }
 function showError(error) { state.error = error?.message || 'Algo se torció.'; flash(state.error); }
@@ -409,15 +409,18 @@ async function returnFromPokerBreak() {
   await (state.online||state.host)?.setSittingOut(false);
   state.screen='game';state.error='';render();
 }
-async function leaveRoom() {
+// Salir de la sala o de la partida vuelve a la pantalla anterior, «Crear partida», con el
+// nombre y el juego ya elegidos. Los invitados no crean mesas: para ellos la sala termina.
+async function leaveRoom(to = 'host-form') {
   document.querySelector('.leave-confirm')?.close();
   if (state.online) await state.online.exit(); else state.host?.close();
   resetToHome();
+  if (to === 'host-form' && !GUEST) { menuTrail.push('home'); state.screen = 'host-form'; render(); }
 }
-function confirmLeave() {
+function confirmLeave(to = 'host-form') {
   const inGame = state.screen !== 'lobby', host = state.role === 'host';
   const others = state.players.some(player => player.id !== state.playerId && !player.isBot);
-  if (!inGame && !others) { leaveRoom().catch(showError); return; }
+  if (!inGame && !others) { leaveRoom(to).catch(showError); return; }
   document.querySelector('.leave-confirm')?.remove();
   const dialog = document.createElement('dialog');
   dialog.className = 'leave-confirm';
@@ -428,7 +431,7 @@ function confirmLeave() {
   dialog.addEventListener('click', event => {
     const choice = event.target.closest('[data-leave]')?.dataset.leave;
     if (choice === 'stay') dialog.close();
-    else if (choice === 'go') leaveRoom().catch(showError);
+    else if (choice === 'go') leaveRoom(to).catch(showError);
   });
   dialog.addEventListener('close', () => dialog.remove(), { once: true });
   document.body.append(dialog);
@@ -543,7 +546,7 @@ app.addEventListener("click", async (event) => {
     }
     else if (action === "home") {
       event.preventDefault();
-      if (IN_ROOM.has(state.screen)) confirmLeave();
+      if (IN_ROOM.has(state.screen)) confirmLeave('home');
       else if (GUEST && state.role === 'client') endGuestRoom(); else resetToHome();
     }
     else if (action === "create-room") {
