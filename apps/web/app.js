@@ -662,7 +662,8 @@ app.addEventListener("click", async (event) => {
     else if (action === "mus-no") sendAction({ type: "mus", wantsMus: false });
     else if (action === "mus-next") sendAction({ type: "next-hand" });
     else if (action === "parchis-roll") { if(beginParchisRoll(app))sendAction({ type: "roll", expectedRoll:Number(button.dataset.rollSequence) }); }
-    else if (action === "parchis-move") sendAction({ type: "move", piece: Number(button.dataset.piece) });
+    else if (action === "parchis-move") sendAction({ type: "move", piece: Number(button.dataset.piece), ...(button.dataset.dice ? { dice: button.dataset.dice.split(",").map(Number) } : {}) });
+    else if (action === "parchis-dice") sendAction({ type: "dice", count: Number(button.dataset.count) });
     else if (action === "mus-pass") sendAction({ type: "pass" });
     else if (action === "mus-bet") sendAction({ type: "bet", amount: Number(document.querySelector("#bet-amount")?.value) });
     else if (action === "mus-ordago") sendAction({ type: "ordago" });

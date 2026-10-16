@@ -21,7 +21,7 @@ offline: [Distribución y acceso](DISTRIBUCION_Y_ACCESO.md).
 
 Para probarlo, abre [Elteto en GitHub Pages](https://fercho-93.github.io/Elteto/) en un teléfono, crea la partida tocando la llama **Que se haga el fuegote**, pulsa **Invitar con internet** y escanea el QR con la cámara del otro.
 
-Cinquillo admite de dos a seis participantes. Mus necesita cuatro. Parchís admite de dos a cuatro.
+Cinquillo admite de dos a seis participantes. Mus necesita cuatro. Parchís admite de dos a seis, con un tablero que se adapta a la mesa (triángulo, cuadrado, pentágono o hexágono) y la opción de dos dados con cinco o seis.
 
 ### Completar la mesa con IA
 
@@ -71,4 +71,4 @@ La web y Android LAN comparten una mesa ilustrada en 2D y diez retratos original
 
 Las [reglas aportadas](reglas_juegos/README.md) conservan los 20 reglamentos originales. La biblioteca está en `reglas_juegos/biblioteca.html` y en la portada del juego. El [catálogo y la arquitectura](MESA_Y_REGLAS.md) describen los veinte motores disponibles y sus variantes. Nuevas mesas de Cinquillo: española 40, cinco de oros y puntuación a 30; Mus: ocho reyes/ases, juegos a 40 y partida a tres juegos.
 
-Parchís: tablero clásico de cuatro colores, dados y movimientos legales, barreras, seguros, capturas y llegada exacta. La edición digital y las decisiones no detalladas por el PDF están en [design/PARCHIS.md](design/PARCHIS.md).
+Parchís: tablero de 3 a 6 lados según los jugadores, uno o dos dados y movimientos legales, barreras, seguros, capturas y llegada exacta. La edición digital y las decisiones no detalladas por el PDF están en [design/PARCHIS.md](design/PARCHIS.md).

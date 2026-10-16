@@ -26,7 +26,7 @@ Las seña físicas, corte manual y errores de reparto no se simulan como accione
 
 ## Parchís
 
-Disponible para 2–4 jugadores, con cuatro fichas por color, tablero de 68 casillas y pasillos de llegada. Se implementan tirada inicial, salida con cinco, seises, barreras, capturas y bonificaciones, llegada exacta y victoria. El tablero se amplía y las fichas se pueden elegir mediante botones grandes. Fuente, decisiones de edición y pruebas: [design/PARCHIS.md](design/PARCHIS.md).
+Disponible para 2–6 jugadores, con cuatro fichas por color, tablero poligonal de 17 casillas por color (triángulo, cuadrado, pentágono o hexágono) y pasillos de llegada; con 5 o 6 jugadores se elige uno o dos dados. Se implementan tirada inicial, salida con cinco, seises, barreras, capturas y bonificaciones, llegada exacta y victoria. El tablero se amplía y las fichas se pueden elegir mediante botones grandes. Fuente, decisiones de edición y pruebas: [design/PARCHIS.md](design/PARCHIS.md).
 
 ## Estructura para ampliar juegos
 

@@ -7,7 +7,7 @@ const ASSETS = ['./mus-table.js','./mus-flow.js','./game-core/games/mus-legacy.j
   "./assets/elteto-cover-balanced-v5.png", "./assets/fuegote-transparent-v2.webp", "./assets/fuegote-finger-v2.webp",
   "./avatar-art.js", "./assets/elteto-logo-neon-v3.png", "./assets/elteto-avatars-v3.png",
   "./parchis-dice.js", "./parchis-dice.css",
-  "./parchis-board.js", "./parchis-board.css", "./game-core/games/parchis.js",
+  "./parchis-board.js", "./parchis-geometry.js", "./parchis-board.css", "./game-core/games/parchis.js",
   "./mus-screen.js", "./mus-screen.css",
   "./rival-portraits.js", "./rival-portraits.css", "./assets/elteto-original-avatars.png",
   "./table-layout.css",
