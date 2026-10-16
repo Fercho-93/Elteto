@@ -21,7 +21,7 @@ offline: [Distribución y acceso](DISTRIBUCION_Y_ACCESO.md).
 
 Para probarlo, abre [Elteto en GitHub Pages](https://fercho-93.github.io/Elteto/) en un teléfono, crea la partida tocando la llama **Que se haga el fuegote**, pulsa **Invitar con internet** y escanea el QR con la cámara del otro.
 
-Cinquillo admite de dos a seis participantes. Mus necesita cuatro. Parchís admite de dos a seis, con un tablero que se adapta a la mesa (triángulo, cuadrado, pentágono o hexágono) y la opción de dos dados con cinco o seis.
+Cinquillo admite de dos a seis participantes. Mus necesita cuatro. Parchís admite de tres a seis, con un tablero que se adapta a la mesa (triángulo, cuadrado, pentágono o hexágono) y la opción de dos dados con cinco o seis.
 
 ### Completar la mesa con IA
 

@@ -7,8 +7,8 @@ export type ParchisColor=typeof PARCHIS_COLORS[number];
 // Every arm keeps the classic 17 squares: start on the fifth, safes on its 5th, 12th and 17th.
 export const PARCHIS_ARM=17;
 export type ParchisLayout={sides:number;cells:number;shared:number;goal:number;starts:Partial<Record<ParchisColor,number>>;safe:number[];colors:ParchisColor[]};
-// Three players use a triangle and five or six a pentagon or hexagon; two face each other on the square.
-export function parchisSides(players:number):number{return players===2?4:players;}
+// One side per player: triangle, square, pentagon or hexagon.
+export function parchisSides(players:number):number{return players;}
 export function parchisLayout(sides=4):ParchisLayout{
  const colors=PARCHIS_COLORS.slice(0,sides) as ParchisColor[],cells=sides*PARCHIS_ARM;
  return {sides,cells,shared:cells-4,goal:cells+3,colors,starts:Object.fromEntries(colors.map((c,k)=>[c,k*PARCHIS_ARM+4])),safe:colors.flatMap((_,k)=>[4,11,16].map(n=>k*PARCHIS_ARM+n))};
@@ -90,10 +90,10 @@ function settle(state:ParchisState):ParchisState {
 }
 function nextDie(state:ParchisState,n=0):number{return 1+Math.floor(createRng(state.seed+state.rollCount*104729+n*7919)()*6);}
 export const parchisEngine:GameEngine<ParchisState,ParchisView,ParchisAction>={
- id:'parchis',label:'Parchís',minPlayers:2,maxPlayers:6,
+ id:'parchis',label:'Parchís',minPlayers:3,maxPlayers:6,
  createInitialState(players,seed){
-  if(players.length<2||players.length>6||new Set(players).size!==players.length)throw Error('Parchís requiere de 2 a 6 jugadores distintos.');
-  const sides=parchisSides(players.length),palette:readonly ParchisColor[]=players.length===2?['yellow','red']:PARCHIS_COLORS.slice(0,sides),choose=players.length>=5;
+  if(players.length<3||players.length>6||new Set(players).size!==players.length)throw Error('Parchís requiere de 3 a 6 jugadores distintos.');
+  const sides=parchisSides(players.length),palette:readonly ParchisColor[]=PARCHIS_COLORS.slice(0,sides),choose=players.length>=5;
   return {initialRound:1,players:[...players],colors:Object.fromEntries(players.map((id,i)=>[id,palette[i]])),pieces:Object.fromEntries(players.map(id=>[id,[-1,-1,-1,-1]])),seed,rollCount:0,turn:0,phase:choose?'setup':'start',die:null,sixes:0,lastPiece:null,bonuses:[],startingRolls:{},candidates:[...players],winner:null,finished:false,sides,diceCount:choose?null:1,rolled:[],used:[],repeat:false,
    log:[...(choose?[`Mesa de ${players.length}: ${players[0]} elige jugar con uno o dos dados.`]:[]),'Cada jugador tira el dado. Empieza quien saque la puntuación más alta.']};
  },

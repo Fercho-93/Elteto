@@ -52,7 +52,7 @@ try{
   if(id==='player-a'&&[320,390,844,1280].includes(width)&&!insets)await page.screenshot({path:`tests/artifacts/parchis/${width}-${height}-${game.players.length}p-${game.diceCount??'x'}d-${game.phase}-${kind}.png`});
  }
  // Play actual controls from an initial state, without supplying client dice values.
- let game=engine.createInitialState(['player-a','player-b'],12),moved=false;
+ let game=engine.createInitialState(['player-a','player-b','player-c'],12),moved=false;
  for(let n=0;n<100&&!moved;n++){
   const id=game.players[game.turn];await page.setViewportSize({width:390,height:664});await page.evaluate(({game,id})=>window.testTable('parchis',game,id),{game,id});
   const legal=engine.view(game,id).legalMoves;
@@ -62,6 +62,6 @@ try{
  assert.ok(moved);assert.ok(Object.values(game.pieces).flat().some(p=>p>=0));
  await page.locator('[data-action="parchis-zoom-open"]').click();assert.ok(await page.locator('.parchis-zoom').evaluate(el=>el.open));assert.ok(await page.locator('.parchis-zoom .parchis-board').evaluate(el=>el.getBoundingClientRect().width>=700));
  await page.keyboard.press('Escape');assert.equal(await page.locator('.parchis-zoom').evaluate(el=>el.open),false);
- await page.locator('.game-menu-button').click();assert.equal(await page.locator('.scoreboard li').count(),2);await page.keyboard.press('Escape');
+ await page.locator('.game-menu-button').click();assert.equal(await page.locator('.scoreboard li').count(),3);await page.keyboard.press('Escape');
  assert.deepEqual(errors,[]);await writeFile(`tests/artifacts/parchis/measurements-${kind}.json`,JSON.stringify(rows,null,2));console.log(`${kind}: ${rows.length} Parchís layouts/POVs on triangle, square, pentagon and hexagon boards, unique cells, every pawn, full game states, 44px controls, actual rolling/moving and magnifier: OK`);
 }finally{await browser.close();await new Promise(r=>server.close(r));}
