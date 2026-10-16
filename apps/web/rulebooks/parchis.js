@@ -75,7 +75,7 @@ export default {
     { title: 'Así se juega en Elteto', blocks: [
       { list: [
         'La aplicación sigue la edición **Cayro en español**. En el tablero cuadrado las salidas son 5, 22, 39 y 56; en todos, los seguros se marcan con un círculo.',
-        'El botón **«Sortear»** hace la tirada inicial y **«Tirar»** el resto de turnos. Tras tirar eliges ficha con los botones **«Salir»**, **«Mover n»** o **«Meta»**.',
+        'El botón **«Sortear»** hace la tirada inicial y **«Tirar»** el resto de turnos. Tras tirar eliges ficha con los botones **«Ficha 1»** a **«Ficha 4»**; debajo de cada uno pone lo que hará: **«Salir»**, **«Avanza n»** o **«Meta»**.',
         'Solo se habilitan las fichas que **pueden** moverse. La aplicación aplica las barreras, el máximo de dos fichas por casilla, los seguros y la entrada exacta.',
         'Con un 5 eliges entre **salir** o **mover**. Con un 6 y una barrera propia, solo se ofrece abrirla.',
         'Las bonificaciones de 20 y 10 se presentan como un movimiento más: avanzas esa cantidad completa con una ficha. Si no hay ninguna posible, se pierde sola.',
