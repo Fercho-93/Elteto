@@ -24,6 +24,8 @@ export function pokerSound(kind){if(!pokerPrefs.sound||document.visibilityState=
 export function handlePokerUI(app,button,view,send){
  const action=button.dataset.action;
    if(action==='catalog-choice'&&button.closest('.poker-bet-inline')){const input=app.querySelector('#catalog-amount-'+button.dataset.index);if(!input||!pokerAmountState(input,view).valid){syncPokerAmounts(app,view);return true;}}
+ if(action==='poker-splash-continue'){const next=view.options.find(option=>option.action?.type==='next-hand');if(next)send({...next.action});return true;}
+ if(action==='poker-splash-close'){app.pokerSplashClosed=`${view.handNumber}:${view.phase}`;app.querySelector('.poker-celebration')?.remove();return true;}
  if(action==='poker-sound-toggle'){pokerPrefs.sound=!pokerPrefs.sound;save('elteto.pokerSound',pokerPrefs.sound?'1':'0');button.setAttribute('aria-pressed',String(pokerPrefs.sound));button.textContent='Sonido: '+(pokerPrefs.sound?'activado':'desactivado');if(pokerPrefs.sound)try{audio||=new (window.AudioContext||window.webkitAudioContext)();void audio.resume().then(()=>pokerSound('cards'));}catch{}return true;}
  if(action==='poker-bb-toggle'){pokerPrefs.blinds=!pokerPrefs.blinds;save('elteto.pokerBB',pokerPrefs.blinds?'1':'0');button.textContent='Saldo: '+(pokerPrefs.blinds?'ciegas grandes':'fichas');for(const el of app.querySelectorAll('.poker-stack b'))el.textContent=pokerStackText(Number(el.closest('.poker-stack').dataset.chips),view);return true;}
  if(action==='poker-info'){const dialog=app.querySelector('.poker-player-info'),id=button.dataset.player;for(const entry of dialog.querySelectorAll('[data-info-player]'))entry.hidden=entry.dataset.infoPlayer!==id;dialog.showModal();return true;}

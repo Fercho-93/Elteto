@@ -60,6 +60,21 @@ try{
  assert.match(await page.locator('.poker-celebration h2').textContent(),/ganado|gana|repartida/);
  assert.match(await page.locator('.poker-win-players b').first().textContent(),/fichas/);
  assert.equal(await page.locator('.catalog-dock .catalog-result').count(),0);
+ // El resultado vive en el aviso, no en la mesa: sin «Ver detalle de la mano», con el detalle de los botes, y se queda hasta que continúa quien ganó.
+ assert.equal(await page.locator('.catalog-dock .poker-result-details,.poker-action-panel details').count(),0);
+ assert.doesNotMatch(await page.locator('#app').innerText(),/Ver detalle de la mano/);
+ assert.equal(await page.locator('.poker-celebration .poker-result-details .poker-result-breakdown p').count()>=1,true,'el aviso incluye el detalle de la mano');
+ await page.waitForTimeout(3300);
+ assert.equal(await page.locator('.poker-celebration').count(),1,'el aviso no se quita solo');
+ assert.equal(await page.locator('.poker-celebration [data-action="poker-splash-continue"]').count(),1,'quien ha ganado lo cierra con Continuar');
+ assert.equal(await page.locator('.poker-action-next-hand').evaluate(el=>getComputedStyle(el).display),'none','sin botón duplicado en la mesa');
+ await page.evaluate(()=>window.spySend());await page.locator('[data-action="poker-splash-continue"]').click();
+ assert.deepEqual(await page.evaluate(()=>window.sent),[{type:'next-hand'}],'Continuar reparte la siguiente mano');await page.evaluate(()=>window.unspySend());
+ // El resto de la mesa ve lo mismo, sin botón, y espera.
+ await page.evaluate(({v,g})=>window.directPoker({...v,options:[]},g),{v:engine.view(game,self),g:game});
+ assert.match(await page.locator('.poker-celebration .poker-win-waiting').textContent(),/Esperando a que .+ continúe/);
+ assert.equal(await page.locator('.poker-celebration button').count(),0,'los demás no pueden quitar el aviso');
+ await page.evaluate(({v,g})=>window.directPoker(v,g),{v:engine.view(game,self),g:game});
  await idle();
  assert.equal(await page.locator('.catalog-surface .poker-card-zone .catalog-card').count(),0);
  await page.locator('.catalog-hand .catalog-card').first().click();await page.locator('[data-action="catalog-poker-show"]').click();

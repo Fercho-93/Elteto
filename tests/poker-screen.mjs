@@ -38,7 +38,8 @@ try{
   await page.evaluate(game=>window.pokerFixture(game,'p0'),game);
   const shown=await measure();
   assert.ok(shown.page&&shown.inside&&shown.clear&&shown.distinct,JSON.stringify({showdown:true,count,width,height,...shown}));
-  assert.equal(await page.locator('.catalog-dock .poker-showdown').count(),count);
+  await page.locator('.poker-celebration').waitFor();
+  assert.equal(await page.locator('.poker-celebration .poker-showdown').count(),count);
   if(count===7&&width===390&&height===844)await page.screenshot({path:'tests/artifacts/poker/showdown.png'});
  }
  await page.setViewportSize({width:390,height:844});let game=engine.createInitialState(['p0','p1','p2'],9);
