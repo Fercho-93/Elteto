@@ -61,9 +61,11 @@ export function chooseBotAction(engine: AnyEngine, v: any, playerId: string, ran
     return v.betting?.pendingBet ? {type: 'accept'} : {type: 'pass'};
   }
   if (engine.id === 'parchis') {
+    if (v.phase === 'setup') return v.diceChoice ? {type: 'dice', count: 2} : null;
     if (['start','roll'].includes(v.phase)) return {type: 'roll'};
     const moves = v.legalMoves || [];
-    return moves.length ? {type: 'move', piece: pick<any>(moves).piece} : null;
+    const move = moves.length ? pick<any>(moves) : null;
+    return move ? {type: 'move', piece: move.piece, dice: move.dice} : null;
   }
   if (v.validCards?.length) return {type: 'play', card: pick(v.validCards)};
   if (v.moves?.length) return {type: 'move', path: pick<any>(v.moves).path};

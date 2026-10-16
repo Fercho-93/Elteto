@@ -140,7 +140,9 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     "players": [
       2,
       3,
-      4
+      4,
+      5,
+      6
     ],
     "material": "parchis",
     "defaultVariant": "cayro-es",
@@ -149,8 +151,8 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "url": "https://cayro.es/wp-content/uploads/2025/01/074-1-074-6-095-096-097-100-118-160-608-632-752-843-860-1615-2631-t-131-a-t-134-t-134-a-t-135-t-136-t-138-t-138-6-t-138-6-a-t-138-a-t-139-t-155-ins-parchis-p-0622-es-en-fr-de-it-pt-el-pl-nl-af.pdf",
       "sha256": "a25b7b509900f943a645bdb02652f0c729f3ed8d9941f4e3411d461f33d5659f"
     },
-    "summary": "Salida con 5; 6 repite y cuenta 7 con cuatro fichas fuera; tercer 6 devuelve última ficha; capturar +20, meta +10 y llegada exacta.",
-    "implementationNotes": "Tablero Elteto de 68 casillas, pasillos de siete y meta exacta: salidas amarillo 5, verde 22, rojo 39 y azul 56. Seguros 5/12/17 y sus rotaciones. Máximo dos fichas por casilla; 5 permite salir o mover; sin excepción de captura en salidas seguras. Desempate inicial entre empatados y bonificaciones completas si hay movimiento válido.",
+    "summary": "Salida con 5; 6 repite y cuenta 7 con cuatro fichas fuera; tercer 6 devuelve última ficha; capturar +20, meta +10 y llegada exacta. Tablero de 3 a 6 lados; con 5 o 6 jugadores se elige uno o dos dados.",
+    "implementationNotes": "Tablero Elteto de 17 casillas por brazo: triángulo (3, 51 casillas), cuadrado (2 o 4, 68), pentágono (5, 85) y hexágono (6, 102), con pasillos de siete y meta exacta. En el cuadrado, salidas amarillo 5, verde 22, rojo 39 y azul 56; naranja y morado continúan cada 17. Seguros 5/12/17 de cada brazo. Con dos dados cada dado mueve por separado, sale con un 5 o con la suma 5, los dobles repiten, abren barreras y al tercero vuelve la última ficha; el 6 cuenta 7 sin fichas en casa. Máximo dos fichas por casilla; 5 permite salir o mover; sin excepción de captura en salidas seguras. Desempate inicial entre empatados y bonificaciones completas si hay movimiento válido.",
     "phases": [
       "tirar",
       "mover",

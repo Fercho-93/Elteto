@@ -3,7 +3,7 @@ import {createServer} from 'node:http';
 import {readFile,mkdir} from 'node:fs/promises';
 import {getGame,parchisEngine,nextBotMove} from '../dist/game-core/index.js';
 import {DICE_DURATION,PAWN_STEP,CHECKER_STEP,CAPTURE_FADE,PIECE_TRANSFER,gooseFlights} from '../dist/game-physics.js';
-import {pawnPlacement,pawnPoint,boardAxis} from '../dist/parchis-board.js';
+import {pawnPlacement,pawnPoint} from '../dist/parchis-board.js';
 import {speechText} from '../dist/table-speech.js';
 import {chromium,webkit} from 'playwright';
 const fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1]+`
@@ -27,7 +27,7 @@ try{
  for(const page of pages)await page.emulateMedia({reducedMotion:'reduce'});
  for(const progress of [-1,0,3,8,20,38,63,64,70,71]){
   game.pieces.a[0]=progress;await show('parchis',game);
-  const [x,y]=pawnPoint(game.colors.a,progress,0),expected={x:boardAxis(x),y:boardAxis(y)};
+  const [x,y]=pawnPoint(game.colors.a,progress,0),expected={x,y};
   for(const page of pages){const delta=await page.locator('.parchis-table [data-pawn="a:0"]').evaluate((el,expected)=>{const svg=el.parentElement.querySelector('svg'),point=new DOMPoint(expected.x,expected.y).matrixTransform(svg.getScreenCTM()),rect=el.getBoundingClientRect();return Math.hypot(point.x-rect.x-rect.width/2,point.y-rect.y-rect.height/2);},expected);assert.ok(delta<.75,`${progress}: counter centred on the SVG board (${delta})`);}
  }
  // A shared square has two separated, aligned counters; movement lands without snapping.

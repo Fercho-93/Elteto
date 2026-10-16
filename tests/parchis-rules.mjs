@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {parchisEngine as engine,legalParchisMoves,parchisSquare,PARCHIS_STARTS,PARCHIS_SAFE,createRng} from '../dist/game-core/index.js';
+import {parchisEngine as engine,legalParchisMoves,parchisSquare,parchisLayout,PARCHIS_STARTS,PARCHIS_SAFE,createRng} from '../dist/game-core/index.js';
 const base=()=>({...engine.createInitialState(['a','b'],1),phase:'move',turn:0,die:1,pieces:{a:[5,-1,-1,-1],b:[-1,-1,-1,-1]}});
 function dieState(s,die){for(let seed=0;seed<1000;seed++)if(1+Math.floor(createRng(seed+s.rollCount*104729)()*6)===die)return {...s,seed};throw Error('No die seed');}
 const enemy=square=>(square-PARCHIS_STARTS.red+68)%68;
@@ -59,18 +59,20 @@ s=engine.applyAction(dieState({...base(),phase:'roll',sixes:2,lastPiece:0},6),'a
 s=engine.createInitialState(['a','b'],1);delete s.lastRoll;delete s.initialRound;s=engine.applyAction(s,'a',{type:'roll',expectedRoll:0});assert.equal(s.lastRoll.round,1);
 // Full deterministic games also verify input immutability, view isolation and color assignment.
 for(let seed=1;seed<=90;seed++){
- const count=2+seed%3,ids=['a','b','c','d'].slice(0,count);let game=engine.createInitialState(ids,seed);
+ const count=2+seed%5,ids=['a','b','c','d','e','f'].slice(0,count);let game=engine.createInitialState(ids,seed);
+ if(game.phase==='setup')game=engine.applyAction(game,'a',{type:'dice',count:1+seed%2});
+ const goal=parchisLayout(game.sides).goal;
  for(let step=0;step<6000&&!game.finished;step++){
   const id=game.players[game.turn],view=engine.view(game,id),snapshot=JSON.stringify(game);
   assert.ok(!('seed' in view)&&!('rollCount' in view)&&!('candidates' in view));
-  const moves=view.legalMoves;const action=moves.length?{type:'move',piece:[...moves].sort((a,b)=>(b.to===71)-(a.to===71)||(b.from===-1)-(a.from===-1)||b.to-a.to)[0].piece}:{type:'roll'};
+  const moves=view.legalMoves,best=[...moves].sort((a,b)=>(b.to===goal)-(a.to===goal)||(b.from===-1)-(a.from===-1)||b.to-a.to)[0];const action=moves.length?{type:'move',piece:best.piece,...(seed%3?{dice:best.dice}:{})}:{type:'roll'};
   const next=engine.applyAction(game,id,action);assert.equal(JSON.stringify(game),snapshot);assert.deepEqual(next,engine.applyAction(JSON.parse(snapshot),id,action));game=next;
-  for(const p of ids){assert.equal(game.pieces[p].length,4);assert.ok(game.pieces[p].every(n=>Number.isInteger(n)&&n>=-1&&n<=71));}
+  for(const p of ids){assert.equal(game.pieces[p].length,4);assert.ok(game.pieces[p].every(n=>Number.isInteger(n)&&n>=-1&&n<=goal));}
  }
- assert.ok(game.finished,`Game ${seed} did not finish`);assert.ok(game.pieces[game.winner].every(p=>p===71));
+ assert.ok(game.finished,`Game ${seed} did not finish`);assert.ok(game.pieces[game.winner].every(p=>p===goal));
  const view=engine.view(game,ids[0]);view.pieces[ids[0]][0]=-999;assert.notEqual(game.pieces[ids[0]][0],-999);
 }
-console.log('Parchís: 90 full games, starting ties, safe cells, barriers, forced opening, captures, exact finish, bonus chains, third six, immutability and public views: OK');
+console.log('Parchís: 90 full games with 2 to 6 players and one or two dice, starting ties, safe cells, barriers, forced opening, captures, exact finish, bonus chains, third six, immutability and public views: OK');
 
 // A five during opening determines order only; an actual five enables every home pawn.
 let five=dieState(engine.createInitialState(['a','b'],1),5);five=engine.applyAction(five,'a',{type:'roll'});
@@ -92,3 +94,63 @@ for(let seed=1;seed<=30;seed++){
  for(let i=0;i<20&&!moved.finished;i++){const actor=moved.players[moved.turn],v=engine.view(moved,actor);moved=engine.applyAction(moved,actor,v.phase==='roll'?{type:'roll'}:{type:'move',piece:v.legalMoves[0].piece});assert.deepEqual(engine.view(moved,'a').turnOrder,previousOrder);}
 }
 console.log('Parchís: starting player, fixed clockwise turn order and no movement during sortition: OK');
+
+// Board shape follows the table: 2 and 4 on the square, 3 a triangle, 5 a pentagon, 6 a hexagon.
+const ids=['a','b','c','d','e','f'];
+for(const [count,sides,colors] of [[2,4,['yellow','red']],[3,3,['yellow','green','red']],[4,4,['yellow','green','red','blue']],[5,5,['yellow','green','red','blue','orange']],[6,6,['yellow','green','red','blue','orange','purple']]]){
+ const game=engine.createInitialState(ids.slice(0,count),3),layout=parchisLayout(sides);
+ assert.equal(game.sides,sides);assert.deepEqual(Object.values(game.colors),colors);
+ assert.equal(layout.cells,17*sides);assert.equal(layout.shared,17*sides-4);assert.equal(layout.goal,17*sides+3);assert.equal(layout.safe.length,3*sides);
+ for(const color of colors){
+  const route=Array.from({length:layout.shared},(_,i)=>parchisSquare(color,i,sides));
+  assert.equal(new Set(route).size,layout.shared);assert.equal(route[0],layout.starts[color]);assert.equal(parchisSquare(color,layout.shared,sides),null);
+  // The last shared square is the tip of the colour's own arm, just before its lane.
+  const arm=layout.colors.indexOf(color);assert.equal(route.at(-1),(arm*17-1+layout.cells)%layout.cells);assert.equal(Math.floor(route[0]/17),arm);
+ }
+ const view=engine.view(game,'a');assert.equal(view.sides,sides);assert.equal(view.goal,layout.goal);
+ assert.equal(game.phase,count>=5?'setup':'start');assert.equal(view.diceCount,count>=5?null:1);
+}
+assert.deepEqual(parchisLayout(4).starts,PARCHIS_STARTS);assert.deepEqual(parchisLayout(4).safe,PARCHIS_SAFE);
+assert.throws(()=>engine.createInitialState(ids.concat('g'),1),/2 a 6/);
+// Five or six players choose the dice before the opening roll; only the first seat chooses.
+let table=engine.createInitialState(ids,4);
+assert.throws(()=>engine.applyAction(table,'a',{type:'roll'}),/uno o dos dados/);
+assert.throws(()=>engine.applyAction(table,'b',{type:'dice',count:2}),/turno/);
+assert.throws(()=>engine.applyAction(table,'a',{type:'dice',count:3}),/uno o dos dados/);
+assert.equal(engine.view(table,'a').diceChoice,true);assert.equal(engine.view(table,'b').diceChoice,false);
+let one=engine.applyAction(table,'a',{type:'dice',count:1});assert.equal(one.phase,'start');assert.equal(one.diceCount,1);
+one=engine.applyAction(one,'a',{type:'roll'});assert.equal(one.lastRoll.values,undefined);
+table=engine.applyAction(table,'a',{type:'dice',count:2});assert.equal(table.phase,'start');assert.equal(table.diceCount,2);
+// The opening roll uses both dice and compares the sums.
+for(let i=0;i<6;i++){const id=table.players[table.turn];table=engine.applyAction(table,id,{type:'roll'});assert.equal(table.lastRoll.values.length,2);assert.equal(table.lastRoll.value,table.lastRoll.values[0]+table.lastRoll.values[1]);if(table.phase!=='start')break;}
+// Two dice: each die is played separately, with the same piece or another one.
+const two=(rolled,pieces,extra={})=>({...engine.createInitialState(ids.slice(0,5),1),phase:'move',turn:0,diceCount:2,rolled,used:rolled.map(()=>false),die:rolled[0],repeat:rolled[0]===rolled[1],pieces:{a:pieces,b:[-1,-1,-1,-1],c:[-1,-1,-1,-1],d:[-1,-1,-1,-1],e:[-1,-1,-1,-1]},...extra});
+let d=two([3,4],[10,-1,-1,-1]);
+assert.deepEqual(legalParchisMoves(d).map(m=>[m.piece,m.steps,m.dice.join()]),[[0,3,'0'],[0,4,'1']]);
+d=engine.applyAction(d,'a',{type:'move',piece:0,dice:[1]});assert.equal(d.pieces.a[0],14);assert.equal(d.phase,'move');assert.equal(d.turn,0);assert.deepEqual(d.used,[false,true]);
+assert.deepEqual(legalParchisMoves(d).map(m=>[m.steps,m.dice.join()]),[[3,'0']]);
+assert.throws(()=>engine.applyAction(d,'a',{type:'move',piece:0,dice:[1]}),/no puede moverse/);
+d=engine.applyAction(d,'a',{type:'move',piece:0});assert.equal(d.pieces.a[0],17);assert.equal(d.turn,1);assert.equal(d.phase,'roll');
+// A five on either die or a sum of five takes a piece out; a five can still move instead.
+d=two([5,2],[10,-1,-1,-1]);assert.deepEqual(legalParchisMoves(d).filter(m=>m.from===-1).map(m=>m.dice.join()),['0','0','0']);assert.ok(legalParchisMoves(d).some(m=>m.piece===0&&m.steps===5));
+d=two([2,3],[10,-1,-1,-1]);const exits=legalParchisMoves(d).filter(m=>m.from===-1);assert.equal(exits.length,3);assert.ok(exits.every(m=>m.dice.join()==='0,1'&&m.to===0));
+d=engine.applyAction(d,'a',{type:'move',piece:1,dice:[0,1]});assert.equal(d.pieces.a[1],0);assert.equal(d.turn,1);
+d=two([5,5],[-1,-1,-1,-1]);d=engine.applyAction(d,'a',{type:'move',piece:0,dice:[0]});d=engine.applyAction(d,'a',{type:'move',piece:1,dice:[1]});assert.deepEqual(d.pieces.a,[0,0,-1,-1]);assert.equal(d.turn,0,'A double repeats');assert.equal(d.phase,'roll');
+// A die without a valid move is lost; the other die is still played.
+d=two([2,6],[parchisLayout(5).goal-2,-1,-1,-1]);assert.deepEqual(legalParchisMoves(d).map(m=>m.dice.join()),['0']);d=engine.applyAction(d,'a',{type:'move',piece:0});assert.equal(d.turn,1);assert.match(d.log.at(-2)+d.log.at(-1),/meta|dado/);
+// Six counts seven with nobody at home, per die.
+d=two([6,1],[3,8,20,30]);assert.ok(legalParchisMoves(d).filter(m=>m.dice[0]===0).every(m=>m.steps===7));
+// A double obliges opening a barrier with the first die; afterwards any piece may move.
+d=two([4,4],[6,6,20,-1]);assert.deepEqual([...new Set(legalParchisMoves(d).map(m=>m.piece))],[0,1]);
+d=engine.applyAction(d,'a',{type:'move',piece:0});assert.deepEqual([...new Set(legalParchisMoves(d).map(m=>m.piece))],[0,1,2]);
+d=two([4,2],[6,6,20,-1]);assert.deepEqual([...new Set(legalParchisMoves(d).map(m=>m.piece))],[0,1,2]);
+// Capture and arrival bonuses are played before the remaining die.
+const layout5=parchisLayout(5),rivalAt=progress=>(parchisSquare('yellow',progress,5)-layout5.starts.green+layout5.cells)%layout5.cells;
+d=two([3,2],[7,-1,-1,-1]);d.pieces.b[0]=rivalAt(10);d=engine.applyAction(d,'a',{type:'move',piece:0,dice:[0]});assert.equal(d.pieces.b[0],-1);assert.equal(d.phase,'bonus');assert.deepEqual(d.bonuses,[20]);
+d=engine.applyAction(d,'a',{type:'move',piece:0});assert.equal(d.pieces.a[0],30);assert.equal(d.phase,'move');d=engine.applyAction(d,'a',{type:'move',piece:0});assert.equal(d.pieces.a[0],32);assert.equal(d.turn,1);
+// Three doubles in a row return the last moved piece and end the turn.
+const doubleSeed=s=>{for(let seed=0;seed<5000;seed++){const r=n=>1+Math.floor(createRng(seed+s.rollCount*104729+n*7919)()*6);if(r(0)===r(1))return {...s,seed};}throw Error('No double');};
+d=doubleSeed({...two([1,1],[12,30,-1,-1]),phase:'roll',sixes:2,lastPiece:1});d=engine.applyAction(d,'a',{type:'roll'});assert.equal(d.pieces.a[1],-1);assert.equal(d.turn,1);assert.match(d.log.at(-1),/tres dobles/);
+// Public views carry the dice and never the seed.
+const v=engine.view(two([3,4],[10,-1,-1,-1]),'b');assert.deepEqual([v.diceCount,v.rolled,v.used,v.legalMoves.length,'seed' in v],[2,[3,4],[false,false],0,false]);
+console.log('Parchís: triangle, square, pentagon and hexagon routes, dice choice, two-dice exits, doubles, lost dice, barriers and bonuses: OK');
