@@ -2,7 +2,7 @@ import {BotPacing} from './bot-pacing.js';
 import {MusFlowRunner} from './mus-flow.js';
 import {PokerAbsenceRunner} from './poker-presence.js';
 import {characterProfile, AVATAR_TAKEN_MESSAGE} from './avatar-art.js';
-import { getGame, createMusState, fillBotSeats, nextBotMove, BotRunner, botTurnDelay } from "./game-core/index.js";
+import { getGame, createMusState, fillBotSeats, nextBotMove, BotRunner, botTurnDelay, forfeitGame } from "./game-core/index.js";
 import { connectFirebase } from "./firebase-client.js";
 import { createRoomCode, inviteUrlFor } from "./room-code.js";
 import {
@@ -392,6 +392,16 @@ export class OnlineSession {
     const errors = {};
     try {
       const action = JSON.parse(data.json);
+      if (action?.type === 'leave-game') {
+        const name = this.room.players[playerUid]?.name || 'Un jugador';
+        if (!this.state.finished) {
+          this.onChange({ kind: 'notice', message: `${name} ha salido de la partida.` });
+          const next = forfeitGame(this.engine.id, this.state, playerUid, name);
+          if (next) this.state = next;
+        }
+        await this.publish(errors);
+        return;
+      }
       if(this.engine.id==='mus'&&this.state.version===2){
         if(this.players().some(p=>!p.isBot&&p.away))throw new Error('La mesa está en pausa. Espera a que todos vuelvan a su plaza.');
         if(action.type==='advance'&&playerUid!==this.uid)throw new Error('Espera a que la mesa termine esta transición.');
@@ -519,6 +529,8 @@ export class OnlineSession {
   async exit() {
     if (this.closed) return;
     const room = this.room;
+    // Salir a mitad de partida se anuncia al anfitrión: en una mesa de dos, gana quien se queda.
+    if (room?.status === "playing" && !this.isHost) await this.sendAction({ type: 'leave-game' }).catch(() => {});
     const reference = doc(this.db, "rooms", this.code, "presence", this.uid);
     try {
       if (room && this.isHost && room.status !== "ended") {

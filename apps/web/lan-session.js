@@ -131,7 +131,7 @@ export class LanSession {
       }
       this.local.peers.get(id)?.send({ type: 'ack', seq: message.seq });
     } else if (message.type === 'leave') {
-      if (this.local.started) this.local.connections.get(id).peer.connected = false;
+      if (this.local.started) { this.local.leaveGame(id); this.local.connections.get(id).peer.connected = false; }
       else this.local.handleMessage(id, message);
     }
   }
@@ -150,6 +150,8 @@ export class LanSession {
     } else if (message.type === 'lobby') {
       this.players = data.players; this.gameId = data.gameId; this.roomName = data.roomName;
       this.onChange({ kind: 'lobby', ...data, playerId: this.playerId, isHost: false, roomCode: this.roomCode });
+    } else if (message.type === 'notice') {
+      this.onChange({ kind: 'notice', message: data.message });
     } else if (message.type === 'state') {
       this.onChange({ kind: 'game', players: this.players, gameId: this.gameId, roomName: this.roomName, playerId: this.playerId, isHost: false, view: data.view });
     } else if (message.type === 'error' && data.code === 'avatar-taken') this.onChange({ kind: 'avatar-taken', message: data.message, taken: data.taken || [] });

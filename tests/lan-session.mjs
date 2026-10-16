@@ -135,3 +135,34 @@ assert.equal(pokerHost.local.players().find(p=>p.id===pokerId).character,9);
 assert.equal(pokerHost.local.players().find(p=>p.id===pokerId).away,false);
 await pokerGuest.exit();await pokerHost.exit();
 console.log('LAN póker: ausentarse, continuar, acción automática y reenganche con fichas/personaje: OK');
+// Salir de una partida de damas avisa al anfitrión y le da la victoria; en una mesa de tres solo se avisa.
+{
+ const left=[[],[]];
+ window.ELTETO_LAN.hostKey='secret';
+ const hostD=await LanSession.create({gameId:'damas-espanolas',hostName:'Ana',character:2,roomName:'Damas'},e=>left[0].push(e));
+ window.ELTETO_LAN.hostKey=null;
+ const guestD=await LanSession.join('ABCD2345','Bea',e=>left[1].push(e),9);
+ await tick();await tick();await hostD.startGame();await tick();await tick();
+ await guestD.exit();await tick();await tick();
+ const notice=left[0].find(e=>e.kind==='notice');
+ assert.match(notice.message,/Bea ha salido de la partida/);
+ const view=hostD.local.engine.view(hostD.local.state,'host');
+ assert.equal(view.finished,true);assert.equal(view.winner,'host');assert.equal(view.forfeitBy,guestD.playerId);assert.equal(view.forfeitName,'Bea');
+ await hostD.exit();
+ const tres=[[],[],[]];
+ window.ELTETO_LAN.hostKey='secret';
+ const hostO=await LanSession.create({gameId:'oca',hostName:'Ana',character:2,roomName:'Oca'},e=>tres[0].push(e));
+ window.ELTETO_LAN.hostKey=null;
+ const first=globalThis.sessionStorage,second=new Map();
+ const g1=await LanSession.join('ABCD2345','Bea',e=>tres[1].push(e),9);
+ globalThis.sessionStorage={getItem:k=>second.get(k)||null,setItem:(k,v)=>second.set(k,v)};
+ const g2=await LanSession.join('ABCD2345','Cris',e=>tres[2].push(e),5);
+ globalThis.sessionStorage=first;
+ await tick();await tick();await hostO.startGame();await tick();await tick();
+ await g2.exit();await tick();await tick();
+ assert.ok(tres[0].some(e=>e.kind==='notice'&&/Cris ha salido/.test(e.message)));
+ assert.ok(tres[1].some(e=>e.kind==='notice'&&/Cris ha salido/.test(e.message)),'the other guest is told too');
+ assert.equal(hostO.local.state.finished,false);
+ await g1.exit();await hostO.exit();
+}
+console.log('LAN: salir de una partida avisa y da la victoria al que se queda en una mesa de dos: OK');

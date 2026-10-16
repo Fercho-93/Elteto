@@ -26,7 +26,33 @@ export function registerGame(engine: AnyEngine): void {
   const plan = getGamePlan(engine.id);
   if (plan.status !== "playable") throw new Error(`Motor pendiente de validación: ${engine.id}`);
   if (!plan.players.includes(engine.minPlayers) || !plan.players.includes(engine.maxPlayers)) throw new Error(`Jugadores incompatibles con la ficha: ${engine.id}`);
+  // Una partida ganada por abandono lo anuncia en la vista de todos los jugadores.
+  const view = engine.view.bind(engine);
+  engine.view = (state, playerId) => {
+    const result = view(state, playerId);
+    return state?.forfeit ? { ...result, forfeitBy: state.forfeit, forfeitName: state.forfeitName } : result;
+  };
   registry.set(engine.id, engine);
+}
+
+/** Juegos con un recuento propio de manos y fichas, donde una victoria por abandono no tiene sentido. */
+const NO_FORFEIT = new Set(["mus", "texas-holdem"]);
+
+/**
+ * Si alguien se marcha de una mesa de dos, la partida termina y gana quien se queda.
+ * Devuelve null cuando no procede (más de dos jugadores, partida ya terminada o juego con
+ * recuento propio): en ese caso la persona queda ausente y puede volver a su plaza.
+ */
+export function forfeitGame(engineId: string, state: any, leaver: PlayerId, leaverName = ""): any | null {
+  if (!state || state.finished || NO_FORFEIT.has(engineId.replace(/_/g, "-")) || !Array.isArray(state.players) || !state.players.includes(leaver)) return null;
+  const rest: PlayerId[] = state.players.filter((id: PlayerId) => id !== leaver);
+  if (rest.length !== 1) return null;
+  const name = leaverName || leaver;
+  return {
+    ...state, finished: true, phase: "finished", winner: rest[0], handWinner: rest[0], loser: undefined,
+    drawOffer: null, forfeit: leaver, forfeitName: name,
+    log: [...(state.log || []), `${name} ha salido de la partida. Gana ${rest[0]}.`],
+  };
 }
 
 export function getGame(id: string): AnyEngine {
