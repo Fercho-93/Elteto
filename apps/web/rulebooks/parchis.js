@@ -1,6 +1,6 @@
 export default {
   tagline: 'Una carrera de cuatro fichas por color: saca con un 5, captura rivales, forma barreras y entra en meta con el número exacto.',
-  facts: [['Jugadores', '2 a 6'], ['Material', 'Tablero de 17 casillas por color (triángulo, cuadrado, pentágono o hexágono), 4 fichas por jugador y uno o dos dados'], ['Duración', '30–60 min']],
+  facts: [['Jugadores', '3 a 6'], ['Material', 'Tablero de 17 casillas por color (triángulo, cuadrado, pentágono o hexágono), 4 fichas por jugador y uno o dos dados'], ['Duración', '30–60 min']],
   sections: [
     { title: 'Objetivo', blocks: [
       'Ser el primero en llevar **tus cuatro fichas a la meta**, en el centro del tablero. Cada ficha sale de su casa, da la vuelta completa al tablero y entra por el pasillo de su color.',
@@ -8,8 +8,8 @@ export default {
     { title: 'Material y preparación', blocks: [
       { list: [
         'Cada jugador tiene un color y **cuatro fichas**, que empiezan en su casa (el nido).',
-        'Los colores son amarillo, verde, rojo y azul, y con más jugadores **naranja** y **morado**, por orden de asiento. Con **2 jugadores** juegan amarillo y rojo, enfrentados.',
-        'El tablero se adapta a la mesa: **triángulo** con 3 jugadores (51 casillas), **cuadrado** con 2 o 4 (68), **pentágono** con 5 (85) y **hexágono** con 6 (102). Cada color tiene su brazo de 17 casillas, con la salida en la quinta: en el cuadrado, la 5 (amarillo), la 22 (verde), la 39 (rojo) y la 56 (azul); en el pentágono y el hexágono, naranja sale en la 73 y morado en la 90.',
+        'Los colores son amarillo, verde, rojo y azul, y con más jugadores **naranja** y **morado**, por orden de asiento.',
+        'El tablero se adapta a la mesa: **triángulo** con 3 jugadores (51 casillas), **cuadrado** con 4 (68), **pentágono** con 5 (85) y **hexágono** con 6 (102). Cada color tiene su brazo de 17 casillas, con la salida en la quinta: en el cuadrado, la 5 (amarillo), la 22 (verde), la 39 (rojo) y la 56 (azul); en el pentágono y el hexágono, naranja sale en la 73 y morado en la 90.',
         'Con **5 o 6 jugadores**, antes del sorteo el primer jugador elige si se juega con **uno o dos dados**.',
         '**Sorteo inicial**: cada jugador tira una vez. Empieza quien saca más. Si hay empate, solo repiten los empatados. Esta tirada no mueve fichas.',
       ] },

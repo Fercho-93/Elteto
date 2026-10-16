@@ -43,7 +43,7 @@ try{
  await page.emulateMedia({reducedMotion:'reduce'});await show({...game,lastRoll:{sequence:1,player:'a',value:5,initial:true,round:1}});
  assert.equal(await page.locator('.parchis-dock').getAttribute('aria-busy'),'false');
  assert.equal(await page.locator('.die-cube').evaluate(el=>el.getAnimations().length),0);
- const playable={...engine.createInitialState(['a','b'],17),phase:'move',turn:0,die:5,lastRoll:{sequence:1,player:'a',value:5,initial:false,round:1}};
+ const playable={...engine.createInitialState(['a','b','c'],17),phase:'move',turn:0,die:5,lastRoll:{sequence:1,player:'a',value:5,initial:false,round:1}};
  await show(playable);await page.waitForFunction(()=>document.querySelector('.parchis-dock').getAttribute('aria-busy')==='false');
  assert.match(await page.locator('.parchis-die small').textContent(),/Tirada actual/);
  assert.equal(await page.locator('.parchis-piece-choices button:enabled').count(),4);
