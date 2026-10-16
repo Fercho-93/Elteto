@@ -4,7 +4,7 @@
 import {PARCHIS_COLORS,PARCHIS_ARM,parchisLayout,parchisSquare} from './game-core/index.js';
 
 export const CELL_ACROSS=1.6,CELL_ALONG=.8875,ROWS=8;
-const ARM_WIDTH=3*CELL_ACROSS,ARM_LENGTH=ROWS*CELL_ALONG,FRAME=.45,PAPER=.15;
+const ARM_WIDTH=3*CELL_ACROSS,ARM_LENGTH=ROWS*CELL_ALONG,PAPER=.15;
 // Single pawn, two pawns sharing a square and the number label, in cell units.
 export const PAWN=.8,PAIR=.5,LANE_PAIR=.7,NUMBER_FONT=.3;
 const add=(a,b,k=1)=>[a[0]+b[0]*k,a[1]+b[1]*k];
@@ -39,6 +39,11 @@ export function boxInsideConvex(polygon,{x,y,width,height},margin=0){
  return [[x,y],[x+width,y],[x+width,y+height],[x,y+height]].every(p=>insideConvex(polygon,p,margin));
 }
 
+const pt=p=>`${+p[0].toFixed(3)},${+p[1].toFixed(3)}`;
+// The short way round from direction `from` to `to`, which passes the bisector (outwards).
+function sweep(from,to){let delta=Math.atan2(to[1],to[0])-Math.atan2(from[1],from[0]);while(delta>Math.PI)delta-=2*Math.PI;while(delta<-Math.PI)delta+=2*Math.PI;return delta;}
+export function arcPoints(center,radius,from,to,steps=16){const a=Math.atan2(from[1],from[0]),delta=sweep(from,to);return Array.from({length:steps+1},(_,i)=>add(center,unit(a+delta*i/steps),radius));}
+function arc(center,radius,from,to){const r=+radius.toFixed(3);return `A${r} ${r} 0 0 ${sweep(from,to)>0?1:0} ${pt(add(center,to,radius))}`;}
 const cache=new Map();
 export function parchisGeometry(sides=4){
  if(cache.has(sides))return cache.get(sides);
@@ -71,9 +76,11 @@ export function parchisGeometry(sides=4){
   let label=null;
   for(let reach=radius*.95;reach>size*1.1&&!label;reach-=.02){
    const [x,y]=add(center,bisector,reach),corners=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>add(add([x,y],across,a*labelWidth/2),bisector,b*labelHeight/2));
-   if(corners.every(p=>insideConvex(polygon,p,.1))&&slots.every(s=>circleClearsRotated(s,size/2+.08,{center:[x,y],axis:across,width:labelWidth,height:labelHeight})))label={x,y,rotate:upright(Math.atan2(across[1],across[0])),corners,name,width:labelWidth,height:labelHeight};
+   if(corners.every(p=>insideConvex(polygon,p,.1)&&Math.hypot(p[0]-center[0],p[1]-center[1])<=radius-.06)&&slots.every(s=>circleClearsRotated(s,size/2+.08,{center:[x,y],axis:across,width:labelWidth,height:labelHeight})))label={x,y,rotate:upright(Math.atan2(across[1],across[0])),corners,name,width:labelWidth,height:labelHeight};
   }
-  return [arm.color,{polygon,center,radius,size,slots,label}];
+  // The board corner is rounded along the home circle, which already touches both edges.
+  const start=add(center,arm.u,radius),end=add(center,next.u,radius);
+  return [arm.color,{polygon,center,radius,size,slots,label,path:`M${pt(point)}L${pt(add(point,arm.u,ARM_LENGTH))}L${pt(start)}${arc(center,radius,arm.u,next.u)}L${pt(add(point,next.u,ARM_LENGTH))}Z`,shape:[point,add(point,arm.u,ARM_LENGTH),...arcPoints(center,radius,arm.u,next.u),add(point,next.u,ARM_LENGTH)]}];
  }));
  // The centre is split into one triangle per colour; finished pawns line up inside it.
  const goals=Object.fromEntries(arms.map((arm,k)=>{
@@ -85,10 +92,14 @@ export function parchisGeometry(sides=4){
   }
   return [arm.color,{polygon,size,slots}];
  }));
- const scale=(r,d)=>arms.map((_,k)=>{const b=vertex(k).bisector;return [b[0]*(r+d/Math.cos(alpha)),b[1]*(r+d/Math.cos(alpha))];});
- const frame=scale(outer,FRAME),paper=scale(outer,PAPER),board=scale(outer,0),xs=frame.map(p=>p[0]),ys=frame.map(p=>p[1]);
- const viewBox={x:Math.min(...xs)-.05,y:Math.min(...ys)-.05,width:Math.max(...xs)-Math.min(...xs)+.1,height:Math.max(...ys)-Math.min(...ys)+.1};
- const geometry={sides,layout,arms,apothem,track,lanes,nests,goals,frame,paper,board,center:arms.map((_,k)=>at(k,ARM_WIDTH/2,0)),viewBox};
+ // Polygon with rounded corners: each edge holds an arm tip and each corner follows a home.
+ // No frame is drawn around it, so the paper edge is the edge of the view.
+ const homes=arms.map((arm,k)=>({center:nests[arm.color].center,from:arm.u,to:arms[(k+1)%sides].u})),radius=nests[arms[0].color].radius;
+ const rounded=offset=>homes.flatMap(h=>arcPoints(h.center,radius+offset,h.from,h.to));
+ const paperPath=homes.map((h,k)=>`${k?'L':'M'}${pt(add(h.center,h.from,radius+PAPER))}${arc(h.center,radius+PAPER,h.from,h.to)}`).join('')+'Z';
+ const board=arms.map((_,k)=>{const b=vertex(k).bisector;return [b[0]*outer,b[1]*outer];}),outline=rounded(0),paper=rounded(PAPER),xs=paper.map(p=>p[0]),ys=paper.map(p=>p[1]);
+ const viewBox={x:Math.min(...xs)-.06,y:Math.min(...ys)-.06,width:Math.max(...xs)-Math.min(...xs)+.12,height:Math.max(...ys)-Math.min(...ys)+.12};
+ const geometry={sides,layout,arms,apothem,track,lanes,nests,goals,board,outline,paper,paperPath,center:arms.map((_,k)=>at(k,ARM_WIDTH/2,0)),viewBox};
  cache.set(sides,geometry);return geometry;
 }
 

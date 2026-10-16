@@ -8,7 +8,7 @@ for(const sides of [3,4,5,6]){
  const g=parchisGeometry(sides),layout=parchisLayout(sides),cells=[...g.track.map(c=>c.corners),...Object.values(g.lanes).flat().map(c=>c.corners)];
  assert.equal(g.track.length,17*sides);assert.equal(g.board.length,sides);assert.equal(cells.length,24*sides);
  // Every cell lies on the board, and no two cells overlap.
- for(const c of cells)for(const p of c)assert.ok(insideConvex(g.board,p,-1e-6),`${sides}: cell outside board`);
+ for(const c of cells)for(const p of c)assert.ok(insideConvex(g.outline,p,-1e-6),`${sides}: cell outside board`);
  for(let i=0;i<cells.length;i++)for(let j=i+1;j<cells.length;j++)assert.ok(!overlap(cells[i],cells[j]),`${sides}: cells ${i} and ${j} overlap`);
  // Consecutive squares touch (an edge or the corner at the centre), so the route never jumps.
  for(let i=0;i<g.track.length;i++){const a=g.track[i].corners,b=g.track[(i+1)%g.track.length].corners;assert.ok(a.some(p=>b.some(q=>Math.hypot(p[0]-q[0],p[1]-q[1])<1e-6)),`${sides}: ${i}→${i+1} not adjacent`);}
@@ -18,8 +18,8 @@ for(const sides of [3,4,5,6]){
   assert.equal(start.arm,layout.colors.indexOf(color));assert.equal(last.arm,start.arm);assert.equal(last.column,1);assert.equal(last.row,7);
   assert.equal(lane[0].arm,start.arm);assert.equal(lane[0].row,6);assert.equal(lane[6].row,0);
   const nest=g.nests[color],goal=g.goals[color];
-  assert.ok(nest.label,`${sides} ${color}: nest label has room`);
-  for(const s of nest.slots){assert.ok(circleInsideConvex(nest.polygon,s,nest.size/2),`${sides} ${color}: nest pawn outside home`);assert.ok(Math.hypot(s[0]-nest.center[0],s[1]-nest.center[1])+nest.size/2<=nest.radius+1e-6);}
+  assert.ok(nest.label,`${sides} ${color}: nest label has room`);for(const p of nest.label.corners)assert.ok(insideConvex(nest.shape,p,.05),`${sides} ${color}: label leaves its home`);
+  for(const s of nest.slots){assert.ok(circleInsideConvex(nest.shape,s,nest.size/2),`${sides} ${color}: nest pawn outside home`);assert.ok(Math.hypot(s[0]-nest.center[0],s[1]-nest.center[1])+nest.size/2<=nest.radius+1e-6);}
   for(let a=0;a<4;a++)for(let b=a+1;b<4;b++){assert.ok(Math.hypot(nest.slots[a][0]-nest.slots[b][0],nest.slots[a][1]-nest.slots[b][1])>=nest.size);assert.ok(Math.hypot(goal.slots[a][0]-goal.slots[b][0],goal.slots[a][1]-goal.slots[b][1])>=goal.size);}
   for(const s of goal.slots)assert.ok(circleInsideConvex(goal.polygon,s,goal.size/2),`${sides} ${color}: goal pawn outside centre`);
   assert.ok(goal.size>=.4,`${sides}: goal pawns too small (${goal.size})`);
