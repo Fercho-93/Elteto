@@ -30,7 +30,7 @@ html:has(.catalog-screen),body:has(.catalog-screen),body:has(.catalog-screen) #a
 .poker-table .poker-seat{position:absolute;transform:translate(-50%,-50%);width:72px;height:auto;text-align:center;z-index:3;display:flex;align-items:center;flex-direction:column;gap:1px;line-height:1.2;}
 .poker-seat .rival-original{width:54px;height:54px;filter:drop-shadow(0 4px 3px #0006)}
 .poker-seat .rival-original svg{height:100%;width:100%;}
-.poker-table .poker-name{max-width:100%;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px 4px;background:#172c28d9;border-radius:5px}
+.poker-table .poker-name{max-width:100%;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px 4px;background:#172c28d9;border-radius:5px;text-shadow:none}
 .poker-stack{display:flex;align-items:center;justify-content:center;gap:4px;background:#282435;border:1px solid #b6a376;border-radius:14px;padding:3px 7px;font-size:11px;box-shadow:0 2px 3px #0005;min-width:52px;}
 .poker-chip{display:inline-block;flex:none;width:15px;height:15px;border-radius:50%;background:#d84783;border:3px dashed #ffe8cb;box-shadow:0 0 0 1px #68294d,0 2px 0 #6f2044;}
 .poker-table .poker-status{height:13px;font-size:8px;color:#ddd3b9;white-space:nowrap;}
