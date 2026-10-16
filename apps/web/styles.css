@@ -879,7 +879,7 @@ body:has(.game-page) {
 .lobby-character svg{width:100%;height:100%;}
 .menu-room-shell .player-row{grid-template-columns:36px minmax(0,1fr) 28px;}
 .menu-room-shell .player-row .lobby-character{grid-column:1;grid-row:1 / 3;width:36px;height:40px;}
-@media(min-width:361px) and (max-width:440px){.character-option strong{font-size:9px;white-space:nowrap;}}
+@media(min-width:361px) and (max-width:440px){.character-option strong{font-size:9px;}}
 
 .menu-home .menu-wrap{position:relative;display:flex;flex-direction:column;justify-content:center;padding-bottom:44px;}
 .menu-home .profile-edit{position:absolute;left:2px;bottom:max(12px,env(safe-area-inset-bottom));margin:0;padding:8px 0;font-size:12px;}

@@ -39,7 +39,7 @@ try {
     }
     await page.getByRole('button',{name:'Completar mesa con IA',exact:true}).click();
     assert.equal(await page.locator('.player-row').count(),engine.maxPlayers);
-    assert.equal(await page.locator('.player-row').first().locator('.lobby-character').getAttribute('aria-label'),'Gota');
+    assert.equal(await page.locator('.player-row').first().locator('.lobby-character').getAttribute('aria-label'),'Gotelé');
     assert.equal(await page.locator('.ready-pill').filter({hasText:/^IA$/}).count(),engine.maxPlayers-1);
     await page.locator('[data-action="kick-player"]').first().click();
     assert.equal(await page.locator('.player-row').count(),engine.maxPlayers-1);
