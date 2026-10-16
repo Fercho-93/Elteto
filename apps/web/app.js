@@ -188,13 +188,12 @@ function renderJoinForm() {
   state.screen = "join-form";
   const code = parseRoomCode(state.offerCode);
   applyTakenAvatars(state.takenAvatars);
-  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><span class="menu-brand">ELTETO<span>✦</span></span></header><section class="menu-setup" aria-labelledby="join-title">
-    <p class="menu-kicker">TE GUARDARON SITIO</p><h1 id="join-title">Entra en la sala<span>.</span></h1>
-    ${code ? `<p class="helper">Sala <strong>${esc(code)}</strong>. Entras como invitado, sin instalar nada.</p>` : `<p class="helper">Escanea con la cámara del móvil el QR del anfitrión o escribe el código de su sala.</p>
-    <label class="field-label" for="join-code">Código de la sala</label><input class="text-field join-code" id="join-code" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD2345" value="${esc(state.joinCode || "")}">`}
-    <label class="field-label" for="join-name">Tu nombre de guerra</label><div class="name-character-field"><input class="text-field" id="join-name" maxlength="24" autocomplete="nickname" placeholder="Donde las dan, las toman" value="${esc(state.name)}">${renderCharacterButton(state.character)}</div>
-    ${state.error ? `<p class="error-message" role="alert">${esc(state.error)}</p>` : ''}
-    <button class="menu-button menu-primary menu-create" data-action="join-room">Guardar y entrar en la sala <span aria-hidden="true">→</span></button>
+  app.innerHTML = `<section class="menu-shell profile-shell"><div class="menu-wrap profile-wrap"><header class="profile-brand"><div class="menu-logo" role="img" aria-label="ELTETO"></div></header><section class="menu-setup profile-setup" aria-labelledby="join-title"><h1 id="join-title">¿Quién se sienta a la mesa?</h1><div class="profile-fields">
+    ${code ? "" : `<div class="profile-field"><label class="field-label" for="join-code">Código de la sala</label><input class="text-field join-code" id="join-code" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD2345" value="${esc(state.joinCode || "")}"></div>`}
+    <div class="profile-field"><label class="field-label" for="join-name">Tu nombre de guerra</label><input class="text-field" id="join-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}"></div>
+    <div class="profile-field">${renderCharacterButton(state.character)}</div></div>
+    <div class="profile-entry">${state.error ? `<p class="error-message" role="alert">${esc(state.error)}</p>` : ''}<button class="menu-button menu-secondary full-button" data-action="join-room">Guardar y entrar <span aria-hidden="true">→</span></button>
+    <p class="helper">${code ? `Sala <strong>${esc(code)}</strong>. ` : ""}Elige un avatar que no esté ya en la mesa.</p></div>
   </section></div></section>`;
   if (code) refreshTakenAvatars(code);
 }

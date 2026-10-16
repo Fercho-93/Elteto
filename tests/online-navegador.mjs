@@ -143,7 +143,7 @@ try {
   const third = await movil("tercera");
   await third.page.goto(`${base}?join=${code}`);
   await third.page.locator('.menu-setup[data-avatars="ready"]').waitFor();
-  assert.equal(await third.page.locator('[data-action="join-room"]').innerText().then(t=>t.replace(/\s+/g,' ').trim().replace(/ →$/,'')),'Guardar y entrar en la sala');
+  assert.equal(await third.page.locator('[data-action="join-room"]').innerText().then(t=>t.replace(/\s+/g,' ').trim().replace(/ →$/,'')),'Guardar y entrar');
   // Avatars are unique: the host's (2) and Bea's (9) are listed but cannot be chosen.
   const avatarOptions=async page=>{await page.locator('[data-action="choose-character"]').click();return page.locator('.character-option').evaluateAll(options=>options.map(o=>o.disabled));};
   const closePicker=page=>page.locator('[data-action="close-character-picker"]').click();
