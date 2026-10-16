@@ -664,8 +664,7 @@ app.addEventListener("click", async (event) => {
 });
 
 app.addEventListener("input", (event) => {
-  if(event.target.matches('[data-poker-range]')){const input=app.querySelector('#'+event.target.dataset.ref);input.value=event.target.value;syncPokerAmounts(app,state.view);return;}
-  if(event.target.matches('[data-poker-amount]')){syncPokerAmounts(app,state.view,false);return;}
+  if(event.target.matches('[data-poker-amount]')){syncPokerAmounts(app,state.view);return;}
   if (event.target.matches("#profile-name")) state.name=event.target.value;
   else if (event.target.matches("#host-name")) state.name = event.target.value;
   else if (event.target.matches("#join-name")) state.name = event.target.value;

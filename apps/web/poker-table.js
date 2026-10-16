@@ -47,7 +47,7 @@ export function collectPokerBets(app,previous,view){
  if(reduce||!previous&&view.phase!=='preflop'){if(ended)showPokerCelebration(app,view,app.pokerName,view.playerId);highlight(Object.values(view.winningHands||{}).flatMap(h=>h.cards.map(c=>c.id)));return;}
  if(previous?.view.lastAction?.sequence===view.lastAction?.sequence&&previous?.handNumber===view.handNumber&&previous?.phase===view.phase){highlight(Object.values(view.winningHands||{}).flatMap(h=>h.cards.map(c=>c.id)));return;}
  root.dataset.motionBusy='true';
- for(const b of root.querySelectorAll('.catalog-options button,.catalog-hand button,.poker-bet-controls input')){b.dataset.motionAllowed=String(!b.disabled);b.disabled=true;}
+ for(const b of root.querySelectorAll('.catalog-options button,.catalog-hand button,.poker-bet-inline input')){b.dataset.motionAllowed=String(!b.disabled);b.disabled=true;}
  const a=view.lastAction;
  let offset=0;
  if(plan.fresh){

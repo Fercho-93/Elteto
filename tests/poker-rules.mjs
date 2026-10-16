@@ -67,6 +67,7 @@ console.log('Póker: cartas ganadoras exactas, eventos públicos, revelación vo
 const {pokerControls}=await import('../dist/poker-controls.js');
 const sizing={options:[{label:'Subir',action:{type:'raise',amountInput:{min:40,max:500,value:40}}}],phase:'flop',pot:120,currentBet:20,street:{a:0},playerId:'a',bigBlindAmount:10};
 const sizingHtml=pokerControls(sizing);
-assert.match(sizingHtml,/data-size="90">½ bote/,'Half-pot raise adds half the pot after calling');
-assert.match(sizingHtml,/data-size="160">Bote/,'Pot-sized raise includes the matched bet');
-assert.doesNotMatch(pokerControls({...sizing,phase:'preflop',options:[{action:{type:'raise',amountInput:{min:160,max:500,value:160}}}]}),/>[234] BB</,'Illegal fixed BB sizes are never mislabeled by clamping');
+assert.doesNotMatch(sizingHtml,/<dialog|type="range"|poker-bet-dialog/,'apostar no abre ninguna ventana');
+assert.match(sizingHtml,/data-poker-amount type="number" min="40" max="500"[^>]*value="40"/,'la casilla recibe el mínimo y el máximo del motor');
+assert.match(sizingHtml,/data-action="catalog-choice" data-index="0">Subir</,'el botón confirma la cantidad');
+assert.match(pokerControls({...sizing,currentBet:0,options:[{action:{type:'raise',amountInput:{min:10,max:500,value:10}}}]}),/>Apostar</,'sin apuesta previa el botón dice Apostar');

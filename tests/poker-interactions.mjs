@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {chromium,webkit} from 'playwright';
 import {getGame} from '../dist/game-core/index.js';
 let fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1];
-fixture+=`\nwindow.directPoker=(view,game)=>{testGame=game;state.view=view;renderGame();};`;
+fixture+=`\nwindow.directPoker=(view,game)=>{testGame=game;state.view=view;renderGame();};window.redrawGame=()=>renderGame();window.spySend=()=>{window.sent=[];window.realSend=state.host.applyLocalAction;state.host.applyLocalAction=action=>{window.sent.push(action);};};window.unspySend=()=>{state.host.applyLocalAction=window.realSend;};`;
 const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://local').pathname.slice(1)||'index.html';let b=await readFile('dist/'+file);if(file==='app.js')b=Buffer.from(b+fixture);res.setHeader('content-type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':'text/html');res.end(b);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await(process.env.POKER_BROWSER==='webkit'?webkit:chromium).launch();
 try{
@@ -19,13 +19,26 @@ try{
  assert.equal(await page.locator('.poker-action-panel .catalog-instruction').count(),1);
  assert.equal(await page.locator('.catalog-surface .poker-seat.active-seat .poker-turn-badge').count(),1);
  assert.equal(await page.locator('.catalog-surface .poker-seat.active-seat .poker-turn-badge').getAttribute('data-turn-label'),'TU TURNO');
- await page.locator('[data-action="catalog-poker-open-bet"]').click();
- assert.ok(await page.locator('.poker-bet-dialog button').evaluateAll(buttons=>buttons.every(b=>b.getBoundingClientRect().height>=44)));
- const amount=page.locator('[data-poker-amount]');await page.locator('[data-action="catalog-poker-size"]').filter({hasText:'3 BB'}).click();assert.equal(await amount.inputValue(),'30');await amount.fill('65');await amount.dispatchEvent('input');assert.equal(await amount.inputValue(),'65');
- await page.locator('[data-action="catalog-poker-step"][data-step="10"]').click();assert.equal(await amount.inputValue(),'75');
- assert.equal((await page.evaluate(()=>window.tableSnapshot())).lastAction,undefined,'Changing sizes never bets');
- await page.locator('[data-poker-range]').fill('80');assert.equal(await amount.inputValue(),'80');
- await page.locator('[data-action="catalog-poker-close-bet"]').click();
+ // Apostar es una casilla con la cantidad y el botón, en la propia pantalla: ninguna ventana emergente.
+ assert.equal(await page.locator('.poker-bet-dialog,[data-poker-range],[data-action="catalog-poker-open-bet"]').count(),0,'sin ventana emergente de apuesta');
+ const amount=page.locator('[data-poker-amount]'),bet=page.locator('.poker-bet-inline [data-action="catalog-choice"]'),hint=page.locator('.poker-bet-hint');
+ assert.ok(await amount.isVisible()&&await bet.isVisible(),'la casilla y el botón están a la vista');
+ assert.ok((await bet.boundingBox()).height>=44&&(await amount.boundingBox()).height>=44);
+ const min=Number(await amount.getAttribute('min')),max=Number(await amount.getAttribute('max'));
+ assert.ok(min>game.bigBlindAmount,'la apuesta mínima supera la ciega grande');
+ await amount.fill(String(min-1));assert.ok(await bet.isDisabled(),'por debajo del mínimo no se puede apostar');assert.match(await hint.textContent(),new RegExp('Escribe una cantidad entre '+min));
+ await amount.fill(String(max+1));assert.ok(await bet.isDisabled(),'por encima de tus fichas no se puede apostar');
+ await amount.fill('');assert.ok(await bet.isDisabled(),'una casilla vacía no apuesta');
+ // La pantalla se redibuja con frecuencia: lo escrito y el teclado no se pierden.
+ await amount.fill('65');await amount.focus();await page.evaluate(()=>window.redrawGame());
+ assert.equal(await amount.inputValue(),'65','el redibujado conserva la cantidad');
+ assert.equal(await page.evaluate(()=>document.activeElement?.id),await amount.getAttribute('id'),'el redibujado conserva el foco');
+ assert.ok(await bet.isEnabled());assert.match(await hint.textContent(),/Añades/);
+ await page.screenshot({path:'tests/artifacts/poker/bet-inline.png'});
+ assert.equal((await page.evaluate(()=>window.tableSnapshot())).lastAction,undefined,'Escribir una cantidad nunca apuesta');
+ await page.evaluate(()=>window.spySend());await bet.click();
+ assert.deepEqual(await page.evaluate(()=>window.sent),[{type:'raise',amount:65}],'el botón confirma exactamente la cantidad escrita');
+ await page.evaluate(()=>window.unspySend());
  const other=game.players.find(id=>id!==self);await page.locator(`.catalog-surface [data-action="poker-info"][data-player="${other}"]`).click();
  assert.equal(await page.locator(`.poker-player-info [data-info-player="${other}"] .catalog-card`).count(),0);
  await page.locator('[data-action="poker-info-close"]').click();
