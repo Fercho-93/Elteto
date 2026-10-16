@@ -15,12 +15,14 @@ try {
  browser=await (process.env.LAN_BROWSER==='webkit'?webkit:chromium).launch();
  const errors=[];
  const settled=pages=>Promise.all(pages.map(p=>p.waitForFunction(()=>!document.querySelector('[data-turn-busy="true"]'))));
- const enter=async(page,url)=>{await page.goto(url);await page.locator('[data-action="join-room"]').waitFor();await page.locator('.menu-setup[data-avatars="ready"]').waitFor();if(await page.locator('[data-action="join-room"]').count()){
+ // Re-entering uses a new tab in the same browser (same storage): WebKit can crash
+ // when a tab that already holds a table navigates elsewhere.
+ const enter=async(page,url)=>{if(page.url()!=='about:blank'){const tab=await page.context().newPage();tab.on('pageerror',e=>errors.push(e.message));await page.close();page=tab;}await page.goto(url);await page.locator('[data-action="join-room"]').waitFor();await page.locator('.menu-setup[data-avatars="ready"]').waitFor();if(await page.locator('[data-action="join-room"]').count()){
   // Avatars are unique per table: take 9 when free, otherwise the first free one.
   await page.locator('[data-action="choose-character"]').click();const nine=page.locator('[data-character="9"]:not(:disabled)');
   await (await nine.count()?nine:page.locator('.character-option:not(:disabled)').first()).click();
   await page.locator('[data-action="join-room"]').click();
- }};
+ }return page;};
  const context=async name=>{
   const ctx=await browser.newContext({viewport:{width:390,height:664},serviceWorkers:'block',reducedMotion:'reduce'});
   await ctx.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
@@ -115,11 +117,9 @@ try {
  assert.notEqual(musCode,code,'cada mesa tiene una invitación distinta');
  const old=await context('Enlace antiguo');await enter(old,base+'/?join='+code);
  await old.waitForFunction(()=>document.querySelector('#app').textContent.includes('otra mesa'));
- // Same browser, new tab: WebKit can crash navigating away from the closed-room screen.
- { const tab=await guest.context().newPage();tab.on('pageerror',e=>errors.push(e.message));await guest.close();guest=tab; }
- await enter(guest,base+'/?join='+musCode);
- const c=await context('Cris'),d=await context('Dani');
- await enter(c,base+'/?join='+musCode);await enter(d,base+'/?join='+musCode);
+ guest=await enter(guest,base+'/?join='+musCode);
+ let c=await context('Cris'),d=await context('Dani');
+ c=await enter(c,base+'/?join='+musCode);d=await enter(d,base+'/?join='+musCode);
  await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===4);
  await host.locator('[data-action="start-game"]').click();
  for(const p of [host,guest,c,d]) {
@@ -149,7 +149,7 @@ try {
  // The same room, QR, messages and reconnection path also carry a public board game.
  await host.locator('#host-name').waitFor();await host.locator('#host-name').fill('Ana');
  await host.locator('.game-category:has(input[value="parchis"]) summary').click();await host.locator('input[value="parchis"]').check();await host.locator('[data-action="create-room"]').click();
- const boardCode=(await host.locator('.room-code').textContent()).trim();await enter(guest,base+'/?join='+boardCode);await enter(c,base+'/?join='+boardCode);await enter(d,base+'/?join='+boardCode);
+ const boardCode=(await host.locator('.room-code').textContent()).trim();guest=await enter(guest,base+'/?join='+boardCode);c=await enter(c,base+'/?join='+boardCode);d=await enter(d,base+'/?join='+boardCode);
  await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===4);await host.locator('[data-action="start-game"]').click();
  for(const p of [host,guest,c,d]){await p.locator('.parchis-table [data-pawn]').first().waitFor();assert.equal(await p.locator('.parchis-table [data-pawn]').count(),16);}
  let moved=0;
@@ -178,7 +178,7 @@ try {
  for(const gameId of ['oca','damas-espanolas']){
   await host.locator('#host-name').waitFor();await host.locator('#host-name').fill('Ana');
   await host.locator(`.game-category:has(input[value="${gameId}"]) summary`).click();await host.locator(`input[value="${gameId}"]`).check();await host.locator('[data-action="create-room"]').click();
-  const invitation=(await host.locator('.room-code').textContent()).trim();await enter(guest,base+'/?join='+invitation);
+  const invitation=(await host.locator('.room-code').textContent()).trim();guest=await enter(guest,base+'/?join='+invitation);
   await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===2);await host.locator('[data-action="start-game"]').click();
   for(const p of [host,guest]){await p.locator('.catalog-surface').waitFor();assert.ok(await p.locator('.catalog-surface').evaluate(el=>el.scrollHeight<=el.clientHeight+1&&el.scrollWidth<=el.clientWidth+1));}
   if(gameId==='oca'){
@@ -202,7 +202,7 @@ try {
  {
   await host.locator('#host-name').waitFor();await host.locator('#host-name').fill('Ana');
   await host.locator('.game-category:has(input[value="damas-espanolas"]) summary').click();await host.locator('input[value="damas-espanolas"]').check();await host.locator('[data-action="create-room"]').click();
-  const exitCode=(await host.locator('.room-code').textContent()).trim();await enter(guest,base+'/?join='+exitCode);
+  const exitCode=(await host.locator('.room-code').textContent()).trim();guest=await enter(guest,base+'/?join='+exitCode);
   await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===2);await host.locator('[data-action="start-game"]').click();
   await guest.locator('.catalog-surface').waitFor();await host.locator('.catalog-surface').waitFor();
   await guest.locator('.game-menu-button').click();await guest.locator('[data-action="leave-room"]').click();
