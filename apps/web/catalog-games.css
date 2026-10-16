@@ -242,3 +242,42 @@ html:has(.catalog-screen),body:has(.catalog-screen),body:has(.catalog-screen) #a
 .poker-win-continue:focus-visible{outline:2px solid #76e9e5;outline-offset:2px;}
 .poker-win-waiting{margin:16px 0 0;font:650 12px/1.4 system-ui;color:#9df7e5;}
 .catalog-screen:has(.poker-celebration [data-action="poker-splash-continue"]) .poker-action-next-hand{display:none;}
+/* Portrait phones with room to spare: the community cards get a full-width row of their own. */
+@media(orientation:portrait) and (max-width:599px) and (min-height:740px){
+ .poker-table:is([data-seats="2"],[data-seats="3"],[data-seats="4"],[data-seats="5"]){grid-template-rows:auto minmax(min-content,1fr) auto auto auto auto;}
+ .poker-table:is([data-seats="2"],[data-seats="3"],[data-seats="4"],[data-seats="5"]) .poker-play-area{display:contents;}
+ .poker-table:is([data-seats="2"],[data-seats="3"],[data-seats="4"],[data-seats="5"]) .poker-center-meta{grid-column:2;grid-row:2;align-self:center;}
+ .poker-table:is([data-seats="2"],[data-seats="3"],[data-seats="4"],[data-seats="5"]) .poker-street-label{grid-column:1/4;grid-row:3;justify-self:center;}
+ .poker-table:is([data-seats="2"],[data-seats="3"],[data-seats="4"],[data-seats="5"]) .poker-community{grid-column:1/4;grid-row:4;justify-self:center;width:100%;}
+ .poker-table:is([data-seats="2"],[data-seats="3"],[data-seats="4"],[data-seats="5"]) .poker-payouts{grid-column:2;grid-row:2;align-self:end;justify-self:center;}
+ .poker-table:is([data-seats="2"],[data-seats="3"],[data-seats="4"],[data-seats="5"]):has(.poker-payouts) .poker-center-meta{align-self:start;}
+ .poker-table:is([data-seats="2"],[data-seats="3"],[data-seats="4"],[data-seats="5"]) .poker-edge-bottom{grid-row:6;}
+ .poker-table:is([data-seats="2"],[data-seats="3"],[data-seats="4"],[data-seats="5"]) .poker-community .catalog-public-cards{justify-content:center;gap:5px;}
+ .poker-table:is([data-seats="2"],[data-seats="3"],[data-seats="4"],[data-seats="5"]) .poker-community .catalog-card{width:min(calc((100% - 20px)/5),72px,13cqh)!important;max-width:none;}
+ .poker-table:is([data-seats="2"],[data-seats="3"],[data-seats="4"],[data-seats="5"]){row-gap:6px;}
+ .poker-table:is([data-seats="2"],[data-seats="3"],[data-seats="4"],[data-seats="5"]):has(.poker-payouts) .poker-street-label{display:none;}
+}
+/* The hand result sits in the dock, leaving the felt and every revealed hand in view. */
+.poker-action-panel:has(.poker-celebration)>.catalog-instruction{display:none;}
+.poker-action-panel .poker-celebration{position:static;inset:auto;display:block;background:none;overflow:visible;pointer-events:auto;min-width:0;}
+.poker-action-panel .poker-win-card{width:100%;max-height:none;padding:8px 10px;border-radius:14px;text-align:left;display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;align-items:center;}
+.poker-action-panel .poker-win-kicker{grid-column:1/-1;font-size:8px;}
+.poker-action-panel .poker-win-card h2{grid-column:1/-1;font-size:17px;margin:2px 0 4px;}
+.poker-action-panel .poker-win-players{grid-column:1/-1;justify-content:flex-start;gap:10px;}
+.poker-action-panel .poker-win-players>div{flex-direction:row;max-width:none;gap:6px;}
+.poker-action-panel .poker-win-avatar{width:30px;height:32px;}
+.poker-action-panel .poker-win-players strong{font-size:11px;}.poker-action-panel .poker-win-players b{font-size:13px;}
+.poker-action-panel .poker-win-card .poker-win-hand{grid-column:1/-1;margin:3px 0 0;font-size:12px;}
+.poker-action-panel .poker-win-card .poker-result-details{grid-column:1/-1;margin:6px 0 0;padding-top:6px;}
+.poker-action-panel .poker-win-continue{grid-column:1/-1;min-height:44px;margin:8px 0 0;}
+.poker-action-panel .poker-win-waiting{grid-column:1/-1;margin:6px 0 0;}
+.poker-celebration-settled .poker-win-card{animation:none;}
+.poker-win-flash{position:absolute;inset:0;z-index:20;pointer-events:none;overflow:hidden;animation:poker-win-flash 2.8s ease-out forwards;}
+@keyframes poker-win-flash{0%,70%{opacity:1;}100%{opacity:0;}}
+@media(prefers-reduced-motion:reduce){.poker-win-flash{display:none;}}
+.poker-action-panel:has(.poker-celebration){overflow:auto;min-height:0;}
+.catalog-screen[data-game="texas_holdem"] .catalog-dock:has(.poker-celebration){max-height:min(34dvh,170px);}
+.poker-action-panel .poker-win-kicker{display:none;}
+.poker-action-panel .poker-revealed-hands{display:none;}
+.poker-action-panel:has(.poker-celebration)>.catalog-options:not(:has(button:not(.poker-action-next-hand))){display:none;}
+.poker-action-panel .poker-win-card .poker-result-details{order:5;}
