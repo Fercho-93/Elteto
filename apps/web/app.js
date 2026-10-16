@@ -8,7 +8,7 @@ import {beginParchisRoll} from './parchis-dice.js';
 import {prepareCardPaint,restoreCardPaint,prepareAvatarPaint,restoreAvatarPaint} from './card-paint.js';
 import {TurnSequence,isTurnAction} from './turn-sequence.js';
 import { getGame, listGames, getGamePlan } from "./game-core/index.js";
-import { LocalGuestSession, LocalHostSession } from "./local-session.js";
+import { LocalHostSession } from "./local-session.js";
 import { arrangeCinquilloScreen } from './cinquillo-screen.js';
 import { arrangeMusScreen } from './mus-screen.js';
 import { renderParchisScreen } from './parchis-board.js';
@@ -30,8 +30,8 @@ const app = document.querySelector("#app");
 const toastEl = document.querySelector("#toast");
 const state = {
   roomMode:"lan", musTarget:40, character: savedCharacter(), screen: "home", role: null, name: "", roomName: "", gameId: "", playerId: null,
-  players: [], view: null, host: null, guest: null, online: null, roomCode: "", offerCode: "", answerCode: "",
-  selected: new Set(), error: "", started: false, inviteMode: "offline", handSuit: 'all',
+  players: [], view: null, host: null, online: null, roomCode: "", offerCode: "", joinCode: "",
+  selected: new Set(), error: "", started: false, inviteMode: "local", handSuit: 'all',
 };
 
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
@@ -71,12 +71,12 @@ function renderHome() {
       <div class="menu-hero">
         <div class="menu-art"><div class="menu-logo" role="img" aria-label="Elteto: personajes, dados y coche morado entre palmeras de neón"></div></div>
         <div class="menu-intro"><h1>Se viene<br> <span>PIQUE!</span></h1>
-          <nav class="menu-actions" aria-label="Menú principal">${!LAN || LAN.hostKey ? '<button class="menu-button menu-primary" data-action="open-host"><span class="menu-button-label">Crear partida</span><span class="menu-button-arrow" aria-hidden="true">→</span></button>' : ''}<button class="menu-button menu-secondary" data-action="open-join"><span class="menu-button-label">Unirme a partida</span><span class="menu-button-arrow" aria-hidden="true">→</span></button></nav>
+          <nav class="menu-actions" aria-label="Menú principal"><button class="fuegote-button" data-action="open-host"><span class="fuegote-label">Que se haga<br> el fuegote</span></button></nav>
           ${!LAN && distributionConfig.developmentAdminEnabled ? '<button class="text-button access-switch" data-action="development-admin">Entrar como administrador</button>' : ''}
 
         </div>
       </div>
-      <button class="text-button profile-edit" data-action="edit-profile">Mi nombre y personaje</button><footer class="menu-credit">By Fercho&amp;PAS</footer>
+      <button class="text-button profile-edit" data-action="edit-profile">Mi nombre de guerra y avatar</button><footer class="menu-credit">By Fercho&amp;PAS</footer>
     </div>
   </section>`;
 }
@@ -108,10 +108,9 @@ function endGuestRoom(message = 'La sala ha terminado.') {
   closeGameHelp();
   try{sessionStorage.removeItem(`elteto.joined.${state.roomCode}`);if(LAN)sessionStorage.removeItem(`elteto.lan.${location.host}.${state.roomCode}`);}catch{}
   turnSequence.reset();
-  const session = state.online, guest = state.guest;
-  Object.assign(state, { screen: 'guest-ended', view: null, players: [], host: null, guest: null, online: null, selected: new Set(), offerCode: '', answerCode: '', roomCode: '' });
+  const session = state.online;
+  Object.assign(state, { screen: 'guest-ended', view: null, players: [], host: null, online: null, selected: new Set(), offerCode: '', roomCode: '' });
   session?.teardown?.();
-  if (guest !== session) guest?.leave?.();
   history.replaceState(null, '', location.pathname);
   renderGuestEnded(message);
 }
@@ -143,27 +142,23 @@ function renderHostForm() {
 
 function renderJoinForm() {
   state.screen = "join-form";
-  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><button class="menu-back" data-action="back">← <span>Volver</span></button><a class="menu-brand" href="./" data-action="home">ELTETO<span>✦</span></a></header><section class="menu-setup" aria-labelledby="join-title">
-    <p class="menu-kicker">TE GUARDARON SITIO</p><h1 id="join-title">Unirme a partida<span>.</span></h1>
-    <p class="helper">Abre el enlace o escanea el QR del anfitrión. Entras como invitado, sin instalar nada.</p>
+  const code = parseRoomCode(state.offerCode);
+  app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header"><span class="menu-brand">ELTETO<span>✦</span></span></header><section class="menu-setup" aria-labelledby="join-title">
+    <p class="menu-kicker">TE GUARDARON SITIO</p><h1 id="join-title">Entra en la sala<span>.</span></h1>
+    ${code ? `<p class="helper">Sala <strong>${esc(code)}</strong>. Entras como invitado, sin instalar nada.</p>` : `<p class="helper">Escanea con la cámara del móvil el QR del anfitrión o escribe el código de su sala.</p>
+    <label class="field-label" for="join-code">Código de la sala</label><input class="text-field join-code" id="join-code" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD2345" value="${esc(state.joinCode || "")}">`}
     <label class="field-label" for="join-name">Tu nombre</label><div class="name-character-field"><input class="text-field" id="join-name" maxlength="24" autocomplete="nickname" placeholder="Donde las dan, las toman" value="${esc(state.name)}">${renderCharacterButton(state.character)}</div>
-    <label class="field-label" for="offer-code">Enlace online o código offline</label><div class="scan-row"><button class="button button-paper" data-action="scan-offer">Abrir cámara</button><span>o pega el enlace</span></div><textarea class="code-field" id="offer-code" rows="3" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Código de sala (ABCD2345) o enlace https://fercho-93.github.io/Elteto/?join=…">${esc(state.offerCode)}</textarea>
     ${state.error ? `<p class="error-message" role="alert">${esc(state.error)}</p>` : ''}
     <button class="menu-button menu-primary menu-create" data-action="join-room">Entrar en la sala <span aria-hidden="true">→</span></button>
-    <p class="fineprint">El QR abre este juego y te mete directamente en la sala.</p>
   </section></div></section>`;
 }
 
-function codePanel(label, code, action, compact = false) {
+function invitePanel(code) {
   if (!code) return "";
-  if (compact) return `<section class="code-card compact-invite" aria-label="Invitación a la sala">
-    <canvas class="invite-qr" data-qr-action="${action}" aria-label="Código QR de conexión"></canvas>
-    <div class="compact-invite-tools"><strong>Escanea para entrar</strong><small>${isLocalRoom() ? "Misma Wi-Fi" : "Con internet"}</small><div class="code-actions"><button class="button button-small button-dark" data-action="copy-code" data-code-action="${action}">Copiar código</button><button class="button button-small button-paper" data-action="share-code" data-code-action="${action}">Compartir</button></div>
+  return `<section class="code-card compact-invite" aria-label="Invitación a la sala">
+    <canvas class="invite-qr" aria-label="Código QR de la sala"></canvas>
+    <div class="compact-invite-tools"><strong>Escanea para entrar</strong><small>${isLocalRoom() ? "Misma Wi-Fi" : "Con internet"}</small><div class="code-actions"><button class="button button-small button-dark" data-action="copy-code">Copiar enlace</button><button class="button button-small button-paper" data-action="share-code">Compartir</button></div>
     <details class="invite-link"><summary>Ver enlace</summary><textarea class="code-field code-output" rows="2" readonly spellcheck="false">${esc(code)}</textarea></details></div>
-  </section>`;
-  return `<section class="code-card"><div class="code-head"><span class="code-badge">1</span><div><strong>${label}</strong><small>${action === "offer" && state.inviteMode === "offline" ? "Escanéalo desde Elteto. Sube el brillo de esta pantalla para que el otro móvil lo enfoque." : action === "answer" ? "El anfitrión debe escanearlo desde Elteto para cerrar el enlace local." : "Escanea con la cámara normal del móvil para abrir Elteto."}</small></div></div>
-    <canvas class="invite-qr" data-qr-action="${action}" aria-label="Código QR de conexión"></canvas><textarea class="code-field code-output" rows="3" readonly spellcheck="false">${esc(code)}</textarea>
-    <div class="code-actions"><button class="button button-small button-dark" data-action="copy-code" data-code-action="${action}">Copiar código</button><button class="button button-small button-paper" data-action="share-code" data-code-action="${action}">Compartir código</button></div>
   </section>`;
 }
 
@@ -178,13 +173,11 @@ function renderLobby() {
   const enoughPlayers = game && state.players.length <= game.maxPlayers && getGamePlan(game.id).players.includes(state.players.length);
   const connectionTools = host
     ? `<div class="invite-grid">
-         ${state.online ? "" : '<button class="button button-cyan" data-action="new-offline-invite">Invitar sin internet 🍆</button>'}
-         ${state.online ? "" : '<button class="button button-paper" data-action="new-invite">Invitar con internet</button>'}
+         ${state.online ? "" : '<button class="button button-cyan" data-action="new-invite">Invitar con internet</button>'}
          ${state.online && state.roomCode ? `<p class="helper">Código de la sala: <strong class="room-code">${esc(state.roomCode)}</strong></p>` : ""}
-         ${codePanel(state.inviteMode === "offline" ? "Invitación offline · escanéala desde Elteto" : (isLocalRoom() ? "Mesa local · escanea con la cámara" : "Enlace online · se abre desde la cámara"), state.offerCode, "offer", Boolean(state.online))}
-         ${state.inviteMode === "offline" ? `<label class="field-label" for="answer-code">Respuesta del invitado</label><textarea class="code-field" id="answer-code" rows="3" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Pega aquí su respuesta QR"></textarea><div class="scan-row"><button class="button button-paper" data-action="scan-answer">Escanear respuesta</button><button class="button button-small button-dark" data-action="accept-answer">Aceptar código</button></div>` : ""}
+         ${invitePanel(state.offerCode)}
        </div>`
-    : `<div class="connection-status ${connected ? "connected" : ""}">${connected ? (state.online ? (isLocalRoom() ? "Conectado a la mesa local. Ya estás en la mesa." : "Conectado a la sala. Ya estás en la mesa.") : "Conexión directa establecida. Ya estás en la mesa.") : "Conectando con el anfitrión… No cierres esta página."}</div>${state.answerCode ? codePanel("Muestra este QR al anfitrión para completar la conexión", state.answerCode, "answer") : ""}`;
+    : `<div class="connection-status ${connected ? "connected" : ""}">${connected ? (isLocalRoom() ? "Conectado a la mesa local. Ya estás en la mesa." : "Conectado a la sala. Ya estás en la mesa.") : "Conectando con el anfitrión… No cierres esta página."}</div>`;
   const startButton = host
     ? `<button class="menu-button menu-primary menu-create" data-action="start-game" ${!enoughPlayers ? "disabled" : ""}>${enoughPlayers ? 'Empezar partida <span aria-hidden="true">↗</span>' : `Se necesitan ${game ? playerCountLabel(game) : "más"} jugadores`}</button>`
     : "";
@@ -198,14 +191,14 @@ function renderLobby() {
     ${host && game && game.id!=='mus' && state.players.length < game.maxPlayers ? '<button class="button button-paper full-button" data-action="fill-bots">Completar mesa con IA</button><p class="helper">La IA ocupará las plazas libres. Puedes quitarla antes de empezar.</p>' : ''}
     ${state.gameId==='mus'?`<section class="mus-setup" aria-label="Configuración de Mus"><p>4 jugadores · parejas enfrentadas</p><h3>¿A CUÁNTOS TANTOS JUGAMOS?</h3>${host?`<div>${[30,40].map(n=>`<button data-action="mus-target" data-target="${n}" aria-pressed="${state.musTarget===n}">${n}</button>`).join('')}</div>`:`<p>El anfitrión elige 30 o 40 antes de repartir. Verás el objetivo al comenzar.</p>`}<p>Una partida · 8 reyes y 8 ases · sin vacas</p></section>`:''}${startButton}
     </section><section class="lobby-invite" aria-labelledby="invite-title"><h2 id="invite-title">${host ? "Invita a la mesa" : "Tu conexión"}</h2>
-    <p class="helper ${host && state.online && !isLocalRoom() ? 'compact-help' : ''}">${host ? (state.online ? (isLocalRoom() ? "Comparte el QR o enlace local. Todos debéis estar en la misma Wi-Fi o hotspot. Mantén Elteto abierto en este Android." : "Pásales el enlace, el QR o el código de la sala. Todos necesitáis internet.") : state.inviteMode === "offline" ? "Modo sin internet: los dos móviles deben estar en la misma Wi-Fi o hotspot. Comparte la invitación y escanea luego la respuesta." : "Elige cómo invitar: con internet (enlace, QR o código) o sin internet (misma Wi-Fi).") : (state.online ? (isLocalRoom() ? "Mesa local: deja esta página abierta. Si pierdes la señal, intentaremos recuperar tu plaza." : "Deja Elteto abierto: la sala se mantiene mientras el anfitrión siga conectado.") : "Deja Elteto abierto. Para jugar sin internet, conecta ambos móviles a la misma Wi-Fi o hotspot; el anfitrión escaneará tu respuesta QR.")}</p>
+    <p class="helper ${host && state.online && !isLocalRoom() ? 'compact-help' : ''}">${host ? (state.online ? (isLocalRoom() ? "Comparte el QR o enlace local. Todos debéis estar en la misma Wi-Fi o hotspot. Mantén Elteto abierto en este Android." : "Pásales el enlace, el QR o el código de la sala. Todos necesitáis internet.") : "Pulsa «Invitar con internet» y enséñales el QR: lo escanean con la cámara del móvil.") : (isLocalRoom() ? "Mesa local: deja esta página abierta. Si pierdes la señal, intentaremos recuperar tu plaza." : "Deja Elteto abierto: la sala se mantiene mientras el anfitrión siga conectado.")}</p>
     <div class="connection-box">${connectionTools}</div>
     </section></div>
   </section></div></section>`;
   mountGameHelp(app,state.gameId);
-  for (const canvas of app.querySelectorAll("[data-qr-action]")) {
-    const value = canvas.dataset.qrAction === "answer" ? state.answerCode : state.offerCode;
-    try { window.CONTINUUM.QrEncode.draw(canvas, value); }
+  const qr = app.querySelector(".invite-qr");
+  if (qr) {
+    try { window.CONTINUUM.QrEncode.draw(qr, state.offerCode); }
     catch (error) { console.warn("No se pudo dibujar el código QR.", error); }
   }
 }
@@ -351,7 +344,7 @@ function cinquilloControls(view) {
 
 async function takePokerBreak(){
  if(state.gameId!=='texas-holdem'||!state.view||state.view.finished)return false;
- await (state.online||state.host||state.guest)?.setSittingOut(true);
+ await (state.online||state.host)?.setSittingOut(true);
  turnSequence.reset();state.screen='poker-break';render();return true;
 }
 function renderPokerBreak(){
@@ -375,7 +368,7 @@ function resetToHome() {
   delete app.pokerSnapshot;turnSequence.reset();
   if (GUEST) { endGuestRoom(); return; }
   previousTableKeys = null; renderedGame = null; previousTurn = null; previousSeats = null; shownResult = null;
-  Object.assign(state, { role: null, players: [], view: null, host: null, guest: null, online: null, roomCode: "", offerCode: "", answerCode: "", selected: new Set(), error: "", screen: "home" });
+  Object.assign(state, { role: null, players: [], view: null, host: null, online: null, roomCode: "", offerCode: "", selected: new Set(), error: "", screen: "home" });
   renderHome();
 }
 
@@ -392,8 +385,8 @@ function onHostChange(change) {
   render();
 }
 
-async function copyCode(which) {
-  const value = which === "offer" ? state.offerCode : state.answerCode;
+async function copyCode() {
+  const value = state.offerCode;
   if (!value) return;
   try {
     await navigator.clipboard.writeText(value);
@@ -402,17 +395,17 @@ async function copyCode(which) {
     const field = document.querySelector(".code-output");
     field?.focus();
     field?.select();
-    flash("Selecciona todo el código y cópialo.");
+    flash("Selecciona todo el enlace y cópialo.");
   }
 }
-async function shareCode(which) {
-  const value = which === "offer" ? state.offerCode : state.answerCode;
+async function shareCode() {
+  const value = state.offerCode;
   if (!value) return;
   try {
-    if (navigator.share) await navigator.share(value.startsWith("http") ? { title: "Invitación a Elteto", url: value } : { title: "Código de conexión de Elteto", text: value });
-    else await copyCode(which);
+    if (navigator.share) await navigator.share({ title: "Invitación a Elteto", url: value });
+    else await copyCode();
   } catch (error) {
-    if (error?.name !== "AbortError") flash("No se pudo abrir la hoja de compartir. Prueba a copiar el código.");
+    if (error?.name !== "AbortError") flash("No se pudo abrir la hoja de compartir. Prueba a copiar el enlace.");
   }
 }
 
@@ -477,10 +470,9 @@ app.addEventListener("click", async (event) => {
       try { await requireHostAccess(); } catch { renderAccess(); return; }
       state.screen = "host-form"; state.gameId = state.gameId || ""; render();
     }
-    else if (action === "open-join") { state.screen = "join-form"; render(); }
     else if (action === "home" || action === "back") {
       event.preventDefault();
-      if (state.online) await state.online.exit(); else { state.host?.close(); state.guest?.leave(); }
+      if (state.online) await state.online.exit(); else state.host?.close();
       if (GUEST && state.role === 'client') endGuestRoom(); else resetToHome();
     }
     else if (action === "create-room") {
@@ -504,43 +496,18 @@ app.addEventListener("click", async (event) => {
         renderLobby(); return;
       }
       state.host = new LocalHostSession(gameId, name, state.roomName, onHostChange, state.character);
-      state.inviteMode = "offline"; state.offerCode = ""; state.answerCode = "";
+      state.inviteMode = "local"; state.offerCode = "";
       state.screen = "lobby"; renderLobby();
     } else if (action === "join-room") {
-      const name = document.querySelector("#join-name")?.value.trim() || "Invitado";
-      const invite = document.querySelector("#offer-code")?.value.trim();
-      const roomCode = parseRoomCode(invite);
-      if (roomCode) await beginOnlineJoin(roomCode, name);
-      else {
-        if (!invite) throw new Error("Escanea el QR del anfitrión o pega su código de invitación.");
-        await beginOfflineGuestJoin(invite, name);
-      }
+      const roomCode = parseRoomCode(state.offerCode) || parseRoomCode(state.joinCode);
+      if (!roomCode) throw new Error("Escanea el QR del anfitrión o escribe el código de 8 letras de su sala.");
+      await beginOnlineJoin(roomCode, document.querySelector("#join-name")?.value.trim() || "Invitado");
     } else if (action === "new-invite") {
       await openOnlineRoom();
       flash("Sala con internet lista. Comparte el enlace, el QR o el código.");
-    } else if (action === "new-offline-invite") {
-      if (state.online) throw new Error("Esta sala usa internet. Cierra la sala y crea otra para invitar sin internet.");
-      state.inviteMode = "offline";
-      state.answerCode = "";
-      const offlineOffer = await state.host.createOfflineInvite();
-      if (/^https?:\/\//i.test(String(offlineOffer || "").trim())) {
-        throw new Error("La invitación offline no puede ser una URL. Recarga Elteto para obtener la versión actualizada.");
-      }
-      state.offerCode = offlineOffer;
-      renderLobby();
-      flash("Invitación offline lista. El invitado la escanea dentro de Elteto y luego tú escaneas su respuesta.");
-    } else if (action === "accept-answer") {
-      const answer = document.querySelector("#answer-code")?.value.trim();
-      if (!answer) throw new Error("Pega aquí el código de respuesta del invitado.");
-      await state.host.acceptOfflineAnswer(answer);
-      state.answerCode = "";
-      renderLobby();
-      flash("Respuesta aceptada. La conexión directa está arrancando.");
-    } else if (action === "scan-offer") await beginQrScan("offer");
-    else if (action === "scan-answer") await beginQrScan("answer");
-    else if (action === "stop-scan") endQrScan();
-    else if (action === "copy-code") await copyCode(button.dataset.codeAction);
-    else if (action === "share-code") await shareCode(button.dataset.codeAction);
+    }
+    else if (action === "copy-code") await copyCode();
+    else if (action === "share-code") await shareCode();
     else if (action === "start-game") {
       await (state.online || state.host).startGame(undefined,{targetScore:state.musTarget});
       state.error = "";
@@ -577,12 +544,12 @@ app.addEventListener("click", async (event) => {
     else if (action === "cinquillo-next-hand") sendAction({ type: "next-hand" });
     else if (action === "cinquillo-pass") sendAction({ type: "pass" });
     else if(action==='poker-return'){
-      await (state.online||state.host||state.guest)?.setSittingOut(false);
+      await (state.online||state.host)?.setSittingOut(false);
       state.screen='game';state.error='';render();
     }
     else if (action === "poker-break") { await takePokerBreak(); }
     else if (action === "leave-room") {
-      if (state.online) await state.online.exit(); else { state.host?.close(); state.guest?.leave(); }
+      if (state.online) await state.online.exit(); else state.host?.close();
       resetToHome();
     }
   } catch (error) {
@@ -600,6 +567,7 @@ app.addEventListener("input", (event) => {
   if (event.target.matches("#profile-name")) state.name=event.target.value;
   else if (event.target.matches("#host-name")) state.name = event.target.value;
   else if (event.target.matches("#join-name")) state.name = event.target.value;
+  else if (event.target.matches("#join-code")) state.joinCode = event.target.value;
   else if (event.target.matches("#room-name")) state.roomName = event.target.value;
 });
 
@@ -614,69 +582,6 @@ app.addEventListener("change", (event) => {
 });
 
 
-let scanSession = null;
-async function beginQrScan(target) {
-  endQrScan();
-  if (!window.CONTINUUM?.QrScanner?.isSupported()) {
-    flash("Este navegador no da acceso a la cámara. Puedes pegar el código a mano.");
-    return;
-  }
-  const playerName = document.querySelector("#join-name")?.value.trim() || state.name || "Invitado";
-  if (target === "offer") state.name = playerName;
-  const overlay = document.createElement("section");
-  overlay.className = "scan-overlay";
-  overlay.setAttribute("role", "dialog");
-  overlay.setAttribute("aria-modal", "true");
-  overlay.setAttribute("aria-label", "Escanear invitación");
-  overlay.innerHTML = `<div class="scan-panel"><div class="eyebrow">Conexión de la mesa</div><h2>Apunta al código QR</h2><video id="qr-video" playsinline muted></video><p class="scan-status" role="status">Abriendo cámara…</p><p class="helper">Encaja el QR entero. Si no enfoca, aleja un poco el móvil.</p><button class="button button-paper full-button" data-action="stop-scan">Cancelar</button></div>`;
-  document.body.appendChild(overlay);
-  const session = { overlay, controller: new AbortController(), scanner: null };
-  scanSession = session;
-  // This overlay is outside #app, so it needs its own cancel handler.
-  const cancel = overlay.querySelector('[data-action="stop-scan"]');
-  cancel.addEventListener("click", endQrScan);
-  overlay.addEventListener("keydown", event => { if (event.key === "Escape") endQrScan(); });
-  cancel.focus({ preventScroll: true });
-  try {
-    const scanner = await window.CONTINUUM.QrScanner.start(overlay.querySelector("#qr-video"), value => {
-      if (scanSession !== session) return;
-      endQrScan();
-      flash("QR reconocido. Entrando…");
-      if (target === "offer") {
-        const roomCode = parseRoomCode(value);
-        const join = roomCode ? beginOnlineJoin(roomCode, playerName) : beginOfflineGuestJoin(value, playerName);
-        join.catch(error => { state.error = error.message || "No se pudo entrar en la sala."; flash(state.error); render(); });
-      } else {
-        state.host.acceptOfflineAnswer(value).then(() => { state.answerCode = ""; renderLobby(); flash("Respuesta aceptada. Conexión directa en marcha."); }).catch(error => { state.error = error.message || "No se pudo aceptar la respuesta."; flash(state.error); renderLobby(); });
-      }
-    }, () => {
-      if (scanSession === session) overlay.querySelector(".scan-status").textContent = "Reintentando la lectura. Mantén el QR completo a la vista.";
-    }, { signal: session.controller.signal });
-    if (scanSession !== session) scanner.stop();
-    else { session.scanner = scanner; overlay.querySelector(".scan-status").textContent = "Buscando el QR de la sala…"; }
-  } catch (error) {
-    if (scanSession !== session) return;
-    endQrScan();
-    if (error?.name !== "AbortError") flash(error?.name === "NotAllowedError" ? "Activa el permiso de cámara para escanear el QR." : "No se pudo abrir la cámara. Puedes pegar el código.");
-  }
-}
-function endQrScan() {
-  const session = scanSession;
-  scanSession = null;
-  session?.controller.abort();
-  session?.scanner?.stop();
-  session?.overlay.remove();
-}
-window.addEventListener("pagehide", endQrScan);
-
-function handleGuestChange(change) {
-  if (change.kind === 'disconnected') { endGuestRoom(change.message); return; }
-  if (change.kind === "lobby") { state.players = change.players || []; state.playerId = change.playerId || state.playerId; state.gameId = change.gameId || state.gameId; state.roomName = change.roomName || state.roomName; }
-  else if (change.kind === "game") { receiveGame(change);return; }
-  else if (change.kind === "started") state.error = "";
-  else if (change.kind === "error" || change.kind === "disconnected") { state.error = change.message; flash(change.message); }
-  render();
-}
 // Salas con internet (Firestore). La misma sesión sirve para quien abre la sala y para quien
 // entra, y puede pasar de una a otra si el anfitrión desaparece y alguien toma el relevo.
 function onOnlineChange(change) {
@@ -707,7 +612,6 @@ function onOnlineChange(change) {
 }
 async function openOnlineRoom() {
   if (state.online) { renderLobby(); return; }
-  if (state.host?.connections?.size) throw new Error("Ya hay jugadores conectados sin internet. Cierra la sala y crea otra para invitar con internet.");
   if (LAN?.hostKey && !cachedHostAccess()) {
     if (!distributionConfig.developmentAdminEnabled) throw new Error('Activa tu acceso online desde «Mi acceso».');
     await activatePublicDevelopmentAdmin();
@@ -716,13 +620,13 @@ async function openOnlineRoom() {
   state.inviteMode = "online";
   const session = await OnlineSession.create({ gameId: state.gameId, roomName: state.roomName, hostName: state.name, character: state.character, fillWithAI: Boolean(state.host?.bots?.length) }, onOnlineChange);
   state.host?.close();
-  Object.assign(state, { host: session, online: session, role: "host", playerId: session.playerId, inviteMode: "online", roomCode: session.roomCode, offerCode: session.inviteUrl, answerCode: "", error: "" });
+  Object.assign(state, { host: session, online: session, role: "host", playerId: session.playerId, inviteMode: "online", roomCode: session.roomCode, offerCode: session.inviteUrl, error: "" });
   renderLobby();
 }
 async function beginOnlineJoin(code, name) {
   state.name = name || "Invitado";
   try { localStorage.setItem("elteto.playerName", state.name); } catch {}
-  Object.assign(state, { role: "client", inviteMode: "online", error: "", screen: "lobby", players: [], offerCode: "", answerCode: "", roomCode: code });
+  Object.assign(state, { role: "client", inviteMode: "online", error: "", screen: "lobby", players: [], roomCode: code });
   render();
   try {
     const local = Boolean(LAN && (!LAN.hostKey || code === LAN.roomCode));
@@ -732,34 +636,19 @@ async function beginOnlineJoin(code, name) {
       ? await LanSession.join(code,state.name,onOnlineChange,state.character)
       : await OnlineSession.join(code,state.name,onOnlineChange,undefined,state.character);
     state.online = session;
-    state.guest = session;
     const roomUrl=new URL(location.href);roomUrl.searchParams.set("join",code);history.replaceState(null,"",roomUrl.pathname+roomUrl.search);
     try { sessionStorage.setItem(`elteto.joined.${code}`, "1"); } catch {}
     if (local) state.host = session;
   } catch (error) {
-    Object.assign(state, { role: null, screen: "join-form", roomCode: "" });
+    Object.assign(state, { role: null, screen: "join-form", roomCode: "", offerCode: code });
     throw error;
   }
-}
-async function beginOfflineGuestJoin(offerCode, name) {
-  if (/^https?:\/\//i.test(String(offerCode || "").trim())) {
-    throw new Error("Ese código es una invitación online. Para jugar sin internet, usa el código offline generado por «Invitar sin internet».");
-  }
-  state.name = name || "Invitado";
-  try { localStorage.setItem("elteto.playerName", state.name); } catch {}
-  Object.assign(state, { role: "client", inviteMode: "offline", error: "", screen: "lobby", players: [], offerCode: "", answerCode: "" });
-  render();
-  const guest = new LocalGuestSession(state.name, handleGuestChange, state.character);
-  state.guest = guest;
-  state.answerCode = await guest.connectOffline(offerCode);
-  renderLobby();
 }
 function sendAction(action) {
   if(state.gameId==='mus'&&state.view?.version===2)action={...action,expectedRevision:state.view.revision,...(action.type==='discard'?{expectedDiscardRound:state.view.discardRound}:{})};
   if(turnSequence.busy)return;
   if (state.online) { state.online.sendAction(action).catch((error) => { state.error = error.message; flash(error.message); render(); }); return; }
-  if (state.role === "host") state.host.applyLocalAction(action);
-  else state.guest.sendAction(action);
+  state.host.applyLocalAction(action);
 }
 const incomingRoom = parseRoomCode(location.search);
 function startApplication(){

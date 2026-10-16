@@ -54,7 +54,6 @@ button:disabled { cursor: not-allowed; opacity: .45; transform: none !important;
 .button-dark { background: var(--plum); color: var(--paper); }
 .full-button { width: 100%; margin-top: 16px; }
 .button-small { min-height: 42px; padding: 9px 13px; border-radius: 11px; font-size: 13px; }
-.fineprint { color: #aa98ad; font-size: 11px; margin: 26px 0 0; }
 .panel { width: min(100% - 28px, 600px); margin: 22px auto 48px; padding: clamp(20px, 5vw, 34px); background: #2b1e35; border: var(--edge); border-radius: 21px; box-shadow: 8px 8px 0 var(--black); }
 .eyebrow { color: var(--pink); font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; font-weight: 1000; }
 .panel h2 { color: var(--citrus); font-size: clamp(30px, 8vw, 40px); letter-spacing: -1px; line-height: 1.05; margin: 9px 0 24px; }
@@ -78,11 +77,6 @@ button:disabled { cursor: not-allowed; opacity: .45; transform: none !important;
 .connection-box { background: var(--night); border: 2px solid var(--black); border-radius: 15px; padding: 14px; }
 .invite-grid { display: grid; gap: 12px; }
 .code-card { margin: 2px 0 5px; padding: 13px; background: #34213c; border: 2px dashed var(--pink); border-radius: 13px; }
-.code-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.code-head strong, .code-head small { display: block; }
-.code-head strong { font-size: 14px; }
-.code-head small { color: var(--muted); font-size: 11px; margin-top: 3px; line-height: 1.4; }
-.code-badge { flex: 0 0 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--citrus); color: var(--black); font-weight: 1000; }
 .code-field { resize: vertical; min-height: 90px; font: 12px/1.35 ui-monospace, SFMono-Regular, Consolas, monospace; overflow-wrap: anywhere; }
 .code-output { background: #fdf6e6; }
 .code-actions { display: flex; gap: 9px; margin-top: 9px; }
@@ -143,15 +137,6 @@ button:disabled { cursor: not-allowed; opacity: .45; transform: none !important;
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
 
 .invite-qr { display: block; width: min(100%, 380px); height: auto; aspect-ratio: 1; image-rendering: pixelated; background: var(--paper); border: 8px solid var(--paper); border-radius: 9px; margin: 0 auto 10px; }
-.scan-row { display: flex; align-items: center; gap: 10px; margin: 9px 0; }
-.scan-row span { color: var(--muted); font-size: 12px; font-weight: 750; }
-.scan-overlay { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 16px; background: #09070cf2; }
-.scan-panel { width: min(100%, 500px); padding: 21px; background: #2b1e35; border: var(--edge); border-radius: 20px; box-shadow: 8px 8px 0 #000; }
-.scan-panel h2 { color: var(--citrus); margin: 8px 0 14px; font-size: 28px; }
-.scan-panel video { width: 100%; height: min(44dvh, 340px); min-height: 120px; object-fit: contain; background: #000; border: 3px solid var(--black); border-radius: 13px; }
-.scan-panel .helper { margin: 8px 0 12px; }
-.scan-panel { max-height: calc(100dvh - 32px); overflow-y: auto; }
-.scan-status { min-height: 1.4em; margin: 10px 0 0; color: var(--cyan); font-size: 14px; }
 
 /* Identidad de fruta: descarada, alegre y legible en pantallas pequeñas. */
 .brand { white-space: nowrap; letter-spacing: 1px; }
@@ -517,28 +502,28 @@ body:has(.game-page) {
 .menu-button span { font-size:23px; }
 .menu-button:active { transform:translate(3px,4px); box-shadow:2px 2px var(--black); }
 @media(hover:hover) { .menu-button:hover { transform:translateY(-3px) rotate(-.5deg); box-shadow:6px 9px var(--black); } }
-/* A restrained Miami tint for the two home actions. */
-.menu-actions { gap:17px; padding-inline:3px; }
-.menu-actions .menu-button {
- --button-glow:#f3488d20;
- position:relative; isolation:isolate; overflow:hidden; border:1px solid #ff9bc480; border-radius:12px;
- background:linear-gradient(180deg,#f65b99,var(--pink) 55%,#ee4085);
- color:#291333; transform:skewX(-1.5deg); box-shadow:inset 0 1px 0 #ffffff35,0 3px 0 #160d2680,0 0 10px var(--button-glow);
- transition:transform .18s,box-shadow .18s,filter .18s;
+/* Home action: the flame itself is the button. */
+.menu-actions { justify-items:center; }
+.fuegote-button {
+ position:relative; isolation:isolate; display:grid; place-items:end center; width:clamp(150px,min(48vw,27svh),214px); aspect-ratio:347 / 440; padding:0 0 17%;
+ border:0; background:none; color:var(--paper); cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform .18s;
 }
-.menu-actions .menu-secondary { --button-glow:#69e5e21c; border-color:#b3f4ef80; background:linear-gradient(180deg,#7ae9e4,var(--cyan) 55%,#5ed6d7); }
-.menu-actions .menu-button::after { display:none; }
-.menu-actions .menu-button .menu-button-label { font-size:inherit; font-style:italic; font-weight:850; letter-spacing:.15px; transform:skewX(1.5deg); }
-.menu-actions .menu-button .menu-button-arrow { font-size:23px; transform:skewX(1.5deg); }
-.menu-actions .menu-button:active { transform:translateY(2px) skewX(-1.5deg); box-shadow:inset 0 1px 0 #ffffff25,0 1px 0 #160d2680; }
-.menu-actions .menu-button:focus-visible { outline:3px solid var(--paper); outline-offset:6px; }
-@media(hover:hover) {
- .menu-actions .menu-button:hover { transform:translateY(-1px) skewX(-1.5deg); filter:brightness(1.025); box-shadow:inset 0 1px 0 #ffffff45,0 4px 0 #160d2680,0 0 14px var(--button-glow); }
+/* The flame flickers on its own layer so the button's hit area stays still. */
+.fuegote-button::before {
+ content:""; position:absolute; inset:0; z-index:-1; background:url('./assets/fuegote-flame.png') center / contain no-repeat;
+ filter:drop-shadow(0 0 16px #ff7a2a55) drop-shadow(0 6px 4px #160d2680); transform-origin:50% 92%;
+ animation:fuegote-flicker 2.6s ease-in-out infinite; transition:filter .18s;
 }
+.fuegote-label { width:84%; font-size:clamp(16px,min(4.8vw,2.7svh),21px); font-style:italic; font-weight:1000; line-height:1.04; letter-spacing:-.1px; text-align:center; text-transform:uppercase; -webkit-text-stroke:4px #2a1030; paint-order:stroke fill; text-shadow:2px 3px 0 #a82268; transform:rotate(-4deg) skewX(-4deg); }
+.fuegote-button:active { transform:scale(.95); }
+.fuegote-button:active::before { filter:drop-shadow(0 0 22px #ff7a2a88) drop-shadow(0 2px 2px #160d2680) brightness(1.06); }
+.fuegote-button:focus-visible { outline:3px solid var(--paper); outline-offset:4px; border-radius:40% 40% 46% 46%; }
+@media(hover:hover) { .fuegote-button:hover { transform:translateY(-3px) scale(1.03); } .fuegote-button:hover::before { filter:drop-shadow(0 0 24px #ff8a3a88) drop-shadow(0 8px 5px #160d2680) brightness(1.05); } }
+@keyframes fuegote-flicker { 0%,100% { transform:scale(1,1) rotate(0); } 30% { transform:scale(1.015,.99) rotate(-.6deg); } 60% { transform:scale(.99,1.02) rotate(.5deg); } }
+@media(prefers-reduced-motion:reduce) { .fuegote-button::before { animation:none; } }
+@media(min-width:701px) { .menu-actions { justify-items:start; padding-left:28px; } .menu-intro .access-switch { margin-left:28px; } }
 .menu-home .menu-wrap { min-height:100svh; display:grid; align-items:center; }
 .menu-home .menu-hero { width:100%; padding-block:40px; }
-.menu-actions .menu-rules { --button-glow:#fff8e808; background:#ffffff06; border-color:#fff8e83b; color:var(--paper); box-shadow:inset 0 1px 0 #ffffff12,0 3px 0 #160d2640; }
-.menu-actions .menu-rules::after { display:none; }
 .menu-network-note { max-width:380px; color:var(--menu-muted); font-size:12px; line-height:1.5; margin-top:20px; }
 .menu-games { padding:20px 0 28px; scroll-margin-top:24px; }
 .menu-section-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:15px; }
@@ -590,6 +575,7 @@ body:has(.game-page) {
 .menu-shell .game-option.chosen .game-check { opacity:1; }
 .menu-shell .game-option small { font-size:11px; color:var(--menu-muted); opacity:1; }
 .menu-create { width:100%; }
+.menu-shell .join-code { margin-bottom:22px; text-transform:uppercase; letter-spacing:.14em; }
 .menu-lobby { width:min(100%,900px); }
 .menu-lobby h1 { margin-bottom:12px; overflow-wrap:anywhere; }
 .lobby-game { margin:0 0 30px; color:var(--cyan); font-size:14px; font-weight:750; }
@@ -604,10 +590,6 @@ body:has(.game-page) {
 .menu-lobby .button-dark { background:#ffffff08; }
 .menu-lobby .button-paper { background:#fff8e812; color:var(--menu-text); }
 .menu-lobby .code-card { margin:0; padding:16px; background:#1d142580; border:1px solid var(--menu-line); border-radius:12px; }
-.menu-lobby .code-head { align-items:flex-start; margin-bottom:16px; }
-.menu-lobby .code-badge { background:#69e5e21a; color:var(--cyan); font-size:12px; }
-.menu-lobby .code-head strong { font-size:13px; line-height:1.45; }
-.menu-lobby .code-head small { color:var(--menu-muted); font-size:11px; line-height:1.5; }
 .menu-lobby .invite-qr { width:min(100%,260px); border-radius:8px; margin:0 auto 16px; }
 .menu-lobby .code-field { min-height:72px; background:#25192e; color:var(--menu-text); border:1px solid #ffffff30; font-size:12px; font-weight:400; line-height:1.5; }
 .menu-lobby .code-actions { gap:8px; }
@@ -621,7 +603,6 @@ body:has(.game-page) {
 .menu-lobby .host-pill,.menu-lobby .ready-pill { padding:5px 7px; font-size:8px; background:#69e5e219; color:var(--cyan); }
 .menu-lobby .host-pill { background:#dcfb5219; color:var(--citrus); }
 .menu-lobby .menu-create { margin-top:22px; font-size:15px; justify-content:space-between; }
-.menu-lobby .scan-row { flex-wrap:wrap; margin:0; gap:8px; }
 .menu-lobby .connection-status { margin:0; font-size:13px; line-height:1.6; }
 @media(max-width:700px) {
  .lobby-grid { grid-template-columns:minmax(0,1fr); gap:18px; }
@@ -900,6 +881,7 @@ body:has(.game-page) {
 @media(min-width:361px) and (max-width:440px){.character-option strong{font-size:9px;white-space:nowrap;}}
 
 .menu-home .menu-wrap{position:relative;display:flex;flex-direction:column;justify-content:center;padding-bottom:44px;}
+.menu-home .profile-edit{position:absolute;left:2px;bottom:max(12px,env(safe-area-inset-bottom));margin:0;padding:8px 0;font-size:12px;}
 .menu-credit{position:absolute;right:2px;bottom:max(12px,env(safe-area-inset-bottom));margin:0;padding:8px 0;color:#dbc997;font:600 11px/1.4 system-ui;letter-spacing:.5px;}
 /* First entry uses the same artwork, colors and controls as the game menu. */
 .profile-shell{padding-top:max(24px,env(safe-area-inset-top));padding-bottom:max(28px,env(safe-area-inset-bottom));}

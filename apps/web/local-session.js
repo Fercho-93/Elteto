@@ -3,7 +3,6 @@ import {MusFlowRunner} from './mus-flow.js';
 import {PokerAbsenceRunner} from './poker-presence.js';
 import {characterProfile} from './avatar-art.js';
 import { getGame, createMusState, fillBotSeats, BotRunner, botTurnDelay, nextBotMove } from "./game-core/index.js";
-import { acceptOffer, decodeSignal, makeOffer } from "./local-transport.js";
 
 const HOST_ID = "host";
 const say = (type, data = {}) => ({ type, data });
@@ -58,27 +57,6 @@ export class LocalHostSession {
     if (this.started || !this.bots.some(p => p.id === id)) return;
     this.bots = this.bots.filter(p => p.id !== id);
     this.publishLobby();
-  }
-
-  async createOfflineInvite() {
-    if (this.closed) throw new Error("La sala está cerrada.");
-    if (this.started) throw new Error("La partida ya ha empezado.");
-    if (this.players().length >= this.engine.maxPlayers) throw new Error("La sala está completa.");
-    const peer = await makeOffer(
-      (message) => this.handleMessage(peer.peerId, message),
-      () => {},
-      () => this.handleClose(peer.peerId)
-    );
-    this.peers.set(peer.peerId, peer);
-    return peer.code;
-  }
-
-  async acceptOfflineAnswer(answerCode) {
-    const answer = await decodeSignal(answerCode);
-    if (answer.type !== "answer") throw new Error("Escanea el QR de respuesta del invitado.");
-    const peer = this.peers.get(answer.peerId);
-    if (!peer) throw new Error("Esta respuesta es de otra invitación o ya caducó.");
-    await peer.acceptAnswer(answerCode);
   }
 
   handleMessage(peerId, message) {
@@ -178,67 +156,5 @@ export class LocalHostSession {
     for (const peer of this.peers.values()) peer.close();
     this.peers.clear();
     this.connections.clear();
-  }
-}
-
-export class LocalGuestSession {
-  constructor(playerName, onChange, character) {
-    this.character = characterProfile(character);
-    this.playerName = playerName;
-    this.onChange = onChange;
-    this.peer = null;
-    this.playerId = null;
-    this.gameId = null;
-    this.players = [];
-  }
-
-  async connectOffline(offerCode) {
-    const peer = await acceptOffer(
-      offerCode,
-      (message) => this.handleMessage(message),
-      () => this.peer?.send(say("hello", { name: this.playerName, ...this.character })),
-      () => this.onChange({ kind: "disconnected", message: "Se perdió la conexión local. Comprueba que ambos móviles siguen en la misma Wi-Fi." })
-    );
-    this.peer = peer;
-    this.answerCode = peer.answerCode;
-    this.roomName = "Sala sin internet";
-    this.onChange({ kind: "lobby", players: [], roomName: this.roomName, connected: false });
-    return peer.answerCode;
-  }
-
-  handleMessage(message) {
-    if (this.closed) return;
-    if (!message || typeof message.type !== "string") return;
-    if (message.type === 'closed') {
-      this.closed = true;this.musFlow?.close();
-      this.onChange({ kind: 'disconnected', message: message.data?.message || 'La sala ha terminado.' });
-      this.peer?.close();
-    } else if (message.type === "welcome") {
-      this.playerId = message.data.playerId;
-      this.gameId = message.data.gameId;
-      this.onChange({ kind: "lobby", playerId: this.playerId, players: this.players, gameId: this.gameId, roomName: this.roomName, connected: true });
-    } else if (message.type === "lobby") {
-      this.players = message.data.players || [];
-      this.gameId = message.data.gameId;
-      this.onChange({ kind: "lobby", playerId: this.playerId, players: this.players, gameId: this.gameId, roomName: this.roomName, connected: true });
-    } else if (message.type === "started") {
-      this.onChange({ kind: "started" });
-    } else if (message.type === "state") {
-      this.onChange({ kind: "game", playerId: this.playerId, players: this.players, gameId: this.gameId, view: message.data.view });
-    } else if (message.type === "error") {
-      this.onChange({ kind: "error", message: message.data?.message || "No se pudo completar la acción." });
-    }
-  }
-
-  setSittingOut(value){this.peer?.send(say("sit-out",{value:Boolean(value)}));}
-
-  sendAction(action) {
-    if (!this.peer?.send(say("action", { action }))) throw new Error("Se perdió la conexión con quien creó la sala.");
-  }
-
-  leave() {
-    this.peer?.send(say("leave"));
-    this.peer?.close();
-    this.peer = null;
   }
 }

@@ -114,26 +114,17 @@ try {
   console.log("  ok  el anfitrión abre una sala con internet:", code);
 
   const guest = await movil("invitado");
-  await guest.page.goto(base);
-  await guest.page.click('[data-action="open-join"]');
+  // The phone camera opens the QR's link; the guest only confirms name and avatar.
+  const inviteLink = new URL(await host.page.locator('.invite-link .code-output').inputValue());
+  assert.equal(inviteLink.searchParams.get('join'), code);
+  await guest.page.goto(`${base}${inviteLink.pathname.split('/').pop()}${inviteLink.search}`);
   await guest.page.fill("#join-name", "Bea");
   await guest.page.locator('[data-action="choose-character"]').click();
   await guest.page.locator('[data-action="select-character"][data-character="9"]').click();
-  // Feed the host's actual QR into a real video MediaStream; do not mock decoding.
-  const qrImage = await host.page.locator('canvas.invite-qr').evaluate(canvas=>canvas.toDataURL());
-  await guest.page.evaluate(async image=>{
-    const qr=new Image();qr.src=image;await qr.decode();
-    const frame=document.createElement('canvas');frame.width=1280;frame.height=720;
-    const ctx=frame.getContext('2d');const paint=()=>{ctx.fillStyle='#bbb';ctx.fillRect(0,0,1280,720);ctx.drawImage(qr,460,180,360,360);};paint();
-    window.__qrCameraTracks=[];
-    navigator.mediaDevices.getUserMedia=async()=>{const stream=frame.captureStream(8),timer=setInterval(paint,120);window.__qrCameraTracks=stream.getTracks();for(const track of stream.getTracks()){const stop=track.stop.bind(track);track.stop=()=>{clearInterval(timer);stop();};}return stream;};
-  },qrImage);
-  await guest.page.click('[data-action="scan-offer"]');
+  await guest.page.click('[data-action="join-room"]');
   await guest.waitText(/Conectado a la sala/);
   await host.waitText(/Bea/);
-  assert.equal(await guest.page.locator('.scan-overlay').count(),0);
-  assert.ok(await guest.page.evaluate(()=>window.__qrCameraTracks.every(track=>track.readyState==='ended')));
-  console.log("  ok  la invitada escanea el QR de la sala, conserva su nombre y libera la cámara");
+  console.log("  ok  la invitada abre el enlace del QR y entra con su nombre y personaje");
 
   // Entrar por el enlace de invitación (QR) con una tercera persona.
   const third = await movil("tercera");

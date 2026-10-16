@@ -14,11 +14,15 @@ try{
  for(const [width,height] of [[320,568],[390,844],[844,390],[1280,800]]){
   await page.setViewportSize({width,height});await page.evaluate(()=>window.testHome());
   assert.equal((await page.locator('.menu-intro h1').innerText()).replace(/\s+/g,' '),'Se viene PIQUE!');
-  assert.equal(await page.locator('.menu-actions .menu-button').count(),2);
-  assert.deepEqual(await page.locator('.menu-button-arrow').allTextContents(),['→','→']);
+  assert.equal(await page.locator('.menu-actions > *').count(),1);
+  assert.equal((await page.locator('.menu-actions .fuegote-button[data-action="open-host"]').innerText()).replace(/\s+/g,' ').toLowerCase(),'que se haga el fuegote');
+  assert.equal(await page.locator('[data-action="open-join"]').count(),0);
+  assert.equal(await page.locator('.profile-edit').textContent(),'Mi nombre de guerra y avatar');
+  const [flame,profile,credit]=await Promise.all(['.fuegote-button','.profile-edit','.menu-credit'].map(s=>page.locator(s).boundingBox()));
+  assert.ok(flame.x>=0&&flame.x+flame.width<=width,'flame button fits the screen');
+  assert.ok(profile.x<width/2&&profile.x+profile.width<=credit.x&&Math.abs(profile.y+profile.height-credit.y-credit.height)<2,'profile link sits bottom-left, level with the credit');
   assert.equal(await page.locator('.menu-rules,.menu-network-note').count(),0);
   assert.equal(await page.locator('.menu-credit').textContent(),'By Fercho&PAS');
-  assert.ok(await page.locator('.menu-button').evaluateAll(buttons=>buttons.every(b=>getComputedStyle(b,'::after').display==='none')));
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   if(width===390)await page.screenshot({path:'tests/artifacts/help/home.png',fullPage:true});
  }

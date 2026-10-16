@@ -6,7 +6,7 @@ latido de presencia y relevo del anfitrión**. La diferencia la imponen las cart
 del Mus y el Cinquillo: en Timeline todo el documento de la sala viaja a cada móvil; aquí
 las manos y el mazo no salen nunca del anfitrión salvo en la vista privada de cada persona.
 
-El modo **Sin internet** (QR + WebRTC en la misma Wi-Fi) no usa Firebase y sigue como estaba.
+Para jugar sin internet se usa la app Android anfitriona (ver CONFIGURAR_LAN.md), que no usa Firebase.
 
 ## Arquitectura
 
@@ -148,6 +148,6 @@ relevo → cerrar la sala.
 | `apps/web/firebase-client.js` | Conexión única a Firebase y acceso anónimo (long-polling automático en iOS). |
 | `apps/web/online-room.js` | Sesión de sala: crear, entrar, anfitrión, jugadas, presencia, relevo, salir. |
 | `apps/web/room-code.js` | Códigos de sala e invitaciones (sin dependencias, cargado al arrancar). |
-| `apps/web/local-session.js` | Modo sin internet (WebRTC por QR), independiente de Firebase. |
+| `apps/web/local-session.js` | Motor de la mesa en el anfitrión (vestíbulo, IA y partida), reutilizado por la app Android LAN. |
 | `firestore.rules`, `firebase.json`, `.firebaserc` | Reglas, emuladores y proyecto por defecto. |
 | `packages/game-core/` | Motores de reglas; el anfitrión los ejecuta. |

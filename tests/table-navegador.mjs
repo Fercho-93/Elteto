@@ -372,7 +372,7 @@ try {
     const page=await offlineContext.newPage();
     await page.goto(base);
     await page.waitForFunction(()=>navigator.serviceWorker.controller);
-    assert.equal(await page.locator('.menu-actions > *').count(),2);
+    assert.equal(await page.locator('.menu-actions > *').count(),1);
     assert.equal(await page.locator('.menu-games,.menu-cast,.menu-extras').count(),0);
     await offlineContext.setOffline(true);
     await page.goto(base+'reglas_juegos/biblioteca.html');

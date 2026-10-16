@@ -7,7 +7,7 @@ import vm from 'node:vm';
 const index = await readFile('dist/index.html', 'utf8');
 const worker = await readFile('dist/sw.js', 'utf8');
 const hash = createHash('sha256');
-for (const file of ['app.js', 'styles.css', 'qr-scanner.js', 'manifest.webmanifest', 'icon-32.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png', 'firebase-sdk.js', 'host-access.js', 'activation-code.js', 'online-room.js', 'room-code.js', 'distribution-config.js', 'guest.html', 'mus-table.js', 'mus-flow.js', 'mus-screen.js', 'mus-screen.css', 'game-core/games/parchis.js', 'game-core/games/mus.js', 'game-core/games/mus-legacy.js', 'game-core/games/mus-evaluation.js', 'game-core/games/mus-scoring.js', 'game-help.js', 'game-help.css', 'reglas_juegos/consulta/parchis.html', 'reglas_juegos/consulta/mus.html', 'card-art.js', 'card-art.css', 'assets/decks/fournier-spanish.jpg', 'assets/decks/elteto-backs.jpg', 'catalog-games.js', 'catalog-games.css', 'board-games.js', 'board-games.css', 'board-motion.js', 'bot-pacing.js', 'turn-events.js', 'turn-sequence.js', 'turn-sequence.css', 'game-picker.js', 'avatar-art.js', 'poker-presence.js', 'poker-table.js', 'poker-controls.js', 'poker-events.js', 'poker-celebration.js', 'rival-portraits.js', 'rival-portraits.css', 'game-physics.js', 'card-paint.js', 'table-speech.js', 'parchis-board.js', 'parchis-board.css', 'table-view.js', 'parchis-dice.js', 'parchis-dice.css', 'game-core/catalog.js', 'game-core/engine.js', 'game-core/index.js', 'game-core/bots.js', 'local-session.js', 'lan-session.js', ...['shared','boards','social-cards','tricks','melds','holdem'].map(name => `game-core/games/${name}.js`)]) {
+for (const file of ['app.js', 'styles.css', 'manifest.webmanifest', 'icon-32.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png', 'firebase-sdk.js', 'host-access.js', 'activation-code.js', 'online-room.js', 'room-code.js', 'distribution-config.js', 'guest.html', 'mus-table.js', 'mus-flow.js', 'mus-screen.js', 'mus-screen.css', 'game-core/games/parchis.js', 'game-core/games/mus.js', 'game-core/games/mus-legacy.js', 'game-core/games/mus-evaluation.js', 'game-core/games/mus-scoring.js', 'game-help.js', 'game-help.css', 'reglas_juegos/consulta/parchis.html', 'reglas_juegos/consulta/mus.html', 'card-art.js', 'card-art.css', 'assets/decks/fournier-spanish.jpg', 'assets/decks/elteto-backs.jpg', 'catalog-games.js', 'catalog-games.css', 'board-games.js', 'board-games.css', 'board-motion.js', 'bot-pacing.js', 'turn-events.js', 'turn-sequence.js', 'turn-sequence.css', 'game-picker.js', 'avatar-art.js', 'poker-presence.js', 'poker-table.js', 'poker-controls.js', 'poker-events.js', 'poker-celebration.js', 'rival-portraits.js', 'rival-portraits.css', 'game-physics.js', 'card-paint.js', 'table-speech.js', 'parchis-board.js', 'parchis-board.css', 'table-view.js', 'parchis-dice.js', 'parchis-dice.css', 'game-core/catalog.js', 'game-core/engine.js', 'game-core/index.js', 'game-core/bots.js', 'local-session.js', 'lan-session.js', ...['shared','boards','social-cards','tricks','melds','holdem'].map(name => `game-core/games/${name}.js`)]) {
   let content = await readFile(`dist/${file}`);
   if (file === 'guest.html') content = Buffer.from(content.toString().replace(/\?v=[a-f0-9]{12}/g, ''));
   hash.update(content);
@@ -15,7 +15,6 @@ for (const file of ['app.js', 'styles.css', 'qr-scanner.js', 'manifest.webmanife
 const version = hash.digest('hex').slice(0, 12);
 assert.ok(index.includes(`./app.js?v=${version}`));
 assert.ok(index.includes(`./styles.css?v=${version}`));
-assert.ok(index.includes(`./qr-scanner.js?v=${version}`));
 assert.ok(worker.includes(`elteto-shell-v30-${version}`));
 
 const origin = 'https://example.test/Elteto/';
@@ -70,7 +69,7 @@ async function load(path) {
 assert.equal(await (await load('app.js')).text(), 'new-menu');
 assert.equal(requests.at(-1).cache, 'no-cache');
 offline = true;
-for (const path of ['./', 'index.html', 'app.js', 'styles.css', 'qr-scanner.js', `app.js?v=${version}`, `styles.css?v=${version}`, `qr-scanner.js?v=${version}`]) {
+for (const path of ['./', 'index.html', 'app.js', 'styles.css', `app.js?v=${version}`, `styles.css?v=${version}`]) {
   assert.equal(await (await load(path)).text(), 'new-menu', `${path} stays available offline`);
 }
 console.log('Menu cache: versioned URLs, stale HTTP cache bypass, old cache retirement and offline menu: OK');

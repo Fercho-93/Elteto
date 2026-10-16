@@ -14,7 +14,7 @@ try{
  await page.locator('#profile-name').waitFor();await page.locator('[data-action="profile-confirm"]').click();assert.ok(await page.locator('#profile-name').isVisible());
  await page.locator('#profile-name').fill('Fer');await page.locator('[data-action="choose-character"]').click();await page.locator('[data-action="select-character"][data-character="4"]').click();await page.locator('[data-action="profile-confirm"]').click();
  assert.equal(await page.evaluate(()=>localStorage.getItem('elteto.playerName')),'Fer');assert.equal(await page.evaluate(()=>localStorage.getItem('elteto.character')),'4');
- await page.locator('[data-action="open-join"]').click();assert.equal(await page.locator('#join-name').inputValue(),'Fer');await page.reload();assert.equal(await page.locator('#profile-name').count(),0);
+ assert.equal(await page.locator('[data-action="open-join"]').count(),0);await page.locator('[data-action="edit-profile"]').click();assert.equal(await page.locator('#profile-name').inputValue(),'Fer');await page.reload();assert.equal(await page.locator('#profile-name').count(),0);
  const engine=getGame('texas-holdem');let game=engine.createInitialState(['a','b','c','d'],90);
  await page.evaluate(game=>window.testTable('texas-holdem',game,'a'),game);
  assert.equal(await page.locator('.poker-table .deck-stock').count(),0,'Poker hides the undealt deck and its count');

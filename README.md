@@ -6,7 +6,7 @@ Veinte juegos de cartas y tablero para jugar desde móviles, con una mesa gamber
 
 `apps/web/` contiene la versión web instalable. GitHub Actions compila las reglas compartidas de `packages/game-core/`, genera una web estática y la publica en GitHub Pages al actualizar `main`.
 
-Con internet, el anfitrión crea una sala y la web muestra un código, un enlace y un QR. Cada invitado escanea el QR con la cámara normal del móvil, abre el enlace o escribe el código; si ya había usado Elteto, se recuerda su nombre.
+Con internet, el anfitrión crea una sala y la web muestra un código, un enlace y un QR. Cada invitado escanea el QR con la cámara normal del móvil, sin abrir la app, o escribe el código en la web; si ya había usado Elteto, se recuerda su nombre.
 
 Las salas viven en Firestore, con invitados anónimos de Firebase Authentication y reglas de seguridad. El anfitrión activado conserva la autoridad de las reglas del juego y publica una vista privada por jugador, de modo que cada persona solo recibe sus propias cartas. Los invitados no toman el relevo del anfitrión ni pueden crear salas. No hay un servidor de juego propio.
 
@@ -17,7 +17,7 @@ Los invitados entran por navegador, sin instalación ni código de activación, 
 acceso termina con la sala. Flujo, administración, configuración y límites
 offline: [Distribución y acceso](DISTRIBUCION_Y_ACCESO.md).
 
-Para probarlo, abre [Elteto en GitHub Pages](https://fercho-93.github.io/Elteto/) en ambos teléfonos, crea la partida en uno, pulsa **Invitar con internet** y entra desde el otro con el QR o el código.
+Para probarlo, abre [Elteto en GitHub Pages](https://fercho-93.github.io/Elteto/) en un teléfono, crea la partida tocando la llama **Que se haga el fuegote**, pulsa **Invitar con internet** y escanea el QR con la cámara del otro.
 
 Cinquillo admite de dos a seis participantes. Mus necesita cuatro. Parchís admite de dos a cuatro.
 
@@ -27,19 +27,11 @@ En el vestíbulo de cualquiera de los veinte juegos, el anfitrión puede pulsar 
 
 Los jugadores de IA deciden en el dispositivo anfitrión, sin servicios externos ni claves de API, usando únicamente su vista del juego. Sus jugadas pasan por los mismos motores de reglas y avanzan automáticamente. Funciona en la web, sin internet y en Android LAN; el cliente nativo también comparte estos controles. En las salas online, la IA retoma la partida guardada cuando el mismo anfitrión vuelve a abrir la sala. Las reglas actualizadas de `firestore.rules` deben estar publicadas para añadir plazas de IA online.
 
-### Jugar sin internet entre iPhone y Android
+### Unirse a una partida
 
-El modo **Sin internet** no usa Firebase ni un servidor de señalización. La app crea la conexión WebRTC directa e intercambia la oferta y la respuesta mediante dos códigos QR. Este modo está disponible en la web instalable de GitHub Pages para Safari en iPhone y Chrome en Android.
+Nadie necesita abrir Elteto para unirse: el anfitrión enseña el QR de su sala y cada invitado lo escanea con la cámara normal del móvil. El enlace abre la sala en el navegador, donde solo se confirma el nombre de guerra y el avatar. Si alguien abre la web sin el QR, puede escribir el código de 8 letras que aparece en la sala del anfitrión.
 
-1. Antes de salir de casa, abre [Elteto en Pages](https://fercho-93.github.io/Elteto/) en los dos móviles y espera a que cargue. Instálalo con «Añadir a pantalla de inicio» si quieres; así el navegador guarda la app para abrirla después sin cobertura. Hazlo una vez mientras tengas internet.
-2. En el lugar sin cobertura, conecta los dos móviles a la misma Wi‑Fi local. Si no hay router, activa el **punto de acceso Wi‑Fi** de uno de ellos y conecta el otro. La red puede no tener salida a internet.
-3. En el móvil anfitrión, abre Elteto, crea la sala, elige el juego y toca **Invitar sin internet**.
-4. En el otro móvil, abre Elteto, toca **Unirse**, escribe el nombre y escanea el primer QR con **Abrir cámara dentro de Elteto**. La cámara normal no puede abrir un código SDP sin internet.
-5. El invitado verá un segundo QR. El anfitrión lo escanea con **Escanear respuesta**. Al conectar, ambos vuelven a la sala y el anfitrión puede iniciar la partida.
-
-Los dos móviles deben permanecer en la misma red local y dejar Elteto abierto durante la partida. El modo offline de navegador requiere que la app se haya cargado previamente mientras había internet: GitHub Pages no puede entregar por primera vez la app cuando no hay conexión. Cinquillo ya permite jugar con dos personas; Mus necesita cuatro plazas, que se pueden completar con IA.
-
-Si una sala usa **Invitar con internet**, no se pueden mezclar invitados sin internet en ella: elige un modo al abrir la mesa.
+Para jugar sin internet, el anfitrión usa la [app Android](CONFIGURAR_LAN.md): sirve la mesa en la Wi‑Fi o el hotspot y su QR local también se abre con la cámara normal.
 
 La web se puede instalar desde el navegador con «Añadir a pantalla de inicio».
 
@@ -55,7 +47,7 @@ npm run test:reglas   # reglas de Firestore (emulador, necesita Java)
 npm run test:online   # sesiones online completas (emuladores)
 ```
 
-El sitio compilado aparece en `dist/`. Para probarlo localmente, sírvelo desde HTTPS o desde `localhost`, porque el navegador restringe WebRTC, el acceso a la cámara y la instalación PWA en orígenes inseguros.
+El sitio compilado aparece en `dist/`. Para probarlo localmente, sírvelo desde HTTPS o desde `localhost`, porque el navegador restringe la instalación PWA en orígenes inseguros.
 
 ## Nueva prueba: Android anfitrión e invitados por navegador
 

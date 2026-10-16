@@ -13,7 +13,7 @@ Los invitados siguen entrando mediante el QR y no obtienen la clave del anfitri�
 
 1. En GitHub, abre Actions → **Compilar Android LAN** → última ejecución correcta. Descarga el artefacto **Elteto-LAN-Android-prueba**, extrae el ZIP e instala `app-debug.apk` en el Android anfitrión. Es una compilación de prueba, no un lanzamiento de Play Store.
 2. Conecta los móviles a una misma Wi-Fi local o activa un hotspot en el Android y conecta los invitados. La red no necesita salida a internet.
-3. Abre Elteto LAN en Android. Pulsa **Crear partida**, indica tu nombre y elige Cinquillo (2–6 jugadores), Mus (4 jugadores) o Parchís (2–4 jugadores) y crea la mesa.
+3. Abre Elteto LAN en Android. Toca la llama **Que se haga el fuegote**, indica tu nombre y elige Cinquillo (2–6 jugadores), Mus (4 jugadores) o Parchís (2–4 jugadores) y crea la mesa.
 4. El anfitrión muestra un QR con una dirección local HTTP. Escanéalo con la cámara normal del iPhone o Android invitado. Si no abre, escribe una de las direcciones que aparecen arriba en la app anfitriona y utiliza el código de mesa.
 5. Espera a que aparezcan ambos jugadores e inicia la partida. En juegos de cartas cada invitado recibe solo su mano; en Parchís todos ven el tablero público.
 
@@ -67,3 +67,5 @@ En «Crear partida» puedes elegir **Sin internet** (misma Wi-Fi/hotspot, servid
 La APK 0.2.11 solicita permiso de cámara al abrir el escáner QR. Android muestra la solicitud la primera vez; solo se habilita vídeo para la página local de la app. Si se rechaza, puedes seguir entrando con un código y habilitar la cámara posteriormente en Ajustes → Aplicaciones → Elteto → Permisos.
 
 La APK 0.2.12 hace legibles las opciones «Sin internet» y «Con internet». Para que las salas con internet funcionen desde la app, la clave de API de Firebase debe aceptar `http://127.0.0.1:3000/*` (ver CONFIGURAR_ONLINE.md).
+
+La APK 0.2.13 quita «Unirme a partida» de la pantalla principal y deja de pedir permiso de cámara: los invitados entran escaneando el QR del anfitrión con la cámara normal de su móvil, sin abrir la app. La partida se crea tocando la llama **Que se haga el fuegote**.

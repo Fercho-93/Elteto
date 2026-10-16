@@ -2,7 +2,7 @@
 
 ## Recorrido
 
-«Crear partida» pide una invitación si la cuenta no tiene acceso. Se introduce
+La llama «Que se haga el fuegote» (crear partida) pide una invitación si la cuenta no tiene acceso. Se introduce
 correo, contraseña y código. El canje consume la invitación y crea la licencia en
 una única transacción. «Ya tengo acceso» recupera esa licencia en otro dispositivo
 sin gastar otro código. «Recuperar contraseña» usa Firebase Auth.
@@ -97,8 +97,8 @@ cuenta con internet. Cerrar sesión desactiva ese Android.
 La PWA recuerda el acceso y empaqueta el SDK localmente para abrir mesas directas
 tras la primera carga. Un invitado nuevo puede entrar sin internet por Wi-Fi desde
 el servidor de la APK. Un anfitrión iPhone/PWA no sirve archivos a otros móviles:
-su invitado offline debe haber cargado previamente la página. No se promete una
-primera carga sin internet desde GitHub Pages ni una APK para iPhone.
+sus invitados entran con internet. No se promete una primera carga sin internet
+desde GitHub Pages ni una APK para iPhone.
 
 Una licencia offline no puede revocarse inmediatamente sin reconectar. El código
 evita una segunda activación; alguien puede entregar su invitación antes de usarla

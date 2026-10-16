@@ -31,8 +31,6 @@ jobs:
       - run: LAN_BROWSER=webkit node tests/lan-navegador.mjs
       - run: node tests/table-navegador.mjs
       - run: TABLE_BROWSER=webkit node tests/table-navegador.mjs
-      - run: node tests/qr-navegador.mjs
-      - run: QR_BROWSER=webkit node tests/qr-navegador.mjs
       - run: node tests/bots-navegador.mjs
       - run: BOT_BROWSER=webkit node tests/bots-navegador.mjs
       - run: node tests/physics-screen.mjs
