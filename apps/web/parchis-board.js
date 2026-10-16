@@ -45,7 +45,7 @@ export function renderParchisBoard(view,playerId,name){
   tokens.push(`<button class="parchis-pawn ${move?'can-move':''} ${position.stacked?'stacked':''} ${progress===goal?'at-goal':progress<0?'in-nest':''}" style="--pawn-color:${PARCHIS_PALETTE[color].fill};--d:${position.size};left:${position.left};top:${position.top};width:${position.width}" data-action="parchis-move" data-piece="${piece}" ${move?`data-dice="${move.dice.join(',')}"`:''} data-progress="${progress}" data-pawn="${esc(id)}:${piece}" data-player-id="${esc(id)}" ${move?'':'disabled'} aria-label="${esc(label)}">${renderPawnFace(view,id,piece)}</button>`);
  }
  const ratio=`${fixed(width)} / ${fixed(height)}`;
- return `<div class="parchis-board" data-sides="${sides}" style="--board-ratio:${fixed(width/height)};--zoom-width:${Math.round(width*37)}px;aspect-ratio:${ratio}" aria-label="Tablero ${BOARD_SHAPES[sides]} de Parchís: ${g.layout.cells} casillas y ${sides} colores">${svg}${tokens.join('')}</div>`;
+ return `<div class="parchis-board" data-sides="${sides}" style="--board-ratio:${fixed(width/height)};--zoom-width:${Math.max(700,Math.round(width*37))}px;aspect-ratio:${ratio}" aria-label="Tablero ${BOARD_SHAPES[sides]} de Parchís: ${g.layout.cells} casillas y ${sides} colores">${svg}${tokens.join('')}</div>`;
 }
 const add=(a,b,k)=>[a[0]+b[0]*k,a[1]+b[1]*k];
 function readable(line,view,name){for(const id of [...view.players].sort((a,b)=>b.length-a.length)){const pattern=id.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');line=line.replace(new RegExp(`(^|[^\\w-])${pattern}(?=$|[^\\w-])`,'g'),(_,prefix)=>prefix+name(id));}return line;}

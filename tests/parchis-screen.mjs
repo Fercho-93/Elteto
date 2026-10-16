@@ -3,10 +3,10 @@ import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {parchisEngine as engine} from '../dist/game-core/index.js';
 import {pawnPoint} from '../dist/parchis-board.js';
-import {parchisGeometry,insideConvex} from '../dist/parchis-geometry.js';
+import {parchisGeometry,insidePolygon} from '../dist/parchis-geometry.js';
 const {chromium,webkit}=await import('playwright');
 for(const sides of [3,4,5,6]){const g=parchisGeometry(sides);assert.equal(g.track.length,17*sides);assert.equal(new Set(g.track.map(c=>c.center.map(n=>n.toFixed(3)).join(','))).size,17*sides);
- for(const color of g.layout.colors)for(let progress=-1;progress<=g.layout.goal;progress++)assert.ok(insideConvex(g.outline,pawnPoint(color,progress,0,sides)));}
+ for(const color of g.layout.colors)for(let progress=-1;progress<=g.layout.goal;progress++)assert.ok(insidePolygon(g.outline,pawnPoint(color,progress,0,sides)));}
 const fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1];
 const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://localhost').pathname.slice(1)||'index.html';let body=await readFile('dist/'+file);if(file==='app.js')body=Buffer.from(body+fixture);res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':'text/html');res.end(body);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));

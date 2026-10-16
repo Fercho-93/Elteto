@@ -4,7 +4,7 @@
 import {PARCHIS_COLORS,PARCHIS_ARM,parchisLayout,parchisSquare} from './game-core/index.js';
 
 export const CELL_ACROSS=1.6,CELL_ALONG=.8875,ROWS=8;
-const ARM_WIDTH=3*CELL_ACROSS,ARM_LENGTH=ROWS*CELL_ALONG,PAPER=.15;
+const ARM_WIDTH=3*CELL_ACROSS,ARM_LENGTH=ROWS*CELL_ALONG,PAPER=.15,HOME_RADIUS=2.4;
 // Single pawn, two pawns sharing a square and the number label, in cell units.
 export const PAWN=.8,PAIR=.5,LANE_PAIR=.7,NUMBER_FONT=.3;
 const add=(a,b,k=1)=>[a[0]+b[0]*k,a[1]+b[1]*k];
@@ -20,6 +20,15 @@ export function insideConvex(polygon,[x,y],margin=0){
  let area=0;for(let i=0;i<polygon.length;i++){const [ax,ay]=polygon[i],[bx,by]=polygon[(i+1)%polygon.length];area+=ax*by-bx*ay;}
  const turn=Math.sign(area);
  return polygon.every(([ax,ay],i)=>{const [bx,by]=polygon[(i+1)%polygon.length];return turn*((bx-ax)*(y-ay)-(by-ay)*(x-ax))/Math.hypot(bx-ax,by-ay)>=margin-1e-9;});
+}
+export function insidePolygon(polygon,[x,y],eps=1e-6){
+ let inside=false;
+ for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){
+  const [ax,ay]=polygon[j],[bx,by]=polygon[i],dx=bx-ax,dy=by-ay,t=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy||1)));
+  if(Math.hypot(x-ax-t*dx,y-ay-t*dy)<=eps)return true;
+  if((ay>y)!==(by>y)&&x<(bx-ax)*(y-ay)/(by-ay)+ax)inside=!inside;
+ }
+ return inside;
 }
 export function circleInsideConvex(polygon,center,radius){return insideConvex(polygon,center,radius);}
 // Axis-aligned box (upright text) against a circle: the circle clears it when the nearest box
@@ -65,22 +74,23 @@ export function parchisGeometry(sides=4){
  });
  const lanes=Object.fromEntries(arms.map((arm,k)=>[arm.color,Array.from({length:7},(_,n)=>({...cell(k,1,6-n),side:0}))]));
  const vertex=k=>{const b=unit(arms[k].angle-alpha);return {bisector:b,point:[b[0]*inner,b[1]*inner],corner:[b[0]*outer,b[1]*outer]};};
- // Each home is the kite between its own arm and the next one; four pawns sit on its incircle.
+ // Each home is a sector at the corner where two arms meet. Its radius is just enough for a
+ // circle of HOME_RADIUS (four pawns), so the board no longer reaches out to a far corner.
+ const sine=Math.sin(alpha),reach=Math.min(ARM_LENGTH,HOME_RADIUS*(1+sine)/sine);
  const nests=Object.fromEntries(arms.map((arm,k)=>{
-  const {bisector,point,corner}=vertex(k),next=arms[(k+1)%sides],polygon=[point,add(point,arm.u,ARM_LENGTH),corner,add(point,next.u,ARM_LENGTH)];
-  const distance=ARM_LENGTH/(Math.sin(alpha)+Math.cos(alpha)),radius=distance*Math.sin(alpha),center=add(point,bisector,distance);
-  const size=Math.min(1.4,radius*.5),gap=size*.6,across=[-bisector[1],bisector[0]];
+  const {bisector,point}=vertex(k),next=arms[(k+1)%sides],q=reach;
+  const radius=q*sine/(1+sine),distance=radius/sine,center=add(point,bisector,distance);
+  const shape=[point,...arcPoints(point,q,arm.u,next.u)];
+  const size=Math.min(1.3,radius*.52),gap=size*.6,across=[-bisector[1],bisector[0]];
   const slots=[0,1,2,3].map(piece=>add(add(center,bisector,piece<2?-gap:gap),across,piece%2?gap:-gap));
   const name=PARCHIS_NAMES[arm.color].toUpperCase(),labelWidth=nestLabelWidth(name),labelHeight=NEST_FONT*.74;
-  // The label runs along the outer rim of the circle, beyond the pawns, read the right way up.
+  // The label sits between the corner and the pawns, upright.
   let label=null;
-  for(let reach=radius*.95;reach>size*1.1&&!label;reach-=.02){
-   const [x,y]=add(center,bisector,reach),corners=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>add(add([x,y],across,a*labelWidth/2),bisector,b*labelHeight/2));
-   if(corners.every(p=>insideConvex(polygon,p,.1)&&Math.hypot(p[0]-center[0],p[1]-center[1])<=radius-.06)&&slots.every(s=>circleClearsRotated(s,size/2+.08,{center:[x,y],axis:across,width:labelWidth,height:labelHeight})))label={x,y,rotate:upright(Math.atan2(across[1],across[0])),corners,name,width:labelWidth,height:labelHeight};
+  for(let along=distance-size*1.25;along>.4&&!label;along-=.04){
+   const [x,y]=add(point,bisector,along),corners=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>add(add([x,y],across,a*labelWidth/2),bisector,b*labelHeight/2));
+   if(corners.every(p=>insideConvex(shape,p,.08)))label={x,y,rotate:upright(Math.atan2(across[1],across[0])),corners,name,width:labelWidth,height:labelHeight};
   }
-  // The board corner is rounded along the home circle, which already touches both edges.
-  const start=add(center,arm.u,radius),end=add(center,next.u,radius);
-  return [arm.color,{polygon,center,radius,size,slots,label,path:`M${pt(point)}L${pt(add(point,arm.u,ARM_LENGTH))}L${pt(start)}${arc(center,radius,arm.u,next.u)}L${pt(add(point,next.u,ARM_LENGTH))}Z`,shape:[point,add(point,arm.u,ARM_LENGTH),...arcPoints(center,radius,arm.u,next.u),add(point,next.u,ARM_LENGTH)]}];
+  return [arm.color,{polygon:shape,shape,center,radius,size,slots,label,point,reach:q,path:`M${pt(point)}L${pt(add(point,arm.u,q))}${arc(point,q,arm.u,next.u)}Z`}];
  }));
  // The centre is split into one triangle per colour; finished pawns line up inside it.
  const goals=Object.fromEntries(arms.map((arm,k)=>{
@@ -92,14 +102,19 @@ export function parchisGeometry(sides=4){
   }
   return [arm.color,{polygon,size,slots}];
  }));
- // Polygon with rounded corners: each edge holds an arm tip and each corner follows a home.
- // No frame is drawn around it, so the paper edge is the edge of the view.
- const homes=arms.map((arm,k)=>({center:nests[arm.color].center,from:arm.u,to:arms[(k+1)%sides].u})),radius=nests[arms[0].color].radius;
- const rounded=offset=>homes.flatMap(h=>arcPoints(h.center,radius+offset,h.from,h.to));
- const paperPath=homes.map((h,k)=>`${k?'L':'M'}${pt(add(h.center,h.from,radius+PAPER))}${arc(h.center,radius+PAPER,h.from,h.to)}`).join('')+'Z';
- const board=arms.map((_,k)=>{const b=vertex(k).bisector;return [b[0]*outer,b[1]*outer];}),outline=rounded(0),paper=rounded(PAPER),xs=paper.map(p=>p[0]),ys=paper.map(p=>p[1]);
- const viewBox={x:Math.min(...xs)-.06,y:Math.min(...ys)-.06,width:Math.max(...xs)-Math.min(...xs)+.12,height:Math.max(...ys)-Math.min(...ys)+.12};
- const geometry={sides,layout,arms,apothem,track,lanes,nests,goals,board,outline,paper,paperPath,center:arms.map((_,k)=>at(k,ARM_WIDTH/2,0)),viewBox};
+ // Outline: arm tip, down the arm side to the home's sector, round the sector, up the next arm.
+ // No frame is drawn, so the paper edge is the edge of the view.
+ const outline=[],commands=[];
+ arms.forEach((arm,k)=>{
+  const {point}=vertex(k),next=arms[(k+1)%sides],q=nests[arm.color].reach,tip=add(point,arm.u,ARM_LENGTH);
+  outline.push(tip);commands.push(`${k?'L':'M'}${pt(tip)}`);
+  if(q<ARM_LENGTH){const start=add(point,arm.u,q);outline.push(start);commands.push(`L${pt(start)}`);}
+  outline.push(...arcPoints(point,q,arm.u,next.u));commands.push(arc(point,q,arm.u,next.u));
+  const leave=add(point,next.u,ARM_LENGTH);outline.push(leave);commands.push(`L${pt(leave)}`);
+ });
+ const paperPath=commands.join('')+'Z',xs=outline.map(p=>p[0]),ys=outline.map(p=>p[1]),edge=PAPER+.1;
+ const viewBox={x:Math.min(...xs)-edge,y:Math.min(...ys)-edge,width:Math.max(...xs)-Math.min(...xs)+2*edge,height:Math.max(...ys)-Math.min(...ys)+2*edge};
+ const geometry={sides,layout,arms,apothem,track,lanes,nests,goals,outline,paperPath,center:arms.map((_,k)=>at(k,ARM_WIDTH/2,0)),viewBox};
  cache.set(sides,geometry);return geometry;
 }
 
