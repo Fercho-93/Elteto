@@ -22,10 +22,11 @@ export type ParchisRoll={sequence:number;player:PlayerId;value:number;values?:nu
 export type ParchisState={lastRoll?:ParchisRoll;initialRound?:number;startingPlayer?:PlayerId;players:PlayerId[];colors:Record<PlayerId,ParchisColor>;pieces:Record<PlayerId,number[]>;seed:number;rollCount:number;turn:number;phase:ParchisPhase;die:number|null;sixes:number;lastPiece:number|null;bonuses:number[];startingRolls:Record<PlayerId,number>;candidates:PlayerId[];winner:PlayerId|null;finished:boolean;log:string[];
  /** Board sides (3–6); older saves without it use the square board. */ sides?:number;
  /** Dice per roll: 1, or 2 when a table of 5 or 6 chooses it. Null while that choice is pending. */ diceCount?:number|null;
- rolled?:number[];used?:boolean[];repeat?:boolean};
+ rolled?:number[];used?:boolean[];repeat?:boolean;
+ /** Players who left the table: their pieces are off the board and they never get a turn. */ left?:PlayerId[]};
 export type ParchisMove={piece:number;from:number;to:number;steps:number;capture:PlayerId|null;dice:number[]};
 export type ParchisView=Omit<ParchisState,'seed'|'rollCount'|'turn'|'lastPiece'|'candidates'> & {turnPlayer:PlayerId;legalMoves:ParchisMove[];startingCandidates:PlayerId[];turnOrder:PlayerId[];sides:number;goal:number;cells:number;diceCount:number|null;rolled:number[];used:boolean[];diceChoice:boolean};
-export type ParchisAction={type:'roll';expectedRoll?:number}|{type:'move';piece:number;dice?:number[]}|{type:'dice';count:number};
+export type ParchisAction={type:'roll';expectedRoll?:number}|{type:'move';piece:number;dice?:number[]}|{type:'dice';count:number}|{type:'skip'}|{type:'leave'};
 const layoutOf=(state:{sides?:number})=>parchisLayout(state.sides??4);
 export const parchisGoal=(state:{sides?:number})=>layoutOf(state).goal;
 export function parchisSquare(color:ParchisColor,progress:number,sides=4):number|null{
@@ -75,9 +76,15 @@ export function legalParchisMoves(state:ParchisState):ParchisMove[]{
   });
  });
 }
+// The next seat that has not left the table.
+function nextSeat(state:ParchisState):number{
+ let turn=state.turn;
+ for(let i=0;i<state.players.length;i++){turn=(turn+1)%state.players.length;if(!state.left?.includes(state.players[turn]))return turn;}
+ return state.turn;
+}
 function endTurn(state:ParchisState):ParchisState {
  const again=state.repeat??state.die===6;
- return again?{...state,phase:'roll',bonuses:[]}:{...state,turn:(state.turn+1)%state.players.length,phase:'roll',die:null,sixes:0,lastPiece:null,bonuses:[],rolled:[],used:[],repeat:false};
+ return again?{...state,phase:'roll',bonuses:[]}:{...state,turn:nextSeat(state),phase:'roll',die:null,sixes:0,lastPiece:null,bonuses:[],rolled:[],used:[],repeat:false};
 }
 function settle(state:ParchisState):ParchisState {
  while(state.bonuses.length){state={...state,phase:'bonus'};if(legalParchisMoves(state).length)return state;state={...state,bonuses:state.bonuses.slice(1),log:[...state.log,`No hay movimiento exacto para la bonificación de ${state.bonuses[0]}.`]};}
@@ -99,7 +106,27 @@ export const parchisEngine:GameEngine<ParchisState,ParchisView,ParchisAction>={
  },
  applyAction(state,id,action){
   if(state.finished)throw Error('La partida ya ha terminado.');
+  if(action.type==='leave'){
+   if(!state.players.includes(id)||state.left?.includes(id))return state;
+   // Leaving takes the pieces off the board so they never block anybody, and the turn moves on.
+   const left=[...(state.left||[]),id],pieces={...state.pieces,[id]:[-1,-1,-1,-1]},next:ParchisState={...state,left,pieces,log:[...state.log,`${id} abandona la partida.`]};
+   if(state.phase==='setup')return state.players[state.turn]===id?{...next,turn:nextSeat(next)}:next;
+   if(state.phase==='start'){
+    // The sortition goes on without the player who left.
+    const candidates=state.candidates.filter(p=>p!==id),startingRolls=Object.fromEntries(Object.entries(state.startingRolls).filter(([p])=>p!==id)),opening:ParchisState={...next,candidates,startingRolls},pending=candidates.filter(p=>startingRolls[p]===undefined);
+    if(pending.length)return state.players[state.turn]===id?{...opening,turn:state.players.indexOf(pending[0])}:opening;
+    if(!candidates.length)return opening;
+    const high=Math.max(...candidates.map(p=>startingRolls[p])),tied=candidates.filter(p=>startingRolls[p]===high);
+    if(tied.length>1)return {...opening,candidates:tied,initialRound:(state.initialRound??1)+1,startingRolls:{},turn:state.players.indexOf(tied[0]),die:null,log:[...opening.log,'Empate en la salida: vuelven a tirar los empatados.']};
+    return {...opening,startingPlayer:tied[0],turn:state.players.indexOf(tied[0]),phase:'roll',die:null,log:[...opening.log,`${tied[0]} empieza la partida.`]};
+   }
+   return state.players[state.turn]===id?{...next,turn:nextSeat(next),phase:'roll',die:null,sixes:0,lastPiece:null,bonuses:[],rolled:[],used:[],repeat:false}:next;
+  }
   if(id!==state.players[state.turn])throw Error('No es tu turno.');
+  if(action.type==='skip'){
+   if(!['roll','move','bonus'].includes(state.phase))throw Error('Ahora no se puede saltar el turno.');
+   return {...state,turn:nextSeat(state),phase:'roll',die:null,sixes:0,lastPiece:null,bonuses:[],rolled:[],used:[],repeat:false,log:[...state.log,`${id} pierde el turno.`]};
+  }
   if(state.phase==='setup'){
    if(action.type!=='dice'||![1,2].includes(action.count))throw Error('Elige primero si se juega con uno o dos dados.');
    return {...state,diceCount:action.count,phase:'start',log:[...state.log,`${id} elige jugar con ${action.count===2?'dos dados':'un dado'}.`]};
@@ -122,7 +149,7 @@ export const parchisEngine:GameEngine<ParchisState,ParchisView,ParchisAction>={
    if(next.sixes===3){
     const pieces={...next.pieces,[id]:[...next.pieces[id]]},what=values.length>1?'tres dobles':'tres seises';
     if(state.lastPiece!==null)pieces[id][state.lastPiece]=-1;
-    return {...next,pieces,turn:(state.turn+1)%state.players.length,phase:'roll',sixes:0,lastPiece:null,bonuses:[],rolled:[],used:[],repeat:false,log:[...next.log,state.lastPiece===null?`${what[0].toUpperCase()+what.slice(1)}: termina el turno.`:`${id}: ${what}; la última ficha movida vuelve a la espera.`]};
+    return {...next,pieces,turn:nextSeat(state),phase:'roll',sixes:0,lastPiece:null,bonuses:[],rolled:[],used:[],repeat:false,log:[...next.log,state.lastPiece===null?`${what[0].toUpperCase()+what.slice(1)}: termina el turno.`:`${id}: ${what}; la última ficha movida vuelve a la espera.`]};
    }
    return legalParchisMoves(next).length?next:{...endTurn(next),log:[...next.log,'No hay movimiento válido.']};
   }

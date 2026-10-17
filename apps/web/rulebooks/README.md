@@ -2,7 +2,7 @@
 
 Un archivo por juego, `rulebooks/<id>.js` (mismo `id` que el catálogo, con guiones), con un
 único `export default` de datos. `game-help.js` lo muestra dentro de la aplicación, sin
-conexión y sin enlaces. Se añade solo al final la sección «Si alguien sale de la partida».
+conexión y sin enlaces. Se añade solo al final la sección «Si alguien sale o se ausenta».
 
 ```js
 export default {

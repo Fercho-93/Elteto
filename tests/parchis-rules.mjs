@@ -156,3 +156,28 @@ d=doubleSeed({...two([1,1],[12,30,-1,-1]),phase:'roll',sixes:2,lastPiece:1});d=e
 // Public views carry the dice and never the seed.
 const v=engine.view(two([3,4],[10,-1,-1,-1]),'b');assert.deepEqual([v.diceCount,v.rolled,v.used,v.legalMoves.length,'seed' in v],[2,[3,4],[false,false],0,false]);
 console.log('Parchís: triangle, square, pentagon and hexagon routes, dice choice, two-dice exits, doubles, lost dice, barriers and bonuses: OK');
+// Absence: a skipped turn passes to the next seat; a player who leaves takes the pieces off the board and never plays again.
+{
+ const seats=['a','b','c','d'];
+ let g={...engine.createInitialState(seats,5),phase:'roll',turn:1,startingPlayer:'a',candidates:[...seats]};
+ g.pieces={a:[3,-1,-1,-1],b:[9,10,-1,-1],c:[20,-1,-1,-1],d:[-1,-1,-1,-1]};
+ assert.throws(()=>engine.applyAction(g,'a',{type:'skip'}),/No es tu turno/);
+ let next=engine.applyAction(g,'b',{type:'skip'});assert.equal(next.turn,2);assert.equal(next.phase,'roll');assert.equal(next.sixes,0);assert.match(next.log.at(-1),/pierde el turno/);
+ assert.deepEqual(next.pieces,g.pieces,'skipping moves nothing');
+ assert.throws(()=>engine.applyAction({...g,phase:'start'},'b',{type:'skip'}),/saltar/);
+ // Leaving mid-turn: pieces go home, the turn moves on and the seat is skipped from then on.
+ next=engine.applyAction(g,'b',{type:'leave'});assert.deepEqual(next.pieces.b,[-1,-1,-1,-1]);assert.deepEqual(next.left,['b']);assert.equal(next.turn,2);
+ let after=engine.applyAction(next,'c',{type:'skip'});after=engine.applyAction(after,'d',{type:'skip'});after=engine.applyAction(after,'a',{type:'skip'});assert.equal(after.turn,2,'seat b is never visited');
+ assert.equal(engine.applyAction(next,'b',{type:'leave'}),next,'leaving twice changes nothing');
+ // A departed seat that is not on turn keeps the turn where it is.
+ const other=engine.applyAction(g,'d',{type:'leave'});assert.equal(other.turn,1);
+ // Leaving during the opening roll: the sortition continues without that player.
+ let open=engine.createInitialState(seats,9);open=dieState(open,3);open=engine.applyAction(open,'a',{type:'roll'});
+ const mid=engine.applyAction(open,'b',{type:'leave'});assert.equal(mid.turn,2);assert.deepEqual(mid.candidates,['a','c','d']);
+ let fin=mid;for(const v of [2,5]){fin=dieState(fin,v);fin=engine.applyAction(fin,fin.players[fin.turn],{type:'roll'});}
+ assert.equal(fin.phase,'roll');assert.equal(fin.startingPlayer,'d');
+ // Dice choice at a five-player table passes on when the chooser leaves.
+ const five=engine.createInitialState(['a','b','c','d','e'],2);assert.equal(five.phase,'setup');
+ assert.equal(engine.applyAction(five,'a',{type:'leave'}).turn,1);
+}
+console.log('Parchís: turno saltado, abandono, asiento omitido y sorteo sin quien se va: OK');

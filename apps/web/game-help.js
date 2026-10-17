@@ -14,7 +14,12 @@ function renderBlock(block){
 // Lo mismo para todos los juegos: qué pasa cuando alguien se marcha a mitad de partida.
 function leaveSection(id){
  const plan=getGamePlan(id),pair=plan.players.includes(2)&&!['mus','texas-holdem'].includes(id);
- return {title:'Si alguien sale de la partida',blocks:[pair?'La mesa recibe el aviso «X ha salido de la partida». En una mesa de dos, la partida termina en ese momento y **gana quien se queda**.':'La mesa recibe el aviso «X ha salido de la partida». Quien se ausenta puede volver a su plaza desde el mismo navegador.']};
+ const skip=id==='parchis'?'pierde el turno':id==='texas-holdem'?'pasa o se retira':'la IA juega por esa persona';
+ return {title:'Si alguien sale o se ausenta',blocks:[
+  pair?'La mesa recibe el aviso «X ha salido de la partida». En una mesa de dos, la partida termina en ese momento y **gana quien se queda**.':'La mesa recibe el aviso «X ha salido de la partida».',
+  `Quien se queda sin conexión figura como **Ausente**. Tiene unos segundos para volver con el mismo navegador; si no vuelve, en su turno ${skip} y la partida sigue. Quien sale a propósito deja de jugar.`,
+  'El anfitrión puede **saltar el turno** de quien juega y **expulsar** a alguien desde el menú ⋯ de la partida.',
+ ]};
 }
 export function renderRulebook(book,id){
  const sections=[...book.sections,leaveSection(id)];

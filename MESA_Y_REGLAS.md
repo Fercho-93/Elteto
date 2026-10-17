@@ -50,3 +50,9 @@ Las fichas cubren secuencias, bazas, combinaciones, captura, apuestas, banca, pa
 Las identidades `PhysicalCard.id` distinguen cartas iguales de barajas diferentes. Los motores nuevos de Remigio/Continental no deben identificar cartas solo por palo e índice. El material de póker español usa los cuatro palos españoles con índices A–K, no la española ordinaria de 40/48.
 
 La biblioteca transcribe los PDFs multilingües, pero el texto español original prevalece. Mentiroso presenta un objetivo inicial que contradice su final: la ficha adopta el final explícito (pierde el último con cartas). Burro es la variante de parejas del PDF. Guiñote sigue el reparto completo de la fuente; no se sustituye por otro reglamento regional. Oca usa 63 casillas y los efectos del texto español del PDF. Parchís fija su edición y coordenadas en `design/PARCHIS.md`.
+
+## Ausentes, turno saltado y expulsión
+
+Vale para todos los juegos y para las salas LAN y online. Quien se queda sin conexión figura como **Ausente** en todas las pantallas. La mesa le da unos segundos (15 s en LAN; el margen de presencia en las salas online) para volver; pasado ese margen, en su turno **se salta**: en Parchís pierde el turno, en el póker pasa o se retira y en el resto la IA hace una jugada válida por esa persona, de modo que la partida nunca se queda esperando. Quien sale a propósito deja de jugar de inmediato; en Parchís sus fichas salen del tablero y su asiento no vuelve a recibir turno. Si solo queda una persona presente, gana por abandono (salvo Mus y póker, que tienen su propio recuento).
+
+El anfitrión, desde el menú ⋯ de cualquier juego, puede **saltar el turno** de quien juega ahora y **expulsar** a alguien (con confirmación). El expulsado recibe el aviso, vuelve al inicio y no puede reentrar en esa partida. Pruebas: `tests/absence.mjs` (59 mesas de los 20 juegos), `tests/absence-screen.mjs`, `tests/lan-session.mjs` y `tests/online-sala.mjs`.

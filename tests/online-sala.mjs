@@ -229,6 +229,23 @@ try {
   assert.ok(moves>=2);
   assert.notEqual(board.events[0].last("game").view.phase,"start");
   console.log("  ok  Parchís: cuatro usuarios, tirada inicial, resultados y movimientos sincronizados");
+  // El anfitrión salta el turno de otra persona y expulsa a una tercera.
+  for (let step = 0; step < 40 && board.events[0].last("game").view.turnPlayer === board.host.uid; step++) {
+    const before = board.events[0].last("game"), legal = before.view.legalMoves, sequence = before.view.lastRoll?.sequence ?? 0;
+    await board.host.sendAction(legal.length ? { type: "move", piece: legal[0].piece } : { type: "roll", expectedRoll: sequence });
+    await until("el anfitrión juega", () => JSON.stringify(board.events[0].last("game").view) !== JSON.stringify(before.view));
+  }
+  const skipped = board.events[0].last("game").view.turnPlayer;
+  assert.notEqual(skipped, board.host.uid);
+  await board.host.skipTurn();
+  await until("turno saltado", () => board.events.every(e => e.last("game").view.turnPlayer !== skipped) && /pierde el turno/.test(board.events[0].last("game").view.log.at(-1)));
+  const victim = board.guests[0];
+  await board.host.kickPlayer(victim.uid);
+  await until("expulsión sincronizada", () => board.events.every(e => e.last("game").view.expelled?.[victim.uid] === true));
+  assert.ok(board.events[0].last("game").view.pieces[victim.uid].every(p => p === -1));
+  assert.ok(board.events[0].last("game").players.find(p => p.id === victim.uid).away, "el expulsado figura como ausente");
+  assert.ok(board.events[0].changes.some(e => e.kind === "notice" && /ha sido expulsado/.test(e.message)));
+  console.log("  ok  Parchís: el anfitrión salta un turno y expulsa a alguien, que figura como ausente en todas las pantallas");
   await board.host.exit();
 
   // Solo online: one human completes an entire Mus match with three AI seats.

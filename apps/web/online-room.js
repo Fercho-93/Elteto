@@ -1,7 +1,7 @@
 import {BotPacing} from './bot-pacing.js';
 import {MusFlowRunner} from './mus-flow.js';
 import {characterProfile, AVATAR_TAKEN_MESSAGE} from './avatar-art.js';
-import { getGame, createMusState, fillBotSeats, nextBotMove, BotRunner, botTurnDelay, departGame } from "./game-core/index.js";
+import { getGame, createMusState, fillBotSeats, nextBotMove, BotRunner, botTurnDelay, departGame, absentMove, pendingActors, skipTurnState } from "./game-core/index.js";
 import { connectFirebase } from "./firebase-client.js";
 import { createRoomCode, inviteUrlFor } from "./room-code.js";
 import {
@@ -146,23 +146,23 @@ export class OnlineSession {
     this.actionsStop = null;
     this.botPacing=new BotPacing();
     this.botRunner = new BotRunner(
-      () => this.closed || !this.isHost ? null : nextBotMove(this.engine, this.state, Object.keys(this.room.bots || {})),
+      () => this.closed || !this.isHost ? null : this.nextAutoMove(),
       () => this.enqueue(async () => {
         await this.hostReady;
         if (this.closed || !this.isHost) return;
-        const move = nextBotMove(this.engine, this.state, Object.keys(this.room.bots || {}));
+        const move = this.nextAutoMove();
         if (!move) return;
         this.state = this.engine.applyAction(this.state, move.playerId, move.action);
         await this.publish();
       }),
-      error => this.onChange({kind:'error', message:String(error.message || error)}), () => this.botPacing.delay(botTurnDelay(this.engine?.id || this.room?.gameId || '')));
+      error => this.onChange({kind:'error', message:String(error.message || error)}), () => this.botPacing.delay(this.state&&!this.botMove()?1500:botTurnDelay(this.engine?.id || this.room?.gameId || '')));
     // Tareas de quien juega.
     this.viewStop = null;
     this.viewRev = -1;
     this.lastErrorSeq = 0;
     this.seq = null;
     this.claiming = false;
-    this.musFlow=new MusFlowRunner(()=>this.isHost?({engine:this.engine,state:this.state,paused:this.players().some(p=>!p.isBot&&p.away)}):null,action=>this.enqueue(async()=>{await this.hostReady;if(!this.isHost||this.players().some(p=>!p.isBot&&p.away)||this.state?.revision!==action.expectedRevision)return;this.state=this.engine.applyAction(this.state,this.state.players[0],this.engine.id==='mus'?{...action,at:Date.now()}:action);await this.publish();}),error=>this.onChange({kind:"error",message:error.message}));
+    this.musFlow=new MusFlowRunner(()=>this.isHost?({engine:this.engine,state:this.state,paused:false}):null,action=>this.enqueue(async()=>{await this.hostReady;if(!this.isHost||this.state?.revision!==action.expectedRevision)return;this.state=this.engine.applyAction(this.state,this.state.players[0],this.engine.id==='mus'?{...action,at:Date.now()}:action);await this.publish();}),error=>this.onChange({kind:"error",message:error.message}));
     this.onVisibility = () => { if (document.visibilityState === "visible") void this.heartbeat(); };
   }
 
@@ -178,6 +178,7 @@ export class OnlineSession {
     });
     this.timers.push(setInterval(() => { if (document.visibilityState === "visible") void this.heartbeat(); }, 5000));
     this.timers.push(setInterval(() => this.watchHost(), WATCH_MS));
+    this.timers.push(setInterval(() => this.refreshAbsence(), 5000));
     document.addEventListener("visibilitychange", this.onVisibility);
     return this;
   }
@@ -213,8 +214,8 @@ export class OnlineSession {
         if (data?.seenAt?.toMillis) this.presence.set(uid, { seenAt: data.seenAt.toMillis(), visible: data.visible, sittingOut:data.sittingOut });
         else this.presence.delete(uid);
         if (this.room?.status === "lobby") this.emitLobby();
-        else if(['texas-holdem','mus'].includes(this.room?.gameId)&&this.state&&this.isHost){this.emitGame(this.engine.view(this.state,this.uid));this.musFlow?.schedule();}
-        else if(['texas-holdem','mus'].includes(this.room?.gameId)&&this.lastView)this.emitGame(this.lastView);
+        else if(this.state&&this.isHost){this.emitGame(this.engine.view(this.state,this.uid));this.musFlow?.schedule();this.botRunner.schedule();}
+        else if(this.lastView)this.emitGame(this.lastView);
       }, () => {});
       this.presenceStops.set(uid, stop);
     }
@@ -223,6 +224,30 @@ export class OnlineSession {
       stop(); this.presenceStops.delete(uid); this.presence.delete(uid); this.presenceLoaded.delete(uid);
     }
   }
+
+  /** Los asientos de quienes se han ido o no están conectados los juega la mesa por ellos. */
+  autoIds() {
+    if (!this.state || this.state.finished) return [];
+    const ids = new Set(Object.keys(this.state.departed || {}));
+    for (const uid of this.room.playerOrder) if (uid === this.uid ? this.sittingOut : this.isAway(uid)) ids.add(uid);
+    return [...ids];
+  }
+  botMove() {
+    const departed = this.state?.departed || {};
+    return nextBotMove(this.engine, this.state, Object.keys(this.room.bots || {}).filter(id => !departed[id]));
+  }
+  nextAutoMove() { return this.botMove() || absentMove(this.engine, this.state, this.autoIds()); }
+  /** Quien no está figura como ausente en todas las pantallas, aunque no llegue ninguna jugada. */
+  refreshAbsence() {
+    if (this.closed || !this.room || this.room.status !== 'playing') return;
+    const signature = this.players().filter(p => p.away).map(p => p.id).join(',');
+    if (signature === this.lastAwaySignature) return;
+    this.lastAwaySignature = signature;
+    if (this.isHost && this.state) { this.emitGame(this.engine.view(this.state, this.uid)); this.botRunner.schedule(); }
+    else if (this.lastView) this.emitGame(this.lastView);
+  }
+
+  hasDeparted(uid) { return Boolean((this.state?.departed || this.lastView?.departed)?.[uid]); }
 
   isAway(uid) {
     if(this.room?.gameId==='texas-holdem'){
@@ -307,7 +332,7 @@ export class OnlineSession {
   players() {
     if (!this.room) return [];
     return [...this.room.playerOrder.map((uid) => ({
-      id: uid, name: this.room.players[uid]?.name || "Jugador", ...characterProfile(this.room.players[uid]?.character), isHost: uid === this.room.hostUid, away: this.isAway(uid),
+      id: uid, name: this.room.players[uid]?.name || "Jugador", ...characterProfile(this.room.players[uid]?.character), isHost: uid === this.room.hostUid, away: this.isAway(uid) || this.hasDeparted(uid), absent: this.isAway(uid) || this.hasDeparted(uid),
     })), ...Object.entries(this.room.bots || {}).map(([id, name]) => ({id, name, isHost:false, isBot:true, away:false}))];
   }
 
@@ -396,7 +421,6 @@ export class OnlineSession {
         return;
       }
       if(this.engine.id==='mus'&&this.state.version===2){
-        if(this.players().some(p=>!p.isBot&&p.away))throw new Error('La mesa está en pausa. Espera a que todos vuelvan a su plaza.');
         if(action.type==='advance'&&playerUid!==this.uid)throw new Error('Espera a que la mesa termine esta transición.');
       }
       this.state = this.engine.applyAction(this.state, playerUid, this.engine.id==='mus'?{...action,at:Date.now()}:action);
@@ -439,6 +463,33 @@ export class OnlineSession {
     this.wasPlaying = true;
     try { await this.publish({}, { starting: true }); }
     catch (error) { this.state = null; this.wasPlaying = false; this.actionsStop?.(); this.actionsStop = null; throw roomError(error, "No se pudo empezar la partida."); }
+  }
+
+  /** Anfitrión: echa a alguien de la partida en marcha. Su asiento deja de jugar y recibe el aviso. */
+  async kickPlayer(uid) {
+    if (this.isHost && this.room.status === 'lobby') return this.removePlayer(uid);
+    return this.enqueue(async () => {
+      await this.hostReady;
+      if (!this.isHost || !this.state || this.state.finished || uid === this.uid || !this.state.players.includes(uid) || this.state.departed?.[uid]) return;
+      const name = this.room.players[uid]?.name || 'Un jugador';
+      this.onChange({ kind: 'notice', message: `${name} ha sido expulsado de la partida.` });
+      this.state = departGame(this.engine.id, this.state, uid, name, true);
+      await this.publish();
+    });
+  }
+
+  /** Anfitrión: salta el turno de quien juega ahora (Parchís lo pierde; en el resto juega la IA por esa persona). */
+  async skipTurn() {
+    return this.enqueue(async () => {
+      await this.hostReady;
+      if (!this.isHost || !this.state || this.state.finished) throw new Error('No hay ninguna partida en marcha.');
+      const actor = pendingActors(this.engine, this.state).find(id => id !== this.uid);
+      if (!actor) throw new Error('Ahora solo te toca jugar a ti.');
+      const name = this.players().find(p => p.id === actor)?.name || 'Un jugador';
+      this.state = skipTurnState(this.engine, this.state, actor);
+      this.onChange({ kind: 'notice', message: `El anfitrión ha saltado el turno de ${name}.` });
+      await this.publish();
+    });
   }
 
   async removePlayer(uid) {
