@@ -166,3 +166,47 @@ console.log('LAN póker: ausentarse, esperar sin cronómetro y reenganche con fi
  await g1.exit();await hostO.exit();
 }
 console.log('LAN: salir de una partida avisa y da la victoria al que se queda en una mesa de dos: OK');
+
+// Ausentes: figuran como tales, su turno se salta, y el anfitrión puede saltar turnos y expulsar en cualquier juego.
+{
+ const ev=[[],[],[]];
+ window.ELTETO_LAN.hostKey='secret';
+ const hostP=await LanSession.create({gameId:'parchis',hostName:'Ana',character:2,roomName:'Parchís'},e=>ev[0].push(e));
+ window.ELTETO_LAN.hostKey=null;
+ const first=globalThis.sessionStorage,second=new Map();
+ const gb=await LanSession.join('ABCD2345','Bea',e=>ev[1].push(e),9);
+ globalThis.sessionStorage={getItem:k=>second.get(k)||null,setItem:(k,v)=>second.set(k,v)};
+ const gc=await LanSession.join('ABCD2345','Cris',e=>ev[2].push(e),5);
+ globalThis.sessionStorage=first;
+ await tick();await tick();await hostP.startGame();await tick();await tick();
+ const local=hostP.local;local.graceMs=40;
+ const playing=turn=>{local.state={...local.state,phase:'roll',turn,die:null,sixes:0,candidates:[...local.state.players],startingPlayer:local.state.players[0],bonuses:[]};};
+ const bea=gb.playerId,cris=gc.playerId;
+ // Quien pierde la conexión figura como ausente y, pasado el margen, pierde el turno.
+ playing(1);gb.ws.close();await tick();await tick();
+ assert.ok(local.players().find(p=>p.id===bea).away,'la persona desconectada figura como ausente');
+ assert.equal(local.state.players[local.state.turn],bea,'durante el margen la mesa espera');
+ // The hand-built state counts as a public move; clear the pacing so the 1.5 s absent delay is what is measured.
+ local.botPacing.until=0;local.botRunner.stop();local.botRunner.schedule();
+ await new Promise(r=>setTimeout(r,1900));
+ assert.equal(local.state.players[local.state.turn],cris,'pasado el margen se salta su turno');
+ assert.match(local.state.log.at(-1),/pierde el turno/);
+ // El anfitrión salta el turno de quien juega ahora.
+ await hostP.skipTurn();assert.equal(local.state.players[local.state.turn],'host');
+ assert.ok(ev[0].some(e=>e.kind==='notice'&&/saltado el turno de Cris/.test(e.message)));
+ await assert.rejects(hostP.skipTurn(),/solo te toca/);
+ // Expulsar: sus fichas salen del tablero, no vuelve a jugar y la mesa lo sabe.
+ await hostP.kickPlayer(cris);await tick();await tick();
+ assert.equal(local.state.departed[cris],'Cris');assert.ok(local.state.expelled[cris]);assert.deepEqual(local.state.left,[cris]);
+ assert.ok(local.state.pieces[cris].every(p=>p===-1));
+ assert.ok(ev[0].some(e=>e.kind==='notice'&&/Cris ha sido expulsado/.test(e.message)));
+ assert.ok(local.players().find(p=>p.id===cris).away);
+ assert.equal(local.engine.view(local.state,'host').expelled[cris],true);
+ playing(0);hostP.local.state=local.engine.applyAction({...local.state,phase:'roll',turn:0},'host',{type:'skip'});
+ assert.equal(local.state.players[local.state.turn],bea,'el asiento expulsado no recibe turno');
+ // Con una sola persona presente gana por abandono.
+ await hostP.kickPlayer(bea);await tick();
+ assert.equal(local.state.finished,true);assert.equal(local.state.winner,'host');
+ await gb.exit();await gc.exit();await hostP.exit();
+}
+console.log('LAN: ausentes, turno saltado, saltar turno y expulsar del anfitrión: OK');

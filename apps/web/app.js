@@ -71,9 +71,11 @@ const visibleSignature=(view,players)=>JSON.stringify([view,(players||[]).map(p=
 // Everyone at the table hears when someone leaves. Departures already in the first view of a table are history.
 let departures=null;
 function announceDepartures(change){
- const key=`${state.roomCode||''}:${change.gameId||state.gameId}`,gone=change.view?.departed||{};
+ const key=`${state.roomCode||''}:${change.gameId||state.gameId}`,gone=change.view?.departed||{},expelled=change.view?.expelled||{},me=change.playerId||state.playerId;
  if(departures?.key!==key){departures={key,seen:new Set(Object.keys(gone))};return;}
- for(const [id,name] of Object.entries(gone))if(!departures.seen.has(id)){departures.seen.add(id);if(id!==(change.playerId||state.playerId))flash(`${name} ha salido de la partida.`);}
+ for(const [id,name] of Object.entries(gone))if(!departures.seen.has(id)){departures.seen.add(id);if(id!==me)flash(expelled[id]?`${name} ha sido expulsado de la partida.`:`${name} ha salido de la partida.`);}
+ // Quien es expulsado recibe el aviso y vuelve al inicio.
+ if(expelled[me]&&!departures.expelledSelf){departures.expelledSelf=true;setTimeout(()=>{if(state.role==='client'||GUEST)endGuestRoom('El anfitrión te ha expulsado de la partida.');else leaveRoom('home').catch(()=>{});},600);}
 }
 function receiveGame(change){announceDepartures(change);if(state.screen==='poker-break'){state.view=change.view;state.players=change.players||state.players;render();return;}
  if(state.screen==='game'&&!turnSequence.busy&&change.view&&visibleSignature(change.view,change.players||state.players)===visibleSignature(state.view,state.players)){state.players=change.players||state.players;return;}
@@ -270,7 +272,40 @@ let shownResult = null;
 function renderGame() {
   app.pokerMotionFinished=()=>turnSequence.decorate(app,state.playerId,playerName);
   if(!turnSequence.busy&&state.view)turnSequence.adopt({view:state.view,gameId:state.gameId,playerId:state.playerId});
-  const paint=prepareCardPaint(app),avatars=prepareAvatarPaint(app);renderGameContents();mountScreenBack(app);mountGameHelp(app,state.gameId);restoreCardPaint(app,paint);restoreAvatarPaint(app,avatars);mountForfeitNotice();turnSequence.decorate(app,state.playerId,playerName);
+  const paint=prepareCardPaint(app),avatars=prepareAvatarPaint(app);renderGameContents();mountScreenBack(app);mountGameHelp(app,state.gameId);restoreCardPaint(app,paint);restoreAvatarPaint(app,avatars);mountForfeitNotice();mountAbsence();mountHostControls();turnSequence.decorate(app,state.playerId,playerName);
+}
+// Quien se ha ido o no tiene conexión figura como ausente en cualquier mesa; su turno se salta.
+function absentIds() {
+  const gone = state.view?.departed || {};
+  return new Set([...state.players.filter(p => !p.isBot && (p.away || gone[p.id])).map(p => p.id), ...Object.keys(gone)]);
+}
+function mountAbsence() {
+  const absent = absentIds();
+  if (!absent.size || state.view?.finished) return;
+  for (const seat of app.querySelectorAll('.rival-seat[data-player-id],.table-seat[data-player-id],.mus-seat[data-player-id]')) {
+    if (!absent.has(seat.dataset.playerId)) continue;
+    seat.classList.add('is-absent');
+    if (seat.querySelector('.absent-badge')) continue;
+    const holder = seat.querySelector('.rival-token') || seat;
+    const badge = document.createElement('span');
+    badge.className = 'absent-badge';badge.textContent = 'Ausente';
+    badge.title = 'No está en la mesa: se salta su turno.';
+    holder.append(badge);
+  }
+}
+// El anfitrión puede saltar el turno de quien juega y echar a alguien desde el menú de cualquier juego.
+function mountHostControls() {
+  if (state.role !== 'host' || !state.view || state.view.finished) return;
+  const view = state.view, me = state.playerId, gone = view.departed || {};
+  const actor = [view.turnPlayer, ...(view.awaitingDiscardFrom || [])].find(id => id && id !== me && !gone[id]);
+  const people = state.players.filter(p => !p.isBot && p.id !== me && !gone[p.id]);
+  for (const menu of app.querySelectorAll('.game-menu-content')) {
+    if (menu.querySelector('.host-controls')) continue;
+    const section = document.createElement('section');
+    section.className = 'host-controls';section.setAttribute('aria-label', 'Controles del anfitrión');
+    section.innerHTML = `<h3>Anfitrión</h3><button class="host-skip" data-action="host-skip-turn" ${actor ? '' : 'disabled'}>${actor ? `Saltar el turno de ${esc(playerName(actor))}` : 'Saltar turno (ahora no juega nadie más)'}</button><p class="host-hint">En Parchís pierde el turno; en los demás juegos la IA juega por esa persona.</p>${people.length ? `<ul class="host-kick-list">${people.map(p => `<li><span>${esc(p.name)}${p.away ? ' · ausente' : ''}</span><button data-action="host-kick" data-player-id="${esc(p.id)}">Expulsar</button></li>`).join('')}</ul>` : ''}`;
+    menu.prepend(section);
+  }
 }
 // Quien se queda en una mesa de dos tras la salida del otro ve el motivo de su victoria.
 function mountForfeitNotice() {
@@ -284,7 +319,7 @@ function mountForfeitNotice() {
 }
 function renderGameContents() {
   state.screen = "game";
-  const game = getGame(state.gameId), view = state.view ? {...state.view,characters:Object.fromEntries(state.players.map(p=>[p.id,p.character])),away:Object.fromEntries(state.players.map(p=>[p.id,Boolean(p.away)]))} : null;
+  const game = getGame(state.gameId), view = state.view ? {...state.view,characters:Object.fromEntries(state.players.map(p=>[p.id,p.character])),away:Object.fromEntries(state.players.map(p=>[p.id,Boolean(p.away)])),waiting:Object.fromEntries(state.players.map(p=>[p.id,Boolean(p.away&&!p.absent)]))} : null;
   if (!view) { app.innerHTML = `${header()}<section class="panel"><p>Esperando el estado de la partida…</p></section>`; return; }
   if(state.gameId==='mus'&&view.version===2){renderMusScreen(app,view,state.playerId,playerName,state.selected,state.error);return;}
   if(!['cinquillo','mus','parchis'].includes(state.gameId)){renderCatalogGame(app,view,state.playerId,playerName,state.error);return;}
@@ -641,6 +676,16 @@ app.addEventListener("click", async (event) => {
       render();
     } else if (action === "fill-bots") {
       await (state.online || state.host).fillWithBots();
+    } else if (action === "host-skip-turn") {
+      await (state.online || state.host).skipTurn();
+    } else if (action === "host-kick") {
+      // Dos pulsaciones: la primera pide confirmar para no echar a nadie sin querer.
+      if (button.dataset.armed !== '1') {
+        button.dataset.armed = '1';button.textContent = 'Confirmar';
+        setTimeout(() => { if (button.isConnected) { button.dataset.armed = ''; button.textContent = 'Expulsar'; } }, 4000);
+        return;
+      }
+      await (state.online || state.host).kickPlayer(button.dataset.playerId);
     } else if (action === "kick-player") {
       await (state.online || state.host).removePlayer(button.dataset.playerId);
     } else if (action === "play-card") {

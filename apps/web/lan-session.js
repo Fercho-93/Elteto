@@ -17,7 +17,7 @@ export class LanSession {
     Object.assign(window.ELTETO_LAN, await fetch('./lan-config', { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error('No se pudo abrir la mesa.'); return r.json(); }));
     const session = new LanSession(onChange, true);
     session.local = new LocalHostSession(options.gameId, options.hostName, options.roomName, change => session.emitHost(change), options.character);
-    session.local.canRunBots = () => session.local.engine.id==='texas-holdem' || [...session.local.connections.values()].every(c => c.peer.connected);
+    session.local.canRunBots = () => !session.local.waitingForReturn();
     await session.connect();
     session.local.publishLobby();
     return session;
@@ -102,10 +102,7 @@ export class LanSession {
   handleHostPacket(packet) {
     const id = packet.playerId;
     if (packet.type === 'guest-left') {
-      const connection = this.local.connections.get(id);
-      if (connection) connection.peer.connected = false;
-      this.local.publishLobby();
-      if (this.local.started) this.local.sendViews();
+      this.local.markAway(id);
       return;
     }
     if (packet.type !== 'guest-message') return;
@@ -114,8 +111,14 @@ export class LanSession {
       const peer = { connected: true, send: data => { this.send({ target: id, message: data }); return true; }, close: () => { if (this.ws?.readyState === WebSocket.OPEN) this.send({ target: id, close: true }); } };
       this.local.peers.set(id, peer);
       const existing = this.local.connections.get(id);
+      if (existing && this.local.hasDeparted(id)) {
+        // Quien salió o fue expulsado no vuelve a su asiento.
+        peer.send({ type: 'error', data: { message: 'Ya no estás en esta partida.' } });
+        peer.close();
+        return;
+      }
       if (existing) {
-        existing.peer = peer;existing.sittingOut=Boolean(message.data?.sittingOut);
+        existing.peer = peer;existing.awaySince = 0;clearTimeout(existing.awayTimer);existing.sittingOut=Boolean(message.data?.sittingOut);
         peer.send({ type: 'welcome', data: { playerId: id, gameId: this.local.engine.id } });
         this.local.publishLobby();
         this.local.sendViews();
@@ -131,13 +134,14 @@ export class LanSession {
       }
       this.local.peers.get(id)?.send({ type: 'ack', seq: message.seq });
     } else if (message.type === 'leave') {
-      if (this.local.started) { this.local.leaveGame(id); this.local.connections.get(id).peer.connected = false; }
+      if (this.local.started) { this.local.leaveGame(id); this.local.markAway(id); }
       else this.local.handleMessage(id, message);
     }
   }
   assertConnected() {
-    if(this.local.engine.id==='texas-holdem')return;
-    if ([...this.local.connections.values()].some(c => !c.peer.connected)) throw new Error('Partida en pausa: falta un jugador. Puede volver a entrar con el mismo navegador.');
+    const local = this.local;
+    if (!local.started) { if ([...local.connections.values()].some(c => !c.peer.connected)) throw new Error('Falta un jugador por reconectar. Puede volver a entrar con el mismo navegador.'); return; }
+    if (local.waitingForReturn()) throw new Error('Partida en pausa unos segundos: falta un jugador. Si no vuelve, se salta su turno.');
   }
   handleGuestPacket(message) {
     if (this.closed) return;
@@ -168,6 +172,9 @@ export class LanSession {
     this.send({ type: 'action', seq: this.seq, data: { action } });
     this.pending = true;
   }
+  /** Anfitrión: saltar el turno de quien juega ahora o expulsar a alguien de la partida. */
+  async skipTurn() { if (this.isHost) this.local.skipTurn(); }
+  async kickPlayer(id) { if (this.isHost) this.local.kickPlayer(id); }
   async removePlayer(id) {
     if (!this.isHost || this.local.started) return;
     if (this.local.bots.some(p => p.id === id)) { this.local.removePlayer(id); return; }

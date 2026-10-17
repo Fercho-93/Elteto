@@ -30,7 +30,7 @@ export function registerGame(engine: AnyEngine): void {
   const view = engine.view.bind(engine);
   engine.view = (state, playerId) => {
     const result = view(state, playerId);
-    const departed = state?.departed ? { departed: state.departed } : {};
+    const departed = state?.departed ? { departed: state.departed, ...(state.expelled ? { expelled: state.expelled } : {}) } : {};
     return state?.forfeit ? { ...result, ...departed, forfeitBy: state.forfeit, forfeitName: state.forfeitName } : { ...result, ...departed };
   };
   registry.set(engine.id, engine);
@@ -46,7 +46,8 @@ const NO_FORFEIT = new Set(["mus", "texas-holdem"]);
  */
 export function forfeitGame(engineId: string, state: any, leaver: PlayerId, leaverName = ""): any | null {
   if (!state || state.finished || NO_FORFEIT.has(engineId.replace(/_/g, "-")) || !Array.isArray(state.players) || !state.players.includes(leaver)) return null;
-  const rest: PlayerId[] = state.players.filter((id: PlayerId) => id !== leaver);
+  // Quien ya se había ido antes no cuenta: si solo queda una persona en la mesa, gana.
+  const rest: PlayerId[] = state.players.filter((id: PlayerId) => id !== leaver && !state.departed?.[id]);
   if (rest.length !== 1) return null;
   const name = leaverName || leaver;
   return {
@@ -61,14 +62,16 @@ export function forfeitGame(engineId: string, state: any, leaver: PlayerId, leav
  * en la vista de todos los jugadores para que toda la mesa reciba el aviso. En una mesa de dos
  * gana quien se queda; el póker además retira su mano y deja de repartirle.
  */
-export function departGame(engineId: string, state: any, leaver: PlayerId, leaverName = ""): any {
-  if (!state || !Array.isArray(state.players) || !state.players.includes(leaver)) return state;
+export function departGame(engineId: string, state: any, leaver: PlayerId, leaverName = "", expelled = false): any {
+  if (!state || !Array.isArray(state.players) || !state.players.includes(leaver) || state.departed?.[leaver]) return state;
   const name = leaverName || leaver;
-  const marked = { ...state, departed: { ...(state.departed || {}), [leaver]: name } };
+  const marked = { ...state, departed: { ...(state.departed || {}), [leaver]: name }, ...(expelled ? { expelled: { ...(state.expelled || {}), [leaver]: true } } : {}) };
   if (state.finished) return marked;
   const id = engineId.replace(/_/g, "-");
   if (id === "texas-holdem") return getGame(id).applyAction(marked, leaver, { type: "leave" });
-  return forfeitGame(id, marked, leaver, name) || marked;
+  // En Parchís las fichas de quien se va salen del tablero y su asiento deja de jugar.
+  const left = id === "parchis" ? getGame(id).applyAction(marked, leaver, { type: "leave" }) : marked;
+  return forfeitGame(id, left, leaver, name) || left;
 }
 
 export function getGame(id: string): AnyEngine {

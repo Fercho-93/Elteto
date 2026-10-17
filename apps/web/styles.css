@@ -952,3 +952,19 @@ body:has(.game-page) {
 .forfeit-notice{position:fixed;z-index:8;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);width:max-content;max-width:calc(100vw - 32px);display:grid;gap:2px;padding:12px 18px;text-align:center;color:var(--black);background:var(--citrus);border:2px solid var(--black);border-radius:14px;box-shadow:3px 4px var(--black);pointer-events:none;}
 .forfeit-notice strong{font-size:15px;font-weight:900;}
 .forfeit-notice span{font-size:13px;font-weight:700;}
+
+/* Ausentes y controles del anfitrión, comunes a todos los juegos */
+.is-absent { opacity:.6; filter:grayscale(.55); }
+.absent-badge { display:block; width:max-content; max-width:100%; margin:3px auto 0; padding:1px 7px; border-radius:7px; background:#6a3b3b; color:#ffe1d8; font:700 9px/13px system-ui,sans-serif; letter-spacing:.04em; text-transform:uppercase; filter:none; }
+.table-seat:not(.rival-seat).is-absent .absent-badge { position:absolute; left:50%; bottom:-6px; transform:translateX(-50%); margin:0; z-index:3; }
+.host-controls { display:grid; gap:8px; margin:0 0 14px; padding:12px; border:1px solid #e0c98a40; border-radius:12px; background:#ffffff08; }
+.host-controls h3 { margin:0; font:700 12px/16px system-ui,sans-serif; letter-spacing:.08em; text-transform:uppercase; color:#e8cf94; }
+.host-controls button { min-height:44px; padding:8px 12px; border:0; border-radius:10px; background:#dac58e; color:#25251f; font:650 13px system-ui,sans-serif; }
+.host-controls button:disabled { opacity:.45; }
+.host-controls .host-hint { margin:0; font:400 11px/15px system-ui,sans-serif; color:#bdb3a3; }
+.host-kick-list { display:grid; gap:6px; margin:0; padding:0; list-style:none; }
+.host-kick-list li { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.host-kick-list li span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:500 13px system-ui,sans-serif; }
+.host-kick-list button { flex:none; background:#7a3b3b; color:#fff0ea; }
+.rival-token { position:relative; }
+.rival-token .absent-badge { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); margin:0; z-index:4; box-shadow:0 1px 4px #0008; }

@@ -63,7 +63,7 @@ function playerState(v, p) {
         : "";
 }
 function controls(v, p, selected, name) {
-  if (Object.values(v.away || {}).some(Boolean))
+  if (Object.values(v.waiting || v.away || {}).some(Boolean))
     return '<p class="mus-wait">Mesa en pausa. Esperando a que todos vuelvan a su plaza…</p>';
   if (v.finished)
     return '<button data-action="open-mus-panel" data-kind="recuento" class="mus-action accept">VER RECUENTO</button>';
@@ -164,7 +164,7 @@ export function renderMusScreen(app, v, p, name, selected, error = "") {
     "showing",
     "counting",
   ].includes(v.phase);
-  const paused = Object.values(v.away || {}).some(Boolean);
+  const paused = Object.values(v.waiting || v.away || {}).some(Boolean);
   const turn = paused
     ? "MESA EN PAUSA"
     : v.finished

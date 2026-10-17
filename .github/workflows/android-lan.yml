@@ -94,6 +94,8 @@ jobs:
       - run: PARCHIS_BROWSER=webkit node tests/parchis-screen.mjs
       - run: node tests/parchis-dice.mjs
       - run: PARCHIS_BROWSER=webkit node tests/parchis-dice.mjs
+      - run: node tests/absence-screen.mjs
+      - run: ABSENCE_BROWSER=webkit node tests/absence-screen.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

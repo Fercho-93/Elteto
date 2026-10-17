@@ -1,9 +1,11 @@
 import {BotPacing} from './bot-pacing.js';
 import {MusFlowRunner} from './mus-flow.js';
 import {characterProfile, AVATAR_TAKEN_MESSAGE} from './avatar-art.js';
-import { getGame, createMusState, fillBotSeats, BotRunner, botTurnDelay, nextBotMove, departGame } from "./game-core/index.js";
+import { getGame, createMusState, fillBotSeats, BotRunner, botTurnDelay, nextBotMove, departGame, absentMove, pendingActors, skipTurnState } from "./game-core/index.js";
 
 const HOST_ID = "host";
+// Quien pierde la conexión tiene este margen para volver antes de que se juegue por esa persona.
+export const ABSENT_GRACE_MS = 15000;
 const say = (type, data = {}) => ({ type, data });
 
 export class LocalHostSession {
@@ -19,20 +21,59 @@ export class LocalHostSession {
     this.started = false;
     this.closed = false;
     this.bots = [];
+    this.graceMs = ABSENT_GRACE_MS;
     this.botPacing=new BotPacing();
-    this.botRunner = new BotRunner(() => this.closed || this.canRunBots?.() === false ? null : nextBotMove(this.engine, this.state, this.bots.map(p => p.id)),
+    this.botRunner = new BotRunner(() => this.closed || this.canRunBots?.() === false ? null : nextBotMove(this.engine, this.state, this.botIds()) || absentMove(this.engine, this.state, this.autoIds()),
       ({playerId, action}) => { this.state = this.engine.applyAction(this.state, playerId, this.engine.id==='mus'?{...action,at:Date.now()}:action); this.sendViews(); },
-      error => this.onChange({kind: 'error', message: String(error.message || error)}), () => this.botPacing.delay(botTurnDelay(this.engine.id)));
-    this.musFlow=new MusFlowRunner(()=>({engine:this.engine,state:this.state,paused:[...this.connections.values()].some(c=>c.peer.connected===false)}),action=>this.applyAction(HOST_ID,action),error=>this.onChange({kind:"error",message:error.message}));
+      error => this.onChange({kind: 'error', message: String(error.message || error)}), () => this.botPacing.delay(this.nextIsAbsent() ? 1500 : botTurnDelay(this.engine.id)));
+    this.musFlow=new MusFlowRunner(()=>({engine:this.engine,state:this.state,paused:this.waitingForReturn()}),action=>this.applyAction(HOST_ID,action),error=>this.onChange({kind:"error",message:error.message}));
     this.publishLobby();
   }
 
   players() {
     return [
-      { id: HOST_ID, name: this.hostName, ...this.hostCharacter, away:Boolean(this.hostSittingOut), isHost: true },
-      ...[...this.connections.values()].map(({ id, name, character, peer, sittingOut }) => ({ id, name, ...characterProfile(character), away:Boolean(sittingOut)||peer.connected===false, isHost: false })),
+      { id: HOST_ID, name: this.hostName, ...this.hostCharacter, away:Boolean(this.hostSittingOut), absent:Boolean(this.hostSittingOut), isHost: true },
+      ...[...this.connections.values()].map(({ id, name, character, peer, sittingOut }) => ({ id, name, ...characterProfile(character), away:Boolean(sittingOut)||peer.connected===false||this.hasDeparted(id), absent:this.isAutoPlayed(id), isHost: false })),
       ...this.bots,
     ];
+  }
+
+  /** Ya se juega por esa persona (no solo está desconectada: se fue, se ausentó o pasó el margen). */
+  isAutoPlayed(id) { return this.autoIds().includes(id); }
+
+  hasDeparted(id) { return Boolean(this.state?.departed?.[id]); }
+
+  /** Quién queda sin jugar: se fue de la partida, se ausentó a propósito o lleva demasiado sin conexión. */
+  autoIds(now = Date.now()) {
+    if (!this.state || this.state.finished) return [];
+    const ids = new Set(Object.keys(this.state.departed || {}));
+    if (this.hostSittingOut) ids.add(HOST_ID);
+    for (const c of this.connections.values()) if (c.sittingOut || (c.peer.connected === false && c.awaySince && now - c.awaySince >= this.graceMs)) ids.add(c.id);
+    return [...ids];
+  }
+
+  botIds() { return this.bots.map(p => p.id).filter(id => !this.hasDeparted(id)); }
+
+  nextIsAbsent() { return Boolean(this.state) && !nextBotMove(this.engine, this.state, this.botIds()); }
+
+  /** Mientras alguien acaba de perder la conexión la partida espera unos segundos a que vuelva. */
+  waitingForReturn(now = Date.now()) {
+    if (!this.started || this.engine.id === 'texas-holdem') return false;
+    return [...this.connections.values()].some(c => c.peer.connected === false && !this.hasDeparted(c.id) && !(c.awaySince && now - c.awaySince >= this.graceMs));
+  }
+
+  /** Una persona deja de estar conectada: figura como ausente y, pasado el margen, se juega por ella. */
+  markAway(id) {
+    const connection = this.connections.get(id);
+    if (!connection) return;
+    connection.peer.connected = false;
+    connection.awaySince = Date.now();
+    this.publishLobby();
+    if (this.started) {
+      this.sendViews();
+      clearTimeout(connection.awayTimer);
+      connection.awayTimer = setTimeout(() => { if (!this.closed && connection.peer.connected === false) { this.publishLobby(); this.sendViews(); } }, this.graceMs + 50);
+    }
   }
 
   publishLobby() {
@@ -106,12 +147,34 @@ export class LocalHostSession {
     this.state = departGame(this.engine.id, this.state, peerId, name); this.sendViews();
   }
 
+  /** El anfitrión echa a alguien de la partida en marcha: su asiento deja de jugar y se le avisa. */
+  kickPlayer(id) {
+    if (id === HOST_ID) return;
+    if (!this.started) { const peer = this.peers.get(id); if (peer) { peer.close(); this.handleClose(id); } return; }
+    if (!this.state || this.state.finished || !this.state.players.includes(id) || this.hasDeparted(id)) return;
+    const name = this.connections.get(id)?.name || this.bots.find(p => p.id === id)?.name || 'Un jugador';
+    this.notify(`${name} ha sido expulsado de la partida.`);
+    this.state = departGame(this.engine.id, this.state, id, name, true);
+    this.sendViews();
+    // The expelled player gets the final view first, then the connection closes.
+    const peer = this.peers.get(id);
+    if (peer) setTimeout(() => { peer.close(); this.handleClose(id); }, 400);
+  }
+
+  /** El anfitrión salta el turno de quien juega ahora: Parchís lo pierde y en el resto juega la IA por esa persona. */
+  skipTurn() {
+    if (!this.started || !this.state || this.state.finished) throw new Error('No hay ninguna partida en marcha.');
+    const actor = pendingActors(this.engine, this.state).find(id => id !== HOST_ID);
+    if (!actor) throw new Error('Ahora solo te toca jugar a ti.');
+    const name = this.players().find(p => p.id === actor)?.name || 'Un jugador';
+    this.state = skipTurnState(this.engine, this.state, actor);
+    this.notify(`El anfitrión ha saltado el turno de ${name}.`);
+    this.sendViews();
+  }
+
   handleClose(peerId) {
     this.peers.delete(peerId);
-    if(this.started&&['texas-holdem','mus'].includes(this.engine.id)){
-      const connection=this.connections.get(peerId);if(connection)connection.peer.connected=false;
-      this.publishLobby();this.sendViews();return;
-    }
+    if(this.started){this.markAway(peerId);return;}
     if (this.connections.delete(peerId)) this.publishLobby();
   }
 
@@ -154,7 +217,8 @@ export class LocalHostSession {
   applyAction(playerId, action) {
     if (!this.started || !this.state) return;
     try {
-      if(this.engine.id==='mus'&&this.players().some(p=>!p.isBot&&p.away))throw new Error('La mesa está en pausa. Falta un jugador por volver a su plaza.');
+      if (this.hasDeparted(playerId)) throw new Error('Ya no estás en esta partida.');
+      if(this.engine.id==='mus'&&this.waitingForReturn())throw new Error('La mesa está en pausa. Falta un jugador por volver a su plaza.');
       this.state = this.engine.applyAction(this.state, playerId, this.engine.id==='mus'?{...action,at:Date.now()}:action);
       this.sendViews();
     } catch (error) {

@@ -39,7 +39,7 @@ try{
    assert.ok((await page.locator('.help-rulebook').textContent()).length>2500);
    assert.ok(await page.locator('.help-section h2').filter({hasText:/Objetivo/}).count()>=1);
    assert.ok(await page.locator('.help-section h2').filter({hasText:/Elteto/}).count()>=1);
-   assert.equal(await page.locator('.help-section h2').last().textContent(),'Si alguien sale de la partida');
+   assert.equal(await page.locator('.help-section h2').last().textContent(),'Si alguien sale o se ausenta');
    assert.ok(await page.locator('.game-help').evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight;}));
    await page.locator('.help-index summary').click();await page.locator('[data-help-section]').last().click();assert.ok(await page.locator('.help-scroll').evaluate(el=>el.scrollTop>0));
    assert.deepEqual(await page.evaluate(()=>window.tableSnapshot()),game,'opening information never changes the game');

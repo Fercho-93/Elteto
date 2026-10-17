@@ -145,6 +145,44 @@ export function nextBotMove(engine: AnyEngine, state: any, botIds: string[], ran
   return null;
 }
 
+/**
+ * Jugada por quien no está en la mesa. En Parchís pierde el turno; en el póker pasa o se retira;
+ * en el resto la IA hace una jugada válida por esa persona para que la partida no se detenga.
+ */
+export function autoAction(engine: AnyEngine, state: any, playerId: string, random = Math.random): any | null {
+  if (!state || engine.isOver(state)) return null;
+  const v = engine.view(state, playerId);
+  if (engine.id === 'parchis' && v.turnPlayer === playerId && ['roll', 'move', 'bonus'].includes(v.phase)) return {type: 'skip'};
+  if (engine.id === 'texas-holdem' && v.phase !== 'result' && v.turnPlayer === playerId) {
+    const options = (v.options || []).map((o: any) => o.action);
+    return options.find((a: any) => a.type === 'check') || options.find((a: any) => a.type === 'fold') || chooseBotAction(engine, v, playerId, random);
+  }
+  return chooseBotAction(engine, v, playerId, random);
+}
+
+/** Primera jugada automática pendiente entre quienes están ausentes. */
+export function absentMove(engine: AnyEngine, state: any, ids: string[], random = Math.random) {
+  if (!state || engine.isOver(state)) return null;
+  for (const playerId of ids) {
+    const action = autoAction(engine, state, playerId, random);
+    if (action) return {playerId, action};
+  }
+  return null;
+}
+
+/** Personas a las que les toca jugar ahora (turno, descartes simultáneos o paso a la mano siguiente). */
+export function pendingActors(engine: AnyEngine, state: any): string[] {
+  if (!state || engine.isOver(state)) return [];
+  return (state.players as string[]).filter(id => chooseBotAction(engine, engine.view(state, id), id) !== null);
+}
+
+/** El anfitrión salta el turno de `playerId`: Parchís lo pierde; en el resto juega la IA por esa persona. */
+export function skipTurnState(engine: AnyEngine, state: any, playerId: string, random = Math.random): any {
+  const action = autoAction(engine, state, playerId, random);
+  if (!action) throw new Error('A esa persona no le toca jugar ahora.');
+  return engine.applyAction(state, playerId, engine.id === 'mus' ? {...action, at: Date.now()} : action);
+}
+
 export const botTurnDelay=(gameId:string)=>gameId==='oca'?6500:['damas_espanolas','damas-espanolas'].includes(gameId)?1500:gameId==='parchis'?5500:gameId==='mentiroso'?5200:4800;
 
 // One delayed move at a time. The host can resume from the saved state.
