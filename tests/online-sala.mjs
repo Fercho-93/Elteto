@@ -325,9 +325,7 @@ try {
   await until('póker ausente',()=>pokerRoom.host.players().find(p=>p.id===guestId)?.away);
   await pokerRoom.host.sendAction({type:'call'});
   await until('turno del ausente',()=>pokerRoom.host.state.players[pokerRoom.host.state.turn]===guestId);
-  await new Promise(r=>setTimeout(r,200));
-  assert.equal(pokerRoom.host.state.phase,'preflop','sin cronómetro: nadie actúa por el ausente');
-  assert.equal(pokerRoom.host.state.players[pokerRoom.host.state.turn],guestId,'la mesa espera al ausente');
+  await until('el ausente pasa y la mano sigue',()=>pokerRoom.host.state.phase==='flop');
   const remaining=pokerRoom.host.state.chips[guestId],hole=JSON.stringify(pokerRoom.host.state.hands[guestId]);
   pokerGuest.teardown();
   const returned=track(await OnlineSession.join(pokerRoom.host.roomCode,'Bea',pokerRoom.events[1].onChange,pokerRoom.conns[1],4));
@@ -336,7 +334,7 @@ try {
   assert.equal(JSON.stringify(pokerRoom.host.state.hands[guestId]),hole);
   assert.equal(pokerRoom.host.players().find(p=>p.id===guestId).character,4);
   await pokerRoom.host.exit();
-  console.log('  ok  Póker: ausente, la mesa espera sin cronómetro y misma identidad/fichas al reenganchar');
+  console.log('  ok  Póker: ausente, su turno pasa sin atascar la mesa y misma identidad/fichas al reenganchar');
   console.log("Salas online de punta a punta: OK");
 } finally {
   for (const session of sessions) if (!session.closed) session.teardown();

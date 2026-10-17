@@ -108,7 +108,7 @@ assert.ok(aiEvents.findLast(e=>e.kind==='game').players.every(p=>!p.away));
 await aiHost.exit();
 console.log('LAN: completar con IA, quitar IA y turnos automáticos sin invitados: OK');
 
-// Hold'em retains absent seats and waits for them: there is no turn timer.
+// Hold'em keeps an absent seat but never stalls: their turn passes (check, or fold against a bet).
 window.ELTETO_LAN.hostKey='secret';const pokerEvents=[[],[]];
 const pokerHost=await LanSession.create({gameId:'texas-holdem',hostName:'Ana',character:2,roomName:'Poker'},e=>pokerEvents[0].push(e));
 window.ELTETO_LAN.hostKey=null;
@@ -123,9 +123,9 @@ pokerGuest.ws.close();await tick();clearTimeout(pokerGuest.timer);
 assert.equal(pokerHost.local.players().length,2);
 await pokerHost.sendAction({type:'call'});await tick();
 assert.equal(pokerHost.local.state.players[pokerHost.local.state.turn],pokerId);
-await new Promise(r=>setTimeout(r,60));
-assert.equal(pokerHost.local.state.phase,'preflop','no timer acts for an absent guest');
-assert.equal(pokerHost.local.state.players[pokerHost.local.state.turn],pokerId,'the table waits for the absent guest');
+pokerHost.local.graceMs=40;
+for(let i=0;i<60&&pokerHost.local.state.phase==='preflop';i++)await new Promise(r=>setTimeout(r,100));
+assert.equal(pokerHost.local.state.phase,'flop','the absent guest checks instead of stalling the hand');
 const chips=pokerHost.local.state.chips[pokerId],hand=JSON.stringify(pokerHost.local.state.hands[pokerId]);
 await pokerGuest.connect();await tick();await tick();
 assert.equal(pokerGuest.playerId,pokerId);
@@ -134,7 +134,7 @@ assert.equal(JSON.stringify(pokerHost.local.state.hands[pokerId]),hand);
 assert.equal(pokerHost.local.players().find(p=>p.id===pokerId).character,9);
 assert.equal(pokerHost.local.players().find(p=>p.id===pokerId).away,false);
 await pokerGuest.exit();await pokerHost.exit();
-console.log('LAN póker: ausentarse, esperar sin cronómetro y reenganche con fichas/personaje: OK');
+console.log('LAN póker: ausentarse, turno pasado sin atascar la mesa y reenganche con fichas/personaje: OK');
 // Salir de una partida de damas avisa al anfitrión y le da la victoria; en una mesa de tres solo se avisa.
 {
  const left=[[],[]];

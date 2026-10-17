@@ -453,7 +453,7 @@ async function takePokerBreak(){
 }
 function renderPokerBreak(){
  const chips=state.view?.chips?.[state.playerId]||0;
- app.innerHTML=`<section class="menu-shell"><div class="menu-wrap"><header class="menu-header">${backButton('Volver a la partida')}<span class="menu-brand">ELTETO ✦</span></header><section class="menu-setup"><h1>Tu sitio sigue reservado</h1><p>Conservas tu personaje y tus ${chips.toLocaleString('es-ES')} fichas. Las ciegas siguen contando mientras estás ausente.</p><p>No hay cronómetro: cuando te toque, la mesa te esperará hasta que vuelvas y decidas.</p><button class="button button-cyan full-button" data-action="poker-return">Volver a la partida</button><button class="button full-button" data-action="leave-room">Salir de la partida</button></section></div></section>`;
+ app.innerHTML=`<section class="menu-shell"><div class="menu-wrap"><header class="menu-header">${backButton('Volver a la partida')}<span class="menu-brand">ELTETO ✦</span></header><section class="menu-setup"><h1>Tu sitio sigue reservado</h1><p>Conservas tu personaje y tus ${chips.toLocaleString('es-ES')} fichas. Las ciegas siguen contando mientras estás ausente.</p><p>La mesa no se detiene por ti: si te toca mientras estás ausente, pasas cuando es gratis o te retiras si hay una apuesta. Cuando vuelvas, retomas tu plaza.</p><button class="button button-cyan full-button" data-action="poker-return">Volver a la partida</button><button class="button full-button" data-action="leave-room">Salir de la partida</button></section></div></section>`;
 }
 function render() {
   if(state.screen==='profile')renderProfile();
