@@ -9,12 +9,12 @@ fixture+=`\nwindow.directPoker=view=>{state.view=view;renderGame();};`;
 const server=createServer(async(req,res)=>{try{const p=new URL(req.url,'http://local').pathname.slice(1)||'index.html';let b=await readFile('dist/'+p);if(p==='app.js')b=Buffer.from(b+fixture);res.setHeader('content-type',p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.png')?'image/png':p.endsWith('.webp')?'image/webp':p.endsWith('.gif')?'image/gif':p.endsWith('.svg')?'image/svg+xml':p.endsWith('.jpg')?'image/jpeg':'text/html');res.end(b);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await(process.env.EXPERIENCE_BROWSER==='webkit'?webkit:chromium).launch();
 try{
- const page=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const page=await (await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'})).newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(`http://127.0.0.1:${server.address().port}`);
  await page.locator('#profile-name').waitFor();await page.locator('[data-action="profile-confirm"]').click();assert.ok(await page.locator('#profile-name').isVisible());
  await page.locator('#profile-name').fill('Fer');await page.locator('[data-action="choose-character"]').click();await page.locator('[data-action="select-character"][data-character="4"]').click();await page.locator('[data-action="profile-confirm"]').click();
  assert.equal(await page.evaluate(()=>localStorage.getItem('elteto.playerName')),'Fer');assert.equal(await page.evaluate(()=>localStorage.getItem('elteto.character')),'4');
- assert.equal(await page.locator('[data-action="open-join"]').count(),0);await page.locator('[data-action="edit-profile"]').click();assert.equal(await page.locator('#profile-name').inputValue(),'Fer');await page.reload({waitUntil:'domcontentloaded'});await page.locator('.fuegote-button').waitFor();assert.equal(await page.locator('#profile-name').count(),0);
+ assert.equal(await page.locator('[data-action="open-join"]').count(),0);await page.locator('[data-action="edit-profile"]').click();assert.equal(await page.locator('#profile-name').inputValue(),'Fer');{const again=await page.context().newPage();await again.goto(page.url());await again.locator('.fuegote-button').waitFor();assert.equal(await again.locator('#profile-name').count(),0,'a stored profile skips the profile screen');await again.close();}await page.locator('[data-action="profile-confirm"]').click();
  const engine=getGame('texas-holdem');let game=engine.createInitialState(['a','b','c','d'],90);
  await page.evaluate(game=>window.testTable('texas-holdem',game,'a'),game);
  assert.equal(await page.locator('.poker-table .deck-stock').count(),0,'Poker hides the undealt deck and its count');
