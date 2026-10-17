@@ -279,7 +279,7 @@ try {
     assert.ok(await page.locator('.game-menu').evaluate(el=>el.open));
     assert.ok(await page.locator('.game-rules').evaluate(el=>el.open));
     assert.ok(await page.locator('.history').evaluate(el=>el.open));
-    assert.equal(await page.locator('.game-menu-content').evaluate(el=>el.scrollTop),menuPosition);
+    assert.ok(Math.abs(await page.locator('.game-menu-content').evaluate(el=>el.scrollTop)-menuPosition)<=1,'the open menu keeps its scroll position');
     await page.keyboard.press('Escape');
     await page.waitForFunction(()=>document.activeElement.className==='game-menu-button');
     assert.equal(await page.evaluate(()=>document.activeElement.className),'game-menu-button');

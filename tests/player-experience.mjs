@@ -6,7 +6,7 @@ import {PNG} from 'pngjs';
 import {getGame} from '../dist/game-core/index.js';
 let fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1];
 fixture+=`\nwindow.directPoker=view=>{state.view=view;renderGame();};`;
-const server=createServer(async(req,res)=>{try{const p=new URL(req.url,'http://local').pathname.slice(1)||'index.html';let b=await readFile('dist/'+p);if(p==='app.js')b=Buffer.from(b+fixture);res.setHeader('content-type',p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.png')?'image/png':'text/html');res.end(b);}catch{res.writeHead(404);res.end();}});
+const server=createServer(async(req,res)=>{try{const p=new URL(req.url,'http://local').pathname.slice(1)||'index.html';let b=await readFile('dist/'+p);if(p==='app.js')b=Buffer.from(b+fixture);res.setHeader('content-type',p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.png')?'image/png':p.endsWith('.webp')?'image/webp':p.endsWith('.gif')?'image/gif':p.endsWith('.svg')?'image/svg+xml':p.endsWith('.jpg')?'image/jpeg':'text/html');res.end(b);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await(process.env.EXPERIENCE_BROWSER==='webkit'?webkit:chromium).launch();
 try{
  const page=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block'}),errors=[];page.on('pageerror',e=>errors.push(e.message));

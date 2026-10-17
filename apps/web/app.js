@@ -272,7 +272,7 @@ let shownResult = null;
 function renderGame() {
   app.pokerMotionFinished=()=>turnSequence.decorate(app,state.playerId,playerName);
   if(!turnSequence.busy&&state.view)turnSequence.adopt({view:state.view,gameId:state.gameId,playerId:state.playerId});
-  const paint=prepareCardPaint(app),avatars=prepareAvatarPaint(app);renderGameContents();mountScreenBack(app);mountGameHelp(app,state.gameId);restoreCardPaint(app,paint);restoreAvatarPaint(app,avatars);mountForfeitNotice();mountAbsence();mountHostControls();turnSequence.decorate(app,state.playerId,playerName);
+  const paint=prepareCardPaint(app),avatars=prepareAvatarPaint(app),menuTop=app.querySelector('.game-menu[open] .game-menu-content')?.scrollTop;renderGameContents();mountScreenBack(app);mountGameHelp(app,state.gameId);restoreCardPaint(app,paint);restoreAvatarPaint(app,avatars);mountForfeitNotice();mountAbsence();mountHostControls();if(menuTop!==undefined){const menu=app.querySelector('.game-menu[open] .game-menu-content');if(menu)menu.scrollTop=menuTop;}turnSequence.decorate(app,state.playerId,playerName);
 }
 // Quien se ha ido o no tiene conexión figura como ausente en cualquier mesa; su turno se salta.
 function absentIds() {
