@@ -83,12 +83,16 @@ export function parchisGeometry(sides=4){
   const shape=[point,...arcPoints(point,q,arm.u,next.u)];
   const size=Math.min(1.3,radius*.52),gap=size*.6,across=[-bisector[1],bisector[0]];
   const slots=[0,1,2,3].map(piece=>add(add(center,bisector,piece<2?-gap:gap),across,piece%2?gap:-gap));
-  const name=PARCHIS_NAMES[arm.color].toUpperCase(),labelWidth=nestLabelWidth(name),labelHeight=NEST_FONT*.74;
-  // The label sits between the corner and the pawns, upright.
+  const name=PARCHIS_NAMES[arm.color].toUpperCase(),labelHeight=NEST_FONT*.74;
+  // The label (the seated player's name) sits between the corner and the pawns, upright. It
+  // reserves room for up to ten letters and settles for fewer in a small home.
   let label=null;
-  for(let along=distance-size*1.25;along>.4&&!label;along-=.04){
-   const [x,y]=add(point,bisector,along),corners=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>add(add([x,y],across,a*labelWidth/2),bisector,b*labelHeight/2));
-   if(corners.every(p=>insideConvex(shape,p,.08)))label={x,y,rotate:upright(Math.atan2(across[1],across[0])),corners,name,width:labelWidth,height:labelHeight};
+  for(let chars=Math.max(10,name.length);chars>=4&&!label;chars--){
+   const labelWidth=nestLabelWidth('M'.repeat(chars));
+   for(let along=distance-size*1.25;along>.4&&!label;along-=.04){
+    const [x,y]=add(point,bisector,along),corners=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>add(add([x,y],across,a*labelWidth/2),bisector,b*labelHeight/2));
+    if(corners.every(p=>insideConvex(shape,p,.08)))label={x,y,rotate:upright(Math.atan2(across[1],across[0])),corners,name,width:labelWidth,height:labelHeight,maxChars:chars};
+   }
   }
   return [arm.color,{polygon:shape,shape,center,radius,size,slots,label,point,reach:q,path:`M${pt(point)}L${pt(add(point,arm.u,q))}${arc(point,q,arm.u,next.u)}Z`}];
  }));

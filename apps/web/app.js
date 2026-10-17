@@ -71,7 +71,7 @@ const visibleSignature=(view,players)=>JSON.stringify([view,(players||[]).map(p=
 // Everyone at the table hears when someone leaves. Departures already in the first view of a table are history.
 let departures=null;
 function announceDepartures(change){
- const key=`${state.roomCode||''}:${change.gameId||state.gameId}`,gone=change.view?.departed||{},expelled=change.view?.expelled||{},me=change.playerId||state.playerId;
+ const key=`${change.gameId||state.gameId}:${change.view?.players?.join('|')||''}`,gone=change.view?.departed||{},expelled=change.view?.expelled||{},me=change.playerId||state.playerId;
  if(departures?.key!==key){departures={key,seen:new Set(Object.keys(gone))};return;}
  for(const [id,name] of Object.entries(gone))if(!departures.seen.has(id)){departures.seen.add(id);if(id!==me)flash(expelled[id]?`${name} ha sido expulsado de la partida.`:`${name} ha salido de la partida.`);}
  // Quien es expulsado recibe el aviso y vuelve al inicio.
@@ -166,9 +166,8 @@ function renderHostForm() {
   if (!availableGames(listGames()).some(game=>game.id===state.gameId)) state.gameId = "";
   const games = renderGameChoices(availableGames(listGames()),state.gameId,playerCountLabel);
   app.innerHTML = `<section class="menu-shell"><div class="menu-wrap"><header class="menu-header">${backButton()}<a class="menu-brand" href="./" data-action="home">ELTETO<span>✦</span></a><button class="text-button" data-action="access-install">Mi acceso</button></header><section class="menu-setup" aria-labelledby="setup-title">
-    <p class="menu-kicker">TÚ PONES LA MESA</p><h1 id="setup-title">Crear partida<span>.</span></h1>
-    <div class="menu-fields"><div><label class="field-label" for="host-name">Tu nombre de guerra</label><div class="name-character-field"><input class="text-field" id="host-name" maxlength="24" autocomplete="nickname" placeholder="Cómo te llaman" value="${esc(state.name)}">${renderCharacterButton(state.character)}</div></div>
-    <div><label class="field-label" for="room-name">Nombre de la sala <span>opcional</span></label><input class="text-field" id="room-name" maxlength="30" placeholder="La de siempre" value="${esc(state.roomName)}"></div></div>
+    <p class="menu-kicker">TÚ PONES LA MESA</p><h1 id="setup-title">Crear partida</h1>
+    <div class="menu-fields"><div><label class="field-label" for="room-name">Nombre de la sala</label><input class="text-field" id="room-name" maxlength="30" placeholder="La de siempre" value="${esc(state.roomName)}"></div></div>
     ${LAN?.hostKey ? `<fieldset class="menu-game-fieldset room-mode"><legend>Cómo vais a jugar</legend><label><input type="radio" name="room-mode" value="lan" ${state.roomMode==='lan'?'checked':''}><span><strong>Sin internet</strong><small>Misma Wi-Fi o hotspot · QR local</small></span></label><label><input type="radio" name="room-mode" value="online" ${state.roomMode==='online'?'checked':''}><span><strong>Con internet</strong><small>Desde cualquier lugar · enlace y QR</small></span></label></fieldset>` : `<fieldset class="menu-game-fieldset room-mode"><legend>Cómo vais a jugar</legend><label class="room-mode-unavailable"><input type="radio" name="room-mode" value="lan" disabled><span><strong>Sin internet</strong><small>Abre la mesa desde la app Elteto LAN de un Android. Desde este móvil puedes unirte escaneando su QR, sin datos.</small></span></label><label><input type="radio" name="room-mode" value="online" checked><span><strong>Con internet</strong><small>Desde cualquier lugar · enlace y QR</small></span></label></fieldset>`}
     <fieldset class="menu-game-fieldset"><legend>Elige el juego</legend>${games}</fieldset>
     ${state.error ? `<p class="error-message" role="alert">${esc(state.error)}</p>` : ""}
@@ -282,14 +281,15 @@ function absentIds() {
 function mountAbsence() {
   const absent = absentIds();
   if (!absent.size || state.view?.finished) return;
-  for (const seat of app.querySelectorAll('.rival-seat[data-player-id],.table-seat[data-player-id],.mus-seat[data-player-id]')) {
+  for (const seat of app.querySelectorAll('.rival-seat[data-player-id],.table-seat[data-player-id]:not(.poker-seat),.mus-seat[data-player-id]')) {
     if (!absent.has(seat.dataset.playerId)) continue;
     seat.classList.add('is-absent');
     if (seat.querySelector('.absent-badge')) continue;
-    const holder = seat.querySelector('.rival-token') || seat;
+    const holder = seat.querySelector('.rival-token') || seat, left = Boolean(state.view?.departed?.[seat.dataset.playerId]);
     const badge = document.createElement('span');
-    badge.className = 'absent-badge';badge.textContent = 'Ausente';
-    badge.title = 'No está en la mesa: se salta su turno.';
+    // Quien se ha ido de la partida queda «Retirado», como en el póker; «Ausente» es quien ha perdido la conexión.
+    badge.className = 'absent-badge';badge.textContent = left ? 'Retirado' : 'Ausente';
+    badge.title = left ? 'Ha salido de la partida.' : 'No está en la mesa: se salta su turno.';
     holder.append(badge);
   }
 }
@@ -639,9 +639,11 @@ app.addEventListener("click", async (event) => {
     else if (action === "create-room") {
       if (GUEST) throw new Error('Esta invitación solo permite entrar en la sala.');
       const gameId = document.querySelector('input[name="game"]:checked')?.value;
-      const name = document.querySelector("#host-name")?.value.trim();
+      // El nombre de guerra y el avatar se eligen en la pantalla inicial (perfil).
+      let name = String(state.name || '').trim(); try { name = name || (localStorage.getItem('elteto.playerName') || '').trim(); } catch {}
+      if (!name) { renderProfile(); return; }
       const roomName = document.querySelector("#room-name")?.value.trim();
-      if (!name || !availableGames(listGames()).some(game=>game.id===gameId)) throw new Error("Elige un nombre y un juego para abrir la mesa.");
+      if (!availableGames(listGames()).some(game=>game.id===gameId)) throw new Error("Elige un juego para abrir la mesa.");
       state.name = name; state.roomName = roomName || `Partida de ${name}`; state.gameId = gameId; state.role = "host"; state.playerId = "host"; state.error = "";
       state.roomMode = document.querySelector('input[name="room-mode"]:checked')?.value || "lan";
       if (LAN && state.roomMode === "online") {
@@ -731,7 +733,6 @@ app.addEventListener("click", async (event) => {
 app.addEventListener("input", (event) => {
   if(event.target.matches('[data-poker-amount]')){syncPokerAmounts(app,state.view);return;}
   if (event.target.matches("#profile-name")) state.name=event.target.value;
-  else if (event.target.matches("#host-name")) state.name = event.target.value;
   else if (event.target.matches("#join-name")) state.name = event.target.value;
   else if (event.target.matches("#join-code")) state.joinCode = event.target.value;
   else if (event.target.matches("#room-name")) state.roomName = event.target.value;

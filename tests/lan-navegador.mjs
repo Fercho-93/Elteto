@@ -23,7 +23,7 @@ try {
   await (await nine.count()?nine:page.locator('.character-option:not(:disabled)').first()).click();
   await page.locator('[data-action="join-room"]').click();
  }return page;};
- const context=async name=>{
+ const context=async(name,character='0')=>{
   const ctx=await browser.newContext({viewport:{width:390,height:664},serviceWorkers:'block',reducedMotion:'reduce'});
   await ctx.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
   // Transport coverage includes paused engines without exposing them in the shipping menu.
@@ -36,15 +36,15 @@ try {
    const body=(await readFile('dist/game-picker.js','utf8')).replace("ids:['parchis','damas-espanolas']","ids:['parchis','damas-espanolas','oca']");
    await route.fulfill({body,contentType:'text/javascript'});
   });
-  await ctx.addInitScript(name=>{localStorage.setItem('elteto.profileReady','1');localStorage.setItem('elteto.character','0');localStorage.setItem('elteto.playerName',name);},name);
+  await ctx.addInitScript(([name,character])=>{localStorage.setItem('elteto.profileReady','1');localStorage.setItem('elteto.character',character);localStorage.setItem('elteto.playerName',name);},[name,character]);
   await ctx.addInitScript(()=>{window.EltetoActivation={isActivated:()=>true,isOpenAccess:()=>true};});
   const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));return page;
  };
- const host=await context('Ana');await host.goto(hostUrl);
+ // The host's name and avatar come from the profile screen.
+ const host=await context('Ana','2');await host.goto(hostUrl);
  assert.equal(await host.locator('[data-action="development-admin"]').count(),0);
  assert.equal(await host.locator('#access-form').count(),0);
- await host.locator('[data-action="open-host"]').click();await host.locator('#host-name').fill('Ana');
- await host.locator('[data-action="choose-character"]').click();await host.locator('[data-action="select-character"][data-character="2"]').click();
+ await host.locator('[data-action="open-host"]').click();await host.locator('#room-name').waitFor();
  assert.equal(await host.locator('input[name="room-mode"]').count(),2);
  assert.equal(await host.locator('input[name="room-mode"]:checked').inputValue(),'lan');
  await host.locator('[data-action="create-room"]').click();
@@ -109,8 +109,8 @@ try {
  assert.equal(await guest.locator('[data-action="open-host"]').count(),0);
  // Open another LAN table using the unchanged generic transport, now choosing Mus.
  // Leaving the table returns the host to "Crear partida" with the name kept.
- await host.locator('#host-name').waitFor();
- await host.locator('#host-name').fill('Ana');
+ 
+ await host.locator('#room-name').waitFor();
  await host.locator('.game-category:has(input[value="mus"]) summary').click();await host.locator('input[value="mus"]').check();
  await host.locator('[data-action="create-room"]').click();
  const musCode=(await host.locator('.room-code').textContent()).trim();
@@ -147,7 +147,7 @@ try {
  await host.locator('[data-action="leave-room"]').click();
  for(const p of [guest,c,d]) await p.getByText('Hasta la próxima.',{exact:true}).waitFor();
  // The same room, QR, messages and reconnection path also carry a public board game.
- await host.locator('#host-name').waitFor();await host.locator('#host-name').fill('Ana');
+ await host.locator('#room-name').waitFor();
  await host.locator('.game-category:has(input[value="parchis"]) summary').click();await host.locator('input[value="parchis"]').check();await host.locator('[data-action="create-room"]').click();
  const boardCode=(await host.locator('.room-code').textContent()).trim();guest=await enter(guest,base+'/?join='+boardCode);c=await enter(c,base+'/?join='+boardCode);d=await enter(d,base+'/?join='+boardCode);
  await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===4);await host.locator('[data-action="start-game"]').click();
@@ -176,7 +176,7 @@ try {
  await host.locator('.game-menu-button').click();await host.locator('[data-action="leave-room"]').click();await guest.getByText('Hasta la próxima.',{exact:true}).waitFor();
  console.log('Parchís LAN: initial dice, rolls, legal moves, board synchronization and reload/reconnection: OK');
  for(const gameId of ['oca','damas-espanolas']){
-  await host.locator('#host-name').waitFor();await host.locator('#host-name').fill('Ana');
+  await host.locator('#room-name').waitFor();
   await host.locator(`.game-category:has(input[value="${gameId}"]) summary`).click();await host.locator(`input[value="${gameId}"]`).check();await host.locator('[data-action="create-room"]').click();
   const invitation=(await host.locator('.room-code').textContent()).trim();guest=await enter(guest,base+'/?join='+invitation);
   await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===2);await host.locator('[data-action="start-game"]').click();
@@ -200,7 +200,7 @@ try {
  }
  // Salir de una partida de dos avisa y da la victoria a quien se queda.
  {
-  await host.locator('#host-name').waitFor();await host.locator('#host-name').fill('Ana');
+  await host.locator('#room-name').waitFor();
   await host.locator('.game-category:has(input[value="damas-espanolas"]) summary').click();await host.locator('input[value="damas-espanolas"]').check();await host.locator('[data-action="create-room"]').click();
   const exitCode=(await host.locator('.room-code').textContent()).trim();guest=await enter(guest,base+'/?join='+exitCode);
   await host.waitForFunction(()=>document.querySelectorAll('.player-row').length===2);await host.locator('[data-action="start-game"]').click();

@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
-import {listGames, getGamePlan, nextBotMove, createRng} from '../dist/game-core/index.js';
+import {listGames, getGamePlan, nextBotMove, createRng, getGame, departGame} from '../dist/game-core/index.js';
 const {chromium,webkit}=await import('playwright');
 const fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1];
-const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://localhost').pathname.slice(1)||'index.html';let body=await readFile('dist/'+file);if(file==='app.js')body=Buffer.from(body+fixture+'\nwindow.setAway=id=>{state.players=state.players.map(p=>p.id===id?{...p,away:true}:p);renderGame();};window.setRole=role=>{state.role=role;renderGame();};');res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':'text/html');res.end(body);}catch{res.writeHead(404);res.end();}});
+const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://localhost').pathname.slice(1)||'index.html';let body=await readFile('dist/'+file);if(file==='app.js')body=Buffer.from(body+fixture+'\nwindow.emitGame=view=>receiveGame({kind:"game",view,players:state.players,gameId:state.gameId,playerId:state.playerId});window.setAway=id=>{state.players=state.players.map(p=>p.id===id?{...p,away:true}:p);renderGame();};window.setRole=role=>{state.role=role;renderGame();};');res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':'text/html');res.end(body);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const kind=process.env.ABSENCE_BROWSER||'chromium',browser=await (kind==='webkit'?webkit:chromium).launch(),errors=[],random=createRng(5);
 let games=0;
@@ -30,6 +30,20 @@ try{
   assert.equal(await page.locator('.host-controls').count(),0,`${engine.id}: guests have no host controls`);
   assert.ok(await shown()>=1,`${engine.id}: guests also see who is absent`);
   games++;
+ }
+ // Parchís: each home carries its player's name, and whoever leaves is announced and marked «Retirado».
+ {
+  const parchis=getGame('parchis'),ids=['a','b','c','d'],names=['Ana','Bea','Cristina','Dani'];let game=parchis.createInitialState(ids,5);
+  await page.evaluate(({game,names})=>window.testTable('parchis',game,'a',names),{game,names});
+  await page.evaluate(view=>window.emitGame(view),parchis.view(game,'a'));
+  const homes=await page.locator('.parchis-board').first().locator('.parchis-nest text').allTextContents();
+  assert.deepEqual([...homes].sort(),names.map(n=>n.toUpperCase()).sort(),'homes show player names, not colours');
+  game=departGame('parchis',game,'c','Cristina');
+  await page.evaluate(view=>window.emitGame(view),parchis.view(game,'a'));
+  await page.waitForFunction(()=>document.querySelector('#toast').textContent==='Cristina ha salido de la partida.');
+  await page.locator('.rival-seat[data-player-id="c"] .absent-badge').waitFor();
+  assert.equal(await page.locator('.rival-seat[data-player-id="c"] .absent-badge').textContent(),'Retirado');
+  assert.equal(await page.locator('.parchis-pawn[data-player-id="c"]').count(),0,'pawns leave with their player');
  }
  assert.deepEqual(errors,[]);
  console.log(`${kind}: ${games} juegos muestran «Ausente» y dan al anfitrión saltar turno y expulsar: OK`);

@@ -71,10 +71,10 @@ try {
   assert.equal(new URL(developer.page.url()).hash,'','enlace privado retirado de la barra');
   assert.equal(await developer.page.locator('input[type="password"]').count(),0);
   await developer.page.click('[data-action="open-host"]');
-  await developer.page.locator('#host-name').waitFor();
+  await developer.page.locator('#room-name').waitFor();
   await developer.page.reload();
   await developer.page.click('[data-action="open-host"]');
-  await developer.page.locator('#host-name').waitFor();
+  await developer.page.locator('#room-name').waitFor();
   assert.equal(await developer.page.locator('input[type="password"]').count(),0);
   await developer.context.close();
   console.log('  ok  administrador sin contraseña, enlace retirado y acceso conservado tras recargar');
@@ -84,7 +84,7 @@ try {
   await quick.page.goto(base);
   assert.equal(await quick.page.locator('[data-action="development-admin"]').count(),0);
   await quick.page.locator('.fuegote-button').click();
-  await quick.page.fill('#host-name','Sin cuenta');
+  await quick.page.locator('#room-name').waitFor();
   await quick.page.locator('.game-category:has(input[value="cinquillo"]) summary').click();
   await quick.page.locator('input[value="cinquillo"]').check();
   await quick.page.click('[data-action="create-room"]');
@@ -112,9 +112,9 @@ try {
   await host.page.locator('#access-form [type="submit"]').click();
   await host.waitText(/Tu mesa está lista/);
   await host.page.click('[data-action="open-host"]');
-  await host.page.fill("#host-name", "Ana");
-  await host.page.locator('[data-action="choose-character"]').click();
-  await host.page.locator('[data-action="select-character"][data-character="2"]').click();
+  // Name and avatar come from the profile screen.
+  await host.page.addInitScript(()=>{localStorage.setItem('elteto.playerName','Ana');localStorage.setItem('elteto.character','2');});
+  await host.page.reload();await host.page.click('[data-action="open-host"]');await host.page.locator('#room-name').waitFor();
   await host.page.fill("#room-name", "Mesa online");
   await host.page.locator('.game-category:has(input[value="cinquillo"]) summary').click();
   await host.page.locator('input[value="cinquillo"]').check();

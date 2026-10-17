@@ -5,7 +5,7 @@ import {parchisRoutes} from './turn-events.js';
 import {escapeHtml as esc,mascotForSeat,MASCOTS} from './table-view.js';
 import {renderRivalRoster,revealActivePlayer} from './rival-portraits.js';
 import {parchisSquare} from './game-core/index.js';
-import {parchisGeometry,pawnSpot,NUMBER_FONT,NEST_FONT} from './parchis-geometry.js';
+import {parchisGeometry,pawnSpot,NUMBER_FONT,NEST_FONT,nestLabelWidth} from './parchis-geometry.js';
 export const PARCHIS_PALETTE={yellow:{name:'Amarillo',fill:'#e8b942',ink:'#392c10'},green:{name:'Verde',fill:'#439968',ink:'#102d20'},red:{name:'Rojo',fill:'#cf6260',ink:'#461b1b'},blue:{name:'Azul',fill:'#568ec5',ink:'#152c49'},orange:{name:'Naranja',fill:'#e48a3c',ink:'#47250c'},purple:{name:'Morado',fill:'#9a6dc4',ink:'#2d1846'}};
 export const BOARD_SHAPES={3:'triangular',4:'cuadrado',5:'pentagonal',6:'hexagonal'};
 const sidesOf=view=>view.sides||4,goalOf=view=>view.goal??parchisGeometry(sidesOf(view)).layout.goal;
@@ -27,10 +27,13 @@ export function pawnPlacement(view,id,piece,progress=view.pieces[id][piece]){
 export function renderPawnFace(view,id,piece){return `<span class="parchis-pawn-avatar">${renderAvatarArtwork(mascotForSeat(view.players,view.players.indexOf(id),view.characters))}</span><b class="parchis-pawn-number">${piece+1}</b>`;}
 export function renderParchisBoard(view,playerId,name){
  const sides=sidesOf(view),g=parchisGeometry(sides),{x,y,width,height}=g.viewBox,goal=goalOf(view),used=new Set(Object.values(view.colors));
+ const gone_=id=>view.left?.includes(id)||!!view.departed?.[id];
  let svg=`<svg viewBox="${fixed(x)} ${fixed(y)} ${fixed(width)} ${fixed(height)}" aria-hidden="true"><defs><radialGradient id="board-paper"><stop stop-color="#f8f0d9"/><stop offset="1" stop-color="#d9c8a7"/></radialGradient></defs><path d="${g.paperPath}" fill="url(#board-paper)" stroke="#bc9b64" stroke-width=".08"/>`;
  for(const arm of g.arms){
-  const p=PARCHIS_PALETTE[arm.color],nest=g.nests[arm.color],label=nest.label;
-  svg+=`<g class="parchis-nest" data-nest="${arm.color}" opacity="${used.has(arm.color)?1:.45}"><path d="${nest.path}" fill="${p.fill}" fill-opacity=".22" stroke="${p.fill}" stroke-width=".09" stroke-linejoin="round"/><circle cx="${fixed(nest.center[0])}" cy="${fixed(nest.center[1])}" r="${fixed(nest.radius*.97)}" fill="${p.fill}" fill-opacity=".12" stroke="${p.fill}" stroke-width=".04"/>${label?`<text x="${fixed(label.x)}" y="${fixed(label.y+NEST_FONT*.36)}" transform="rotate(${fixed(label.rotate)} ${fixed(label.x)} ${fixed(label.y)})" text-anchor="middle" textLength="${fixed(label.width)}" lengthAdjust="spacingAndGlyphs" font-size="${NEST_FONT}" font-weight="700" fill="${p.ink}">${label.name}</text>`:''}</g>`;
+  // Each home shows the name of the player seated there (shortened if it does not fit), not its colour.
+  const p=PARCHIS_PALETTE[arm.color],nest=g.nests[arm.color],owner=view.players.find(id=>view.colors[id]===arm.color),gone=owner&&(gone_(owner));
+  const full=owner?String(name(owner)).toUpperCase():'',text=!nest.label||full.length<=nest.label.maxChars?full:full.slice(0,nest.label.maxChars-1)+'…',label=text&&nest.label?{...nest.label,name:esc(text),width:nestLabelWidth(text)}:null;
+  svg+=`<g class="parchis-nest" data-nest="${arm.color}" ${owner?`data-player-id="${esc(owner)}"`:''} opacity="${used.has(arm.color)&&!gone?1:.45}"><path d="${nest.path}" fill="${p.fill}" fill-opacity=".22" stroke="${p.fill}" stroke-width=".09" stroke-linejoin="round"/><circle cx="${fixed(nest.center[0])}" cy="${fixed(nest.center[1])}" r="${fixed(nest.radius*.97)}" fill="${p.fill}" fill-opacity=".12" stroke="${p.fill}" stroke-width=".04"/>${label?`<text x="${fixed(label.x)}" y="${fixed(label.y+NEST_FONT*.36)}" transform="rotate(${fixed(label.rotate)} ${fixed(label.x)} ${fixed(label.y)})" text-anchor="middle" textLength="${fixed(label.width)}" lengthAdjust="spacingAndGlyphs" font-size="${NEST_FONT}" font-weight="700" fill="${p.ink}">${label.name}</text>`:''}</g>`;
   for(const c of g.lanes[arm.color])svg+=`<polygon class="parchis-lane" points="${points(c.corners)}" fill="${p.fill}" fill-opacity=".65" stroke="#746146" stroke-width=".035"/>`;
  }
  for(const c of g.track){
@@ -40,7 +43,8 @@ export function renderParchisBoard(view,playerId,name){
  for(const arm of g.arms)svg+=`<polygon class="parchis-goal" points="${points(g.goals[arm.color].polygon)}" fill="${PARCHIS_PALETTE[arm.color].fill}" stroke="#746146" stroke-width=".035"/>`;
  svg+=`<circle cx="0" cy="0" r="${fixed(Math.min(.32,g.apothem*.3))}" fill="#f3e3b9"/><text x="0" y=".11" text-anchor="middle" font-size=".3" fill="#6b542f">★</text></svg>`;
  const tokens=[];
- for(const id of view.players)for(let piece=0;piece<4;piece++){
+ // Whoever left the game takes their pawns with them.
+ for(const id of view.players.filter(id=>!gone_(id)))for(let piece=0;piece<4;piece++){
   const progress=view.pieces[id][piece],color=view.colors[id],position=pawnPlacement(view,id,piece),move=id===playerId&&view.legalMoves.find(m=>m.piece===piece),square=parchisSquare(color,progress,sides),label=`${name(id)}, ficha ${piece+1}, ${progress<0?'en espera':progress===goal?'en meta':square!==null?'casilla '+(square+1):'pasillo de llegada'}`;
   tokens.push(`<button class="parchis-pawn ${move?'can-move':''} ${position.stacked?'stacked':''} ${progress===goal?'at-goal':progress<0?'in-nest':''}" style="--pawn-color:${PARCHIS_PALETTE[color].fill};--d:${position.size};left:${position.left};top:${position.top};width:${position.width}" data-action="parchis-move" data-piece="${piece}" ${move?`data-dice="${move.dice.join(',')}"`:''} data-progress="${progress}" data-pawn="${esc(id)}:${piece}" data-player-id="${esc(id)}" ${move?'':'disabled'} aria-label="${esc(label)}">${renderPawnFace(view,id,piece)}</button>`);
  }

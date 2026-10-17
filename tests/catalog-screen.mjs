@@ -4,8 +4,8 @@ import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {listGames,getGame,buildCardMaterial,captures15} from '../dist/game-core/index.js';
 const {chromium,webkit}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1]+'\nwindow.testHostForm = () => renderHostForm(); window.testJoinForm = () => { state.offerCode = "ABCD2345"; renderJoinForm(); };';
-const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://localhost').pathname.slice(1)||'index.html';let body=await readFile('dist/'+file);if(file==='app.js')body=Buffer.from(body+fixture);res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':file.endsWith('.svg')?'image/svg+xml':'text/html');res.end(body);}catch{res.writeHead(404);res.end();}});
+const fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1]+'\nwindow.testHostForm = () => renderHostForm(); window.testProfile = () => renderProfile(); window.testJoinForm = () => { state.offerCode = "ABCD2345"; renderJoinForm(); };';
+const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://localhost').pathname.slice(1)||'index.html';let body=await readFile('dist/'+file);if(file==='app.js')body=Buffer.from(body+fixture);res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':file.endsWith('.webp')?'image/webp':file.endsWith('.svg')?'image/svg+xml':'text/html');res.end(body);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const kind=process.env.CATALOG_BROWSER||'chromium',browser=await (kind==='webkit'?webkit:chromium).launch();
 await mkdir('tests/artifacts/catalog',{recursive:true});
@@ -28,9 +28,17 @@ try{
    assert.ok((await category.locator('.category-title').textContent()).endsWith(': '+name));
   }
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
-  await page.locator('#host-name').fill('Nombre conservado');
+  // Name and avatar come from the profile screen; the form only names the room.
+  assert.equal(await page.locator('#host-name,.menu-setup [data-action="choose-character"]').count(),0);
+  assert.equal(await page.locator('#setup-title').innerText(),'Crear partida');
+  assert.ok(!/opcional/i.test(await page.locator('.menu-setup').innerText()));
+  assert.deepEqual(await page.locator('.category-art img').evaluateAll(images=>images.map(img=>img.getAttribute('src'))),['./assets/juegos-tablero.webp','./assets/juegos-cartas.webp']);
+  await page.waitForFunction(()=>[...document.querySelectorAll('.category-art img')].every(img=>img.complete&&img.naturalWidth===720));
+  const cards=await page.locator('.game-category:not([open])').evaluateAll(els=>els.map(el=>el.getBoundingClientRect().height));
+  assert.ok(cards.length<2||Math.abs(cards[0]-cards[1])<1,'closed categories line up '+width);
+  await page.locator('#room-name').fill('Sala conservada');
   await page.evaluate(()=>window.testHostForm());
-  assert.equal(await page.locator('#host-name').inputValue(),'Nombre conservado');
+  assert.equal(await page.locator('#room-name').inputValue(),'Sala conservada');
   assert.equal(await page.locator('input[name="game"]:checked').inputValue(),'texas-holdem');
   if(width===390)await page.screenshot({path:`tests/artifacts/catalog/game-picker-${kind}.png`,fullPage:true});
  }
@@ -38,16 +46,15 @@ try{
  for(const width of [320,390,844]){
   await page.setViewportSize({width,height:844});await page.evaluate(()=>window.testHostForm());
   const hostBrand=await page.locator('.menu-header .menu-brand').innerHTML();
-  await page.locator('#host-name').fill('Ana sin perder nombre');
-  assert.equal(await page.locator('#host-name').inputValue(),'Ana sin perder nombre','initial fill '+width);
-  await page.locator('#room-name').fill('Mesa elegida');
+  await page.evaluate(()=>window.testProfile());
+  await page.locator('#profile-name').fill('Ana sin perder nombre');
+  assert.equal(await page.locator('#profile-name').inputValue(),'Ana sin perder nombre','initial fill '+width);
   for(let character=0;character<10;character++){
    await page.locator('[data-action="choose-character"]').click();
    assert.equal(await page.locator('.character-option').count(),10);
    await page.locator(`.character-option[data-character="${character}"]`).click();
    await page.locator('.character-dialog').waitFor({state:'detached'});
-   assert.equal(await page.locator('#host-name').inputValue(),'Ana sin perder nombre',JSON.stringify({width,character}));
-   assert.equal(await page.locator('#room-name').inputValue(),'Mesa elegida');
+   assert.equal(await page.locator('#profile-name').inputValue(),'Ana sin perder nombre',JSON.stringify({width,character}));
    assert.equal(await page.evaluate(()=>localStorage.getItem('elteto.character')),String(character));
   }
   await page.evaluate(()=>window.testJoinForm());

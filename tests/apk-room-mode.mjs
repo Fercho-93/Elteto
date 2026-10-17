@@ -8,7 +8,7 @@ const online=source.split('async function openOnlineRoom() {')[1].split('async f
 for (const mode of ['lan','online']) {
  const calls=[];
  const session={roomCode:'ABCD2345',inviteUrl:mode==='lan'?'http://192.168.1.2:3000/?join=ABCD2345':'https://fercho-93.github.io/Elteto/guest.html?join=ABCD2345'};
- const state={character:0};
+ const state={character:0,name:'Ana'};
  const context=vm.createContext({state,LAN:{hostKey:'local'},GUEST:false,Boolean,
   document:{querySelector(selector){return {value:selector.includes('room-mode')?mode:selector.includes('game')?'mus':selector.includes('name')?'Ana':'Mesa'};}},
   availableGames:x=>x,listGames:()=>[{id:'mus'}],readHostAccess:async()=>null,cachedHostAccess:()=>null,
