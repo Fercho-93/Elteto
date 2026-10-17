@@ -19,7 +19,7 @@ for(const sides of [3,4,5,6]){
   assert.equal(lane[0].arm,start.arm);assert.equal(lane[0].row,6);assert.equal(lane[6].row,0);
   const nest=g.nests[color],goal=g.goals[color];
   assert.ok(nest.label,`${sides} ${color}: nest label has room`);for(const p of nest.label.corners)assert.ok(insideConvex(nest.shape,p,.05),`${sides} ${color}: label leaves its home`);
-  for(const s of nest.slots){assert.ok(circleInsideConvex(nest.shape,s,nest.size/2),`${sides} ${color}: nest pawn outside home`);assert.ok(Math.hypot(s[0]-nest.center[0],s[1]-nest.center[1])+nest.size/2<=nest.radius+1e-6);assert.ok(nest.radius<=2.5,`${sides}: home stays compact (${nest.radius})`);}
+  for(const s of nest.slots){assert.ok(circleInsideConvex(nest.shape,s,nest.size/2),`${sides} ${color}: nest pawn outside home`);assert.ok(Math.hypot(s[0]-nest.center[0],s[1]-nest.center[1])+nest.size/2<=nest.radius+1e-6);assert.ok(nest.radius>=2.3,`${sides}: home keeps room for its four pawns (${nest.radius})`);}
   for(let a=0;a<4;a++)for(let b=a+1;b<4;b++){assert.ok(Math.hypot(nest.slots[a][0]-nest.slots[b][0],nest.slots[a][1]-nest.slots[b][1])>=nest.size);assert.ok(Math.hypot(goal.slots[a][0]-goal.slots[b][0],goal.slots[a][1]-goal.slots[b][1])>=goal.size);}
   for(const s of goal.slots)assert.ok(circleInsideConvex(goal.polygon,s,goal.size/2),`${sides} ${color}: goal pawn outside centre`);
   assert.ok(goal.size>=.4,`${sides}: goal pawns too small (${goal.size})`);
@@ -34,6 +34,8 @@ for(const sides of [3,4,5,6]){
    const a=pawnSpot(sides,color,progress,0,2,0),b=pawnSpot(sides,color,progress,0,2,1);assert.ok(Math.hypot(a.point[0]-b.point[0],a.point[1]-b.point[1])>=a.size-1e-9,`${sides}: stacked pawns overlap`);
   }
  }
+ // No arm sticks out of the board: each home arc starts exactly where its neighbouring arm ends.
+ for(const color of layout.colors){const nest=g.nests[color];assert.ok(Math.abs(nest.reach-parchisGeometry(sides).nests[color].reach)<1e-9&&Math.abs(nest.reach-7.1)<1e-9,`${sides} ${color}: home reaches the arm tips (${nest.reach})`);}
  for(const c of g.track)assert.ok(boxInsideConvex(c.corners,c.number.box),`${sides}: number ${c.index+1} leaves its square`);
  assert.ok(g.viewBox.width>0&&g.viewBox.height>0);
  console.log(`Parchís ${shapes[sides]}: ${g.track.length} casillas sin solapes, ${sides*7} de pasillo, ${sides} casas y metas, números y fichas en su sitio: OK`);

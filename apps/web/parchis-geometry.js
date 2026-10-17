@@ -74,14 +74,15 @@ export function parchisGeometry(sides=4){
  });
  const lanes=Object.fromEntries(arms.map((arm,k)=>[arm.color,Array.from({length:7},(_,n)=>({...cell(k,1,6-n),side:0}))]));
  const vertex=k=>{const b=unit(arms[k].angle-alpha);return {bisector:b,point:[b[0]*inner,b[1]*inner],corner:[b[0]*outer,b[1]*outer]};};
- // Each home is a sector at the corner where two arms meet. Its radius is just enough for a
- // circle of HOME_RADIUS (four pawns), so the board no longer reaches out to a far corner.
- const sine=Math.sin(alpha),reach=Math.min(ARM_LENGTH,HOME_RADIUS*(1+sine)/sine);
+ // Each home is a sector at the corner where two arms meet. It reaches exactly as far as the
+ // arm tips, so the arc runs flush into the end of both neighbouring arms and no arm sticks
+ // out of the board, whatever the number of sides.
+ const sine=Math.sin(alpha),reach=ARM_LENGTH;
  const nests=Object.fromEntries(arms.map((arm,k)=>{
   const {bisector,point}=vertex(k),next=arms[(k+1)%sides],q=reach;
   const radius=q*sine/(1+sine),distance=radius/sine,center=add(point,bisector,distance);
   const shape=[point,...arcPoints(point,q,arm.u,next.u)];
-  const size=Math.min(1.3,radius*.52),gap=size*.6,across=[-bisector[1],bisector[0]];
+  const size=Math.min(1.6,radius*.52),gap=size*.6,across=[-bisector[1],bisector[0]];
   const slots=[0,1,2,3].map(piece=>add(add(center,bisector,piece<2?-gap:gap),across,piece%2?gap:-gap));
   const name=PARCHIS_NAMES[arm.color].toUpperCase(),labelHeight=NEST_FONT*.74;
   // The label (the seated player's name) sits between the corner and the pawns, upright. It
