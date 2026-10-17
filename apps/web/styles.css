@@ -892,7 +892,7 @@ body:has(.game-page) {
 @media(min-width:361px) and (max-width:440px){.character-option strong{font-size:9px;}}
 
 .menu-home .menu-wrap{position:relative;display:flex;flex-direction:column;justify-content:center;padding-bottom:44px;}
-.menu-home .profile-edit{position:absolute;left:2px;bottom:max(12px,env(safe-area-inset-bottom));margin:0;padding:8px 0;font-size:12px;}
+.menu-home .profile-edit{position:absolute;left:2px;bottom:max(12px,env(safe-area-inset-bottom));margin:0;padding:8px 0;font-size:12px;line-height:1.4;text-align:left;max-width:calc(100% - 130px);}
 .menu-credit{position:absolute;right:2px;bottom:max(12px,env(safe-area-inset-bottom));margin:0;padding:8px 0;color:#dbc997;font:600 11px/1.4 system-ui;letter-spacing:.5px;}
 /* First entry uses the same artwork, colors and controls as the game menu. */
 .profile-shell{padding-top:max(24px,env(safe-area-inset-top));padding-bottom:max(28px,env(safe-area-inset-bottom));}

@@ -60,42 +60,79 @@ jobs:
       - run: npm install --no-save --package-lock=false playwright@1.56.1
       - run: npx playwright install --with-deps chromium webkit
       - run: node tests/lan-navegador.mjs
+        if: ${{ !cancelled() }}
       - run: LAN_BROWSER=webkit node tests/lan-navegador.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/table-navegador.mjs
+        if: ${{ !cancelled() }}
       - run: TABLE_BROWSER=webkit node tests/table-navegador.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/bots-navegador.mjs
+        if: ${{ !cancelled() }}
       - run: BOT_BROWSER=webkit node tests/bots-navegador.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/physics-screen.mjs
+        if: ${{ !cancelled() }}
       - run: PHYSICS_BROWSER=webkit node tests/physics-screen.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/turn-screen.mjs
+        if: ${{ !cancelled() }}
       - run: TURN_BROWSER=webkit node tests/turn-screen.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/board-screen.mjs
+        if: ${{ !cancelled() }}
       - run: BOARD_BROWSER=webkit node tests/board-screen.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/no-aids.mjs
+        if: ${{ !cancelled() }}
       - run: AIDS_BROWSER=webkit node tests/no-aids.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/game-help-screen.mjs
+        if: ${{ !cancelled() }}
       - run: HELP_BROWSER=webkit node tests/game-help-screen.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/card-art-screen.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/poker-interactions.mjs
+        if: ${{ !cancelled() }}
       - run: POKER_BROWSER=webkit node tests/poker-interactions.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/poker-screen.mjs
+        if: ${{ !cancelled() }}
       - run: POKER_BROWSER=webkit node tests/poker-screen.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/player-experience.mjs
+        if: ${{ !cancelled() }}
       - run: EXPERIENCE_BROWSER=webkit node tests/player-experience.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/catalog-screen.mjs
+        if: ${{ !cancelled() }}
       - run: CATALOG_BROWSER=webkit node tests/catalog-screen.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/cinquillo-layout.mjs
+        if: ${{ !cancelled() }}
       - run: LAYOUT_BROWSER=webkit node tests/cinquillo-layout.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/rival-portraits.mjs
+        if: ${{ !cancelled() }}
       - run: AVATAR_BROWSER=webkit node tests/rival-portraits.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/game-screen-flow.mjs
+        if: ${{ !cancelled() }}
       - run: FLOW_BROWSER=webkit node tests/game-screen-flow.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/parchis-screen.mjs
+        if: ${{ !cancelled() }}
       - run: PARCHIS_BROWSER=webkit node tests/parchis-screen.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/parchis-dice.mjs
+        if: ${{ !cancelled() }}
       - run: PARCHIS_BROWSER=webkit node tests/parchis-dice.mjs
+        if: ${{ !cancelled() }}
       - run: node tests/absence-screen.mjs
+        if: ${{ !cancelled() }}
       - run: ABSENCE_BROWSER=webkit node tests/absence-screen.mjs
+        if: ${{ !cancelled() }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
