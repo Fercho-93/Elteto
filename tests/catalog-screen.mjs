@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {listGames,getGame,buildCardMaterial,captures15} from '../dist/game-core/index.js';
+import {AVAILABLE_GAME_IDS} from '../dist/game-picker.js';
 const {chromium,webkit}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1]+'\nwindow.testHostForm = () => renderHostForm(); window.testProfile = () => renderProfile(); window.testJoinForm = () => { state.offerCode = "ABCD2345"; renderJoinForm(); };';
 const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://localhost').pathname.slice(1)||'index.html';let body=await readFile('dist/'+file);if(file==='app.js')body=Buffer.from(body+fixture);res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':file.endsWith('.webp')?'image/webp':file.endsWith('.svg')?'image/svg+xml':'text/html');res.end(body);}catch{res.writeHead(404);res.end();}});
@@ -16,15 +17,19 @@ try{
  for(const [width,height] of [[320,568],[390,844],[844,390],[1280,800]]){
   await page.setViewportSize({width,height});await page.evaluate(()=>window.testHostForm());
   assert.equal(await page.locator('.game-category').count(),2);
-  assert.deepEqual(await page.locator('input[name="game"]').evaluateAll(inputs=>inputs.map(i=>i.value).sort()),['damas-espanolas','mus','parchis','texas-holdem']);
-  for(const id of ['parchis','damas-espanolas','mus','texas-holdem']){
+  // Los veinte juegos con motor se ofrecen, cada uno una sola vez.
+  assert.deepEqual(await page.locator('input[name="game"]').evaluateAll(inputs=>inputs.map(i=>i.value).sort()),listGames().map(g=>g.id).sort());
+  assert.equal(AVAILABLE_GAME_IDS.length,20);
+  assert.deepEqual(await page.locator('.game-category[data-category="board"] input').evaluateAll(inputs=>inputs.map(i=>i.value)),['parchis','oca','damas-espanolas','domino']);
+  assert.equal(await page.locator('.category-section').count(),4);
+  for(const id of AVAILABLE_GAME_IDS){
    const category=page.locator('.game-category').filter({has:page.locator(`input[value="${id}"]`)});
    await category.locator('summary').click();
    await category.locator(`input[value="${id}"]`).check();
    assert.equal(await page.locator('input[name="game"]:checked').inputValue(),id);
    assert.equal(await page.locator('.game-category.chosen').count(),1);
    assert.equal(await category.evaluate(el=>el.open),false);
-   const name=({'damas-espanolas':'Damas','texas-holdem':'Póker',mus:'Mus',parchis:'Parchís'})[id];
+   const name=({'damas-espanolas':'Damas','texas-holdem':'Póker',oca:'Oca',escoba:'Escoba'})[id]||getGame(id).label;
    assert.ok((await category.locator('.category-title').textContent()).endsWith(': '+name));
   }
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
@@ -39,7 +44,7 @@ try{
   await page.locator('#room-name').fill('Sala conservada');
   await page.evaluate(()=>window.testHostForm());
   assert.equal(await page.locator('#room-name').inputValue(),'Sala conservada');
-  assert.equal(await page.locator('input[name="game"]:checked').inputValue(),'texas-holdem');
+  assert.equal(await page.locator('input[name="game"]:checked').inputValue(),AVAILABLE_GAME_IDS.at(-1));
   if(width===390)await page.screenshot({path:`tests/artifacts/catalog/game-picker-${kind}.png`,fullPage:true});
  }
  // Character picker preserves typed identity, exposes all ten choices, and persists locally.
@@ -131,5 +136,5 @@ try{
   await page.getByRole('button',{name:'Siguiente mano',exact:true}).click();assert.equal((await page.evaluate(()=>window.tableSnapshot())).handNumber,2);
  }
  assert.deepEqual(errors,[]);await writeFile(`tests/artifacts/catalog/measurements-${kind}.json`,JSON.stringify(results,null,2));
- console.log(`${kind}: ${results.length} catalog layouts, rules/menu/zoom, two categories / four-game selection, engine-backed actions: OK`);
+ console.log(`${kind}: ${results.length} catalog layouts, rules/menu/zoom, two categories / twenty-game selection, engine-backed actions: OK`);
 }finally{await browser.close();await new Promise(r=>server.close(r));}

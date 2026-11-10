@@ -3,7 +3,10 @@ import {speechText} from './table-speech.js';
 import {DICE_DURATION,PAWN_STEP,CHECKER_STEP,PIECE_TRANSFER,CAPTURE_FADE,gooseFlights} from './game-physics.js';
 // Public differences only: never use an opponent's private hand or future options.
 export const TURN_INTRO=1000,TURN_RESULT=2000;
-export const turnTiming=event=>event?.kind==='checkers'?{intro:180,result:250,padding:150}:{intro:TURN_INTRO,result:TURN_RESULT,padding:800};
+// Card and tile games keep a brisk table rhythm: each play is short and many happen per hand.
+// Closing a trick or a hand leaves more time to read the result.
+export const CARD_PACE_GAMES=new Set(['tricks','capture','melds','burro','bank','domino']);
+export const turnTiming=event=>event?.kind==='checkers'?{intro:180,result:250,padding:150}:event?.pace==='cards'?{intro:600,result:event.settles?2200:event.collects?1700:1200,padding:400}:{intro:TURN_INTRO,result:TURN_RESULT,padding:800};
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 export const viewIdentity=(change)=>`${change.gameId||change.view.id}:${change.view.players.join('|')}:${change.playerId||''}:${change.view.boardKind==='poker'?'session':change.view.handNumber||1}`;
 export function parchisRoutes(before,after){
@@ -58,6 +61,8 @@ export function publicTurnEvent(before,after){
  else if(after.handWinner)result=`${after.handWinner} gana la mano`;
  else if(after.phase==='collect')result=after.log?.at(-1)||detail;
  else if(after.boardKind==='oca'&&roll&&after.turnPlayer===actor)result=detail+' · vuelve a tirar';
+ const cardPace=(CARD_PACE_GAMES.has(after.boardKind)||['spanish-40','legacy-french-52'].includes(after.ruleset)&&after.table&&!after.boardKind)&&kind!=='speech';
+ if(cardPace){motion=Math.min(motion,after.boardKind==='capture'&&capture?.capturedCount?1300:900);return {actor,action,detail,result,kind,motion,pawns,pace:'cards',...(action==='Recoge la baza'?{collects:true}:{}),...(after.finished||after.handWinner&&!before.handWinner||after.phase==='result'&&before.phase!=='result'?{settles:true}:{})};}
  return {actor,action,detail,result,kind,motion,pawns};
 }
 export function readableTurn(text,players,name){

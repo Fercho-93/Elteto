@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {getGame,listGames,nextBotMove,createMusState} from '../dist/game-core/index.js';
 import {TurnSequence} from '../dist/turn-sequence.js';
-import {publicTurnEvent,TURN_INTRO,TURN_RESULT,readableTurn,parchisRoutes} from '../dist/turn-events.js';
+import {publicTurnEvent,TURN_INTRO,TURN_RESULT,readableTurn,parchisRoutes,turnTiming} from '../dist/turn-events.js';
 import {PAWN_STEP,PIECE_TRANSFER} from '../dist/game-physics.js';
 import {BotPacing} from '../dist/bot-pacing.js';
 let checked=0;
@@ -26,7 +26,8 @@ const sequence=new TurnSequence({apply:c=>display.push(c.view.chain.length),phas
 sequence.receive(change(game));const snapshots=[];
 for(let i=0;i<3;i++){const move=nextBotMove(engine,game,game.players);game=engine.applyAction(game,move.playerId,move.action);snapshots.push(change(game));sequence.receive(change(game));}
 assert.deepEqual(display,[0]);assert.equal(sequence.phase,'announce');sequence.receive(snapshots.at(-1));assert.equal(sequence.queue.length,2);
-advance(TURN_INTRO);assert.deepEqual(display,[0,1]);assert.equal(sequence.phase,'move');advance(PIECE_TRANSFER);assert.equal(sequence.phase,'result');advance(TURN_RESULT);assert.equal(sequence.phase,'announce');
+const firstEvent=publicTurnEvent(engine.view(engine.createInitialState(['a','b','c','d'],22),'a'),snapshots[0].view),firstTiming=turnTiming(firstEvent);assert.equal(firstEvent.pace,'cards','Dominó usa el ritmo ágil de mesa');assert.ok(firstTiming.intro<TURN_INTRO&&firstTiming.result<TURN_RESULT);
+advance(firstTiming.intro);assert.deepEqual(display,[0,1]);assert.equal(sequence.phase,'move');advance(firstEvent.motion);assert.equal(sequence.phase,'result');advance(firstTiming.result);assert.equal(sequence.phase,'announce');
 advance(20000);assert.deepEqual(display,[0,1,2,3]);assert.equal(sequence.busy,false);assert.equal(sequence.queue.length,0);
 sequence.receive({...snapshots[0],playerId:'b'});assert.equal(sequence.busy,false,'A new POV never replays old turns');
 sequence.receive({...snapshots[1],playerId:'b'});sequence.reset();advance(20000);assert.equal(display.at(-1),1,'Leaving cancels pending renders');

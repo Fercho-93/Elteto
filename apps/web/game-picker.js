@@ -2,15 +2,27 @@ import {escapeHtml as esc} from './table-view.js';
 
 // Each category opens with its own illustration, cached with the app so it also works offline.
 const CATEGORY_ART={board:'./assets/juegos-tablero.webp',cards:'./assets/juegos-cartas.webp'};
-export const AVAILABLE_GAME_IDS = ['parchis','damas-espanolas','mus','texas-holdem'];
+// Every game with an engine is offered, grouped the way people look for them at a real table.
+export const GAME_GROUPS=[
+ {id:'board',title:'Juegos de Tablero',sections:[{title:'Tablero y fichas',ids:['parchis','oca','damas-espanolas','domino']}]},
+ {id:'cards',title:'Juegos de cartas',sections:[
+  {title:'Para toda la familia',ids:['cinquillo','escoba','burro','mentiroso']},
+  {title:'Bazas y triunfos',ids:['brisca','tute','guinote','butifarra','pocha','julepe']},
+  {title:'Combinaciones',ids:['chinchon','remigio','continental']},
+  {title:'Envites y apuestas',ids:['mus','texas-holdem','siete-y-medio']},
+ ]},
+];
+export const AVAILABLE_GAME_IDS=GAME_GROUPS.flatMap(group=>group.sections.flatMap(section=>section.ids));
 export function availableGames(games){return AVAILABLE_GAME_IDS.map(id=>games.find(game=>game.id===id)).filter(Boolean);}
-const label = game => ({'damas-espanolas':'Damas','texas-holdem':'Póker'})[game.id] || game.label;
+const label = game => ({'damas-espanolas':'Damas','texas-holdem':'Póker','oca':'Oca','escoba':'Escoba'})[game.id] || game.label;
+const choice=(game,selected,countLabel)=>`<label class="category-choice"><input type="radio" name="game" value="${esc(game.id)}" ${game.id===selected?'checked':''}><span>${esc(label(game))}</span><small>${countLabel(game)} jugadores</small></label>`;
 export function renderGameChoices(games,selected,countLabel){
- const groups=[{id:'board',title:'Juegos de Tablero',ids:['parchis','damas-espanolas']},{id:'cards',title:'Juegos de cartas',ids:games.filter(g=>!['parchis','damas-espanolas','oca'].includes(g.id)).map(g=>g.id)}];
- return `<div class="game-categories" aria-label="Juegos disponibles">${groups.map(group=>{
-  const choices=games.filter(g=>group.ids.includes(g.id)),chosen=choices.find(g=>g.id===selected);
-  return `<details name="game-category" class="game-category ${chosen?'chosen':''}" data-category="${group.id}"><summary><span class="category-art"><img src="${CATEGORY_ART[group.id]}" alt="" width="720" height="480" decoding="async" draggable="false"></span><strong class="category-title">${group.title}${chosen?': '+esc(label(chosen)):''}</strong><span class="category-hint">${chosen?'Seleccionado · '+countLabel(chosen)+' jugadores':'Pulsa para elegir'} <span aria-hidden="true">⌄</span></span></summary><div class="category-combo" role="group" aria-label="${group.title}">${choices.map(game=>`<label class="category-choice"><input type="radio" name="game" value="${esc(game.id)}" ${game.id===selected?'checked':''}><span>${esc(label(game))}</span><small>${countLabel(game)} jugadores</small></label>`).join('')}</div></details>`;
- }).join('')}</div><p class="game-picker-summary" role="status">${selected?'Juego elegido: '+esc(label(games.find(g=>g.id===selected))):'Elige un juego para abrir la mesa'}</p>`;
+ return `<div class="game-categories" aria-label="Juegos disponibles">${GAME_GROUPS.map(group=>{
+  const ids=group.sections.flatMap(section=>section.ids),chosen=games.find(g=>ids.includes(g.id)&&g.id===selected);
+  const sections=group.sections.map(section=>({...section,games:section.ids.map(id=>games.find(g=>g.id===id)).filter(Boolean)})).filter(section=>section.games.length);
+  const titled=sections.length>1;
+  return `<details name="game-category" class="game-category ${chosen?'chosen':''}" data-category="${group.id}"><summary><span class="category-art"><img src="${CATEGORY_ART[group.id]}" alt="" width="720" height="480" decoding="async" draggable="false"></span><strong class="category-title">${group.title}${chosen?': '+esc(label(chosen)):''}</strong><span class="category-hint">${chosen?'Seleccionado · '+countLabel(chosen)+' jugadores':'Pulsa para elegir'} <span aria-hidden="true">⌄</span></span></summary><div class="category-combo" role="group" aria-label="${group.title}">${sections.map(section=>titled?`<div class="category-section" role="group" aria-label="${esc(section.title)}"><p class="category-section-title" aria-hidden="true">${esc(section.title)}</p>${section.games.map(game=>choice(game,selected,countLabel)).join('')}</div>`:section.games.map(game=>choice(game,selected,countLabel)).join('')).join('')}</div></details>`;
+ }).join('')}</div><p class="game-picker-summary" role="status">${selected&&games.some(g=>g.id===selected)?'Juego elegido: '+esc(label(games.find(g=>g.id===selected))):'Elige un juego para abrir la mesa'}</p>`;
 }
 export function updateGamePicker(app){
  const input=app.querySelector('input[name="game"]:checked');

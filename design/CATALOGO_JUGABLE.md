@@ -24,6 +24,22 @@ Los veinte reglamentos tienen motor en web y Android LAN. Los originales de `reg
 
 Las fichas son puntos de partida, sin pagos ni dinero real. Las mesas conservan el límite existente de ocho personas. Los identificadores de sala usan guiones; `getGame` y `getGamePlan` aceptan también los nombres antiguos con guion bajo.
 
+## Selector de juegos
+
+La pantalla «Crear partida» ofrece los veinte juegos (`apps/web/game-picker.js`, `GAME_GROUPS`). Se mantienen las dos categorías ilustradas:
+
+- **Juegos de Tablero**: Parchís, Oca, Damas y Dominó.
+- **Juegos de cartas**, en cuatro apartados: *Para toda la familia* (Cinquillo, Escoba, Burro, Mentiroso), *Bazas y triunfos* (Brisca, Tute, Guiñote, Butifarra, Pocha, Julepe), *Combinaciones* (Chinchón, Remigio, Continental) y *Envites y apuestas* (Mus, Póker, Siete y medio).
+
+En pantallas de 600 px o más, cada apartado se muestra en dos columnas.
+
+## Presentación y ritmo
+
+- **Remigio** usa caras reales de póker español: as, 2–9 y figuras con las ilustraciones tradicionales (J = sota, Q = caballo, K = rey) y el índice de póker en la esquina; el diez se pinta con diez símbolos del palo y el comodín tiene su propia cara.
+- **Dominó** dibuja la línea de juego en serpentina: cada fila continúa por el mismo lado que la anterior, los dobles van cruzados y los dos extremos abiertos se resaltan con su número encima («Izquierda» y «Derecha», como los botones de colocar).
+- **Ritmo**: los juegos de cartas y de fichas (bazas, Escoba, combinaciones, Burro, Siete y medio, Dominó y Cinquillo) usan un ritmo ágil de unos 3 s por jugada (0,6 s de aviso, ≤0,9 s de movimiento, 1,2 s de resultado). Recoger una baza deja 1,7 s y cerrar una mano 2,2 s para leer el resultado. Mus, póker, Mentiroso, Oca, Parchís y Damas conservan su ritmo propio. La IA nunca juega antes de que termine la secuencia visible (`BotPacing`).
+- Las cartas se anuncian con nombres legibles para lectores de pantalla: «As de oros», «Sota de copas», «Rey de bastos».
+
 ## Implementación
 
 - `shared.ts`: estado, reparto determinista, identidad de cartas, validación e inmutabilidad; las vistas públicas usan una lista explícita de campos y copias independientes.

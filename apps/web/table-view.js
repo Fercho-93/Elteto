@@ -27,7 +27,7 @@ const suitNames = {
 };
 export const cardKey = (card) => `${card.suit}:${card.rank}`;
 export const canPlayCinquillo = (table, card, ruleset = "spanish-40") => canPlaceCinquillo(table, card, ruleset);
-function suitArt(suit) {
+export function suitArt(suit) {
   if (symbols[suit]) return `<span class="suit-symbol">${symbols[suit]}</span>`;
   const art = {
     oros: '<circle cx="30" cy="30" r="21" fill="#e8b342"/><circle cx="30" cy="30" r="15" fill="none" stroke="#9c641b" stroke-width="3"/><path d="m30 19 3 7 8 1-6 5 2 8-7-4-7 4 2-8-6-5 8-1z" fill="#fff1b5"/>',
