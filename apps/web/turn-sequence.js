@@ -2,6 +2,17 @@ import {publicTurnEvent,viewIdentity,TURN_INTRO,TURN_RESULT,turnTiming,readableT
 const navigation=new Set(['catalog-zoom','catalog-close-zoom','catalog-poker-close-bet','catalog-clear','parchis-zoom-open','parchis-zoom-close']);
 export const isTurnAction=action=>action==='play-card'||action==='cinquillo-pass'||action==='cinquillo-next-hand'||action.startsWith('mus-')&&!['mus-bet-less','mus-bet-more','mus-target'].includes(action)||action.startsWith('parchis-')&&!navigation.has(action)||action.startsWith('catalog-')&&!navigation.has(action);
 // Each device queues only its own redacted snapshots. The host remains authoritative.
+// Frases del historial que empiezan por tu nombre se leen en segunda persona.
+const VERBS={gana:'Ganas',pierde:'Pierdes',recoge:'Recoges',sale:'Sales','no tiene':'No tienes',descarta:'Descartas',roba:'Robas',coge:'Coges',cierra:'Cierras',coloca:'Colocas',pide:'Pides',apuesta:'Apuestas',juega:'Juegas',deja:'Dejas',declara:'Declaras','se planta':'Te plantas','se pasa':'Te pasas','enseña':'Enseñas','se abate':'Te abates',cambia:'Cambias',recibe:'Recibes',elige:'Eliges',delega:'Delegas',contra:'Contras',recontra:'Recontras','no contra':'No contras','no recontra':'No recontras',canta:'Cantas',acierta:'Aciertas','pidió':'Pediste','hizo la última':'Hiciste la última','se queda':'Te quedas',reparte:'Repartes'};
+const FOLLOW={recoge:'recoges',roba:'robas',forma:'formas',descubre:'descubres','se pasa':'te pasas','se lo lleva':'te lo llevas',cierra:'cierras','se lleva':'te llevas',deja:'dejas',hizo:'hiciste',cumple:'cumples'};
+export function secondPerson(text,playerId){
+ const safe=playerId.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+ return text.split(' · ').map(part=>{
+  const match=part.match(new RegExp('^'+safe+' ('+Object.keys(VERBS).sort((a,b)=>b.length-a.length).map(v=>v.replace(/ /g,' ')).join('|')+')(?=[\\s.,:;]|$)'));
+  if(!match)return part;
+  return (VERBS[match[1]]+part.slice(match[0].length)).replace(/( y | e |: )(se lo lleva|se lleva|se pasa|recoge|roba|forma|descubre|cierra|deja|hizo|cumple)(?=[\s.,:;]|$)/g,(_,sep,verb)=>sep+FOLLOW[verb]);
+ }).join(' · ');
+}
 export class TurnSequence {
  constructor({apply,refresh=()=>{},phaseChanged=()=>{},reduced=()=>false,hidden=()=>false,setTimer=(fn,ms)=>setTimeout(fn,ms),clearTimer=id=>clearTimeout(id)}){
   Object.assign(this,{apply,refresh,phaseChanged,reduced,hidden,setTimer,clearTimer});this.reset();
@@ -54,7 +65,7 @@ export class TurnSequence {
   if(!status)return;
   if(status.dataset.sequenceOriginal===undefined)status.dataset.sequenceOriginal=status.innerHTML;
   if(!this.busy){if(status.classList.contains('turn-story-slot'))status.remove();else{status.innerHTML=status.dataset.sequenceOriginal;status.classList.remove('turn-story');}return;}
-  const event=this.event,own=text=>String(text).replace(new RegExp('^'+playerId.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+' (gana|pierde|recoge|sale|no tiene)\\b'),(_,verb)=>({gana:'Ganas',pierde:'Pierdes',recoge:'Recoges',sale:'Sales','no tiene':'No tienes'})[verb]),read=t=>readableTurn(own(t),view.players,id=>id===playerId?`${name(id)} (tú)`:name(id));
+  const event=this.event,own=text=>secondPerson(String(text),playerId),read=t=>readableTurn(own(t),view.players,id=>id===playerId?`${name(id)} (tú)`:name(id));
   status.replaceChildren();status.classList.add('turn-story');status.setAttribute('role','status');
   const label=document.createElement('strong'),detail=document.createElement('span'),progress=document.createElement('i');
   label.className='turn-story-label';label.textContent=`${event.actor===playerId?'Tú':name(event.actor)} · ${this.phase==='announce'?event.action:this.phase==='move'?'En movimiento':'Resultado'}`;

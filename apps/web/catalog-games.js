@@ -7,6 +7,7 @@ import {renderParchisDie,beginParchisRoll,finishDiceRender,OCA_DICE_TARGETS} fro
 import {finishBoardMotion,preparePublicMotion,finishPublicMotion} from './board-motion.js';
 import {getGamePlan} from './game-core/index.js';
 import {cardName} from './card-names.js';
+import {secondPerson} from './turn-sequence.js';
 import {renderRivalRoster,revealActivePlayer} from './rival-portraits.js';
 import {mascotForSeat,MASCOTS,escapeHtml as esc,suitArt} from './table-view.js';
 import {renderCardArtwork,renderCardBack,renderDrawPile} from './card-art.js';
@@ -46,12 +47,12 @@ function publicCards(cards){return `<div class="catalog-public-cards">${cards.ma
 // Mesa de bazas como en Mus: cada carta aparece delante de quien la juega, en el sentido real de
 // la mesa (antihorario: el siguiente jugador queda a tu derecha). La carta que gana se resalta.
 const SUIT_NAMES={oros:'oros',copas:'copas',espadas:'espadas',bastos:'bastos',none:'sin triunfo'};
-function seatSpot(index,count){const angle=(90-index*360/count)*Math.PI/180;return {x:50+Math.cos(angle)*36,y:47+Math.sin(angle)*33};}
+function seatSpot(index,count){const angle=(90-index*360/count)*Math.PI/180;return {x:Math.cos(angle).toFixed(3),y:Math.sin(angle).toFixed(3)};}
 function trickTable(view,name,playerId){
  const own=Math.max(0,view.players.indexOf(playerId)),count=view.players.length,who=p=>p===playerId?'Tú':name(p);
  const playing=view.joined||view.players.filter(p=>p!==view.sitting);
  const cards=view.trick.map((t,order)=>{const seat=(view.players.indexOf(t.player)-own+count)%count,spot=seatSpot(seat,count),win=view.trickWinner===t.player;
-  return `<div class="trick-slot ${win?'is-winner':''} ${order===0?'is-lead':''}" style="left:${spot.x}%;top:${spot.y}%;--deal-order:${order}" data-trick-player="${esc(t.player)}"><small>${esc(who(t.player))}${order===0?' · sale':''}</small>${cardHtml(t.card)}${win?'<b class="trick-badge">Gana la baza</b>':''}</div>`;}).join('');
+  return `<div class="trick-slot ${win?'is-winner':''} ${order===0?'is-lead':''}" style="--sx:${spot.x};--sy:${spot.y};--deal-order:${order}" data-trick-player="${esc(t.player)}"><small>${esc(who(t.player))}${order===0?' · sale':''}</small>${cardHtml(t.card)}${win?'<b class="trick-badge">Gana la baza</b>':''}</div>`;}).join('');
  const empty=view.trick.length?'':`<p class="trick-waiting">${view.phase==='play'?`${esc(who(view.turnPlayer))} ${view.turnPlayer===playerId?'sales':'sale'} a la baza`:view.phase==='result'?'Mano terminada':'La mesa está lista'}</p>`;
  const trumpCard=view.pinta&&view.stockCount?`<span class="trick-pinta">${cardHtml(view.pinta)}</span>`:'';
  const meta=`<div class="trick-meta">${view.stockCount?`<span class="trick-stock">${renderDrawPile(view.stockCount,false)}<span><small>Mazo</small><b>${view.stockCount}</b></span></span>`:'<span class="trick-stock">Sin mazo</span>'}<span class="trick-trump">${trumpCard}<span><small>Triunfo</small><b>${view.trump?esc(SUIT_NAMES[view.trump]||view.trump):'Por elegir'}</b></span></span>${view.multiplier>1?`<span class="trick-extra">×${view.multiplier}</span>`:''}${view.pot?`<span class="trick-extra">Plato <b>${view.pot}</b></span>`:''}</div>`;
@@ -60,12 +61,12 @@ function trickTable(view,name,playerId){
  const score=teams?teams.map(label=>{const members=view.players.filter(p=>view.teamLabels[p]===label);return `<span class="${members.includes(playerId)?'is-own':''}"><small>${esc(label)} · ${members.map(who).map(esc).join(' y ')}</small><b>${view.points[members[0]]} tantos</b></span>`;}).join(''):playing.map(p=>`<span class="${p===playerId?'is-own':''}"><small>${esc(who(p))}</small><b>${view.predictions[p]!==undefined?`${view.tricks[p]} de ${view.predictions[p]} bazas`:view.id==='julepe'||view.id==='pocha'?`${view.tricks[p]} bazas`:view.points[p]+' tantos'}</b></span>`).join('');
  // Recuento al cerrar la mano: las líneas del historial desde la última baza, legibles y con «Tú».
  if(view.phase==='result'||view.finished){const log=view.log||[],last=log.map((l,i)=>/ gana la baza\.$/.test(l)?i:-1).filter(i=>i>=0).at(-1)??-1,lines=log.slice(last+1);
-  const read=line=>view.players.reduce((t,id)=>t.split(id).join(id===playerId?`${name(id)} (tú)`:name(id)),line);
+  const read=line=>readLine(view,playerId,name,line);
   return `${meta}<section class="trick-summary" aria-label="Recuento de la mano"><h3>${view.finished?'Final de la partida':`Recuento · mano ${view.handNumber}`}</h3><ul>${lines.map(l=>`<li>${esc(read(l))}</li>`).join('')||'<li>Mano terminada.</li>'}</ul><p>${({pocha:'Puntos',butifarra:'Puntos · meta 100',julepe:'Fichas'})[view.id]||'Juegos ganados · gana quien llega a 3'}: ${(teams?teams.map(label=>{const m=view.players.filter(p=>view.teamLabels[p]===label);return `${esc(label)} ${view.scores[m[0]]}`;}):playing.map(p=>`${esc(who(p))} ${Number(view.scores[p]).toLocaleString('es-ES',{maximumFractionDigits:2})}`)).join(' · ')}</p></section><div class="catalog-scoreline trick-score">${score}</div>`;}
  return `${meta}<div class="trick-table" style="--seats:${count}" aria-label="Baza en juego">${cards}${empty}</div><div class="catalog-scoreline trick-score">${score}</div>`;
 }
 // Recuento de mano compartido: las líneas públicas del historial desde el último marcador.
-function readLine(view,playerId,name,line){return view.players.reduce((t,id)=>t.split(id).join(id===playerId?`${name(id)} (tú)`:name(id)),line);}
+function readLine(view,playerId,name,line){return view.players.reduce((t,id)=>t.split(id).join(id===playerId?`${name(id)} (tú)`:name(id)),secondPerson(line,playerId));}
 function handSummary(view,playerId,name,{since,title,footer=''}){
  const log=view.log||[],start=log.map((l,i)=>since.test(l)?i:-1).filter(i=>i>=0).at(-1)??-1,lines=log.slice(start+1);
  return `<section class="trick-summary" aria-label="${esc(title)}"><h3>${esc(title)}</h3><ul>${lines.map(l=>`<li>${esc(readLine(view,playerId,name,l))}</li>`).join('')||'<li>Mano terminada.</li>'}</ul>${footer?`<p>${footer}</p>`:''}</section>`;
@@ -110,6 +111,16 @@ function bankTable(view,name,playerId){
  const result=view.phase==='result'||view.finished?handSummary(view,playerId,name,{since:/ (se planta|pide carta|se pasa|apuesta )/,title:view.finished?'Final de la partida':`Cobros · mano ${view.handNumber}`}):'';
  return `${result}<div class="bank-seats">${seats}</div>`;
 }
+// Combinaciones: mazo y descarte grandes en el centro, regla de la mano a la vista y combinaciones de cada jugador.
+function meldTable(view,name,playerId){
+ const who=youOr(playerId,name),out=p=>view.eliminated?.includes(p);
+ const rule=view.id==='continental'?view.contract:view.id==='chinchon'?'Cierra con 5 puntos o menos sin ligar':'Cierra con las diez combinadas o del mismo palo';
+ const piles=`<div class="meld-piles"><div class="meld-pile">${renderDrawPile(view.stockCount,frenchDeckView)||'<span class="meld-empty">Sin mazo</span>'}<small>Mazo · ${view.stockCount}</small></div><div class="meld-pile is-discard">${view.discard?cardHtml(view.discard):'<span class="meld-empty">Vacío</span>'}<small>Descarte</small></div></div>`;
+ const groups=view.players.filter(p=>view.exposed[p]?.length).map(p=>`<section class="meld-owner"><small>${esc(who(p))}</small><div>${view.exposed[p].map((g,i)=>`<div class="meld-group" aria-label="${g.kind==='set'?'Grupo':'Escalera'} ${i+1} de ${esc(who(p))}">${g.cards.map(c=>cardHtml(c)).join('')}</div>`).join('')}</div></section>`).join('');
+ const strip=scoreStrip(view,playerId,name,p=>out(p)?'Eliminado':`${view.scores[p]} ${view.scores[p]===1?'punto':'puntos'}`);
+ if(view.phase==='result'||view.finished)return `<p class="meld-rule">${esc(rule)}</p>${handSummary(view,playerId,name,{since:/ (descarta|roba del mazo|coge el descarte)/,title:view.finished?'Final de la partida':`Recuento · mano ${view.handNumber}`,footer:view.id==='chinchon'?'Quien pasa de 100 queda eliminado. Gana el último que aguanta.':`Gana la menor suma tras ${view.id==='continental'?7:6} manos.`})}${groups?`<div class="catalog-melds">${groups}</div>`:''}${strip}`;
+ return `<p class="meld-rule">${esc(rule)}</p>${piles}${groups?`<div class="catalog-melds">${groups}</div>`:''}${strip}`;
+}
 function board(view,name,interactive=true,playerId=view.players[0]){
  switch(view.boardKind){
  case 'tricks':return trickTable(view,name,playerId);
@@ -119,7 +130,7 @@ function board(view,name,interactive=true,playerId=view.players[0]){
  case 'capture':return captureTable(view,name,playerId,interactive);
  case 'bluff':return bluffTable(view,name,playerId);
  case 'burro':return burroTable(view,name,playerId,interactive);
- case 'melds':return `${renderDrawPile(view.stockCount,frenchDeckView)}<div class="catalog-table-meta"><strong>${esc(view.contract)}</strong><span>Mazo ${view.stockCount}</span></div>${view.discard?`<div class="catalog-discard"><small>Descarte</small>${cardHtml(view.discard)}</div>`:''}<div class="catalog-melds">${view.players.filter(p=>view.exposed[p]?.length).map(p=>`<section><small>${esc(name(p))}</small>${view.exposed[p].map(g=>publicCards(g.cards)).join('')}</section>`).join('')}</div>`;
+ case 'melds':return meldTable(view,name,playerId);
  case 'poker':return renderPokerTable(view,name,playerId,publicCards);
  case 'bank':return bankTable(view,name,playerId);
  default:return '';

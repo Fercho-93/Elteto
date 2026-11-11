@@ -60,6 +60,8 @@ export function publicTurnEvent(before,after){
  if(capture){action='Juega carta';detail=`${cardName(capture.card)}${capture.capturedCount?` · recoge ${capture.captured?.length?capture.captured.map(c=>cardName(c)).join(', '):capture.capturedCount}${capture.sweep?' · ¡escoba!':''}`:' · la deja en la mesa'}`;motion=capture.capturedCount?1800:1200;}
  if(trick&&!capture){detail=cardName(trick.card,{poker:after.id==='remigio'});}
  const fresh=newLogLines(before,after);
+ // Renuncias rápidas sin efecto público (dejar pasar un descarte, terminar sin colocar): no paran la mesa.
+ if(after.boardKind==='melds'&&['claim','layoff'].includes(before.phase)&&!fresh.length&&same(before.handSizes,after.handSizes))return null;
  if(after.boardKind==='tricks'&&!trick&&TRICK_PHASE_ACTIONS[before.phase]&&before.phase!=='collect'){action=TRICK_PHASE_ACTIONS[before.phase];detail=fresh[0]||detail;if(before.phase==='result'){detail=fresh.at(-1)||`Mano ${after.handNumber}`;}}
  let trickResult=null;
  if(after.boardKind==='tricks'&&after.trickWinner&&!before.trickWinner){const w=after.trickWinner,gain=(after.points?.[w]??0)-(before.points?.[w]??0);trickResult=`${w} gana la baza${gain>0&&!['julepe','pocha'].includes(after.id)?` · +${gain} tantos`:''}`;}
@@ -70,6 +72,8 @@ export function publicTurnEvent(before,after){
  if(after.bets?.[actor]!==before.bets?.[actor]&&after.bets?.[actor]!==undefined){action='Apuesta';detail=`${after.bets[actor]} fichas`;}
  if(after.boardKind==='bank'&&fresh.length){const line=fresh[0];detail=line;action=/ apuesta /.test(line)?'Apuesta':/ se planta/.test(line)?'Se planta':/ se pasa /.test(line)?'Se pasa':/ pide carta boca abajo/.test(line)?'Pide carta oculta':/ pide carta/.test(line)?'Pide carta':action;}
  if(after.boardKind==='bank'&&before.phase==='result'){action='Nueva mano';detail=`Mano ${after.handNumber}: banca de ${after.bank}`;}
+ if(after.boardKind==='melds'&&fresh.length){const line=fresh[0];detail=line;action=/ roba del mazo/.test(line)?'Roba del mazo':/ coge el descarte fuera/.test(line)?'Coge con castigo':/ coge el descarte/.test(line)?'Coge el descarte':/ descarta /.test(line)?'Descarta':/ cierra /.test(line)?'Cierra':/ se abate/.test(line)?'Se abate':/ coloca /.test(line)?'Coloca carta':/ enseña | no tiene combinaciones/.test(line)?'Enseña':/ cambia un comodín/.test(line)?'Comodín':action;}
+ if(after.phase==='result'&&before.phase!=='result'&&['Resuelve el turno','Hace su jugada'].includes(action))action='Fin de la mano';
  if(before.phase==='result'&&after.phase!=='result'&&!after.finished&&after.boardKind!=='poker'){action='Nueva mano';detail=after.boardKind==='bank'?detail:fresh.filter(l=>/^Mano /.test(l)).at(-1)||`Mano ${after.handNumber}`;}
  if(speech){kind='speech';action=speech.kind==='declare'?'Declara cartas':speech.kind==='pass'?'Pasa':'Cuestiona la jugada';detail=speechText(speech);motion=1600;}
  let result=detail;

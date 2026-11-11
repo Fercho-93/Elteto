@@ -10,6 +10,8 @@ for(const engine of listGames()){
  for(let step=0;step<12&&!state.finished;step++){
   const move=nextBotMove(engine,state,ids);if(!move)break;
   const next=engine.applyAction(state,move.playerId,move.action),events=ids.map(id=>publicTurnEvent(engine.view(state,id),engine.view(next,id)));
+  // Silent passes (letting a Continental discard go, finishing without laying off) never stop the table, in any POV.
+  if(['claim','layoff'].includes(state.phase)&&move.action.type==='continue'&&events.every(e=>e===null)){state=next;checked++;continue;}
   for(const event of events){if(engine.id==='cinquillo'&&move.action.type==='play')assert.equal(event.action,'Juega carta');assert.ok(event,`${engine.id}: public action detected`);assert.equal(event.actor,move.playerId,`${engine.id}/${move.action.type}: same actual actor in every POV`);assert.deepEqual(event,events[0],`${engine.id}: same public timeline from every POV`);assert.ok(event.motion>=220);}
   state=next;checked++;
  }

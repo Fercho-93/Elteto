@@ -25,7 +25,7 @@ export class LocalHostSession {
     this.botPacing=new BotPacing();
     this.botRunner = new BotRunner(() => this.closed || this.canRunBots?.() === false ? null : nextBotMove(this.engine, this.state, this.botIds()) || absentMove(this.engine, this.state, this.autoIds()),
       ({playerId, action}) => { this.state = this.engine.applyAction(this.state, playerId, this.engine.id==='mus'?{...action,at:Date.now()}:action); this.sendViews(); },
-      error => this.onChange({kind: 'error', message: String(error.message || error)}), () => this.botPacing.delay(this.nextIsAbsent() ? 1500 : botTurnDelay(this.engine.id)));
+      error => this.onChange({kind: 'error', message: String(error.message || error)}), () => this.botPacing.delay(this.nextIsAbsent() ? 1500 : botTurnDelay(this.engine.id,this.state?.phase)));
     this.musFlow=new MusFlowRunner(()=>({engine:this.engine,state:this.state,paused:this.waitingForReturn()}),action=>this.applyAction(HOST_ID,action),error=>this.onChange({kind:"error",message:error.message}));
     this.publishLobby();
   }

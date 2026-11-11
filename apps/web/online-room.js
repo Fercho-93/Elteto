@@ -155,7 +155,7 @@ export class OnlineSession {
         this.state = this.engine.applyAction(this.state, move.playerId, move.action);
         await this.publish();
       }),
-      error => this.onChange({kind:'error', message:String(error.message || error)}), () => this.botPacing.delay(this.state&&!this.botMove()?1500:botTurnDelay(this.engine?.id || this.room?.gameId || '')));
+      error => this.onChange({kind:'error', message:String(error.message || error)}), () => this.botPacing.delay(this.state&&!this.botMove()?1500:botTurnDelay(this.engine?.id || this.room?.gameId || '',this.state?.phase)));
     // Tareas de quien juega.
     this.viewStop = null;
     this.viewRev = -1;
