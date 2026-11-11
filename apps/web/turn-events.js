@@ -1,12 +1,13 @@
 import {pokerPublicEvent} from './poker-events.js';
 import {speechText} from './table-speech.js';
+import {cardName} from './card-names.js';
 import {DICE_DURATION,PAWN_STEP,CHECKER_STEP,PIECE_TRANSFER,CAPTURE_FADE,gooseFlights} from './game-physics.js';
 // Public differences only: never use an opponent's private hand or future options.
 export const TURN_INTRO=1000,TURN_RESULT=2000;
-// Card and tile games keep a brisk table rhythm: each play is short and many happen per hand.
-// Closing a trick or a hand leaves more time to read the result.
+// Card and tile games: about four seconds per play, enough to read who played what without
+// dragging long hands. Completing a trick or a hand leaves extra time to read the outcome.
 export const CARD_PACE_GAMES=new Set(['tricks','capture','melds','burro','bank','domino']);
-export const turnTiming=event=>event?.kind==='checkers'?{intro:180,result:250,padding:150}:event?.pace==='cards'?{intro:600,result:event.settles?2200:event.collects?1700:1200,padding:400}:{intro:TURN_INTRO,result:TURN_RESULT,padding:800};
+export const turnTiming=event=>event?.kind==='checkers'?{intro:180,result:250,padding:150}:event?.pace==='cards'?{intro:900,result:event.settles?3200:event.collects?2600:1500,padding:600}:{intro:TURN_INTRO,result:TURN_RESULT,padding:800};
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 export const viewIdentity=(change)=>`${change.gameId||change.view.id}:${change.view.players.join('|')}:${change.playerId||''}:${change.view.boardKind==='poker'?'session':change.view.handNumber||1}`;
 export function parchisRoutes(before,after){
@@ -19,6 +20,13 @@ export function parchisRoutes(before,after){
  });
  return moved;
 }
+// Líneas nuevas del historial público entre dos vistas (el historial puede estar recortado).
+export function newLogLines(before,after){
+ const a=before?.log||[],b=after?.log||[];
+ for(let i=0;i<=a.length;i++){const tail=a.slice(i);if(tail.length<=b.length&&tail.every((line,j)=>line===b[j]))return b.slice(tail.length);}
+ return b.slice(-1);
+}
+const TRICK_PHASE_ACTIONS={predict:'Pide bazas',join:'Decide si juega',discard:'Cambia cartas',choose:'Elige triunfo',double:'Contrar',redouble:'Recontrar',exchange:'Pinta',result:'Nueva mano'};
 export function publicTurnEvent(before,after){
  if(after?.version===2&&after.ruleset==='eight-kings'&&after.stage){
   if(!before||before.revision===after.revision)return null;
@@ -50,7 +58,13 @@ export function publicTurnEvent(before,after){
  let action=kind==='roll'||kind==='goose'?'Tira el dado':kind==='checkers'||kind==='parchis'?'Mueve ficha':trick?'Juega carta':after.boardKind==='domino'?'Coloca ficha':discarded?'Descarta':before.phase!==after.phase?'Resuelve el turno':'Hace su jugada';
  if(['spanish-40','legacy-french-52'].includes(after.ruleset)&&after.handSizes[actor]<before.handSizes[actor])action='Juega carta';
  if(capture){action='Juega carta';detail=`${capture.card.rank} de ${capture.card.suit}${capture.capturedCount?` · recoge ${capture.capturedCount}${capture.sweep?' · escoba':''}`:' · la deja en la mesa'}`;motion=capture.capturedCount?1800:1200;}
- if(after.boardKind==='tricks'&&before.trick?.length&&!after.trick?.length){action='Recoge la baza';detail=`${after.turnPlayer} recoge las cartas`;}
+ if(trick&&!capture){detail=cardName(trick.card,{poker:after.id==='remigio'});}
+ const fresh=newLogLines(before,after);
+ if(after.boardKind==='tricks'&&!trick&&TRICK_PHASE_ACTIONS[before.phase]&&before.phase!=='collect'){action=TRICK_PHASE_ACTIONS[before.phase];detail=fresh[0]||detail;if(before.phase==='result'){detail=fresh.at(-1)||`Mano ${after.handNumber}`;}}
+ let trickResult=null;
+ if(after.boardKind==='tricks'&&after.trickWinner&&!before.trickWinner){const w=after.trickWinner,gain=(after.points?.[w]??0)-(before.points?.[w]??0);trickResult=`${w} gana la baza${gain>0&&!['julepe','pocha'].includes(after.id)?` · +${gain} tantos`:''}`;}
+ if(after.boardKind==='tricks'&&before.phase==='collect'&&after.phase==='collect'){const sang=!same(before.log,after.log)&&/ canta /.test(after.log?.at(-1)||'');action=sang?'Canta':'Sin cantar';detail=sang?after.log.at(-1):`${actor} no tiene cantes`;}
+ if(after.boardKind==='tricks'&&before.trickWinner&&!after.trickWinner){action=actor===before.trickWinner?'Recoge la baza':'Sin cantar';detail=after.phase==='play'?`${before.trickWinner} sale en la siguiente baza`:'Última baza recogida';}
  if(after.boardKind==='burro'){action='Roba boca abajo';detail=`Retira ${(after.discardCount-before.discardCount)/2} parejas`;}
  if(after.boardKind==='oca'&&!roll){action='Pasa turno';detail=before.prison===actor?'Espera en prisión':'Pierde el turno';}
  if(after.bets?.[actor]!==before.bets?.[actor]&&after.bets?.[actor]!==undefined){action='Apuesta';detail=`${after.bets[actor]} fichas`;}
@@ -58,11 +72,12 @@ export function publicTurnEvent(before,after){
  let result=detail;
  if(after.finished)result=after.winner?`${after.winner} gana la partida`:after.winnerTeam?`Gana la pareja ${after.winnerTeam}`:after.loser?`${after.loser} pierde`:'Partida terminada';
  else if(speech?.kind==='challenge')result=after.log?.at(-1)||detail;
- else if(after.handWinner)result=`${after.handWinner} gana la mano`;
+ else if(trickResult)result=trickResult;
+ else if(after.handWinner&&after.handWinner!==before.handWinner||after.phase==='result'&&before.phase!=='result'){const lines=fresh.filter(line=>!/ gana la baza\.$/.test(line));result=after.handWinner&&after.boardKind!=='tricks'?`${after.handWinner} gana la mano`:lines.length?lines.slice(0,3).join(' · ')+(lines.length>3?' · …':''):'Mano terminada';}
  else if(after.phase==='collect')result=after.log?.at(-1)||detail;
  else if(after.boardKind==='oca'&&roll&&after.turnPlayer===actor)result=detail+' · vuelve a tirar';
  const cardPace=(CARD_PACE_GAMES.has(after.boardKind)||['spanish-40','legacy-french-52'].includes(after.ruleset)&&after.table&&!after.boardKind)&&kind!=='speech';
- if(cardPace){motion=Math.min(motion,after.boardKind==='capture'&&capture?.capturedCount?1300:900);return {actor,action,detail,result,kind,motion,pawns,pace:'cards',...(action==='Recoge la baza'?{collects:true}:{}),...(after.finished||after.handWinner&&!before.handWinner||after.phase==='result'&&before.phase!=='result'?{settles:true}:{})};}
+ if(cardPace){motion=Math.min(motion,after.boardKind==='capture'&&capture?.capturedCount?1300:900);return {actor,action,detail,result,kind,motion,pawns,pace:'cards',...(trickResult?{collects:true}:{}),...(after.finished||after.handWinner&&!before.handWinner||after.phase==='result'&&before.phase!=='result'?{settles:true}:{})};}
  return {actor,action,detail,result,kind,motion,pawns};
 }
 export function readableTurn(text,players,name){

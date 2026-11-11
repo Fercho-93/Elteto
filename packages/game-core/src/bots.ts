@@ -186,7 +186,7 @@ export function skipTurnState(engine: AnyEngine, state: any, playerId: string, r
 // Minimum pause before a bot moves. The visible turn sequence can extend it (see BotPacing).
 // Card and tile games play many short moves per hand, so they use a brisker floor.
 const BRISK_GAMES=new Set(['cinquillo','brisca','tute','guinote','butifarra','pocha','julepe','escoba','chinchon','remigio','continental','burro','domino','siete-y-medio']);
-export const botTurnDelay=(gameId:string)=>{const id=gameId.replace(/_/g,'-');return id==='oca'?6500:id==='damas-espanolas'?1500:id==='parchis'?5500:id==='mentiroso'?5200:BRISK_GAMES.has(id)?2600:4800;};
+export const botTurnDelay=(gameId:string)=>{const id=gameId.replace(/_/g,'-');return id==='oca'?6500:id==='damas-espanolas'?1500:id==='parchis'?5500:id==='mentiroso'?5200:BRISK_GAMES.has(id)?3400:4800;};
 
 // One delayed move at a time. The host can resume from the saved state.
 export class BotRunner {

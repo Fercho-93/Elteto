@@ -104,16 +104,16 @@ try{
    const view=engine.view(game,active);await page.evaluate(({id,game,active,names})=>window.testTable(id,game,active,names),{id:engine.id,game,active,names});
    let expected;
    if(game.id==='domino'){const action=view.options[0].action;expected=engine.applyAction(game,active,action);await page.locator(`[data-action="catalog-select-tile"][data-tile-id="${action.tile}"]`).click();assert.equal(await page.locator('.catalog-options').textContent(), '');}
-   else if(view.validCards?.length){const card=view.validCards[0];expected=engine.applyAction(game,active,{type:'play',card});await page.locator(`[data-action="catalog-select-card"][data-card-id="${card}"]`).click();}
+   else if(view.validCards?.length){const card=view.validCards[0];expected=engine.applyAction(game,active,{type:'play',card});await page.locator(`[data-action="catalog-select-card"][data-card-id="${card}"]`).click({position:{x:6,y:24}});}
    else if(view.moves?.length){const path=view.moves[0].path;expected=engine.applyAction(game,active,{type:'move',path});for(const square of path)await page.locator(`.catalog-surface [data-square="${square}"]`).click();}
    else if(game.id==='escoba'){
     const card=view.myHand[0],value=Number(card.rank)>7?Number(card.rank)-2:Number(card.rank),table=captures15(view.table,15-value)[0]||[];
-    await page.locator(`[data-action="catalog-select-card"][data-card-id="${view.myHand[1].id}"]`).click();
-    await page.locator(`[data-action="catalog-select-card"][data-card-id="${card.id}"]`).click();assert.equal(await page.locator('.catalog-hand .is-selected').count(),1);
+    await page.locator(`[data-action="catalog-select-card"][data-card-id="${view.myHand[1].id}"]`).click({position:{x:6,y:24}});
+    await page.locator(`[data-action="catalog-select-card"][data-card-id="${card.id}"]`).click({position:{x:6,y:24}});assert.equal(await page.locator('.catalog-hand .is-selected').count(),1);
     for(const id of table)await page.locator(`[data-action="catalog-table-card"][data-card-id="${id}"]`).click();
     expected=engine.applyAction(game,active,{type:'capture',card:card.id,table});await page.locator('[data-action="catalog-choice"]').click();
    }else if(game.id==='mentiroso'){
-    const cards=view.myHand.slice(0,2).map(c=>c.id);for(const id of cards)await page.locator(`[data-action="catalog-select-card"][data-card-id="${id}"]`).click();
+    const cards=view.myHand.slice(0,2).map(c=>c.id);for(const id of cards)await page.locator(`[data-action="catalog-select-card"][data-card-id="${id}"]`).click({position:{x:6,y:24}});
     await page.locator('#catalog-rank').selectOption('3');expected=engine.applyAction(game,active,{type:'play-facedown',cards,rank:'3'});await page.locator('[data-action="catalog-choice"]').click();
    }else{const index=view.options.findIndex(o=>!['selection','singleCard','rankInput','amountInput','tableSelection'].some(k=>o.action[k]));if(index>=0){expected=engine.applyAction(game,active,view.options[index].action);await page.locator(`[data-action="catalog-choice"][data-index="${index}"]`).click();}}
    if(expected)assert.deepEqual(await page.evaluate(()=>window.tableSnapshot()),expected);
@@ -126,7 +126,7 @@ try{
   const hand=id==='continental'?cards.filter(c=>c.pack===0&&['K','Q'].includes(c.rank)&&c.suit!=='treboles'&&c.suit!=='joker'):sequence.map(rank=>cards.find(c=>c.pack===0&&c.suit===suit&&c.rank===rank));
   const discard=cards.find(c=>c.pack===0&&c.suit!=='joker'&&c.suit!==suit&&c.rank==='2');game.hands.p0=id==='continental'?hand:[...hand,discard];game.turn=0;game.phase='discard';
   await page.setViewportSize({width:390,height:664});await page.evaluate(({id,game,names})=>window.testTable(id,game,'p0',names),{id,game,names});
-  const selected=id==='continental'?hand:[discard];for(const card of selected)await page.locator(`[data-action="catalog-select-card"][data-card-id="${card.id}"]`).click();
+  const selected=id==='continental'?hand:[discard];for(const card of selected)await page.locator(`[data-action="catalog-select-card"][data-card-id="${card.id}"]`).click({position:{x:6,y:24}});
   await page.getByRole('button',{name:id==='continental'?'Exponer contrato':'Cerrar con esta carta',exact:true}).click();
   let next=await page.evaluate(()=>window.tableSnapshot());assert.ok(['show','result'].includes(next.phase));
   while(['show','layoff'].includes(next.phase)){await page.evaluate(({id,game,names})=>window.testTable(id,game,game.players[game.turn],names),{id,game:next,names});await page.locator('[data-action="catalog-choice"]').first().click();next=await page.evaluate(()=>window.tableSnapshot());}

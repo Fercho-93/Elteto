@@ -54,7 +54,7 @@ export class TurnSequence {
   if(!status)return;
   if(status.dataset.sequenceOriginal===undefined)status.dataset.sequenceOriginal=status.innerHTML;
   if(!this.busy){if(status.classList.contains('turn-story-slot'))status.remove();else{status.innerHTML=status.dataset.sequenceOriginal;status.classList.remove('turn-story');}return;}
-  const event=this.event,read=t=>readableTurn(t,view.players,name);
+  const event=this.event,own=text=>String(text).replace(new RegExp('^'+playerId.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+' (gana|pierde|recoge|sale|no tiene)\\b'),(_,verb)=>({gana:'Ganas',pierde:'Pierdes',recoge:'Recoges',sale:'Sales','no tiene':'No tienes'})[verb]),read=t=>readableTurn(own(t),view.players,id=>id===playerId?`${name(id)} (tú)`:name(id));
   status.replaceChildren();status.classList.add('turn-story');status.setAttribute('role','status');
   const label=document.createElement('strong'),detail=document.createElement('span'),progress=document.createElement('i');
   label.className='turn-story-label';label.textContent=`${event.actor===playerId?'Tú':name(event.actor)} · ${this.phase==='announce'?event.action:this.phase==='move'?'En movimiento':'Resultado'}`;
@@ -62,5 +62,26 @@ export class TurnSequence {
   if(event.kind==='poker'&&this.phase==='result'&&['result','finished'].includes(view.phase)){label.textContent='Mano resuelta';detail.textContent='Premios entregados · resultado sobre la mesa';}
   progress.className='turn-story-progress';progress.setAttribute('aria-hidden','true');for(const step of ['announce','move','result']){const dot=document.createElement('b');dot.classList.toggle('current',step===this.phase);progress.append(dot);}
   status.append(label,detail,progress);
+  this.splash(root,playerId,name,read);
+ }
+ // Aviso sobre el tapete en los juegos de cartas y fichas: quién juega, qué y cómo acaba la jugada.
+ splash(root,playerId,name,read){
+  const surface=root.matches('.catalog-screen')?root.querySelector('.catalog-surface'):null;
+  const event=this.event;
+  let box=surface?.querySelector('.turn-splash');
+  if(!surface||!this.busy||!event||event.pace!=='cards'&&event.kind!=='speech'){box?.remove();return;}
+  const self=event.actor===playerId,phase=this.phase;
+  const verb=self?({'Juega carta':'Juegas','Coloca ficha':'Colocas ficha','Recoge la baza':'Recoges la baza','Roba boca abajo':'Robas boca abajo','Descarta':'Descartas','Apuesta':'Apuestas','Hace su jugada':'Tu jugada','Resuelve el turno':'Tu jugada','Declara cartas':'Declaras','Pasa':'Pasas','Cuestiona la jugada':'Cuestionas','Canta':'Cantas','Sin cantar':'Sin cantar'})[event.action]||event.action:event.action;
+  const who=self?'':name(event.actor)+' · ';
+  const title=phase==='result'?'Resultado':`${who}${verb}`;
+  const body=read(phase==='result'?event.result:event.detail);
+  // En la mesa de bazas el centro queda libre: el aviso va ahí, sin tapar ninguna carta.
+  const host=surface.querySelector('.trick-table')||surface;
+  if(box&&box.parentElement!==host){box.remove();box=null;}
+  if(!box){box=document.createElement('div');box.className='turn-splash'+(host===surface?'':' is-centred');box.setAttribute('aria-hidden','true');host.append(box);}
+  const key=`${event.actor}|${phase}|${body}`;if(box.dataset.key===key)return;box.dataset.key=key;
+  box.classList.toggle('is-result',phase==='result');box.classList.toggle('is-self',self);
+  box.replaceChildren();const t=document.createElement('small'),b=document.createElement('strong');t.textContent=title;b.textContent=body;box.append(t,b);
+  if(!this.reduced())box.animate([{opacity:0,scale:.94},{opacity:1,scale:1}],{duration:260,easing:'cubic-bezier(.2,.7,.3,1)'});
  }
 }

@@ -21,3 +21,11 @@
 .game-table{position:relative;}
 .turn-story-slot{position:absolute!important;bottom:4px;left:18px;right:18px;z-index:5;padding:3px 8px 5px!important;background:#153e34eF;border:1px solid #d9c18a44;border-radius:8px;pointer-events:none;}
 .parchis-table .turn-story-slot{top:5px;bottom:auto;background:#24212cf5;}
+/* Aviso de jugada sobre el tapete: grande, centrado arriba y sin tapar las cartas jugadas. */
+.turn-splash{position:absolute;z-index:6;left:50%;top:10px;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);padding:8px 16px 9px;border-radius:14px;background:#140f1ce6;border:1px solid #e8cf9466;box-shadow:0 8px 22px #0008;text-align:center;pointer-events:none;backdrop-filter:blur(3px)}
+.turn-splash small{display:block;font:700 10px/13px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#cdbf9e}
+.turn-splash strong{display:block;font:800 16px/21px system-ui,sans-serif;color:#fff4d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.turn-splash.is-self{border-color:#69e5e299}.turn-splash.is-self small{color:#9eefec}
+.turn-splash.is-result{background:#2a210ff0;border-color:#f6d36b}.turn-splash.is-result strong{color:#f6d36b}
+.turn-splash.is-centred{top:47%;transform:translate(-50%,-50%);max-width:min(52%,240px);white-space:normal;padding:7px 10px 8px}.turn-splash.is-centred strong{font-size:15px;line-height:19px}
+.turn-splash.is-centred strong{white-space:normal}
