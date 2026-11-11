@@ -66,11 +66,26 @@ const SIDE_ARMS = [
 ];
 const sideArms = character => SIDE_ARMS.map(contour=>character<5 ? contour : contour.replace(/(\d+)% (\d+)%/g,(_,x,y)=>`${x}% ${Number(y)-7}%`));
 // Explicit public choices follow player IDs; older rooms retain the deterministic fallback.
-export function mascotForSeat(players, seat, characters = {}) {
-  const selected=characters[players[seat]];
-  if(validCharacter(selected))return selected;
+// Avatares de toda la mesa a la vez: nunca se repiten. Quien eligió avatar lo conserva; si dos
+// eligieron el mismo, se lo queda el asiento anterior. Los demás (y la IA) reciben el primero libre
+// a partir de una posición determinista, igual en todos los dispositivos.
+export function assignMascots(players, characters = {}) {
   const hash = [...players.join("|")].reduce((value, ch) => (Math.imul(value, 31) + ch.charCodeAt(0)) >>> 0, 0);
-  return (hash + seat * 3) % MASCOTS.length;
+  const used = new Set(), result = new Array(players.length).fill(null);
+  players.forEach((id, seat) => {
+    const selected = characters?.[id];
+    if (validCharacter(selected) && !used.has(selected)) { result[seat] = selected; used.add(selected); }
+  });
+  players.forEach((_, seat) => {
+    if (result[seat] !== null) return;
+    let character = (hash + seat * 3) % MASCOTS.length;
+    while (used.has(character)) character = (character + 1) % MASCOTS.length;
+    result[seat] = character; used.add(character);
+  });
+  return result;
+}
+export function mascotForSeat(players, seat, characters = {}) {
+  return assignMascots(players, characters)[seat];
 }
 export function renderMascot(character, seat = character) {
   return `<div class="player-character" role="img" aria-label="${MASCOTS[character]}"><div class="character-sprite" data-character="${character}" style="--character-x:${(character % 5) * 25}%;--character-y:${Math.floor(character / 5) * 100}%;--motion-delay:${seat * -1.3}s"></div></div>`;
