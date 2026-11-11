@@ -1,7 +1,7 @@
 import {organizePokerDock} from './poker-celebration.js';
 import {pokerControls,syncPokerAmounts,pokerPrefs} from './poker-controls.js';
 import {renderPokerTable,renderPokerShowdown,renderPokerInfo,collectPokerBets,pokerSnapshot} from './poker-table.js';
-import {finishTableSpeech} from './table-speech.js';
+import {finishTableSpeech,speechText} from './table-speech.js';
 import {renderCheckersBoard,renderGooseBoard,GOOSE_COLORS,GOOSE_COLOR_NAMES} from './board-games.js';
 import {renderParchisDie,beginParchisRoll,finishDiceRender,OCA_DICE_TARGETS} from './parchis-dice.js';
 import {finishBoardMotion,preparePublicMotion,finishPublicMotion} from './board-motion.js';
@@ -64,18 +64,64 @@ function trickTable(view,name,playerId){
   return `${meta}<section class="trick-summary" aria-label="Recuento de la mano"><h3>${view.finished?'Final de la partida':`Recuento · mano ${view.handNumber}`}</h3><ul>${lines.map(l=>`<li>${esc(read(l))}</li>`).join('')||'<li>Mano terminada.</li>'}</ul><p>${({pocha:'Puntos',butifarra:'Puntos · meta 100',julepe:'Fichas'})[view.id]||'Juegos ganados · gana quien llega a 3'}: ${(teams?teams.map(label=>{const m=view.players.filter(p=>view.teamLabels[p]===label);return `${esc(label)} ${view.scores[m[0]]}`;}):playing.map(p=>`${esc(who(p))} ${Number(view.scores[p]).toLocaleString('es-ES',{maximumFractionDigits:2})}`)).join(' · ')}</p></section><div class="catalog-scoreline trick-score">${score}</div>`;}
  return `${meta}<div class="trick-table" style="--seats:${count}" aria-label="Baza en juego">${cards}${empty}</div><div class="catalog-scoreline trick-score">${score}</div>`;
 }
+// Recuento de mano compartido: las líneas públicas del historial desde el último marcador.
+function readLine(view,playerId,name,line){return view.players.reduce((t,id)=>t.split(id).join(id===playerId?`${name(id)} (tú)`:name(id)),line);}
+function handSummary(view,playerId,name,{since,title,footer=''}){
+ const log=view.log||[],start=log.map((l,i)=>since.test(l)?i:-1).filter(i=>i>=0).at(-1)??-1,lines=log.slice(start+1);
+ return `<section class="trick-summary" aria-label="${esc(title)}"><h3>${esc(title)}</h3><ul>${lines.map(l=>`<li>${esc(readLine(view,playerId,name,l))}</li>`).join('')||'<li>Mano terminada.</li>'}</ul>${footer?`<p>${footer}</p>`:''}</section>`;
+}
+const youOr=(playerId,name)=>p=>p===playerId?'Tú':name(p);
+function scoreStrip(view,playerId,name,value){const who=youOr(playerId,name);return `<div class="catalog-scoreline trick-score">${view.players.map(p=>`<span class="${p===playerId?'is-own':''}"><small>${esc(who(p))}</small><b>${value(p)}</b></span>`).join('')}</div>`;}
+// Escoba: mesa grande en el centro, mazo y escobas a la vista, y recuento detallado al final.
+function captureTable(view,name,playerId,interactive){
+ const who=youOr(playerId,name),teams=view.players.length>=4;
+ const meta=`<div class="trick-meta"><span class="trick-stock">${renderDrawPile(view.stockCount,false)}<span><small>Mazo</small><b>${view.stockCount}</b></span></span><span class="capture-goal"><small>Suma</small><b>15</b></span></div>`;
+ const team=p=>teams?view.players.filter((_,i)=>i%2===view.players.indexOf(p)%2):[p];
+ const points=p=>{const sw=team(p).reduce((n,id)=>n+(view.sweeps?.[id]||0),0);return `${view.scores[p]} ${view.scores[p]===1?'punto':'puntos'}${sw?` · ${sw} ${sw===1?'escoba':'escobas'}`:''}`;};
+ const strip=teams?`<div class="catalog-scoreline trick-score">${[0,1].map(t=>{const m=view.players.filter((_,i)=>i%2===t);return `<span class="${m.includes(playerId)?'is-own':''}"><small>${m.map(who).map(esc).join(' y ')}</small><b>${points(m[0])}</b></span>`;}).join('')}</div>`:scoreStrip(view,playerId,name,points);
+ if(view.phase==='result'||view.finished)return `${meta}${handSummary(view,playerId,name,{since:/ (juega|deja) .+ (y recoge|en la mesa)/,title:view.finished?'Final de la partida':`Recuento · mano ${view.handNumber}`,footer:`Puntos (meta ${view.target||21}): ${view.players.filter((p,i)=>!teams||i<2).map(p=>`${esc(teams?team(p).map(who).join(' y '):who(p))} ${view.scores[p]}`).join(' · ')}`})}${strip}`;
+ const cards=view.table.map(c=>cardHtml(c,{action:interactive?'catalog-table-card':undefined,chosen:ui.table.has(c.id)})).join('')||'<p class="catalog-empty">Mesa limpia</p>';
+ // Recibo de la última captura: la carta jugada y lo recogido (las cartas vuelan hacia su dueño).
+ const last=view.lastPlay?.capturedCount?`<div class="capture-receipt">${cardHtml(view.lastPlay.card)}<span><strong>${esc(who(view.lastPlay.player))}</strong><small>${view.lastPlay.sweep?'¡Escoba! · ':''}Recoge ${view.lastPlay.captured?.length?view.lastPlay.captured.map(cardLabel).map(esc).join(', '):view.lastPlay.capturedCount}</small></span></div>`:view.lastPlay?`<p class="capture-last"><b>${esc(who(view.lastPlay.player))}</b> deja ${esc(cardLabel(view.lastPlay.card))}</p>`:'';
+ return `${meta}<div class="capture-cards capture-felt">${cards}</div>${last}${strip}`;
+}
+// Mentiroso: el montón boca abajo y la declaración en palabras.
+function bluffTable(view,name,playerId){
+ const who=youOr(playerId,name),d=view.declaration;
+ const said=d?`${esc(who(d.player))} ${d.player===playerId?'has declarado':'declara'} <b>${esc(speechText({kind:'declare',count:d.count,rank:d.rank}))}</b>`:'Nadie ha declarado todavía';
+ return `<div class="catalog-bluff-pile"><span class="catalog-card-back">${renderCardBack(frenchDeckView)}</span><strong>${view.pileCount} ${view.pileCount===1?'carta':'cartas'} en el montón</strong><p>${said}</p></div>${view.reveal?`<div class="bluff-reveal ${view.reveal.truth?'is-truth':'is-lie'}"><p>${view.reveal.truth?'Decía la verdad':'Era mentira'}</p>${publicCards(view.reveal.cards)}</div>`:''}${scoreStrip(view,playerId,name,p=>`${view.handSizes[p]} cartas`)}`;
+}
+// Burro: eliges directamente una de las cartas boca abajo del vecino; las letras de cada uno a la vista.
+function burroTable(view,name,playerId,interactive){
+ const who=youOr(playerId,name),mine=interactive&&view.turnPlayer===playerId&&!view.finished&&view.phase!=='result';
+ const backs=Array.from({length:view.hiddenCount||0},(_,i)=>{const index=view.options.findIndex(o=>o.action.type==='draw-hidden'&&o.action.index===i);return mine&&index>=0?`<button class="burro-back" data-action="catalog-choice" data-index="${index}" aria-label="Robar la carta ${i+1}">${renderCardBack(false)}</button>`:`<span class="burro-back">${renderCardBack(false)}</span>`;}).join('');
+ const source=view.hiddenSource,pair=view.lastPair;
+ const fan=view.phase==='result'||view.finished?'':`<section class="burro-source"><p>${mine?`Roba una carta a <b>${esc(who(source))}</b>`:`${esc(who(view.turnPlayer))} roba a ${esc(who(source))}`}</p><div class="burro-fan" style="--hand-count:${Math.max(1,view.hiddenCount||1)}">${backs}</div></section>`;
+ const last=pair?`<div class="burro-last"><small>${esc(who(pair.player))} roba a ${esc(who(pair.from))}</small>${pair.cards.length?`<div>${pair.cards.map(c=>cardHtml(c)).join('')}</div><b>Pareja fuera</b>`:'<b>Sin pareja</b>'}</div>`:'';
+ const result=view.phase==='result'||view.finished?handSummary(view,playerId,name,{since:/ (roba a|forma pareja)/,title:view.finished?'Final de la partida':'Fin de la mano'}):'';
+ return `<div class="trick-meta"><span><small>Parejas fuera</small><b>${view.discardCount/2}</b></span></div>${result||fan}${result?'':last}${scoreStrip(view,playerId,name,p=>`<span class="burro-letters">${'BURRO'.split('').map((l,i)=>`<i class="${i<(view.letters?.[p]||0)?'on':''}">${l}</i>`).join('')}</span>`)}`;
+}
+// Siete y medio: banca destacada, apuestas en fichas y estado de cada jugador.
+function bankTable(view,name,playerId){
+ const who=youOr(playerId,name),half=n=>`${Math.floor(n)}${n%1?'½':''}`.replace(/^0½$/,'½');
+ const value=c=>Number(c.rank)>=10?.5:Number(c.rank);
+ const seats=view.players.map(p=>{const cards=view.publicHands[p]||[],open=cards.every(Boolean),sum=cards.filter(Boolean).reduce((n,c)=>n+value(c),0),bust=open&&sum>7.5,bank=p===view.bank;
+  return `<section class="bank-seat ${bank?'is-bank':''} ${p===view.turnPlayer&&!view.finished?'is-active':''} ${bust?'is-bust':''}"><small>${esc(who(p))}${bank?' · banca':view.bets[p]?` · apuesta ${view.bets[p]}`:''}</small>${publicCards(cards)}<b>${bust?`Se pasa (${half(sum)})`:!cards.length?'':open?half(sum):sum?`Vista ${half(sum)} + oculta`:'Carta oculta'}</b><em>${view.chips[p]} fichas</em></section>`;}).join('');
+ const result=view.phase==='result'||view.finished?handSummary(view,playerId,name,{since:/ (se planta|pide carta|se pasa|apuesta )/,title:view.finished?'Final de la partida':`Cobros · mano ${view.handNumber}`}):'';
+ return `${result}<div class="bank-seats">${seats}</div>`;
+}
 function board(view,name,interactive=true,playerId=view.players[0]){
  switch(view.boardKind){
  case 'tricks':return trickTable(view,name,playerId);
  case 'domino':return dominoLine(view.chain);
  case 'checkers':return renderCheckersBoard(view,ui.path,playerId,name,interactive);
  case 'oca':return renderGooseBoard(view,name,!interactive);
- case 'capture':return `${renderDrawPile(view.stockCount,false)}<div class="catalog-table-meta"><span>Mazo <b>${view.stockCount}</b></span></div><div class="capture-cards">${view.table.map(c=>cardHtml(c,{action:interactive?'catalog-table-card':undefined,chosen:ui.table.has(c.id)})).join('')||'<p class="catalog-empty">Mesa limpia</p>'}</div>${view.lastPlay?.capturedCount?`<div class="capture-receipt">${cardHtml(view.lastPlay.card)}<span><strong>${esc(name(view.lastPlay.player))}</strong><small>${view.lastPlay.sweep?'Escoba · ':''}Recoge ${view.lastPlay.capturedCount} de la mesa</small></span></div>`:''}`;
- case 'bluff':return `<div class="catalog-bluff-pile"><span class="catalog-card-back">${renderCardBack(frenchDeckView)}</span><strong>${view.pileCount} cartas</strong>${view.declaration?`<p>${esc(name(view.declaration.player))}: ${view.declaration.count} de valor ${esc(view.declaration.rank||'—')}</p>`:''}</div>${view.reveal?`<p>${view.reveal.truth?'Decía la verdad':'Era mentira'}</p>${publicCards(view.reveal.cards)}`:''}`;
- case 'burro':return `<div class="catalog-empty"><strong>${view.discardCount/2} parejas fuera</strong><p>${view.hiddenSource?`Robas de ${esc(name(view.hiddenSource))}`:''}</p></div>`;
+ case 'capture':return captureTable(view,name,playerId,interactive);
+ case 'bluff':return bluffTable(view,name,playerId);
+ case 'burro':return burroTable(view,name,playerId,interactive);
  case 'melds':return `${renderDrawPile(view.stockCount,frenchDeckView)}<div class="catalog-table-meta"><strong>${esc(view.contract)}</strong><span>Mazo ${view.stockCount}</span></div>${view.discard?`<div class="catalog-discard"><small>Descarte</small>${cardHtml(view.discard)}</div>`:''}<div class="catalog-melds">${view.players.filter(p=>view.exposed[p]?.length).map(p=>`<section><small>${esc(name(p))}</small>${view.exposed[p].map(g=>publicCards(g.cards)).join('')}</section>`).join('')}</div>`;
  case 'poker':return renderPokerTable(view,name,playerId,publicCards);
- case 'bank':return `<div class="catalog-table-meta"><span>Banca <b>${esc(name(view.bank))}</b></span></div><div class="catalog-public-hands">${view.players.map(p=>`<section><small>${esc(name(p))}${view.bets[p]?` · apuesta ${view.bets[p]}`:''}</small>${publicCards(view.publicHands[p])}</section>`).join('')}</div>`;
+ case 'bank':return bankTable(view,name,playerId);
  default:return '';
  }
 }
@@ -93,8 +139,8 @@ export function renderCatalogGame(app,view,playerId,name,error=''){
  const ranks=plan.material.includes('french')||plan.material.includes('poker')?['A','2','3','4','5','6','7','8','9','10','J','Q','K']:['1','2','3','4','5','6','7','8','9','10','11','12'];
  const suits=Object.keys(symbols).concat('joker');
  const myHand=(view.boardKind==='poker'&&view.folded[playerId]?[]:view.myHand).slice().sort((a,b)=>suits.indexOf(a.suit)-suits.indexOf(b.suit)||ranks.indexOf(a.rank)-ranks.indexOf(b.rank));
- const result=view.boardKind==='tricks'&&view.phase==='result'&&!view.finished?'':view.finished?(view.loser?`${name(view.loser)} pierde`:view.winner?`${name(view.winner)} gana`:'Tablas'):view.phase==='result'?(view.id==='burro'?`${name(view.loser)}: ${'BURRO'.slice(0,view.scores[view.loser])}`:view.boardKind==='bank'?'Banca resuelta':view.handWinner?`${name(view.handWinner)} gana la mano`:'Mano terminada'):'';
- let controls=view.options.map((option,index)=>{if(option.action.type==='extend')return '';const amount=option.action.amountInput;return `${amount?`<label class="catalog-amount">Hasta <input type="number" id="catalog-amount-${index}" min="${amount.min}" max="${amount.max}" value="${amount.value}" step="1"></label>`:''}${actionButton(view.boardKind==='oca'&&option.label==='Tirar dado'?'Tirar':option.label,'catalog-choice',`data-index="${index}" ${view.boardKind==='oca'&&option.action.type==='roll'&&!view.penalties[playerId]&&view.prison!==playerId?`data-roll-sequence="${view.lastRoll?.sequence??0}"`:''}`)}`;}).join('');
+ const result=['tricks','capture','burro','bank'].includes(view.boardKind)&&view.phase==='result'&&!view.finished?'':view.finished?(view.loser?`${name(view.loser)} pierde`:view.winner?`${name(view.winner)} gana`:'Tablas'):view.phase==='result'?(view.id==='burro'?`${name(view.loser)}: ${'BURRO'.slice(0,view.scores[view.loser])}`:view.boardKind==='bank'?'Banca resuelta':view.handWinner?`${name(view.handWinner)} gana la mano`:'Mano terminada'):'';
+ let controls=view.options.map((option,index)=>{if(option.action.type==='extend'||option.action.type==='draw-hidden')return '';const amount=option.action.amountInput;return `${amount?`<label class="catalog-amount">Hasta <input type="number" id="catalog-amount-${index}" min="${amount.min}" max="${amount.max}" value="${amount.value}" step="1"></label>`:''}${actionButton(view.boardKind==='oca'&&option.label==='Tirar dado'?'Tirar':option.label,'catalog-choice',`data-index="${index}" ${view.boardKind==='oca'&&option.action.type==='roll'&&!view.penalties[playerId]&&view.prison!==playerId?`data-roll-sequence="${view.lastRoll?.sequence??0}"`:''}`)}`;}).join('');
  if(view.boardKind==='poker')controls=pokerControls(view);
  if(view.boardKind==='oca'&&!controls)controls=actionButton('Tirar','catalog-choice',`data-index="0" data-roll-sequence="${view.lastRoll?.sequence??0}" disabled aria-label="Tirar dado"`);
  // Play pieces directly; choosing an end never discloses which ends are legal.

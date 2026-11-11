@@ -57,7 +57,7 @@ export function publicTurnEvent(before,after){
  // Announce the action independently of which player won its result.
  let action=kind==='roll'||kind==='goose'?'Tira el dado':kind==='checkers'||kind==='parchis'?'Mueve ficha':trick?'Juega carta':after.boardKind==='domino'?'Coloca ficha':discarded?'Descarta':before.phase!==after.phase?'Resuelve el turno':'Hace su jugada';
  if(['spanish-40','legacy-french-52'].includes(after.ruleset)&&after.handSizes[actor]<before.handSizes[actor])action='Juega carta';
- if(capture){action='Juega carta';detail=`${capture.card.rank} de ${capture.card.suit}${capture.capturedCount?` · recoge ${capture.capturedCount}${capture.sweep?' · escoba':''}`:' · la deja en la mesa'}`;motion=capture.capturedCount?1800:1200;}
+ if(capture){action='Juega carta';detail=`${cardName(capture.card)}${capture.capturedCount?` · recoge ${capture.captured?.length?capture.captured.map(c=>cardName(c)).join(', '):capture.capturedCount}${capture.sweep?' · ¡escoba!':''}`:' · la deja en la mesa'}`;motion=capture.capturedCount?1800:1200;}
  if(trick&&!capture){detail=cardName(trick.card,{poker:after.id==='remigio'});}
  const fresh=newLogLines(before,after);
  if(after.boardKind==='tricks'&&!trick&&TRICK_PHASE_ACTIONS[before.phase]&&before.phase!=='collect'){action=TRICK_PHASE_ACTIONS[before.phase];detail=fresh[0]||detail;if(before.phase==='result'){detail=fresh.at(-1)||`Mano ${after.handNumber}`;}}
@@ -65,15 +65,18 @@ export function publicTurnEvent(before,after){
  if(after.boardKind==='tricks'&&after.trickWinner&&!before.trickWinner){const w=after.trickWinner,gain=(after.points?.[w]??0)-(before.points?.[w]??0);trickResult=`${w} gana la baza${gain>0&&!['julepe','pocha'].includes(after.id)?` · +${gain} tantos`:''}`;}
  if(after.boardKind==='tricks'&&before.phase==='collect'&&after.phase==='collect'){const sang=!same(before.log,after.log)&&/ canta /.test(after.log?.at(-1)||'');action=sang?'Canta':'Sin cantar';detail=sang?after.log.at(-1):`${actor} no tiene cantes`;}
  if(after.boardKind==='tricks'&&before.trickWinner&&!after.trickWinner){action=actor===before.trickWinner?'Recoge la baza':'Sin cantar';detail=after.phase==='play'?`${before.trickWinner} sale en la siguiente baza`:'Última baza recogida';}
- if(after.boardKind==='burro'){action='Roba boca abajo';detail=`Retira ${(after.discardCount-before.discardCount)/2} parejas`;}
+ if(after.boardKind==='burro'){action='Roba boca abajo';const pair=after.lastPair;detail=pair&&pair.sequence!==before.lastPair?.sequence?(pair.cards.length?`Forma pareja: ${pair.cards.map(c=>cardName(c)).join(' y ')}`:`Roba a ${pair.from}: sin pareja`):fresh[0]||detail;}
  if(after.boardKind==='oca'&&!roll){action='Pasa turno';detail=before.prison===actor?'Espera en prisión':'Pierde el turno';}
  if(after.bets?.[actor]!==before.bets?.[actor]&&after.bets?.[actor]!==undefined){action='Apuesta';detail=`${after.bets[actor]} fichas`;}
+ if(after.boardKind==='bank'&&fresh.length){const line=fresh[0];detail=line;action=/ apuesta /.test(line)?'Apuesta':/ se planta/.test(line)?'Se planta':/ se pasa /.test(line)?'Se pasa':/ pide carta boca abajo/.test(line)?'Pide carta oculta':/ pide carta/.test(line)?'Pide carta':action;}
+ if(after.boardKind==='bank'&&before.phase==='result'){action='Nueva mano';detail=`Mano ${after.handNumber}: banca de ${after.bank}`;}
+ if(before.phase==='result'&&after.phase!=='result'&&!after.finished&&after.boardKind!=='poker'){action='Nueva mano';detail=after.boardKind==='bank'?detail:fresh.filter(l=>/^Mano /.test(l)).at(-1)||`Mano ${after.handNumber}`;}
  if(speech){kind='speech';action=speech.kind==='declare'?'Declara cartas':speech.kind==='pass'?'Pasa':'Cuestiona la jugada';detail=speechText(speech);motion=1600;}
  let result=detail;
  if(after.finished)result=after.winner?`${after.winner} gana la partida`:after.winnerTeam?`Gana la pareja ${after.winnerTeam}`:after.loser?`${after.loser} pierde`:'Partida terminada';
  else if(speech?.kind==='challenge')result=after.log?.at(-1)||detail;
  else if(trickResult)result=trickResult;
- else if(after.handWinner&&after.handWinner!==before.handWinner||after.phase==='result'&&before.phase!=='result'){const lines=fresh.filter(line=>!/ gana la baza\.$/.test(line));result=after.handWinner&&after.boardKind!=='tricks'?`${after.handWinner} gana la mano`:lines.length?lines.slice(0,3).join(' · ')+(lines.length>3?' · …':''):'Mano terminada';}
+ else if(after.handWinner&&after.handWinner!==before.handWinner||after.phase==='result'&&before.phase!=='result'){const lines=fresh.filter(line=>!/ gana la baza\.$/.test(line));result=after.handWinner&&!['tricks','bank','capture','burro','melds'].includes(after.boardKind)?`${after.handWinner} gana la mano`:lines.length?lines.slice(0,3).join(' · ')+(lines.length>3?' · …':''):'Mano terminada';}
  else if(after.phase==='collect')result=after.log?.at(-1)||detail;
  else if(after.boardKind==='oca'&&roll&&after.turnPlayer===actor)result=detail+' · vuelve a tirar';
  const cardPace=(CARD_PACE_GAMES.has(after.boardKind)||['spanish-40','legacy-french-52'].includes(after.ruleset)&&after.table&&!after.boardKind)&&kind!=='speech';

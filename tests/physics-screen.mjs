@@ -45,7 +45,8 @@ try{
  const firstMove=nextBotMove(domino,game,game.players);game=domino.applyAction(game,firstMove.playerId,firstMove.action);await show('domino',game);
  let dominoNext,dominoMove;do{dominoMove=nextBotMove(domino,game,game.players);dominoNext=domino.applyAction(game,dominoMove.playerId,dominoMove.action);if(dominoMove.action.type!=='place'){game=dominoNext;await show('domino',game,false);}}while(dominoMove.action.type!=='place');
  await show('domino',dominoNext,false);
- for(const page of pages){assert.equal(await page.locator('.catalog-surface .domino-tile').first().evaluate(el=>el.getAnimations()[0]?.effect.getTiming().duration),PIECE_TRANSFER,'Existing domino tile glides when the chain grows');}
+ // Placing at the left end shifts the existing tiles; placing at the right end flies the new tile in. Either way one tile moves for PIECE_TRANSFER.
+ for(const page of pages){assert.ok((await page.locator('.catalog-surface .domino-tile').evaluateAll(els=>els.map(el=>el.getAnimations()[0]?.effect.getTiming().duration))).includes(PIECE_TRANSFER),'Domino tiles glide when the chain grows');}
  // A prisoner released by another player's landing travels only after the arrival.
  const goose=getGame('oca');game=goose.createInitialState(['a','b','c','d'],22);
  const die=goose.applyAction(game,'a',{type:'roll'}).roll;game.positions.a=52-die;game.positions.b=52;game.prison='b';

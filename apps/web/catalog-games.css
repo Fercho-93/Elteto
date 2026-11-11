@@ -302,3 +302,31 @@ html:has(.catalog-screen),body:has(.catalog-screen),body:has(.catalog-screen) #a
 .trick-summary h3{margin:0 0 8px;font:800 15px/1.2 system-ui,sans-serif;color:#f6d36b}
 .trick-summary ul{margin:0;padding-left:18px;display:grid;gap:5px;font-size:12px;line-height:1.35;color:#f3ecd6}
 .trick-summary p{margin:10px 0 0;font-size:11px;color:#cfe3d4}
+/* Escoba */
+.capture-goal{display:flex;flex-direction:column;align-items:flex-end}
+.capture-felt{flex:1;align-content:center;gap:10px;width:100%;margin:0}
+.capture-felt .catalog-card{width:clamp(58px,19vw,88px)}
+.capture-last{margin:0;text-align:center;font-size:12px;color:#e8e1c8}.capture-last b{color:#fff4d6}
+.catalog-screen[data-game="escoba"] .capture-receipt{position:static;flex:none}
+/* Mentiroso */
+.catalog-bluff-pile strong{font-size:14px}.catalog-bluff-pile p{font-size:13px;color:#e8e1c8;text-align:center}.catalog-bluff-pile p b{color:#f6d36b;font-size:16px}
+.bluff-reveal{margin:0 auto;padding:8px 12px;border-radius:12px;text-align:center;background:#0004}.bluff-reveal p{margin:0 0 6px;font-weight:800}.bluff-reveal.is-truth p{color:#9eefec}.bluff-reveal.is-lie p{color:#ff8fb4}
+/* Burro */
+.burro-source{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;container-type:inline-size}
+.burro-source p{margin:0;font-size:13px;color:#e8e1c8}.burro-source b{color:#fff4d6}
+.burro-fan{display:flex;justify-content:center;width:100%;--back-w:clamp(44px,calc(92cqw/var(--hand-count)),76px)}
+.burro-back{width:var(--back-w);aspect-ratio:208/319;flex:none;padding:0;border:0;background:none;border-radius:6px;display:block;transition:transform .2s}
+.burro-back+.burro-back{margin-left:min(6px,calc((92cqw - var(--hand-count)*var(--back-w))/(var(--hand-count) - 1)))}
+.burro-back .elteto-card-back{width:100%;height:100%;display:block;border-radius:6px;box-shadow:0 3px 6px #0006}
+button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus-visible{transform:translateY(-8px);z-index:2;outline:2px solid var(--citrus,#e9f27a);outline-offset:2px}
+.burro-last{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:#d9d3bb}.burro-last>div{display:flex;gap:6px}.burro-last .catalog-card{width:46px}.burro-last b{color:#f6d36b}
+.burro-letters{display:inline-flex;gap:2px}.burro-letters i{font-style:normal;width:14px;height:17px;display:grid;place-items:center;border-radius:3px;background:#ffffff14;color:#ffffff40;font-size:10px}.burro-letters i.on{background:#f3488d;color:#fff}
+/* Siete y medio */
+.bank-seats{flex:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-content:center;container-type:inline-size}
+.bank-seat{min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:12px;background:#0b2a2233;border:1px solid transparent}
+.bank-seat.is-bank{background:#2a210f80;border-color:#f6d36b88}.bank-seat.is-active{border-color:#69e5e2}.bank-seat.is-bust{opacity:.7}
+.bank-seat small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#e9e3cc}
+.bank-seat .catalog-card{width:clamp(36px,11cqw,54px)}
+.bank-seat b{font-size:12px;color:#fff4d6}.bank-seat.is-bust b{color:#ff8fb4}.bank-seat em{font-style:normal;font-size:10px;color:#cfe3d4}
+.catalog-public-hands .catalog-card{width:auto}
+.catalog-scoreline .burro-letters{flex-direction:row;display:inline-flex}
