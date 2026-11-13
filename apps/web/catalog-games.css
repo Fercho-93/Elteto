@@ -169,7 +169,7 @@ html:has(.catalog-screen),body:has(.catalog-screen),body:has(.catalog-screen) #a
  .poker-table[data-seats="6"] .poker-edge-right,.poker-table[data-seats="7"] .poker-edge-right,.poker-table[data-seats="8"] .poker-edge-right{justify-content:flex-end;}
 }
 /* Poker: a dedicated hand column and a clear action panel. */
-.catalog-screen[data-game="texas_holdem"] .catalog-dock{display:grid;grid-template-columns:106px minmax(0,1fr);padding:10px;gap:12px;min-height:156px;max-height:34dvh;border-radius:20px 20px 0 0;background:linear-gradient(140deg,#36283f,#231e2c);border-color:#dac38b45;}
+.catalog-screen[data-game="texas_holdem"] .catalog-dock{display:grid;grid-template-columns:106px minmax(0,1fr);padding:10px;gap:12px;min-height:156px;max-height:36dvh;border-radius:20px 20px 0 0;background:linear-gradient(140deg,#36283f,#231e2c);border-color:#dac38b45;}
 .poker-private-hand{display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 0;border-radius:12px;background:#171d2480;min-width:0;}
 .poker-private-hand>span{font:750 9px system-ui;color:#dbcba5;letter-spacing:.09em;}
 .catalog-screen[data-game="texas_holdem"] .catalog-hand{position:static;justify-content:center;gap:4px;padding:2px;overflow:visible;}
@@ -337,7 +337,7 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
 .meld-pile .catalog-card{width:clamp(64px,20vw,92px)}
 .meld-pile .deck-stock{transform:scale(1.05)}
 .meld-empty{display:grid;place-items:center;width:clamp(64px,20vw,92px);aspect-ratio:208/319;border:2px dashed #ffffff33;border-radius:8px;color:#ffffff66;font-size:11px}
-.catalog-melds{flex:none;max-height:38%;overflow:auto;gap:10px 14px}
+.catalog-melds{flex:none;gap:10px 14px}
 .meld-owner>div{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
 .meld-owner small{font-size:10px;color:#e9e3cc}
 .meld-group{display:flex;padding:3px;border-radius:6px;background:#0003}
@@ -349,3 +349,5 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
 @media(max-height:620px){.trick-meta .deck-stock{transform:scale(.5)}.trick-pinta .catalog-card{width:26px}.trick-score{padding-top:3px}.trick-score b{font-size:11px}.meld-piles{min-height:90px}.meld-pile .catalog-card,.meld-empty{width:clamp(48px,15vw,70px)}.trick-summary{padding:8px 10px}.trick-summary ul{font-size:11px;gap:3px}}
 @media(max-height:620px){.catalog-dock{max-height:38dvh}.trick-table{min-height:118px;--ry:28%}.trick-slot small{font-size:9px;padding:0 5px}.trick-badge{font-size:9px;bottom:-9px}.catalog-hand.is-fanned{--card-w:clamp(42px,calc((100cqw - 10px)/var(--hand-count) - 6px),56px);padding-top:5px}}
 @media(max-height:620px){.trick-meta .deck-stock,.trick-meta .trick-pinta{display:none}.trick-meta small{display:inline;margin-right:4px}.trick-score{flex-wrap:nowrap}.trick-score span{flex-direction:row;gap:4px;align-items:baseline;min-width:0}.trick-score small{max-width:90px}.catalog-surface:has(.trick-table){gap:4px;padding:8px 10px}}
+.catalog-options:has(.bet-chip){display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.catalog-options .bet-caption{grid-column:1/-1;font-size:11px;color:#cfc4d3}.catalog-options .bet-chip{min-width:0;padding:6px 2px;font-size:15px}
+.bank-seats:has(>:nth-child(5)){grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.bank-seats:has(>:nth-child(5)) .bank-seat{padding:5px 2px}

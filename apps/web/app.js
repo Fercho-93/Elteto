@@ -7,6 +7,7 @@ import {renderCatalogGame,handleCatalogAction} from './catalog-games.js';
 import {beginParchisRoll} from './parchis-dice.js';
 import {prepareCardPaint,restoreCardPaint,prepareAvatarPaint,restoreAvatarPaint} from './card-paint.js';
 import {TurnSequence,isTurnAction} from './turn-sequence.js';
+import {fitTable,watchTableFit} from './table-fit.js';
 import { getGame, listGames, getGamePlan } from "./game-core/index.js";
 import { LocalHostSession } from "./local-session.js";
 import { arrangeCinquilloScreen } from './cinquillo-screen.js';
@@ -28,6 +29,7 @@ let activationCode = new URLSearchParams(location.hash.slice(1)).get('activate')
 let adminCode = new URLSearchParams(location.hash.slice(1)).get('admin') || '';
 if (activationCode || adminCode) history.replaceState(history.state, '', location.pathname + location.search);
 const app = document.querySelector("#app");
+watchTableFit(app);
 const toastEl = document.querySelector("#toast");
 const state = {
   roomMode:"lan", musTarget:40, character: savedCharacter(), screen: "home", role: null, name: "", roomName: "", gameId: "", playerId: null,
@@ -271,7 +273,7 @@ let shownResult = null;
 function renderGame() {
   app.pokerMotionFinished=()=>turnSequence.decorate(app,state.playerId,playerName);
   if(!turnSequence.busy&&state.view)turnSequence.adopt({view:state.view,gameId:state.gameId,playerId:state.playerId});
-  const paint=prepareCardPaint(app),avatars=prepareAvatarPaint(app),menuTop=app.querySelector('.game-menu[open] .game-menu-content')?.scrollTop;renderGameContents();mountScreenBack(app);mountGameHelp(app,state.gameId);restoreCardPaint(app,paint);restoreAvatarPaint(app,avatars);mountForfeitNotice();mountAbsence();mountHostControls();if(menuTop!==undefined){const menu=app.querySelector('.game-menu[open] .game-menu-content');if(menu)menu.scrollTop=menuTop;}turnSequence.decorate(app,state.playerId,playerName);
+  const paint=prepareCardPaint(app),avatars=prepareAvatarPaint(app),menuTop=app.querySelector('.game-menu[open] .game-menu-content')?.scrollTop;renderGameContents();mountScreenBack(app);mountGameHelp(app,state.gameId);restoreCardPaint(app,paint);restoreAvatarPaint(app,avatars);mountForfeitNotice();mountAbsence();mountHostControls();if(menuTop!==undefined){const menu=app.querySelector('.game-menu[open] .game-menu-content');if(menu)menu.scrollTop=menuTop;}turnSequence.decorate(app,state.playerId,playerName);fitTable(app);
 }
 // Quien se ha ido o no tiene conexión figura como ausente en cualquier mesa; su turno se salta.
 function absentIds() {

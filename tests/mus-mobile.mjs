@@ -23,7 +23,7 @@ try{
    assert.deepEqual(await page.locator('.mus-cards [data-card-key]').evaluateAll(cards=>cards.map(c=>c.dataset.cardKey)),e.view(readyState,p).myHand.map(c=>c.suit+':'+c.rank));
    const dims=await page.locator('.mus-cards .playing-card').evaluateAll(cards=>cards.map(c=>({width:c.getBoundingClientRect().width,css:getComputedStyle(c).width,flex:getComputedStyle(c).flex})));if(dims.some(d=>d.width<77))await page.screenshot({path:'tests/artifacts/mus/failed-layout.png',fullPage:true});assert.ok(dims.every(d=>d.width>=77),JSON.stringify({width,height,dims}));
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no horizontal document overflow');
-   assert.ok(await page.evaluate(()=>{const context=document.querySelector('.mus-context h2').getBoundingClientRect(),partner=document.querySelector('.mus-seat[data-position="partner"]').getBoundingClientRect(),self=document.querySelector('.mus-seat[data-position="self"]').getBoundingClientRect();return context.top>=partner.bottom&&context.bottom<=self.top;}),'lance does not overlap player names');
+   assert.ok(await page.evaluate(()=>{const context=document.querySelector('.mus-context h2').getBoundingClientRect(),partner=document.querySelector('.mus-seat[data-position="partner"]').getBoundingClientRect(),self=document.querySelector('.mus-seat[data-position="self"]').getBoundingClientRect();return context.top>=partner.bottom&&context.bottom<=self.top;}),`lance does not overlap player names ${width}x${height}`);
    if(width===320&&height===568&&i===0)await page.screenshot({path:'tests/artifacts/mus/compact.png',fullPage:true});
    if(width===390&&height===844)await page.screenshot({path:`tests/artifacts/mus/pov-${p}.png`,fullPage:true});
   }
