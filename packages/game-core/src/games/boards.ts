@@ -2,7 +2,7 @@ import {buildDominoSet,shuffle} from '../deck';
 import {Action,State,base,check,choices,finish,finishHand,integer,makeEngine,mapPlayers,next,note,publicView,random,requireTurn} from './shared';
 
 type Tile={id:string;left:number;right:number};
-function dominoDeal(s:State){s.stock=[];s.hands=mapPlayers(s.players,()=>[]);const tiles=shuffle(buildDominoSet(),()=>random(s));s.tiles=mapPlayers(s.players,()=>tiles.splice(0,7));s.chain=[];s.passes=0;s.phase='play';s.turn=(s.handNumber-1)%4;}
+function dominoDeal(s:State){s.stock=[];s.hands=mapPlayers(s.players,()=>[]);const tiles=shuffle(buildDominoSet(),()=>random(s));s.tiles=mapPlayers(s.players,()=>tiles.splice(0,7));s.chain=[];s.chainStart=0;s.passes=0;s.phase='play';s.turn=(s.handNumber-1)%4;}
 function dominoOptions(s:State,p:string){const out:any[]=[];for(const t of s.tiles[p] as Tile[]){if(!s.chain.length)out.push({label:`${t.left} · ${t.right}`,action:{type:'place',tile:t.id,side:'right'}});else for(const side of ['left','right']){const end=side==='left'?s.chain[0].left:s.chain[s.chain.length-1].right;if(t.left===end||t.right===end)out.push({label:`${t.left} · ${t.right} · ${side==='left'?'izquierda':'derecha'}`,action:{type:'place',tile:t.id,side}});}}return out.length?out:choices(['Pasar',{type:'pass'}]);}
 function dominoEnd(s:State,seat?:number){const sums=[0,0];s.players.forEach((p,i)=>sums[i%2]+=(s.tiles[p] as Tile[]).reduce((n,t)=>n+t.left+t.right,0));let team=seat===undefined?(sums[0]===sums[1]?-1:sums[0]<sums[1]?0:1):seat%2;if(team>=0){for(let i=team;i<4;i+=2)s.scores[s.players[i]]+=sums[0]+sums[1];note(s,`Pareja ${team?'B':'A'}: +${sums[0]+sums[1]}.`);}else note(s,'Tranca empatada: nadie puntúa.');finishHand(s,team<0?undefined:s.players[team]);if(team>=0&&s.scores[s.players[team]]>=150)finish(s,s.players[team]);}
 export const dominoEngine=makeEngine('domino',(p,seed)=>{const s=base('domino',p,seed);dominoDeal(s);return s;},(s,p,a)=>{
@@ -11,9 +11,9 @@ export const dominoEngine=makeEngine('domino',(p,seed)=>{const s=base('domino',p
  if(a.type==='pass'){s.passes++;note(s,`${p} pasa.`);if(s.passes===4)dominoEnd(s);else next(s);return;}
  const i=s.tiles[p].findIndex((t:Tile)=>t.id===a.tile),tile={...s.tiles[p].splice(i,1)[0]};
  if(s.chain.length){const end=a.side==='left'?s.chain[0].left:s.chain[s.chain.length-1].right;if((a.side==='left'?tile.right:tile.left)!==end)[tile.left,tile.right]=[tile.right,tile.left];}
- if(a.side==='left')s.chain.unshift(tile);else s.chain.push(tile);s.passes=0;note(s,`${p}: ${tile.left} · ${tile.right}.`);
+ if(a.side==='left'&&s.chain.length){s.chain.unshift(tile);s.chainStart=(s.chainStart??0)+1;}else s.chain.push(tile);s.passes=0;note(s,`${p}: ${tile.left} · ${tile.right}.`);
  if(!s.tiles[p].length)dominoEnd(s,s.turn);else next(s);
-},(s,p)=>publicView(s,p,{boardKind:'domino',chain:s.chain,myTiles:s.tiles[p],handSizes:mapPlayers(s.players,id=>s.tiles[id].length),unit:'fichas',target:150,teamLabels:mapPlayers(s.players,(_,i)=>`Pareja ${i%2?'B':'A'}`),instruction:s.phase==='result'?'Mano terminada.':'Encaja una ficha en uno de los extremos.',options:s.players[s.turn]!==p||s.finished?[]:s.phase==='result'?choices(['Siguiente mano',{type:'next-hand'}]):dominoOptions(s,p)}));
+},(s,p)=>publicView(s,p,{boardKind:'domino',chain:s.chain,chainStart:s.chainStart??0,myTiles:s.tiles[p],handSizes:mapPlayers(s.players,id=>s.tiles[id].length),unit:'fichas',target:150,teamLabels:mapPlayers(s.players,(_,i)=>`Pareja ${i%2?'B':'A'}`),instruction:s.phase==='result'?'Mano terminada.':'Encaja una ficha en uno de los extremos.',options:s.players[s.turn]!==p||s.finished?[]:s.phase==='result'?choices(['Siguiente mano',{type:'next-hand'}]):dominoOptions(s,p)}));
 
 const geese=[5,9,14,18,23,27,32,36,41,45,50,54,59];
 export const ocaEngine=makeEngine('oca',(p,seed)=>{const s=base('oca',p,seed);s.positions=mapPlayers(p,()=>1);s.penalties=mapPlayers(p,()=>0);s.prison=null;s.roll=0;return s;},(s,p,a)=>{

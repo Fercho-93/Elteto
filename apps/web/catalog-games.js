@@ -31,17 +31,60 @@ const cardLabel=card=>cardName(card,{poker:pokerSpanishView});
 function cardHtml(card,{action,chosen=false,disabled=false,label}={}){const title=label||cardLabel(card),tag=action?'button':'div';return `<${tag} class="catalog-card ${chosen?'is-selected':''} ${disabled?'is-muted':''}" data-public-piece="card-${esc(card.id)}" ${action?`data-action="${action}" data-card-id="${esc(card.id)}" aria-pressed="${chosen}" ${disabled?'disabled':''}`:''} aria-label="${esc(title)}">${face(card)}</${tag}>`;}
 function tile(t){return `<span class="domino-half" aria-label="${t.left}">${pips(t.left)}</span><span class="domino-half" aria-label="${t.right}">${pips(t.right)}</span>`;}
 function pips(n){const positions={0:[],1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]}[n];return Array.from({length:9},(_,i)=>`<i class="${positions.includes(i)?'pip':''}"></i>`).join('');}
-// Línea de juego en serpentina: cada fila sigue a la anterior por el mismo lado, los dobles se
-// colocan cruzados y los dos extremos abiertos quedan señalados como en una mesa real.
-const DOMINO_ROW_UNITS=10;
-function dominoLine(chain){
+// Mesa de dominó como en la vida real: la ficha de salida queda fija en el centro y cada
+// extremo crece hacia su lado; al llegar al borde gira en una esquina (ficha en vertical) y
+// vuelve en la fila siguiente: la derecha baja y la izquierda sube. Las fichas ya colocadas
+// no cambian de sitio, los dobles van cruzados y los dos extremos abiertos quedan señalados.
+const DOMINO_GAP=0.12,DOMINO_PITCH=2+DOMINO_GAP;
+export function dominoLayout(chain,start=0,width=11){
+ if(!chain.length)return {tiles:[],width,height:0};
+ start=Math.min(Math.max(0,start|0),chain.length-1);
+ const half=width/2,placed=[],isDouble=t=>t.left===t.right;
+ const first=chain[start],w0=isDouble(first)?1:2;
+ placed.push({index:start,t:first,x:-w0/2,y:isDouble(first)?-1:-0.5,w:w0,h:isDouble(first)?2:1,a:first.left,b:first.right,vertical:isDouble(first)});
+ // vertical: 1 = la fila siguiente queda debajo (extremo derecho), -1 = encima (izquierdo).
+ const branch=(indices,dir0,vertical,near,far)=>{
+  let row=0,dir=dir0,cursor=dir0*(w0/2+DOMINO_GAP),rowItems=[];
+  const fits=w=>dir>0?cursor+w<=half+1e-6:cursor-w>=-half-1e-6;
+  const corner=(item,anchorEdge)=>{
+   // Esquina: en vertical bajo (o sobre) la mitad exterior de la última ficha de la fila.
+   const cy=row*DOMINO_PITCH*vertical,x=dir>0?anchorEdge-1:anchorEdge,top=vertical>0?cy+0.5+DOMINO_GAP:cy-0.5-DOMINO_GAP-2;
+   placed.push({...item,x,y:top,w:1,h:2,vertical:true,a:vertical>0?near(item.t):far(item.t),b:vertical>0?far(item.t):near(item.t),corner:true});
+   row++;dir=-dir;cursor=dir>0?x+1+DOMINO_GAP:x-DOMINO_GAP;rowItems=[];
+  };
+  indices.forEach((index,n)=>{
+   const t=chain[index],w=isDouble(t)?1:2,item={index,t};
+   if(!fits(w)){
+    const last=rowItems.at(-1);
+    if(last&&isDouble(last.t)){
+     // Un doble no puede hacer de esquina cruzado: pasa a ser la esquina y la ficha actual abre fila.
+     placed.splice(placed.indexOf(last.placed),1);cursor=dir>0?last.placed.x-DOMINO_GAP:last.placed.x+1+DOMINO_GAP;
+     corner(last,dir>0?last.anchor:last.anchor);
+    } else {
+     const edge=dir>0?cursor-DOMINO_GAP:cursor+DOMINO_GAP;corner(item,edge);return;
+    }
+   }
+   const cy=row*DOMINO_PITCH*vertical,x=dir>0?cursor:cursor-w;
+   const tile={...item,x,y:isDouble(t)?cy-1:cy-0.5,w,h:isDouble(t)?2:1,vertical:isDouble(t),a:dir>0?near(t):far(t),b:dir>0?far(t):near(t)};
+   placed.push(tile);rowItems.push({...item,placed:tile,anchor:dir>0?cursor-DOMINO_GAP:cursor+DOMINO_GAP});cursor=dir>0?x+w+DOMINO_GAP:x-DOMINO_GAP;
+  });
+ };
+ branch(chain.map((_,i)=>i).slice(start+1),1,1,t=>t.left,t=>t.right);
+ branch(chain.map((_,i)=>i).slice(0,start).reverse(),-1,-1,t=>t.right,t=>t.left);
+ const top=Math.min(...placed.map(p=>p.y)),bottom=Math.max(...placed.map(p=>p.y+p.h));
+ // La ficha de salida queda centrada en vertical: el tablero crece igual hacia arriba y abajo.
+ const reach=Math.max(-top,bottom,2.5)+0.1;
+ return {tiles:placed.map(p=>({...p,x:p.x+half,y:p.y+reach})),width,height:reach*2};
+}
+function dominoLine(chain,start){
  if(!chain.length)return '<div class="domino-line is-empty"><p class="catalog-empty">Coloca la primera ficha</p></div>';
- const rows=[[]];let used=0;
- chain.forEach((t,i)=>{const units=t.left===t.right?1:2;if(used+units>DOMINO_ROW_UNITS&&rows.at(-1).length){rows.push([]);used=0;}rows.at(-1).push({t,i});used+=units;});
- const last=chain.length-1;
- const tileHtml=({t,i},reverse)=>{const double=t.left===t.right,end=i===0?'left':i===last?'right':'';const halves=reverse?{left:t.right,right:t.left}:t;
-  return `<div class="domino-tile ${double?'is-double':''} ${end?'is-open-end end-'+end:''} ${i===0&&i===last?'end-both':''}" data-public-piece="tile-${esc(t.id)}" aria-label="${t.left} y ${t.right}${i===0?', extremo izquierdo':''}${i===last?', extremo derecho':''}">${tile(halves)}</div>`;};
- return `<div class="domino-line"><p class="domino-ends"><span>Izquierda <b>${chain[0].left}</b></span><span>${chain.length} ${chain.length===1?'ficha':'fichas'}</span><span>Derecha <b>${chain[last].right}</b></span></p><div class="domino-chain" aria-label="Línea de juego">${rows.map((row,r)=>`<div class="domino-row ${r%2?'is-reversed':''}">${row.map(item=>tileHtml(item,r%2===1)).join('')}</div>`).join('')}</div></div>`;
+ const last=chain.length-1,wide=typeof matchMedia==='function'&&matchMedia('(orientation: landscape) and (min-width: 600px)').matches;
+ const {tiles,width,height}=dominoLayout(chain,start,wide?17:11);
+ const pct=(n,of)=>`${(n/of*100).toFixed(3)}%`;
+ const tileHtml=p=>{const i=p.index,end=i===0&&i===last?'both':i===0?'left':i===last?'right':'';
+  const halves=`<span class="domino-half" aria-label="${p.a}">${pips(p.a)}</span><span class="domino-half" aria-label="${p.b}">${pips(p.b)}</span>`;
+  return `<div class="domino-tile ${p.vertical?'is-vertical':''} ${p.t.left===p.t.right?'is-double':''} ${i===start?'is-start':''} ${end?'is-open-end end-'+end:''}" data-public-piece="tile-${esc(p.t.id)}" ${end&&end!=='both'?`data-end-label="${end==='left'?'Izq.':'Der.'}"`:''} style="left:${pct(p.x,width)};top:${pct(p.y,height)};width:${pct(p.w,width)};height:${pct(p.h,height)}" aria-label="${p.t.left} y ${p.t.right}${i===start?', ficha de salida':''}${i===0?', extremo izquierdo':''}${i===last?', extremo derecho':''}">${halves}</div>`;};
+ return `<div class="domino-line"><p class="domino-ends"><span>Izquierda <b>${chain[0].left}</b></span><span>${chain.length} ${chain.length===1?'ficha':'fichas'}</span><span>Derecha <b>${chain[last].right}</b></span></p><div class="domino-chain" aria-label="Línea de juego"><div class="domino-board" style="--domino-w:${width};--domino-h:${height.toFixed(3)}">${[...tiles].sort((x,y)=>x.index-y.index).map(tileHtml).join('')}</div></div></div>`;
 }
 function publicCards(cards){return `<div class="catalog-public-cards">${cards.map(c=>c?cardHtml(c):'<div class="catalog-card">'+face(null)+'</div>').join('')}</div>`;}
 // Mesa de bazas como en Mus: cada carta aparece delante de quien la juega, en el sentido real de
@@ -124,7 +167,7 @@ function meldTable(view,name,playerId){
 function board(view,name,interactive=true,playerId=view.players[0]){
  switch(view.boardKind){
  case 'tricks':return trickTable(view,name,playerId);
- case 'domino':return dominoLine(view.chain);
+ case 'domino':return dominoLine(view.chain,view.chainStart??Math.floor(view.chain.length/2));
  case 'checkers':return renderCheckersBoard(view,ui.path,playerId,name,interactive);
  case 'oca':return renderGooseBoard(view,name,!interactive);
  case 'capture':return captureTable(view,name,playerId,interactive);

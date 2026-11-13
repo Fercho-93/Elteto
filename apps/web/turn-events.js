@@ -59,6 +59,9 @@ export function publicTurnEvent(before,after){
  if(['spanish-40','legacy-french-52'].includes(after.ruleset)&&after.handSizes[actor]<before.handSizes[actor])action='Juega carta';
  if(capture){action='Juega carta';detail=`${cardName(capture.card)}${capture.capturedCount?` · recoge ${capture.captured?.length?capture.captured.map(c=>cardName(c)).join(', '):capture.capturedCount}${capture.sweep?' · ¡escoba!':''}`:' · la deja en la mesa'}`;motion=capture.capturedCount?1800:1200;}
  if(trick&&!capture){detail=cardName(trick.card,{poker:after.id==='remigio'});}
+ // Dominó: qué ficha entra y por qué extremo, en lugar de la línea cruda del registro.
+ if(after.boardKind==='domino'&&after.chain&&(after.chain.length>(before.chain?.length||0))){const old=before.chain||[],left=old.length&&after.chain[0].id!==old[0]?.id,t=left?after.chain[0]:after.chain.at(-1);detail=!old.length?`Sale con ${t.left} · ${t.right}`:left?`${t.left} · ${t.right} por la izquierda`:`${t.left} · ${t.right} por la derecha`;}
+ else if(after.boardKind==='domino'&&after.phase===before.phase&&same(after.chain,before.chain)&&/ pasa\.$/.test(after.log?.at(-1)||'')){action='Pasa';detail='No tiene ficha que encaje';}
  const fresh=newLogLines(before,after);
  // Renuncias rápidas sin efecto público (dejar pasar un descarte, terminar sin colocar): no paran la mesa.
  if(after.boardKind==='melds'&&['claim','layoff'].includes(before.phase)&&!fresh.length&&same(before.handSizes,after.handSizes))return null;
