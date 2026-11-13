@@ -13,7 +13,7 @@ window.emitPhysics=(game)=>onHostChange({kind:'game',gameId:state.gameId,players
 window.physicsPhase=()=>turnSequence.phase;
 window.physicsSnapshot=()=>({game:state.gameId,phase:state.view.phase,hand:state.view.myHand.map(c=>c.id)});
 `;
-const server=createServer(async(req,res)=>{try{const name=new URL(req.url,'http://localhost').pathname.slice(1)||'index.html';let body=await readFile('dist/'+name);if(name==='app.js')body=Buffer.from(body+fixture);res.setHeader('Content-Type',name.endsWith('.js')?'text/javascript':name.endsWith('.css')?'text/css':name.endsWith('.svg')?'image/svg+xml':name.endsWith('.png')?'image/png':'text/html');res.end(body);}catch{res.writeHead(404);res.end();}});
+const server=createServer(async(req,res)=>{try{const name=new URL(req.url,'http://localhost').pathname.slice(1)||'index.html';let body=await readFile('dist/'+name);if(name==='app.js')body=Buffer.from(body+fixture);res.setHeader('Content-Type',name.endsWith('.js')?'text/javascript':name.endsWith('.css')?'text/css':name.endsWith('.svg')?'image/svg+xml':name.endsWith('.png')?'image/png':name.endsWith('.webp')?'image/webp':'text/html');res.end(body);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const kind=process.env.PHYSICS_BROWSER||'chromium',browser=await(kind==='webkit'?webkit:chromium).launch(),errors=[];
 await mkdir('tests/artifacts/physics',{recursive:true});
@@ -66,7 +66,7 @@ try{
  for(const page of pages)await page.setViewportSize({width:390,height:844});
  // Public declaration/pass/challenge speech is identical in two private views.
  const bluff=getGame('mentiroso');game=bluff.createInitialState(['a','b','c','d'],22);await show('mentiroso',game);
- for(const page of pages){await page.evaluate(async()=>{const img=new Image();img.src='./assets/decks/fournier-spanish.jpg';await img.decode();});await page.evaluate(()=>{window.faces=[...document.querySelectorAll('.catalog-hand img')];window.faceByUrl=new Map(window.faces.map(img=>[img.src,img]));});}
+ for(const page of pages){await page.evaluate(async()=>{await Promise.all([...document.querySelectorAll('.catalog-hand img')].map(img=>img.decode().catch(()=>{})));});await page.evaluate(()=>{window.faces=[...document.querySelectorAll('.catalog-hand img')];window.faceByUrl=new Map(window.faces.map(img=>[img.src,img]));});}
  for(const action of [{type:'play-facedown',cards:game.hands.a.slice(0,2).map(c=>c.id),rank:'5'},{type:'trust'},{type:'challenge'}]){
   const actor=game.players[game.turn];game=bluff.applyAction(game,actor,action);const speeches=game.players.map(p=>bluff.view(game,p).lastSpeech);assert.ok(speeches.every(s=>JSON.stringify(s)===JSON.stringify(speeches[0])));assert.ok(!('cards' in speeches[0]),'Declared ranks never reveal the played faces');
   await emit(game);await phase('move');

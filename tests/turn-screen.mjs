@@ -13,7 +13,7 @@ window.turnSnapshot=()=>({phase:turnSequence.phase,event:turnSequence.event,queu
 window.redrawTurns=()=>renderGame();
 window.cancelTurns=()=>{turnSequence.reset();state.screen='home';renderHome();};
 `;
-const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://localhost').pathname.slice(1)||'index.html';let body=await readFile('dist/'+file);if(file==='app.js')body=Buffer.from(body+fixture);res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.png')?'image/png':'text/html');res.end(body);}catch{res.writeHead(404);res.end();}});
+const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://localhost').pathname.slice(1)||'index.html';let body=await readFile('dist/'+file);if(file==='app.js')body=Buffer.from(body+fixture);res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.png')?'image/png':file.endsWith('.webp')?'image/webp':'text/html');res.end(body);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const kind=process.env.TURN_BROWSER||'chromium',browser=await(kind==='webkit'?webkit:chromium).launch(),errors=[];
 await mkdir('tests/artifacts/turns',{recursive:true});

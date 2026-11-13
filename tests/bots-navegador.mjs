@@ -8,7 +8,7 @@ const server=createServer(async(req,res)=>{
   try {
     const file=new URL(req.url,'http://localhost').pathname.slice(1)||'index.html';
     const body=await readFile('dist/'+file);
-    res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':file.endsWith('.svg')?'image/svg+xml':'text/html');
+    res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':file.endsWith('.webp')?'image/webp':file.endsWith('.svg')?'image/svg+xml':'text/html');
     res.end(body);
   } catch {res.writeHead(404);res.end();}
 });

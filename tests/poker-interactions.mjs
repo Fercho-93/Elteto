@@ -5,7 +5,7 @@ import {chromium,webkit} from 'playwright';
 import {getGame} from '../dist/game-core/index.js';
 let fixture=(await readFile('tests/table-navegador.mjs','utf8')).match(/const fixture = `([\s\S]*?)`;/)[1];
 fixture+=`\nwindow.directPoker=(view,game)=>{testGame=game;state.view=view;renderGame();};window.redrawGame=()=>renderGame();window.spySend=()=>{window.sent=[];window.realSend=state.host.applyLocalAction;state.host.applyLocalAction=action=>{window.sent.push(action);};};window.unspySend=()=>{state.host.applyLocalAction=window.realSend;};`;
-const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://local').pathname.slice(1)||'index.html';let b=await readFile('dist/'+file);if(file==='app.js')b=Buffer.from(b+fixture);res.setHeader('content-type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':'text/html');res.end(b);}catch{res.writeHead(404);res.end();}});
+const server=createServer(async(req,res)=>{try{const file=new URL(req.url,'http://local').pathname.slice(1)||'index.html';let b=await readFile('dist/'+file);if(file==='app.js')b=Buffer.from(b+fixture);res.setHeader('content-type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':file.endsWith('.webp')?'image/webp':'text/html');res.end(b);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await(process.env.POKER_BROWSER==='webkit'?webkit:chromium).launch();
 try{
  const page=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block'}),errors=[];page.on('pageerror',e=>errors.push(e.message));

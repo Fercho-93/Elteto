@@ -1,4 +1,4 @@
-.reference-card-art{display:block;width:100%;height:100%;background:#f8f2df;overflow:hidden;}
+.reference-card-art{display:block;width:100%;height:100%;object-fit:fill;background:#f8f2df;overflow:hidden;}
 .elteto-card-back{display:block;width:100%;height:100%;border-radius:inherit;background-image:url('./assets/decks/elteto-backs.jpg');background-repeat:no-repeat;background-size:246.154% 110.345%;background-position:13.158% 37.5%;}
 .elteto-card-back.deck-blue{background-size:247.742% 110.345%;background-position:87.009% 37.5%;}
 .card-back:has(.elteto-card-back),.catalog-card-back:has(.elteto-card-back){background:#fff6de;padding:0;border:0;overflow:hidden;}

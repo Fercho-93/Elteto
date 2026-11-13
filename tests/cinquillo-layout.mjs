@@ -6,7 +6,7 @@ import {chromium,webkit} from 'playwright';
 import {cinquilloEngine,canPlaceCinquillo} from '../dist/game-core/index.js';
 const fixture=(await readFile(new URL('./table-navegador.mjs',import.meta.url),'utf8')).match(/const fixture = `([\s\S]*?)`;/)[1];
 const out=new URL('./artifacts/layout/',import.meta.url);await mkdir(out,{recursive:true});
-const server=createServer(async(req,res)=>{try{const path=new URL(req.url,'http://localhost').pathname;const file=path==='/'?'index.html':path.slice(1);let data=await readFile(new URL('../dist/'+file,import.meta.url));if(file==='app.js')data=Buffer.from(data+fixture);res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':'text/html');res.end(data);}catch{res.writeHead(404);res.end();}});
+const server=createServer(async(req,res)=>{try{const path=new URL(req.url,'http://localhost').pathname;const file=path==='/'?'index.html':path.slice(1);let data=await readFile(new URL('../dist/'+file,import.meta.url));if(file==='app.js')data=Buffer.from(data+fixture);res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':file.endsWith('.webp')?'image/webp':'text/html');res.end(data);}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await (process.env.LAYOUT_BROWSER==='webkit'?webkit:chromium).launch();
 const results=[];
 try {
