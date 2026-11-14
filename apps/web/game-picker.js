@@ -6,7 +6,7 @@ const CATEGORY_ART={board:'./assets/juegos-tablero.webp',cards:'./assets/juegos-
 export const GAME_GROUPS=[
  {id:'board',title:'Juegos de Tablero',sections:[{title:'Tablero y fichas',ids:['parchis','oca','damas-espanolas','domino']}]},
  {id:'cards',title:'Juegos de cartas',sections:[
-  {title:'Para toda la familia',ids:['cinquillo','escoba','burro','mentiroso']},
+  {title:'Para toda la familia',ids:['tetuno','cinquillo','escoba','burro','mentiroso']},
   {title:'Bazas y triunfos',ids:['brisca','tute','guinote','butifarra','pocha','julepe']},
   {title:'Combinaciones',ids:['chinchon','remigio','continental']},
   {title:'Envites y apuestas',ids:['mus','texas-holdem','siete-y-medio']},

@@ -1,9 +1,9 @@
-const CACHE = "elteto-shell-v30";
+const CACHE = "elteto-shell-v31";
 const ASSETS = ['./mus-table.js','./mus-flow.js','./game-core/games/mus-legacy.js','./game-core/games/mus-evaluation.js','./game-core/games/mus-scoring.js',"./game-help.js", "./game-help.css", "./rulebooks/index.js", "./rulebooks/cinquillo.js", "./rulebooks/mus.js", "./rulebooks/texas-holdem.js", "./rulebooks/parchis.js", "./rulebooks/damas-espanolas.js", "./rulebooks/oca.js", "./rulebooks/brisca.js", "./rulebooks/tute.js", "./rulebooks/chinchon.js", "./rulebooks/escoba.js", "./rulebooks/pocha.js", "./rulebooks/julepe.js", "./rulebooks/guinote.js", "./rulebooks/butifarra.js", "./rulebooks/remigio.js", "./rulebooks/continental.js", "./rulebooks/siete-y-medio.js", "./rulebooks/burro.js", "./rulebooks/mentiroso.js", "./rulebooks/domino.js","./card-art.js", "./card-art.css",
   "./poker-table.js", "./poker-controls.js", "./poker-events.js", "./poker-celebration.js",
   './guest.html', './activation-code.js', './host-access.js', './distribution-config.js', './firebase-sdk.js',
   "./game-picker.js", "./board-games.js", "./board-games.css", "./board-motion.js", "./turn-events.js", "./card-names.js", "./turn-sequence.js", "./turn-sequence.css", "./game-physics.js", "./table-fit.js", "./bot-pacing.js", "./card-paint.js", "./table-speech.js",
-  "./catalog-games.js", "./catalog-games.css", "./game-core/games/shared.js", "./game-core/games/boards.js", "./game-core/games/social-cards.js", "./game-core/games/tricks.js", "./game-core/games/melds.js", "./game-core/games/holdem.js",
+  "./catalog-games.js", "./catalog-games.css", "./tetuno-table.js", "./game-core/games/tetuno.js", "./rulebooks/tetuno.js", ...[0,1,2,3,4,5,6,7,8,9].map(n => `./assets/avatars/${n}.webp`), "./game-core/games/shared.js", "./game-core/games/boards.js", "./game-core/games/social-cards.js", "./game-core/games/tricks.js", "./game-core/games/melds.js", "./game-core/games/holdem.js",
   "./assets/elteto-cover-balanced-v5.png", "./assets/fuegote-transparent-v2.webp", "./assets/fuegote-finger-v2.webp", "./assets/juegos-tablero.webp", "./assets/juegos-cartas.webp",
   "./avatar-art.js", "./assets/elteto-logo-neon-v3.png", "./assets/elteto-avatars-v3.png",
   "./parchis-dice.js", "./parchis-dice.css",

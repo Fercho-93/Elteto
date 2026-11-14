@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
-import {listGames,getGame,createRng,buildCardMaterial,checkersMoves,evaluatePoker,comparePoker,pokerPayout,captures15,analyzeMelds,contractGroups,meldKind,legalTrickCards,GAME_CATALOG,settleJulepe} from '../dist/game-core/index.js';
+import {chooseBotAction,listGames,getGame,createRng,buildCardMaterial,checkersMoves,evaluatePoker,comparePoker,pokerPayout,captures15,analyzeMelds,contractGroups,meldKind,legalTrickCards,GAME_CATALOG,settleJulepe} from '../dist/game-core/index.js';
 
 const old=new Set(['mus','cinquillo','parchis']),games=listGames().filter(g=>!old.has(g.id));
-assert.equal(games.length,17);
+assert.equal(games.length,18);
 const ids=n=>Array.from({length:n},(_,i)=>`player-${i}`),random=createRng(713);
 const pick=items=>items[Math.floor(random()*items.length)];
 function stepAction(engine,s){const p=s.players[s.turn],v=engine.view(s,p);
+ if(s.id==='tetuno')return chooseBotAction(engine,v,p,random);
  if(v.validCards?.length)return {type:'play',card:pick(v.validCards)};
  if(s.id==='damas_espanolas')return {type:'move',path:pick(v.moves).path};
  if(s.id==='escoba'&&s.phase==='play'){const c=pick(s.hands[p]),value=Number(c.rank)>7?Number(c.rank)-2:Number(c.rank),combos=captures15(s.table,15-value);return {type:'capture',card:c.id,table:combos.length?pick(combos):[]};}

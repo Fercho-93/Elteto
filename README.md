@@ -1,6 +1,6 @@
 # Elteto
 
-Veinte juegos de cartas y tablero para jugar desde móviles, con una mesa gamberra, reglas compartidas y partidas entre personas y jugadores de IA, con o sin internet.
+Veintiún juegos de cartas y tablero para jugar desde móviles, con una mesa gamberra, reglas compartidas y partidas entre personas y jugadores de IA, con o sin internet.
 
 ## Aplicación web y GitHub Pages
 
@@ -21,7 +21,9 @@ offline: [Distribución y acceso](DISTRIBUCION_Y_ACCESO.md).
 
 Para probarlo, abre [Elteto en GitHub Pages](https://fercho-93.github.io/Elteto/) en un teléfono, crea la partida tocando la llama **Que se haga el fuegote**, pulsa **Invitar con internet** y escanea el QR con la cámara del otro.
 
-La pantalla «Crear partida» ofrece los veinte juegos: Tablero (Parchís, Oca, Damas, Dominó) y Cartas, agrupadas en familia, bazas y triunfos, combinaciones, y envites y apuestas. Detalle en [design/CATALOGO_JUGABLE.md](design/CATALOGO_JUGABLE.md).
+La pantalla «Crear partida» ofrece los veintiún juegos: Tablero (Parchís, Oca, Damas, Dominó) y Cartas, agrupadas en familia, bazas y triunfos, combinaciones, y envites y apuestas.
+
+**El Tetuno** es el juego de descartes propio de Elteto (de 2 a 8): 108 cartas en cuatro colores con los avatares de la casa, Chúpate 2 y Chúpate 4 acumulables, Te salto, Media vuelta, comodines y el canto de **¡Tetuno!** con una carta; partida a 300. La **Oca** mantiene las reglas de Cayro con casillas gamberras: avatares en lugar de ocas («de avatar en avatar y tiro porque me toca»), Tirolina, Resaca, Pedo-cohete, Váter, Rotonda, Trullo, Cáscara y Fiestón, y cada ficha lleva el avatar de su jugador. Detalle en [design/CATALOGO_JUGABLE.md](design/CATALOGO_JUGABLE.md).
 
 Cinquillo admite de dos a seis participantes. Mus necesita cuatro. Parchís admite de tres a seis, con un tablero que se adapta a la mesa (triángulo, cuadrado, pentágono o hexágono) y la opción de dos dados con cinco o seis.
 

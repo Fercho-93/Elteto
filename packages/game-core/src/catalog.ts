@@ -47,6 +47,41 @@ export const GAME_CATALOG: readonly GamePlan[] = [
     ]
   },
   {
+    "id": "tetuno",
+    "label": "El Tetuno",
+    "family": "shedding",
+    "status": "playable",
+    "players": [2, 3, 4, 5, 6, 7, 8],
+    "material": "tetuno-108",
+    "defaultVariant": "elteto",
+    "rules": {
+      "file": "apps/web/rulebooks/tetuno.js",
+      "url": "",
+      "sha256": ""
+    },
+    "summary": "108 cartas en 4 colores: descarta por color o símbolo; Chúpate 2 y 4 acumulables, Te salto, Media vuelta y comodines. Canta ¡Tetuno! con una carta. Partida a 300.",
+    "implementationNotes": "Juego propio de Elteto con las reglas clásicas de descartes por colores. Siete cartas por cabeza, salida siempre con un número, Chúpate 4 solo sin cartas del color que manda y Chúpate acumulables (2 sobre 2, 4 sobre 2 o 4). Quien no cante ¡Tetuno! y sea pillado se chupa dos. El ganador de la mano suma las cartas ajenas: números su valor, especiales 20 y comodines 50.",
+    "phases": [
+      "reparto",
+      "descartar",
+      "recuento"
+    ],
+    "actions": [
+      "play",
+      "draw",
+      "pass",
+      "catch",
+      "next-hand"
+    ],
+    "acceptance": [
+      "Color o símbolo",
+      "Chúpate acumulado",
+      "Media vuelta y salto",
+      "Cantar ¡Tetuno!",
+      "Recuento a 300"
+    ]
+  },
+  {
     "id": "mus",
     "label": "Mus",
     "family": "betting",

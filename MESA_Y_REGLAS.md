@@ -24,6 +24,10 @@ Cada juego completo termina a 40 tantos o al aceptar un órdago. Gana la partida
 
 Las seña físicas, corte manual y errores de reparto no se simulan como acciones digitales. No se añade juego real, ausente en la fuente. La posición inicial de parejas continúa siendo la asignada por la sala.
 
+## El Tetuno
+
+Juego propio de Elteto, sin reglamento externo: `packages/game-core/src/games/tetuno.ts`, mesa en `apps/web/tetuno-table.js` y reglamento en `apps/web/rulebooks/tetuno.js`. Baraja de 108 cartas (cuatro colores con 0, dos de cada 1–9, Chúpate 2, Te salto y Media vuelta; cuatro Comodines y cuatro Chúpate 4), siete cartas por jugador, de 2 a 8. Se descarta por color o símbolo; Chúpate acumulables (2 sobre 2, 4 sobre 2 o 4); Chúpate 4 solo sin cartas del color que manda; Media vuelta salta entre dos. Quien no canta ¡Tetuno! y es pillado antes de la siguiente jugada se chupa dos. El ganador de la mano suma los puntos ajenos (número, 20 especiales, 50 comodines); partida a 300. Las caras usan los avatares recortados en `apps/web/assets/avatars/`.
+
 ## Parchís
 
 Disponible para 3–6 jugadores, con cuatro fichas por color, tablero poligonal de 17 casillas por color (triángulo, cuadrado, pentágono o hexágono) y pasillos de llegada; con 5 o 6 jugadores se elige uno o dos dados. Se implementan tirada inicial, salida con cinco, seises, barreras, capturas y bonificaciones, llegada exacta y victoria. El tablero se amplía y las fichas se pueden elegir mediante botones grandes. Fuente, decisiones de edición y pruebas: [design/PARCHIS.md](design/PARCHIS.md).
@@ -49,7 +53,7 @@ Las fichas cubren secuencias, bazas, combinaciones, captura, apuestas, banca, pa
 
 Las identidades `PhysicalCard.id` distinguen cartas iguales de barajas diferentes. Los motores nuevos de Remigio/Continental no deben identificar cartas solo por palo e índice. El material de póker español usa los cuatro palos españoles con índices A–K, no la española ordinaria de 40/48.
 
-La biblioteca transcribe los PDFs multilingües, pero el texto español original prevalece. Mentiroso presenta un objetivo inicial que contradice su final: la ficha adopta el final explícito (pierde el último con cartas). Burro es la variante de parejas del PDF. Guiñote sigue el reparto completo de la fuente; no se sustituye por otro reglamento regional. Oca usa 63 casillas y los efectos del texto español del PDF. Parchís fija su edición y coordenadas en `design/PARCHIS.md`.
+La biblioteca transcribe los PDFs multilingües, pero el texto español original prevalece. Mentiroso presenta un objetivo inicial que contradice su final: la ficha adopta el final explícito (pierde el último con cartas). Burro es la variante de parejas del PDF. Guiñote sigue el reparto completo de la fuente; no se sustituye por otro reglamento regional. Oca usa 63 casillas y los efectos del texto español del PDF; solo cambian los dibujos y los nombres gamberros de las casillas (avatares en lugar de ocas, Tirolina, Resaca, Pedo-cohete, Váter, Rotonda, Trullo, Cáscara y Fiestón). Parchís fija su edición y coordenadas en `design/PARCHIS.md`.
 
 ## Ausentes, turno saltado y expulsión
 

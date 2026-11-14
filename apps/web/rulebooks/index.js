@@ -7,6 +7,7 @@ const loaders = {
   'parchis': () => import('./parchis.js'),
   'damas-espanolas': () => import('./damas-espanolas.js'),
   'oca': () => import('./oca.js'),
+  'tetuno': () => import('./tetuno.js'),
   'brisca': () => import('./brisca.js'),
   'tute': () => import('./tute.js'),
   'chinchon': () => import('./chinchon.js'),

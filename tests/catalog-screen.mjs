@@ -19,7 +19,7 @@ try{
   assert.equal(await page.locator('.game-category').count(),2);
   // Los veinte juegos con motor se ofrecen, cada uno una sola vez.
   assert.deepEqual(await page.locator('input[name="game"]').evaluateAll(inputs=>inputs.map(i=>i.value).sort()),listGames().map(g=>g.id).sort());
-  assert.equal(AVAILABLE_GAME_IDS.length,20);
+  assert.equal(AVAILABLE_GAME_IDS.length,21);
   assert.deepEqual(await page.locator('.game-category[data-category="board"] input').evaluateAll(inputs=>inputs.map(i=>i.value)),['parchis','oca','damas-espanolas','domino']);
   assert.equal(await page.locator('.category-section').count(),4);
   for(const id of AVAILABLE_GAME_IDS){

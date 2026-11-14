@@ -49,6 +49,20 @@ export function chooseBotAction(engine: AnyEngine, v: any, playerId: string, ran
     return {type: 'discard', cards: [card]};
   }
   if (v.turnPlayer !== playerId) return null;
+  if (engine.id === 'tetuno') {
+    if (v.phase === 'result') return {type: 'next-hand'};
+    // Pilla a quien no cantó antes de jugar, casi siempre.
+    if (v.catchable && random() < .7) return {type: 'catch', target: v.catchable};
+    const playable = hand.filter((c: any) => v.playable.includes(c.id));
+    if (!playable.length) return v.drawn ? {type: 'pass'} : {type: 'draw'};
+    // Guarda los comodines para el final y suelta antes lo que más duele.
+    const weight = (c: any) => c.suit === 'comodin' ? (hand.length <= 2 ? 30 : -10) : c.rank === '+2' ? 8 : ['salto','vuelta'].includes(c.rank) ? 6 : Number(c.rank) / 2;
+    const card = playable.slice().sort((a: any, b: any) => weight(b) - weight(a) + (random() - .5))[0];
+    const counts: Record<string, number> = {rojo: 0, amarillo: 0, verde: 0, azul: 0};
+    for (const c of hand) if (c.id !== card.id && counts[c.suit] !== undefined) counts[c.suit]++;
+    const color = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+    return {type: 'play', card: card.id, ...(card.suit === 'comodin' ? {color} : {}), call: hand.length === 2 && random() < .85};
+  }
   if (engine.id === 'cinquillo') {
     if (v.handWinner) return {type: 'next-hand'};
     const cards = hand.filter((c: any) => canPlaceCinquillo(v.table, c, v.ruleset));
@@ -185,7 +199,7 @@ export function skipTurnState(engine: AnyEngine, state: any, playerId: string, r
 
 // Minimum pause before a bot moves. The visible turn sequence can extend it (see BotPacing).
 // Card and tile games play many short moves per hand, so they use a brisker floor.
-const BRISK_GAMES=new Set(['cinquillo','brisca','tute','guinote','butifarra','pocha','julepe','escoba','chinchon','remigio','continental','burro','domino','siete-y-medio']);
+const BRISK_GAMES=new Set(['cinquillo','tetuno','brisca','tute','guinote','butifarra','pocha','julepe','escoba','chinchon','remigio','continental','burro','domino','siete-y-medio']);
 export const botTurnDelay=(gameId:string,phase?:string)=>{const id=gameId.replace(/_/g,'-');if(['claim','layoff'].includes(phase||'')&&['continental','chinchon','remigio'].includes(id))return 900;return id==='oca'?6500:id==='damas-espanolas'?1500:id==='parchis'?5500:id==='mentiroso'?5200:BRISK_GAMES.has(id)?3400:4800;};
 
 // One delayed move at a time. The host can resume from the saved state.

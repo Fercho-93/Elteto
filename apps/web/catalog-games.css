@@ -351,3 +351,52 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
 @media(max-height:620px){.trick-meta .deck-stock,.trick-meta .trick-pinta{display:none}.trick-meta small{display:inline;margin-right:4px}.trick-score{flex-wrap:nowrap}.trick-score span{flex-direction:row;gap:4px;align-items:baseline;min-width:0}.trick-score small{max-width:90px}.catalog-surface:has(.trick-table){gap:4px;padding:8px 10px}}
 .catalog-options:has(.bet-chip){display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.catalog-options .bet-caption{grid-column:1/-1;font-size:11px;color:#cfc4d3}.catalog-options .bet-chip{min-width:0;padding:6px 2px;font-size:15px}
 .bank-seats:has(>:nth-child(5)){grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.bank-seats:has(>:nth-child(5)) .bank-seat{padding:5px 2px}
+
+/* El Tetuno: cartas propias con los avatares de Elteto. Las medidas siguen el ancho de cada carta. */
+.catalog-card:has(.tetuno-face){padding:0;border-color:#1b1226;background:#1b1226;}
+.tetuno-face{position:absolute;inset:0;display:block;overflow:hidden;border-radius:4px;container-type:inline-size;--tc1:#e53950;--tc2:#9c1029;background:radial-gradient(circle at 50% 38%,var(--tc1) 0 46%,var(--tc2) 100%);box-shadow:inset 0 0 0 2px #fff3,inset 0 0 0 4px #0002;}
+.tetuno-face.tetuno-amarillo{--tc1:#ffd53f;--tc2:#de8d00;}
+.tetuno-face.tetuno-verde{--tc1:#43d071;--tc2:#137a35;}
+.tetuno-face.tetuno-azul{--tc1:#42a0ff;--tc2:#1a43b8;}
+.tetuno-face.tetuno-wild{background:conic-gradient(from 45deg,#e53950 0 25%,#ffd53f 0 50%,#43d071 0 75%,#42a0ff 0);}
+.tetuno-face.tetuno-wild:before{content:'';position:absolute;inset:9%;border-radius:40%;background:radial-gradient(circle,#2b1840 40%,#120a1c);}
+.tetuno-face.tetuno-back{background:repeating-linear-gradient(135deg,#3a1a52 0 6%,#2a1240 6% 12%);box-shadow:inset 0 0 0 3px #ff69d1aa;}
+.tetuno-face .tetuno-blob{position:absolute;left:12%;top:17%;width:76%;aspect-ratio:1;border-radius:46% 54% 42% 58%/55% 45% 55% 45%;background:radial-gradient(circle at 40% 35%,#fffdf4,#fff2c9 60%,#f6d98d);rotate:-9deg;box-shadow:0 0 0 2px #1b1226,0 3px 0 #1b122688;display:grid;place-items:center;}
+.tetuno-face.tetuno-wild .tetuno-blob,.tetuno-face.tetuno-back .tetuno-blob{background:radial-gradient(circle at 40% 35%,#ffe3f6,#ff9fd8 70%,#d156a8);}
+.tetuno-face .tetuno-avatar{width:90%;height:90%;object-fit:contain;rotate:9deg;filter:drop-shadow(0 2px 1px #0005);pointer-events:none;}
+.tetuno-face .tetuno-index{position:absolute;left:6%;top:3%;font:900 21cqw/1 system-ui,sans-serif;font-style:normal;color:#fff;-webkit-text-stroke:1px #1b1226;paint-order:stroke;text-shadow:0 2px 0 #1b1226;z-index:2;}
+.tetuno-face .tetuno-index.is-bottom{left:auto;top:auto;right:6%;bottom:13%;rotate:180deg;}
+.tetuno-face .tetuno-big{position:absolute;right:9%;top:46%;font:italic 900 46cqw/1 system-ui,sans-serif;color:#fff;-webkit-text-stroke:2px #1b1226;paint-order:stroke;text-shadow:0 3px 0 #1b1226;z-index:2;}
+.tetuno-face .tetuno-banner{position:absolute;left:0;right:0;bottom:0;padding:3% 2% 4%;background:#1b1226e6;color:#fff6d9;text-align:center;font:900 10.5cqw/1.05 system-ui,sans-serif;letter-spacing:.02em;white-space:nowrap;overflow:hidden;z-index:3;}
+.tetuno-face.is-special .tetuno-banner{color:#ffe36a;}
+.tetuno-face.tetuno-back .tetuno-banner{color:#57efff;font-style:italic;letter-spacing:.08em;}
+.catalog-hand .catalog-card.is-muted:has(.tetuno-face){filter:saturate(.45) brightness(.72);}
+.catalog-hand .catalog-card:has(.tetuno-face):not(.is-muted):not(:disabled){box-shadow:0 0 0 2px #fff7,0 4px 8px #0007;}
+.tetuno-meta{justify-content:space-between;}
+.tetuno-direction{display:flex;align-items:center;gap:6px;}
+.tetuno-direction b{font-size:26px;line-height:1;color:#57efff;display:inline-block;}
+.tetuno-direction.is-reverse b{color:#ff69d1;}
+@media(prefers-reduced-motion:no-preference){.tetuno-direction b{animation:tetuno-spin 4s linear infinite;}.tetuno-direction.is-reverse b{animation-direction:reverse;}.tetuno-pending{animation:tetuno-pulse 1.1s ease-in-out infinite alternate;}}
+@keyframes tetuno-spin{to{rotate:360deg;}}
+@keyframes tetuno-pulse{from{scale:1;}to{scale:1.04;}}
+.tetuno-center{display:flex;align-items:flex-end;justify-content:center;gap:clamp(18px,8vw,46px);flex:1;min-height:0;padding:6px 0;}
+.tetuno-pile{display:flex;flex-direction:column;align-items:center;gap:6px;color:#efe0b8;font:600 11px system-ui,sans-serif;}
+.tetuno-pile .deck-stock.tetuno-stock{width:58px;height:89px;margin:0 auto 6px;}
+.tetuno-pile.is-discard .catalog-card{width:clamp(78px,24vw,108px);border-width:2px;transition:box-shadow .3s;}
+.tetuno-pile.is-discard small b{display:block;font-size:13px;}
+.tetuno-manda-rojo .catalog-card{box-shadow:0 0 0 3px #e53950,0 0 18px #e53950;}
+.tetuno-manda-amarillo .catalog-card{box-shadow:0 0 0 3px #ffd53f,0 0 18px #ffd53f;}
+.tetuno-manda-verde .catalog-card{box-shadow:0 0 0 3px #43d071,0 0 18px #43d071;}
+.tetuno-manda-azul .catalog-card{box-shadow:0 0 0 3px #42a0ff,0 0 18px #42a0ff;}
+.tetuno-manda-rojo small b{color:#ff8a9c}.tetuno-manda-amarillo small b{color:#ffe36a}.tetuno-manda-verde small b{color:#7ff0a0}.tetuno-manda-azul small b{color:#8cc6ff}
+.tetuno-empty{display:grid;place-items:center;width:58px;height:89px;border:2px dashed #efe0b855;border-radius:6px;font-size:10px;text-align:center;}
+.tetuno-pending{margin:4px auto 0;padding:6px 14px;border-radius:999px;background:linear-gradient(#ff4f7e,#c3164a);color:#fff;font:900 17px/1.1 system-ui,sans-serif;text-align:center;box-shadow:0 3px 0 #6c0b2a,0 6px 14px #0006;}
+.tetuno-pending small{display:block;font:600 11px system-ui,sans-serif;opacity:.92;}
+.tetuno-last{margin:0;text-align:center;color:#fff3ca;font:600 12px/1.3 system-ui,sans-serif;min-height:16px;}
+.trick-score .is-unsaid small:after{content:' · ¡sin cantar!';color:#ff8ab9;font-weight:800;}
+.tetuno-color-caption{width:100%;color:#efe0b8;font:700 12px system-ui,sans-serif;}
+.catalog-options .tetuno-color-choice{color:#fff;font-weight:800;border:2px solid #1b1226;text-shadow:0 1px 1px #0008;}
+.catalog-options .tetuno-color-choice.tetuno-rojo{background:#e53950}.catalog-options .tetuno-color-choice.tetuno-amarillo{background:#e0a800}.catalog-options .tetuno-color-choice.tetuno-verde{background:#1f9d4a}.catalog-options .tetuno-color-choice.tetuno-azul{background:#2a6fe0}
+.catalog-options .tetuno-call{background:linear-gradient(#ffe36a,#ffb02e);color:#2b1530;font-weight:900;}
+.catalog-options .tetuno-call.is-on{background:linear-gradient(#ff69d1,#c13a9a);color:#fff;}
+.catalog-screen[data-game="tetuno"] .catalog-surface{display:flex;flex-direction:column;gap:6px;}

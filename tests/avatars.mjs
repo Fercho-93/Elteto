@@ -19,4 +19,4 @@ for(const engine of listGames())for(let count=engine.minPlayers;count<=engine.ma
  for(const [c,seat] of first)assert.equal(assigned[seat],c);
  tables++;
 }
-console.log(`Avatares: ${tables} mesas de los 20 juegos, sin repetidos y respetando la elección de cada uno: OK`);
+console.log(`Avatares: ${tables} mesas de los 21 juegos, sin repetidos y respetando la elección de cada uno: OK`);

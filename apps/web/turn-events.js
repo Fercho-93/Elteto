@@ -71,7 +71,7 @@ export function publicTurnEvent(before,after){
  if(after.boardKind==='tricks'&&before.phase==='collect'&&after.phase==='collect'){const sang=!same(before.log,after.log)&&/ canta /.test(after.log?.at(-1)||'');action=sang?'Canta':'Sin cantar';detail=sang?after.log.at(-1):`${actor} no tiene cantes`;}
  if(after.boardKind==='tricks'&&before.trickWinner&&!after.trickWinner){action=actor===before.trickWinner?'Recoge la baza':'Sin cantar';detail=after.phase==='play'?`${before.trickWinner} sale en la siguiente baza`:'Última baza recogida';}
  if(after.boardKind==='burro'){action='Roba boca abajo';const pair=after.lastPair;detail=pair&&pair.sequence!==before.lastPair?.sequence?(pair.cards.length?`Forma pareja: ${pair.cards.map(c=>cardName(c)).join(' y ')}`:`Roba a ${pair.from}: sin pareja`):fresh[0]||detail;}
- if(after.boardKind==='oca'&&!roll){action='Pasa turno';detail=before.prison===actor?'Espera en prisión':'Pierde el turno';}
+ if(after.boardKind==='oca'&&!roll){action='Pasa turno';detail=before.prison===actor?'Espera en el trullo':'Pierde el turno';}
  if(after.bets?.[actor]!==before.bets?.[actor]&&after.bets?.[actor]!==undefined){action='Apuesta';detail=`${after.bets[actor]} fichas`;}
  if(after.boardKind==='bank'&&fresh.length){const line=fresh[0];detail=line;action=/ apuesta /.test(line)?'Apuesta':/ se planta/.test(line)?'Se planta':/ se pasa /.test(line)?'Se pasa':/ pide carta boca abajo/.test(line)?'Pide carta oculta':/ pide carta/.test(line)?'Pide carta':action;}
  if(after.boardKind==='bank'&&before.phase==='result'){action='Nueva mano';detail=`Mano ${after.handNumber}: banca de ${after.bank}`;}

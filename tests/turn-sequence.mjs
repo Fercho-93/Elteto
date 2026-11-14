@@ -39,7 +39,7 @@ sequence.reset();game=engine.createInitialState(['a','b','c','d'],22);display=[]
 for(let i=0;i<10;i++){const move=nextBotMove(engine,game,game.players);game=engine.applyAction(game,move.playerId,move.action);expected.push(engine.view(game,'a').chain.length);sequence.receive(change(game));}
 assert.equal(sequence.queue.length,9);advance(60000);assert.deepEqual(display,expected);assert.equal(sequence.busy,false);
 const routes=parchisRoutes({pieces:{a:[2,-1,-1,-1],b:[8,-1,-1,-1]}},{players:['a','b'],pieces:{a:[22,-1,-1,-1],b:[-1,-1,-1,-1]}});assert.equal(routes[0].route.length,21);assert.equal(routes[0].duration,20*PAWN_STEP);assert.deepEqual(routes[1].route,[8,-1]);
-console.log(`Turn sequence: ${checked} public actions across all 20 games/POVs; ordered phases, duplicates, cancellation, reconnect and Parchis routes: OK`);
+console.log(`Turn sequence: ${checked} public actions across all 21 games/POVs; ordered phases, duplicates, cancellation, reconnect and Parchis routes: OK`);
 
 // Bots wait for the entire visible route, not just a fixed thinking delay.
 const pacing=new BotPacing();let stops=0;const runner={stop(){stops++;}};

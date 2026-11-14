@@ -62,4 +62,4 @@ assert.notEqual(session.state.phase,'mus');session.close();
 const snapshot=JSON.stringify(session.state);await new Promise(resolve=>setTimeout(resolve,20));assert.equal(JSON.stringify(session.state),snapshot);
 let called=0;const runner=new BotRunner(()=>({playerId:'b',action:{type:'pass'}}),()=>called++,()=>{},1);runner.schedule();runner.stop();
 await new Promise(resolve=>setTimeout(resolve,10));assert.equal(called,0);
-console.log(`IA: ${moves} legal moves, all 20 games, lobby, Mus discards and teardown OK`);
+console.log(`IA: ${moves} legal moves, all 21 games, lobby, Mus discards and teardown OK`);

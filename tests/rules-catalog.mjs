@@ -4,8 +4,8 @@ import {createHash} from 'node:crypto';
 import {GAME_CATALOG, listGames, getGame, buildCardMaterial, buildDominoSet, canPlaceCinquillo, cinquilloEngine, legacyMusEngine as musEngine, musRank, musCardValue} from '../dist/game-core/index.js';
 
 const provenance = JSON.parse(await readFile('reglas_juegos/procedencia.json','utf8'));
-assert.equal(GAME_CATALOG.length,20);
-assert.equal(new Set(GAME_CATALOG.map(g=>g.id)).size,20);
+assert.equal(GAME_CATALOG.length,21);
+assert.equal(new Set(GAME_CATALOG.map(g=>g.id)).size,21);
 assert.deepEqual(GAME_CATALOG.filter(g=>g.status==='playable').map(g=>g.id).sort(),listGames().map(g=>g.id).sort());
 for (const source of provenance) {
   const bytes=await readFile(`reglas_juegos/${source.archivo}`);
@@ -88,4 +88,4 @@ for(const id of ids) m=musEngine.applyAction(m,id,{type:'discard',cards:id==='d'
 assert.ok(m.hands.d.every(c=>!removed.some(d=>d.suit===c.suit && d.rank===c.rank)));
 const all=[...Object.values(m.hands).flat(),...m.stock,...m.discarded];
 assert.equal(all.length,40);assert.equal(new Set(all.map(c=>`${c.suit}:${c.rank}`)).size,40);
-console.log('20 rules, byte preservation, offline archive, 20 playable engines, materials, Spanish scoring and Mus matches: OK');
+console.log('20 rules, byte preservation, offline archive, 21 playable engines, materials, Spanish scoring and Mus matches: OK');
