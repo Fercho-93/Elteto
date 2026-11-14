@@ -55,9 +55,11 @@ function deal(s:State){
  // La primera carta del descarte siempre es un número: los especiales vuelven al mazo.
  let first=s.stock.pop()!;while(!/^\d$/.test(first.rank)){s.stock.unshift(first);first=s.stock.pop()!;}
  s.discard=[first];s.color=first.suit;s.direction=1;s.pending=0;s.pendingKind=null;s.drawn=null;s.unsaid=null;s.phase='play';
- s.dealer=(s.handNumber-1)%s.players.length;s.turn=(s.dealer+1)%s.players.length;
+ // La primera mano la abre quien salga del sorteo (según la semilla de la sala); después la salida rota por la mesa.
+ if(s.firstDealer===undefined)s.firstDealer=Math.floor(random(s)*s.players.length);
+ s.dealer=(s.firstDealer+s.handNumber-1)%s.players.length;s.turn=(s.dealer+1)%s.players.length;
  s.lastPlay={sequence:(s.lastPlay?.sequence??0)+1,player:null,card:first,color:first.suit,kind:'start'};
- note(s,`Mano ${s.handNumber}: sale ${tetunoCardText(first)}.`);
+ note(s,`Mano ${s.handNumber}: empieza ${s.players[s.turn]} y sale ${tetunoCardText(first)}.`);
 }
 
 function endHand(s:State,winner:string){

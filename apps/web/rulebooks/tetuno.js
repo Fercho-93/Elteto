@@ -20,7 +20,7 @@ export default {
       { list: [
         'Se reparten **siete cartas** a cada jugador. El resto forma el mazo, boca abajo.',
         'Se descubre la primera carta del mazo para empezar el descarte. Siempre es un **número**: si sale una especial, vuelve al mazo.',
-        'Empieza el jugador siguiente a quien reparte, que va rotando en cada mano.',
+        'La primera mano la abre un jugador **sorteado al azar**. En las siguientes la salida va rotando por la mesa, en el orden de los asientos.',
       ] },
     ] },
     { title: 'Cómo se juega', blocks: [

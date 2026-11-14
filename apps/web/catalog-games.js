@@ -178,7 +178,7 @@ function board(view,name,interactive=true,playerId=view.players[0]){
  case 'melds':return meldTable(view,name,playerId);
  case 'poker':return renderPokerTable(view,name,playerId,publicCards);
  case 'bank':return bankTable(view,name,playerId);
- case 'tetuno':return tetunoTable(view,name,playerId,c=>cardHtml(c),view.phase==='result'||view.finished?handSummary(view,playerId,name,{since:/^Mano \d+: sale /,title:view.finished?'Final de la partida':`Recuento · mano ${view.handNumber}`,footer:`Puntos para quien se queda sin cartas · meta ${view.target}`}):'');
+ case 'tetuno':return tetunoTable(view,name,playerId,c=>cardHtml(c),view.phase==='result'||view.finished?handSummary(view,playerId,name,{since:/^Mano \d+: empieza /,title:view.finished?'Final de la partida':`Recuento · mano ${view.handNumber}`,footer:`Puntos para quien se queda sin cartas · meta ${view.target}`}):'');
  default:return '';
  }
 }
