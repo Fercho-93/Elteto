@@ -403,3 +403,13 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
 .catalog-options .tetuno-call.is-on{background:linear-gradient(#ff69d1,#c13a9a);color:#fff;}
 .catalog-screen[data-game="tetuno"] .catalog-surface{display:flex;flex-direction:column;gap:6px;}
 .tetuno-stock .tetuno-banner{display:none;}
+/* Física de cartas: dorso durante el vuelo de una carta rival, dorsos que se roban y gritos del Tetuno. */
+.card-flight-back{position:absolute;inset:-2px;z-index:6;display:block;border-radius:inherit;overflow:hidden;pointer-events:none;}
+.card-flight-back>.catalog-card-back{min-height:0;height:100%;}
+.card-toss-ghost,.card-draw-ghost{position:fixed!important;z-index:40;pointer-events:none!important;margin:0!important;}
+.card-draw-ghost{padding:0;box-shadow:0 6px 12px #0007;}
+.card-draw-ghost>.catalog-card-back{min-height:0;height:100%;}
+.tetuno-shout{min-width:0;max-width:min(170px,46vw);padding:5px 10px;font:900 13px/15px system-ui,sans-serif;letter-spacing:.02em;text-wrap:balance;background:linear-gradient(#fff36b,#ffbf2e);color:#2b1530;border-color:#fff8;box-shadow:0 3px 0 #a7641a,0 6px 12px #0006;white-space:normal;}
+.tetuno-shout:before{background:#fff36b;}
+.tetuno-shout.is-hit{background:linear-gradient(#ff7aa2,#e0245e);color:#fff;box-shadow:0 3px 0 #7c0f33,0 6px 12px #0006;}
+.tetuno-shout.is-hit:before{background:#ff7aa2;}

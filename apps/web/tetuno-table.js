@@ -33,9 +33,17 @@ function stock(count){
 }
 function lastPlayText(view,who){
  const last=view.lastPlay;if(!last)return '';
- const actor=last.player?who(last.player):'';
+ const actor=last.player?who(last.player):'',me=actor==='Tú';
+ // En segunda persona cuando la jugada es tuya.
+ if(me){
+  if(last.kind==='catch')return `Pillas a ${who(last.target)} sin cantar: se chupa ${last.count}`;
+  if(last.kind==='eat')return `Te chupas ${last.count} ${last.count===1?'carta':'cartas'}`;
+  if(last.kind==='draw')return 'Robas';
+  if(last.kind==='pass')return 'Pasas';
+  if(last.kind==='play')return `Juegas ${tetunoCardName(last.card)}${last.card.suit==='comodin'?` · pides ${TETUNO_COLOR_LABELS[last.color].toLowerCase()}`:''}${last.called?' · ¡TETUNO!':''}`;
+ }
  if(last.kind==='start')return `Sale ${tetunoCardName(last.card)}`;
- if(last.kind==='catch')return `${actor} pilla a ${who(last.target)} sin cantar: se chupa ${last.count}`;
+ if(last.kind==='catch')return last.target===view.players.find(p=>who(p)==='Tú')?`${actor} te pilla sin cantar: te chupas ${last.count}`:`${actor} pilla a ${who(last.target)} sin cantar: se chupa ${last.count}`;
  if(last.kind==='eat')return `${actor} se chupa ${last.count} ${last.count===1?'carta':'cartas'}`;
  if(last.kind==='draw')return `${actor} roba`;
  if(last.kind==='pass')return `${actor} pasa`;
@@ -60,4 +68,41 @@ export function tetunoControls(view,playerId,ui,actionButton){
  const call=view.myHand.length===2&&view.playable.length?actionButton(ui.call?'¡Tetuno! cantado':'Cantar ¡Tetuno!','catalog-tetuno-call',`class="tetuno-call ${ui.call?'is-on':''}" aria-pressed="${ui.call}"`):'';
  if(wild)return `<span class="tetuno-color-caption">¿Qué color manda?</span>${TETUNO_COLORS.map(color=>actionButton(TETUNO_COLOR_LABELS[color],'catalog-tetuno-color',`class="tetuno-color-choice tetuno-${color}" data-color="${color}"`)).join('')}${call}${actionButton('Cancelar','catalog-clear')}`;
  return call;
+}
+
+// Gritos de la mesa: quien canta, pilla, castiga o se queda sin turno lo anuncia sobre su retrato.
+// Se recrean en cada redibujado conservando su progreso, como el resto de la física pública.
+const SHOUT=1900;
+const shoutContexts=new WeakMap();
+function shoutsFor(last){
+ const out=new Map(),add=(player,text,hit=false)=>{if(!player)return;const old=out.get(player);out.set(player,{text:old?`${old.text} ${text}`:text,hit:hit||old?.hit});};
+ if(last.kind==='play'){
+  if(last.card.rank==='+2'||last.card.rank==='+4')add(last.player,`¡CHÚPATE ${last.card.rank.slice(1)}!`);
+  else if(last.card.rank==='color')add(last.player,`¡${TETUNO_COLOR_LABELS[last.color].split(' ')[0].toUpperCase()}!`);
+  else if(last.card.rank==='vuelta'&&!last.skipped)add(last.player,'¡MEDIA VUELTA!');
+  if(last.called)add(last.player,'¡TETUNO!');
+  if(last.skipped)add(last.skipped,'¡SALTADO!',true);
+ }
+ if(last.kind==='catch'){add(last.player,'¡PILLADO!');add(last.target,`+${last.count}`,true);}
+ if(last.kind==='eat')add(last.player,`¡ÑAM! +${last.count}`,true);
+ return [...out].map(([player,shout])=>({player,...shout}));
+}
+export function finishTetunoEffects(app,view,name,playerId){
+ const last=view.lastPlay,key=`${view.players.join('|')}:${view.handNumber}`;
+ let ctx=shoutContexts.get(app);
+ if(!ctx||ctx.key!==key){shoutContexts.set(app,{key,sequence:last?.sequence,started:0,shouts:[]});return;}
+ if(last&&last.sequence!==ctx.sequence){ctx.sequence=last.sequence;ctx.started=performance.now();ctx.shouts=shoutsFor(last);}
+ const elapsed=performance.now()-ctx.started,panel=app.querySelector('.catalog-screen .players-panel');
+ if(!panel||elapsed>=SHOUT||!ctx.shouts.length||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+ const origin=panel.getBoundingClientRect();
+ for(const shout of ctx.shouts){
+  const seat=[...panel.querySelectorAll('.rival-seat')].find(el=>el.dataset.playerId===shout.player),token=seat?.querySelector('.rival-token');if(!token)continue;
+  const bubble=document.createElement('div');bubble.className=`player-speech tetuno-shout${shout.hit?' is-hit':''}`;bubble.dataset.speaker=shout.player;bubble.setAttribute('role','status');
+  bubble.setAttribute('aria-label',`${shout.player===playerId?'Tú':name(shout.player)}: ${shout.text}`);bubble.textContent=shout.text;panel.append(bubble);
+  const box=token.getBoundingClientRect(),width=bubble.getBoundingClientRect().width,centreX=box.x+box.width/2-origin.x,left=Math.max(2,Math.min(origin.width-width-2,centreX-width/2));
+  bubble.style.left=left+'px';bubble.style.top=box.bottom-origin.y-3+'px';bubble.style.setProperty('--speech-pointer',Math.max(12,Math.min(width-12,centreX-left))+'px');
+  const pop=bubble.animate([{opacity:0,transform:'translateY(8px) scale(.6) rotate(-6deg)'},{opacity:1,transform:'translateY(-3px) scale(1.12) rotate(2deg)',offset:.14},{opacity:1,transform:'none',offset:.22},{opacity:1,transform:'none',offset:.85},{opacity:0,transform:'translateY(-6px) scale(.95)'}],{duration:SHOUT,easing:'ease-out',fill:'both'});
+  pop.currentTime=elapsed;pop.onfinish=()=>bubble.remove();
+  if(shout.hit&&elapsed<600){const shake=token.animate([{transform:'none'},{transform:'translateX(-5px) rotate(-6deg)',offset:.2},{transform:'translateX(5px) rotate(5deg)',offset:.45},{transform:'translateX(-3px) rotate(-3deg)',offset:.7},{transform:'none'}],{duration:600,easing:'ease-out'});shake.currentTime=elapsed;}
+ }
 }

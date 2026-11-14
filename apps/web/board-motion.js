@@ -1,6 +1,11 @@
 import {DICE_DURATION,PAWN_STEP,CHECKER_STEP,PIECE_TRANSFER,CAPTURE_FADE,settledFrames,gooseFlights} from './game-physics.js';
 import {goosePoint,gooseRadius,renderCheckerPiece} from './board-games.js';
 import {finishDiceRender,OCA_DICE_TARGETS} from './parchis-dice.js';
+import {tossFrames,flipCover,drawGhost,drawTarget,CARD_FLIGHT,OWN_FLIGHT,DRAW_STAGGER,DEAL_STAGGER} from './card-motion.js';
+// Mesas donde una carta nueva sale oculta de la mano de un rival: viaja boca abajo y se voltea.
+const FLIP_BOARDS=new Set(['tricks','capture','melds','tetuno']);
+// Mesas donde robar del mazo se ve: un dorso vuela del mazo a quien roba.
+const DRAW_BOARDS=new Set(['tricks','capture','melds','tetuno']);
 
 const contexts=new WeakMap();
 const publicContexts=new WeakMap();
@@ -9,25 +14,35 @@ const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 export function preparePublicMotion(app,view){
  const key=`${view.id}:${view.players.join('|')}:${view.handNumber}`;
  let state=publicContexts.get(app);const fresh=!state||state.key!==key;
- if(fresh){state={key,keys:null,turn:null,flights:new Map(),ghosts:new Map()};publicContexts.set(app,state);}
+ // A new hand at the same table (not the first paint) deals visibly from the stock.
+ if(fresh){const renewed=!!state&&state.key.split(':').slice(0,2).join(':')===key.split(':').slice(0,2).join(':');state={key,keys:null,turn:null,flights:new Map(),ghosts:new Map(),draws:[],prev:null,renewed};publicContexts.set(app,state);}
  const seat=[...app.querySelectorAll('.rival-seat')].find(el=>el.dataset.playerId===state.turn);
  state.origin=seat?.getBoundingClientRect();
+ // Your own cards leave from where they sit in your hand, not from your portrait.
+ state.hand=new Map([...app.querySelectorAll('.catalog-hand [data-card-id]')].map(el=>[el.dataset.cardId,el.getBoundingClientRect()]));
  state.before=fresh?new Map():new Map([...app.querySelectorAll('.catalog-surface [data-public-piece]')].filter(el=>!el.closest('.capture-receipt')).map(el=>[el.dataset.publicPiece,{html:el.outerHTML,rect:el.getBoundingClientRect()}]));
  return state;
 }
-export function finishPublicMotion(app,view,state){
+export function finishPublicMotion(app,view,state,{self,back}={}){
  const cards=[...app.querySelectorAll('.catalog-surface [data-public-piece]')],keys=new Set(cards.map(el=>el.dataset.publicPiece)),now=performance.now();
  const dominoAdded=view.boardKind==='domino'&&state.keys&&cards.some(el=>!state.keys.has(el.dataset.publicPiece));
  for(const card of cards){
   const key=card.dataset.publicPiece;
-  if(state.keys&&!state.keys.has(key)&&state.origin)state.flights.set(key,{started:now,origin:state.origin});
+  if(state.keys&&!state.keys.has(key)){
+   const own=key.startsWith('card-')&&state.hand?.get(key.slice(5));
+   if(own)state.flights.set(key,{started:now,origin:own,own:true});
+   else if(state.origin)state.flights.set(key,{started:now,origin:state.origin,flip:!!back&&key.startsWith('card-')&&FLIP_BOARDS.has(view.boardKind)});
+  }
   if(dominoAdded&&state.keys.has(key)){const old=state.before.get(key)?.rect,next=card.getBoundingClientRect();if(old&&Math.hypot(old.x-next.x,old.y-next.y)>1)state.flights.set(key,{started:now,origin:old,slide:true});}
   const flight=state.flights.get(key);if(!flight||reduced())continue;
-  const duration=key.startsWith('tile-')?PIECE_TRANSFER:1200;
+  const duration=key.startsWith('tile-')?PIECE_TRANSFER:flight.own?OWN_FLIGHT:CARD_FLIGHT;
   const elapsed=now-flight.started;if(elapsed>=duration){state.flights.delete(key);continue;}
   const destination=card.getBoundingClientRect(),origin=flight.origin;
-  const frames=flight.slide?[{transform:`translate(${origin.x-destination.x}px,${origin.y-destination.y}px)`},{transform:'none'}]:[{transform:`translate(${origin.x+origin.width/2-destination.x-destination.width/2}px,${origin.y+origin.height/2-destination.y-destination.height/2}px) rotate(-10deg) scale(.75)`,opacity:.7},{transform:'translate(0,0) rotate(3deg) scale(1.05)',offset:.8},{transform:'none',opacity:1}];
-  const animation=card.animate(frames,{duration,easing:'cubic-bezier(.2,.8,.2,1)'});
+  // Your card starts below the felt: a fixed copy flies above everything, so the table never sees
+  // overflow (table-fit would shrink it), and the real card appears as the copy lands.
+  // The same holds for rivals' portraits beside the felt in landscape.
+  if(!flight.slide){tossGhost(app,card,origin,destination,duration,elapsed,{flip:flight.flip,spin:flight.own?-5:-14,back});card.animate([{opacity:0},{opacity:0,offset:.97},{opacity:1}],{duration}).currentTime=elapsed;continue;}
+  const animation=card.animate([{transform:`translate(${origin.x-destination.x}px,${origin.y-destination.y}px)`},{transform:'none'}],{duration,easing:'cubic-bezier(.2,.8,.2,1)'});
   animation.currentTime=elapsed;
  }
  for(const key of state.flights.keys())if(!keys.has(key))state.flights.delete(key);
@@ -42,7 +57,27 @@ export function finishPublicMotion(app,view,state){
    const animation=el.animate([{transform:'none',opacity:1},{transform:`translate(${ghost.target.x+ghost.target.width/2-ghost.rect.x-ghost.rect.width/2}px,${ghost.target.y+ghost.target.height/2-ghost.rect.y-ghost.rect.height/2}px) scale(.35) rotate(10deg)`,opacity:0}],{duration:600,delay:ghost.delay,easing:'ease-in',fill:'both'});animation.currentTime=elapsed;animation.onfinish=()=>el.remove();
   }
  }
+ // Cards drawn or dealt from the stock: one back per card, flying to whoever receives it.
+ if(DRAW_BOARDS.has(view.boardKind)&&back&&!reduced()){
+  const stock=app.querySelector('.catalog-surface .deck-stock')?.getBoundingClientRect(),sizes=view.handSizes||{};
+  if(stock?.width&&state.prev&&view.stockCount<state.prev.stock){
+   let left=state.prev.stock-view.stockCount,order=0;
+   for(const p of view.players){const gain=Math.min(left,Math.max(0,(sizes[p]??0)-(state.prev.sizes[p]??0)));left-=gain;const to=drawTarget(app,p,self);if(!to)continue;for(let i=0;i<Math.min(gain,6);i++)state.draws.push({from:stock,to,started:now,delay:order++*DRAW_STAGGER,spin:-10+((order*7)%14)});}
+  }else if(stock?.width&&state.renewed&&!state.prev){
+   const per=Math.min(3,Math.max(0,...view.players.map(p=>sizes[p]??0)));let order=0;
+   for(let i=0;i<per;i++)for(const p of view.players){if((sizes[p]??0)<=i)continue;const to=drawTarget(app,p,self);if(to)state.draws.push({from:stock,to,started:now,delay:order++*DEAL_STAGGER,spin:-8+((order*5)%12)});}
+  }
+  state.draws=state.draws.filter(draw=>drawGhost(app,draw,back,now));
+ }
+ state.prev={sizes:{...(view.handSizes||{})},stock:view.stockCount??0};
  state.keys=keys;state.turn=view.turnPlayer;
+}
+function tossGhost(app,card,origin,destination,duration,elapsed,{flip=false,spin=-5,back}={}){
+ const holder=document.createElement('div');holder.innerHTML=card.outerHTML;const el=holder.firstElementChild;
+ el.classList.add('card-toss-ghost');el.removeAttribute('data-action');el.removeAttribute('data-public-piece');el.setAttribute('aria-hidden','true');el.tabIndex=-1;
+ Object.assign(el.style,{left:destination.x+'px',top:destination.y+'px',width:destination.width+'px',height:destination.height+'px'});app.append(el);
+ const animation=el.animate(tossFrames(origin,destination,{flip,spin}),{duration,easing:'linear',fill:'both'});animation.currentTime=elapsed;animation.onfinish=()=>el.remove();
+ if(flip&&back)flipCover(el,back,duration,elapsed);
 }
 function indicateTurn(root,player){
  for(const seat of root.querySelectorAll('.rival-seat')){

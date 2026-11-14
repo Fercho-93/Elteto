@@ -3,7 +3,7 @@ const navigation=new Set(['catalog-zoom','catalog-close-zoom','catalog-poker-clo
 export const isTurnAction=action=>action==='play-card'||action==='cinquillo-pass'||action==='cinquillo-next-hand'||action.startsWith('mus-')&&!['mus-bet-less','mus-bet-more','mus-target'].includes(action)||action.startsWith('parchis-')&&!navigation.has(action)||action.startsWith('catalog-')&&!navigation.has(action);
 // Each device queues only its own redacted snapshots. The host remains authoritative.
 // Frases del historial que empiezan por tu nombre se leen en segunda persona.
-const VERBS={gana:'Ganas',pierde:'Pierdes',recoge:'Recoges',sale:'Sales','no tiene':'No tienes',descarta:'Descartas',roba:'Robas',coge:'Coges',cierra:'Cierras',coloca:'Colocas',pide:'Pides',apuesta:'Apuestas',juega:'Juegas',deja:'Dejas',declara:'Declaras','se planta':'Te plantas','se pasa':'Te pasas','enseña':'Enseñas','se abate':'Te abates',cambia:'Cambias',recibe:'Recibes',elige:'Eliges',delega:'Delegas',contra:'Contras',recontra:'Recontras','no contra':'No contras','no recontra':'No recontras',canta:'Cantas',acierta:'Aciertas','pidió':'Pediste','hizo la última':'Hiciste la última','se queda':'Te quedas',reparte:'Repartes'};
+const VERBS={gana:'Ganas','se chupa':'Te chupas',pilla:'Pillas','se queda sin':'Te quedas sin',pierde:'Pierdes',recoge:'Recoges',sale:'Sales','no tiene':'No tienes',descarta:'Descartas',roba:'Robas',coge:'Coges',cierra:'Cierras',coloca:'Colocas',pide:'Pides',apuesta:'Apuestas',juega:'Juegas',deja:'Dejas',declara:'Declaras','se planta':'Te plantas','se pasa':'Te pasas','enseña':'Enseñas','se abate':'Te abates',cambia:'Cambias',recibe:'Recibes',elige:'Eliges',delega:'Delegas',contra:'Contras',recontra:'Recontras','no contra':'No contras','no recontra':'No recontras',canta:'Cantas',acierta:'Aciertas','pidió':'Pediste','hizo la última':'Hiciste la última','se queda':'Te quedas',reparte:'Repartes'};
 const FOLLOW={recoge:'recoges',roba:'robas',forma:'formas',descubre:'descubres','se pasa':'te pasas','se lo lleva':'te lo llevas',cierra:'cierras','se lleva':'te llevas',deja:'dejas',hizo:'hiciste',cumple:'cumples'};
 export function secondPerson(text,playerId){
  const safe=playerId.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
@@ -82,7 +82,7 @@ export class TurnSequence {
   let box=surface?.querySelector('.turn-splash');
   if(!surface||!this.busy||!event||event.pace!=='cards'&&event.kind!=='speech'){box?.remove();return;}
   const self=event.actor===playerId,phase=this.phase;
-  const verb=self?({'Juega carta':'Juegas','Coloca ficha':'Colocas ficha','Recoge la baza':'Recoges la baza','Roba boca abajo':'Robas boca abajo','Descarta':'Descartas','Apuesta':'Apuestas','Hace su jugada':'Tu jugada','Resuelve el turno':'Tu jugada','Declara cartas':'Declaras','Pasa':'Pasas','Cuestiona la jugada':'Cuestionas','Canta':'Cantas','Sin cantar':'Sin cantar'})[event.action]||event.action:event.action;
+  const verb=self?({'Juega carta':'Juegas','Coloca ficha':'Colocas ficha','Recoge la baza':'Recoges la baza','Roba boca abajo':'Robas boca abajo','Descarta':'Descartas','Apuesta':'Apuestas','Hace su jugada':'Tu jugada','Resuelve el turno':'Tu jugada','Declara cartas':'Declaras','Pasa':'Pasas','Cuestiona la jugada':'Cuestionas','Canta':'Cantas','Sin cantar':'Sin cantar','Roba':'Robas','Se chupa las cartas':'Te chupas las cartas'})[event.action]||event.action:event.action;
   const who=self?'':name(event.actor)+' · ';
   const title=phase==='result'?'Resultado':`${who}${verb}`;
   const body=read(phase==='result'?event.result:event.detail);

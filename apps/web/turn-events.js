@@ -6,7 +6,7 @@ import {DICE_DURATION,PAWN_STEP,CHECKER_STEP,PIECE_TRANSFER,CAPTURE_FADE,gooseFl
 export const TURN_INTRO=1000,TURN_RESULT=2000;
 // Card and tile games: about four seconds per play, enough to read who played what without
 // dragging long hands. Completing a trick or a hand leaves extra time to read the outcome.
-export const CARD_PACE_GAMES=new Set(['tricks','capture','melds','burro','bank','domino']);
+export const CARD_PACE_GAMES=new Set(['tricks','capture','melds','burro','bank','domino','tetuno']);
 export const turnTiming=event=>event?.kind==='checkers'?{intro:180,result:250,padding:150}:event?.pace==='cards'?{intro:900,result:event.settles?3200:event.collects?2600:1500,padding:600}:{intro:TURN_INTRO,result:TURN_RESULT,padding:800};
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 export const viewIdentity=(change)=>`${change.gameId||change.view.id}:${change.view.players.join('|')}:${change.playerId||''}:${change.view.boardKind==='poker'?'session':change.view.handNumber||1}`;
@@ -47,7 +47,9 @@ export function publicTurnEvent(before,after){
  // Log arrays can be capped, so compare their contents rather than their length.
  const meaningful=roll||checkers||speech||pawns.length||!same(before.log,after.log)||before.phase!==after.phase||before.turnPlayer!==after.turnPlayer||!same(before.handSizes,after.handSizes)||!same(before.scores,after.scores);
  if(!meaningful)return null;
- const actor=roll?.player||checkers?.player||capture?.player||speech?.player||trick?.player||discarded||before.turnPlayer;
+// El Tetuno anota cada jugada pública, incluido «¡Pillado!», que puede hacerse fuera de turno.
+ const tetuno=after.boardKind==='tetuno'&&after.lastPlay?.player&&after.lastPlay.sequence!==before.lastPlay?.sequence?after.lastPlay:null;
+ const actor=tetuno?.player||roll?.player||checkers?.player||capture?.player||speech?.player||trick?.player||discarded||before.turnPlayer;
  let motion=after.boardKind==='domino'?PIECE_TRANSFER:1200,kind='action',detail=after.log?.at(-1)||'Jugada realizada';
  if(after.boardKind==='poker'&&before.handNumber!==after.handNumber)motion=1500;
  if(roll){kind='roll';motion=DICE_DURATION;detail=`Dado: ${roll.value}`;}
@@ -71,6 +73,7 @@ export function publicTurnEvent(before,after){
  if(after.boardKind==='tricks'&&before.phase==='collect'&&after.phase==='collect'){const sang=!same(before.log,after.log)&&/ canta /.test(after.log?.at(-1)||'');action=sang?'Canta':'Sin cantar';detail=sang?after.log.at(-1):`${actor} no tiene cantes`;}
  if(after.boardKind==='tricks'&&before.trickWinner&&!after.trickWinner){action=actor===before.trickWinner?'Recoge la baza':'Sin cantar';detail=after.phase==='play'?`${before.trickWinner} sale en la siguiente baza`:'Última baza recogida';}
  if(after.boardKind==='burro'){action='Roba boca abajo';const pair=after.lastPair;detail=pair&&pair.sequence!==before.lastPair?.sequence?(pair.cards.length?`Forma pareja: ${pair.cards.map(c=>cardName(c)).join(' y ')}`:`Roba a ${pair.from}: sin pareja`):fresh[0]||detail;}
+ if(tetuno){action=({play:'Juega carta',draw:'Roba',eat:'Se chupa las cartas',pass:'Pasa',catch:'¡Pillado!'})[tetuno.kind]||action;detail=fresh.find(line=>!/^Se acaba el mazo/.test(line))||detail;}
  if(after.boardKind==='oca'&&!roll){action='Pasa turno';detail=before.prison===actor?'Espera en el trullo':'Pierde el turno';}
  if(after.bets?.[actor]!==before.bets?.[actor]&&after.bets?.[actor]!==undefined){action='Apuesta';detail=`${after.bets[actor]} fichas`;}
  if(after.boardKind==='bank'&&fresh.length){const line=fresh[0];detail=line;action=/ apuesta /.test(line)?'Apuesta':/ se planta/.test(line)?'Se planta':/ se pasa /.test(line)?'Se pasa':/ pide carta boca abajo/.test(line)?'Pide carta oculta':/ pide carta/.test(line)?'Pide carta':action;}

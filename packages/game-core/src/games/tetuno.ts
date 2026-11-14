@@ -105,7 +105,7 @@ export const tetunoEngine=makeEngine('tetuno',(players,seed)=>{const s=base('tet
  if(card.rank==='+2'||card.rank==='+4'){s.pending+=card.rank==='+2'?2:4;s.pendingKind=card.rank;}
  if(card.rank==='vuelta'){s.direction=-s.direction;if(s.players.length>2)note(s,'Media vuelta: cambia el sentido.');}
  if(!left){step(s);endHand(s,p);return;}
- if(card.rank==='salto'||(card.rank==='vuelta'&&s.players.length===2)){step(s);note(s,`${s.players[s.turn]} se queda sin turno.`);step(s);return;}
+ if(card.rank==='salto'||(card.rank==='vuelta'&&s.players.length===2)){step(s);s.lastPlay.skipped=s.players[s.turn];note(s,`${s.players[s.turn]} se queda sin turno.`);step(s);return;}
  step(s);
 },(s,p)=>{
  const mine=s.players[s.turn]===p&&!s.finished,playable=tetunoPlayable(s,p);

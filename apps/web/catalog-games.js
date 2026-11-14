@@ -11,7 +11,7 @@ import {secondPerson} from './turn-sequence.js';
 import {renderRivalRoster,revealActivePlayer} from './rival-portraits.js';
 import {mascotForSeat,MASCOTS,escapeHtml as esc,suitArt} from './table-view.js';
 import {renderCardArtwork,renderCardBack,renderDrawPile} from './card-art.js';
-import {isTetunoCard,renderTetunoFace,tetunoCardName,sortTetunoHand,tetunoTable,tetunoControls} from './tetuno-table.js';
+import {isTetunoCard,renderTetunoFace,renderTetunoBack,tetunoCardName,sortTetunoHand,tetunoTable,tetunoControls,finishTetunoEffects} from './tetuno-table.js';
 
 let pokerSpanishView=false,frenchDeckView=false;
 const ui={key:'',cards:new Set(),table:new Set(),path:[],tile:null,call:false};
@@ -214,8 +214,9 @@ export function renderCatalogGame(app,view,playerId,name,error=''){
  if(view.boardKind==='checkers'){const toolbar=app.querySelector('.catalog-surface .checkers-toolbar');if(toolbar)app.querySelector('.catalog-dock').prepend(toolbar);}
  if(view.boardKind==='poker'){organizePokerDock(app);for(const saved of amounts)if(saved.focus){const input=app.querySelector('#'+saved.id);if(input){input.focus({preventScroll:true});try{input.setSelectionRange(saved.caret??input.value.length,saved.caret??input.value.length);}catch{}}}syncPokerAmounts(app,view);collectPokerBets(app,previousPoker,view);app.pokerSnapshot=pokerSnapshot(app,view);}
  finishBoardMotion(app,view,playerId,name,error);
- if(view.boardKind!=='poker')finishPublicMotion(app,view,publicMotion);
+ if(view.boardKind!=='poker')finishPublicMotion(app,view,publicMotion,{self:playerId,back:view.boardKind==='tetuno'?renderTetunoBack():face(null)});
  finishTableSpeech(app,view,name);
+ if(view.boardKind==='tetuno')finishTetunoEffects(app,view,name,playerId);
  if(view.boardKind==='oca')finishDiceRender(app,view,error,OCA_DICE_TARGETS);
 }
 export function handleCatalogAction(app,button,view,send,render){
