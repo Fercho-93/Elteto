@@ -413,3 +413,41 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
 .tetuno-shout:before{background:#fff36b;}
 .tetuno-shout.is-hit{background:linear-gradient(#ff7aa2,#e0245e);color:#fff;box-shadow:0 3px 0 #7c0f33,0 6px 12px #0006;}
 .tetuno-shout.is-hit:before{background:#ff7aa2;}
+/* Siete y medio: tus cartas, incluida la oculta, ya están boca arriba en tu asiento de la mesa.
+   La mano de abajo las repetía y robaba media pantalla al tapete. */
+.catalog-screen[data-game="siete_y_medio"] .catalog-hand{display:none;}
+.bank-standings{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
+.bank-standings li{display:grid;grid-template-columns:22px minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:#0f322bcc;border:1px solid #d9c18a44;color:#eedab1;font:600 13px system-ui,sans-serif;}
+.bank-standings li:first-child{background:linear-gradient(#5a4316,#3a2b0d);border-color:#f6d36b;color:#ffe9a8;}
+.bank-standings li.is-own strong{color:#9eefec;}
+.bank-standings span{font-weight:900;color:#f6d36b;}
+.bank-standings strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bank-standings small{font-size:11px;color:#c9bf9e;min-width:34px;text-align:right;}
+/* Las cartas pedidas se abren en abanico solapado: el asiento no crece por pedir cartas. */
+.bank-seat .catalog-public-cards{display:flex;flex-wrap:nowrap;justify-content:center;gap:0;max-width:100%;}
+.bank-seat .catalog-public-cards .catalog-card{flex:none;box-shadow:-2px 2px 4px #0006;}
+.bank-seat .catalog-public-cards .catalog-card+.catalog-card{margin-left:calc(clamp(36px,11cqw,54px) * -.55);}
+.bank-seat .catalog-public-cards .catalog-card:nth-child(2){rotate:4deg;}
+.bank-seat .catalog-public-cards .catalog-card:nth-child(3){rotate:8deg;}
+.bank-seat .catalog-public-cards .catalog-card:nth-child(n+4){rotate:11deg;}
+/* Escoba: con muchas cartas en la mesa, cartas algo menores y filas que crecen hacia abajo (nunca tapadas). */
+.capture-felt{align-content:safe center;}
+.capture-felt:has(>.catalog-card:nth-child(5)) .catalog-card{width:clamp(48px,15vw,72px);}
+.capture-felt:has(>.catalog-card:nth-child(11)) .catalog-card{width:clamp(40px,12.5vw,60px);}
+/* Mentiroso: el montón tiene grosor según las cartas que acumula, y vacío se ve como un hueco. */
+.bluff-pile-stack{box-shadow:calc(var(--pile,0)*1px) calc(var(--pile,0)*1.5px) 0 -1px #6a3a52,calc(var(--pile,0)*2px) calc(var(--pile,0)*3px) 0 -2px #4a2236,0 6px 12px #0006;}
+.bluff-pile-empty{display:block;width:clamp(52px,16vw,70px);aspect-ratio:208/319;border:2px dashed #efe0b855;border-radius:6px;margin:0 auto;}
+/* Baza como en una mesa real: cartas grandes en un montón central, cada una desplazada hacia
+   quien la jugó y solapada con las demás (se lee la esquina). El tamaño sigue al alto del tapete. */
+.trick-slot{--trick-w:clamp(34px,min(21cqw,40cqh),88px);left:calc(50% + var(--sx)*var(--trick-w)*.92);top:calc(50% + var(--sy)*var(--trick-w)*.62);}
+.trick-table[style*="--seats:5"] .trick-slot,.trick-table[style*="--seats:6"] .trick-slot,.trick-table[style*="--seats:7"] .trick-slot{--trick-w:clamp(30px,min(17cqw,34cqh),74px);left:calc(50% + var(--sx)*var(--trick-w)*1.05);top:calc(50% + var(--sy)*var(--trick-w)*.7);}
+.trick-slot small{position:absolute;bottom:calc(100% - 6px);left:50%;translate:-50% 0;z-index:3;max-width:calc(var(--trick-w) + 30px);box-shadow:0 1px 3px #0007;}
+.trick-slot .catalog-card{box-shadow:0 2px 5px #0008;}
+.trick-slot.is-winner{z-index:4;}
+/* Al recontar, las combinaciones quedan como referencia compacta bajo el recuento. */
+.catalog-screen:is([data-phase="result"],[data-phase="finished"]) .catalog-melds{gap:6px 10px;}
+.catalog-screen:is([data-phase="result"],[data-phase="finished"]) .catalog-melds section{gap:3px;}
+.catalog-screen:is([data-phase="result"],[data-phase="finished"]) .meld-owner>div{gap:4px;}
+.catalog-screen:is([data-phase="result"],[data-phase="finished"]) .meld-group{padding:2px;}
+.catalog-screen:is([data-phase="result"],[data-phase="finished"]) .meld-group .catalog-card{width:24px;padding:1px;border-width:1px;}
+.catalog-screen:is([data-phase="result"],[data-phase="finished"]) .meld-group .catalog-card+.catalog-card{margin-left:-11px;}

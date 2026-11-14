@@ -23,9 +23,9 @@ export function tossFrames(origin,destination,{flip=false,spin=-12}={}){
  });
 }
 /** Dorso que tapa la cara mientras la carta de un rival vuela; desaparece en el volteo. */
-export function flipCover(card,back,duration,elapsed){
+export function flipCover(card,back,duration,elapsed,delay=0){
  const cover=document.createElement('span');cover.className='card-flight-back';cover.setAttribute('aria-hidden','true');cover.innerHTML=back;card.append(cover);
- const animation=cover.animate([{opacity:1},{opacity:1,offset:.46},{opacity:0,offset:.48},{opacity:0}],{duration,fill:'both'});
+ const animation=cover.animate([{opacity:1},{opacity:1,offset:.46},{opacity:0,offset:.48},{opacity:0}],{duration,delay,fill:'both'});
  animation.currentTime=elapsed;animation.onfinish=()=>cover.remove();
 }
 /** Dorso suelto que viaja del mazo a un jugador. Se recrea en cada redibujado conservando su progreso. */

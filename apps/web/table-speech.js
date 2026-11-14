@@ -4,7 +4,8 @@ const ranks={'2':'doses','3':'treses','4':'cuatros','5':'cincos','6':'seises','7
 export function speechText(speech){
  if(speech.kind==='pass')return 'Paso · me lo creo';
  if(speech.kind==='challenge')return '¡Mentiroso!';
- return `${speech.count} ${(speech.count===1?singular:ranks)[speech.rank]||`de valor ${speech.rank}`}`;
+ if(speech.count===1&&singular[speech.rank])return `${speech.rank==='10'?'una':'un'} ${singular[speech.rank]}`;
+ return `${speech.count} ${ranks[speech.rank]||`de valor ${speech.rank}`}`;
 }
 export function finishTableSpeech(app,view,name){
  if(view.boardKind!=='bluff'){contexts.delete(app);return;}
