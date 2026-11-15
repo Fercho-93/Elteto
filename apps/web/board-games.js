@@ -64,8 +64,10 @@ export function renderGooseBoard(view,name,zoom=false){
  </defs><rect x="2" y="2" width="936" height="996" rx="25" fill="url(#${prefix}-night)" stroke="#53eaff" stroke-width="4"/><rect x="12" y="72" width="916" height="916" rx="20" fill="none" stroke="#ff69d1" stroke-width="6"/>
  <text x="470" y="47" class="goose-title">ELTETOCA · SE VIENE PIQUE!</text>
  <g class="goose-center" aria-hidden="true">
- <text x="430" y="340" class="goose-center-title">ELTETOCA</text>
- <text x="430" y="385" class="goose-center-note">SORTEO DE SALIDA</text>
- ${(view.opening||[]).flatMap((round,r)=>round.map((x,i)=>`<text x="430" y="${420+(view.opening.slice(0,r).reduce((n,o)=>n+o.length,0)+i)*30}" class="goose-center-roll">${r?'Desempate · ':''}${esc(name(x.player))}: ${x.value}</text>`)).join('')}
+ <clipPath id="${prefix}-center-clip"><rect x="224" y="284" width="400" height="386" rx="18"/></clipPath>
+ <image href="./assets/eltetoca-board-center.webp" x="224" y="284" width="400" height="386" preserveAspectRatio="xMidYMid slice" clip-path="url(#${prefix}-center-clip)"/>
+ <rect x="224" y="284" width="400" height="386" rx="18" fill="none" stroke="#53eaff" stroke-width="3"/>
+ ${(view.opening||[]).length?`<rect x="224" y="${670-18-(view.opening.flat().length)*28}" width="400" height="${18+view.opening.flat().length*28}" fill="#17132ecc" clip-path="url(#${prefix}-center-clip)"/>`:''}
+ ${(view.opening||[]).flatMap((round,r)=>round.map((x,i)=>`<text x="424" y="${670-10-(view.opening.flat().length-(view.opening.slice(0,r).reduce((n,o)=>n+o.length,0)+i))*28+20}" class="goose-center-roll">${r?'Desempate · ':''}${esc(name(x.player))}: ${x.value}</text>`)).join('')}
  </g>${cells}<g aria-hidden="true">${joins}</g>${pawns}</svg>`;
 }
