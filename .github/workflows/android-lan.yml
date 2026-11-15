@@ -43,7 +43,9 @@ jobs:
 
   navegador:
     name: Pruebas de pantalla (Chromium y WebKit)
-    runs-on: ubuntu-latest
+    # Playwright 1.56.1 no soporta Ubuntu 26.04 (la imagen de «ubuntu-latest» desde noviembre de
+    # 2026): sin esta versión fija, no se instalan los navegadores y todas las pruebas fallan.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
