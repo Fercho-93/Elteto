@@ -59,8 +59,8 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "url": "",
       "sha256": ""
     },
-    "summary": "108 cartas en 4 colores: descarta por color o símbolo; Chúpate 2 y 4 acumulables, Te salto, Media vuelta y comodines. Canta ¡Tetuno! con una carta. Partida a 300.",
-    "implementationNotes": "Juego propio de Elteto con las reglas clásicas de descartes por colores. Siete cartas por cabeza, salida siempre con un número, Chúpate 4 solo sin cartas del color que manda y Chúpate acumulables (2 sobre 2, 4 sobre 2 o 4). Quien no cante ¡Tetuno! y sea pillado se chupa dos. El ganador de la mano suma las cartas ajenas: números su valor, especiales 20 y comodines 50.",
+    "summary": "108 cartas en 4 colores: descarta por color o símbolo; Chúpate 2 y 4 acumulables, Te salto, Media vuelta y comodines. Canta ¡Tetuno! tras echar la penúltima carta. Gana quien llegue a 5 manos.",
+    "implementationNotes": "Juego propio de Elteto con las reglas clásicas de descartes por colores. Siete cartas por cabeza, salida siempre con un número, Chúpate 4 solo sin cartas del color que manda y Chúpate acumulables (2 sobre 2, 4 sobre 2 o 4). Quien se queda con una carta y no canta ¡Tetuno! antes de que el siguiente eche la suya se lleva del mazo tantas cartas como jugadores hay en la mesa. Se juegan manos sin puntos: gana quien llegue antes a 5 manos.",
     "phases": [
       "reparto",
       "descartar",
@@ -70,7 +70,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "play",
       "draw",
       "pass",
-      "catch",
+      "call",
       "next-hand"
     ],
     "acceptance": [
@@ -78,7 +78,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
       "Chúpate acumulado",
       "Media vuelta y salto",
       "Cantar ¡Tetuno!",
-      "Recuento a 300"
+      "Gana quien llegue a 5 manos"
     ]
   },
   {

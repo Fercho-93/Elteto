@@ -49,7 +49,8 @@
 .oca-dock .parchis-die{width:66px;}
 
 .goose-center-title{fill:#57efff;font:italic 900 46px system-ui,sans-serif;text-anchor:middle;paint-order:stroke;stroke:#17132e;stroke-width:3px;}
-.goose-center-note{fill:#ffe775;font:800 12px system-ui,sans-serif;text-anchor:middle;letter-spacing:1px;}
+.goose-center-roll{fill:#fff3ca;font:800 24px system-ui,sans-serif;text-anchor:middle;}
+.goose-center-note{fill:#ffe775;font:800 18px system-ui,sans-serif;text-anchor:middle;letter-spacing:1px;}
 .catalog-screen[data-game="oca"] .catalog-surface{background:radial-gradient(ellipse at top,#412053,#101c35);border-color:#a460c8;}
 /* Boards sit on the app background, with the felt reserved for card games. */
 .catalog-screen[data-game="damas_espanolas"] .catalog-surface,.catalog-screen[data-game="oca"] .catalog-surface{background:transparent;border:0;box-shadow:none;border-radius:0;padding:0;}

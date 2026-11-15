@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {getGame} from '../dist/game-core/index.js';
 const e=getGame('oca');
-const initial=e.createInitialState(['a','b','c'],22);
+const initial={...e.createInitialState(['a','b','c'],22),players:['a','b','c'],turn:0};
 // Select a reproducible seed with a one-pip roll; all assertions use the public engine.
 let seed;for(let n=1;n<10000;n++){if(e.applyAction({...initial,seed:n},'a',{type:'roll'}).roll===1){seed=n;break;}}
 assert.ok(seed);

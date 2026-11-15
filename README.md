@@ -23,7 +23,7 @@ Para probarlo, abre [Elteto en GitHub Pages](https://fercho-93.github.io/Elteto/
 
 La pantalla «Crear partida» ofrece los veintiún juegos: Tablero (Parchís, Oca, Damas, Dominó) y Cartas, agrupadas en familia, bazas y triunfos, combinaciones, y envites y apuestas.
 
-**El Tetuno** es el juego de descartes propio de Elteto (de 2 a 8): 108 cartas en cuatro colores con los avatares de la casa, Chúpate 2 y Chúpate 4 acumulables, Te salto, Media vuelta, comodines y el canto de **¡Tetuno!** con una carta; partida a 300. La **Oca** mantiene las reglas de Cayro con casillas gamberras: avatares en lugar de ocas («de avatar en avatar y tiro porque me toca»), Tirolina, Resaca, Pedo-cohete, Váter, Rotonda, Trullo, Cáscara y Fiestón, y cada ficha lleva el avatar de su jugador. Detalle en [design/CATALOGO_JUGABLE.md](design/CATALOGO_JUGABLE.md).
+**El Tetuno** es el juego de descartes propio de Elteto (de 2 a 8): 108 cartas en cuatro colores con los avatares de la casa, Chúpate 2 y Chúpate 4 acumulables, Te salto, Media vuelta, comodines y el canto de **¡Tetuno!** tras echar la penúltima carta (si no cantas antes de que el siguiente eche la suya, te llevas tantas cartas como jugadores haya); gana quien llegue a 5 manos. La **Oca** mantiene las reglas de Cayro con casillas gamberras: avatares en lugar de ocas, Tirolina, Resaca, Pedo-cohete, Váter, Rotonda, Trullo, Cáscara y Fiestón, y cada ficha lleva el avatar de su jugador. Detalle en [design/CATALOGO_JUGABLE.md](design/CATALOGO_JUGABLE.md).
 
 Cinquillo admite de dos a seis participantes. Mus necesita cuatro. Parchís admite de tres a seis, con un tablero que se adapta a la mesa (triángulo, cuadrado, pentágono o hexágono) y la opción de dos dados con cinco o seis.
 

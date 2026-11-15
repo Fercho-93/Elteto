@@ -48,7 +48,7 @@ try{
  // Placing at the left end shifts the existing tiles; placing at the right end flies the new tile in. Either way one tile moves for PIECE_TRANSFER.
  for(const page of pages){assert.ok((await page.locator('.catalog-surface .domino-tile').evaluateAll(els=>els.map(el=>el.getAnimations()[0]?.effect.getTiming().duration))).includes(PIECE_TRANSFER),'Domino tiles glide when the chain grows');}
  // A prisoner released by another player's landing travels only after the arrival.
- const goose=getGame('oca');game=goose.createInitialState(['a','b','c','d'],22);
+ const goose=getGame('oca');game={...goose.createInitialState(['a','b','c','d'],22),players:['a','b','c','d'],turn:0};
  const die=goose.applyAction(game,'a',{type:'roll'}).roll;game.positions.a=52-die;game.positions.b=52;game.prison='b';
  await show('oca',game);const released=goose.applyAction(game,'a',{type:'roll'}),flights=gooseFlights(game,released);
  assert.deepEqual(flights.map(f=>f.player),['a','b']);assert.equal(flights[1].delay,DICE_DURATION+flights[0].duration);assert.equal(flights[1].duration,PIECE_TRANSFER);
@@ -60,7 +60,7 @@ try{
  for(const page of pages){const victims=await page.locator('.catalog-surface .checker-captured').evaluateAll(els=>els.map(el=>{const a=el.getAnimations()[0];return {delay:a.effect.getTiming().delay,duration:a.effect.getTiming().duration};}));assert.deepEqual(victims.map(v=>v.delay),[CHECKER_STEP,CHECKER_STEP*2]);assert.ok(victims.every(v=>v.duration===CAPTURE_FADE));assert.ok(await page.locator('.catalog-surface .piece-travelling').evaluate(el=>getComputedStyle(el).boxShadow.includes('inset')));}
  // Both dice games always reserve one small 44px button right beside the cube.
  for(const id of ['oca','parchis'])for(const [width,height] of [[320,568],[390,844],[844,390]]){
-  const engine=getGame(id);game=engine.createInitialState(['a','b','c','d'],22);for(const page of pages)await page.setViewportSize({width,height});await show(id,game);const next=engine.applyAction(game,'a',{type:'roll'});await show(id,next,false);
+  const engine=getGame(id);game={...engine.createInitialState(['a','b','c','d'],22),players:['a','b','c','d'],turn:0};for(const page of pages)await page.setViewportSize({width,height});await show(id,game);const next=engine.applyAction(game,'a',{type:'roll'});await show(id,next,false);
   for(const page of pages){const metrics=await page.evaluate(()=>{const die=document.querySelector('.parchis-die').getBoundingClientRect(),button=document.querySelector('.oca-dock .catalog-options button,.parchis-actions [data-action="parchis-roll"]').getBoundingClientRect();return {width:button.width,height:button.height,gap:button.left-die.right,sameRow:button.top<die.bottom&&button.bottom>die.top,page:document.documentElement.scrollHeight<=innerHeight+1};});assert.ok(metrics.width<=124&&metrics.height>=44&&metrics.height<=48&&metrics.gap>=0&&metrics.gap<=24&&metrics.sameRow&&metrics.page,JSON.stringify({id,width,height,...metrics}));assert.equal(await page.locator('.die-flight').evaluate(el=>el.getAnimations()[0]?.effect.getTiming().duration),DICE_DURATION);}
  }
  for(const page of pages)await page.setViewportSize({width:390,height:844});

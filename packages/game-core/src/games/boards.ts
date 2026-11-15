@@ -16,7 +16,21 @@ export const dominoEngine=makeEngine('domino',(p,seed)=>{const s=base('domino',p
 },(s,p)=>publicView(s,p,{boardKind:'domino',chain:s.chain,chainStart:s.chainStart??0,myTiles:s.tiles[p],handSizes:mapPlayers(s.players,id=>s.tiles[id].length),unit:'fichas',target:150,teamLabels:mapPlayers(s.players,(_,i)=>`Pareja ${i%2?'B':'A'}`),instruction:s.phase==='result'?'Mano terminada.':'Encaja una ficha en uno de los extremos.',options:s.players[s.turn]!==p||s.finished?[]:s.phase==='result'?choices(['Siguiente mano',{type:'next-hand'}]):dominoOptions(s,p)}));
 
 const geese=[5,9,14,18,23,27,32,36,41,45,50,54,59];
-export const ocaEngine=makeEngine('oca',(p,seed)=>{const s=base('oca',p,seed);s.positions=mapPlayers(p,()=>1);s.penalties=mapPlayers(p,()=>0);s.prison=null;s.roll=0;return s;},(s,p,a)=>{
+// Sorteo de salida: cada jugador tira un dado; los empates repiten solo entre los empatados.
+// La mesa queda ordenada de la tirada más alta a la más baja y sale el primero.
+function ocaOpening(s:State){
+ const rounds:{player:string;value:number}[][]=[],ranked:string[]=[];
+ const settle=(group:string[])=>{
+  if(group.length===1){ranked.push(group[0]);return;}
+  const rolls=group.map(player=>({player,value:1+Math.floor(random(s)*6)}));rounds.push(rolls);
+  const values=[...new Set(rolls.map(r=>r.value))].sort((a,b)=>b-a);
+  for(const v of values)settle(rolls.filter(r=>r.value===v).map(r=>r.player));
+ };
+ settle([...s.players]);
+ s.players=ranked;s.turn=0;s.opening=rounds;
+ note(s,`Sorteo de salida: ${rounds.map(r=>r.map(x=>`${x.player} ${x.value}`).join(', ')).join(' · desempate: ')}. Sale ${ranked[0]}.`);
+}
+export const ocaEngine=makeEngine('oca',(p,seed)=>{const s=base('oca',p,seed);s.positions=mapPlayers(p,()=>1);s.penalties=mapPlayers(p,()=>0);s.prison=null;s.roll=0;ocaOpening(s);return s;},(s,p,a)=>{
  requireTurn(s,p);check(a.type==='roll');
  if(a.expectedRoll!==undefined)check(Number.isInteger(a.expectedRoll)&&a.expectedRoll===(s.lastRoll?.sequence??0),'La tirada ya fue procesada. Espera al turno actual.');
  if(s.prison===p){note(s,`${p} espera en prisión.`);next(s);return;}
@@ -34,7 +48,7 @@ export const ocaEngine=makeEngine('oca',(p,seed)=>{const s=base('oca',p,seed);s.
  const occupant=s.players.find(id=>id!==p&&s.positions[id]===s.positions[p]&&s.positions[p]!==1);if(occupant)s.positions[occupant]=old;
  s.lastRoll.to=s.positions[p];if(s.positions[p]!==at)s.lastRoll.route.push(s.positions[p]);
  if(s.positions[p]===63){finish(s,p);return;}if(!repeat)next(s);
-},(s,p)=>publicView(s,p,{boardKind:'oca',lastRoll:s.lastRoll,positions:s.positions,penalties:s.penalties,prison:s.prison,roll:s.roll,unit:'casilla',handSizes:s.positions,instruction:s.prison===p?'Espera a que otro jugador llegue a prisión.':s.penalties[p]?`Pierdes ${s.penalties[p]} turno(s).`:'Llega al 63 con una tirada exacta.',options:!s.finished&&s.players[s.turn]===p?choices([s.prison===p||s.penalties[p]?'Pasar turno':'Tirar dado',{type:'roll'}]):[]}));
+},(s,p)=>publicView(s,p,{boardKind:'oca',opening:s.opening,lastRoll:s.lastRoll,positions:s.positions,penalties:s.penalties,prison:s.prison,roll:s.roll,unit:'casilla',handSizes:s.positions,instruction:s.prison===p?'Espera a que otro jugador llegue a prisión.':s.penalties[p]?`Pierdes ${s.penalties[p]} turno(s).`:'Llega al 63 con una tirada exacta.',options:!s.finished&&s.players[s.turn]===p?choices([s.prison===p||s.penalties[p]?'Pasar turno':'Tirar dado',{type:'roll'}]):[]}));
 
 type Move={path:number[];captures:number[];kings:number};
 const rc=(i:number)=>[Math.floor(i/8),i%8];

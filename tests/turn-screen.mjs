@@ -47,7 +47,7 @@ try{
  game=checkers.applyAction(game,'a',{type:'move',path});await emit('damas-espanolas',game);await phase('move');await actor('a');assert.deepEqual(await geometry(pages[0]),bounds);await visibleStory();
  assert.equal(await pages[1].locator('.catalog-surface .checker-last-move').count(),1);await phase('result');await actor('a');await phase('idle');
  // Oca uses the shared dice flight before moving, then holds the result/actor.
- const oca=getGame('oca');game=oca.createInitialState(['a','b','c','d'],22);await start('oca',game);const ocaBounds=await geometry(pages[0]);game=oca.applyAction(game,'a',{type:'roll'});await emit('oca',game);await phase('move');await actor('a');await visibleStory();
+ const oca=getGame('oca');game={...oca.createInitialState(['a','b','c','d'],22),players:['a','b','c','d'],turn:0};await start('oca',game);const ocaBounds=await geometry(pages[0]);game=oca.applyAction(game,'a',{type:'roll'});await emit('oca',game);await phase('move');await actor('a');await visibleStory();
  for(const page of pages){assert.equal(await page.locator('.catalog-surface .goose-cell').count(),63);assert.equal(await page.locator('.die-face').count(),6);assert.ok(await page.locator('.die-flight').evaluate(el=>el.getAnimations().length>0));assert.ok(await page.locator('.catalog-surface [data-goose-player="a"]').evaluate(el=>el.getAnimations().length>0));}
  await phase('result');await actor('a');assert.deepEqual(await geometry(pages[0]),ocaBounds);await pages[0].screenshot({path:`tests/artifacts/turns/oca-${kind}.png`});await phase('idle');
  // A 20-space Parchís bonus visits every square; capture returns after arrival.

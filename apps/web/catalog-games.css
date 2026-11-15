@@ -397,8 +397,9 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
 .tetuno-color-caption{width:100%;color:#efe0b8;font:700 12px system-ui,sans-serif;}
 .catalog-options .tetuno-color-choice{color:#fff;font-weight:800;border:2px solid #1b1226;text-shadow:0 1px 1px #0008;}
 .catalog-options .tetuno-color-choice.tetuno-rojo{background:#e53950}.catalog-options .tetuno-color-choice.tetuno-amarillo{background:#e0a800}.catalog-options .tetuno-color-choice.tetuno-verde{background:#1f9d4a}.catalog-options .tetuno-color-choice.tetuno-azul{background:#2a6fe0}
-.catalog-options .tetuno-call{background:linear-gradient(#ffe36a,#ffb02e);color:#2b1530;font-weight:900;}
-.catalog-options .tetuno-call.is-on{background:linear-gradient(#ff69d1,#c13a9a);color:#fff;}
+.catalog-screen[data-game="tetuno"] .catalog-surface{position:relative;}
+.catalog-screen .tetuno-call-side{position:absolute;right:6px;top:50%;translate:0 -50%;z-index:5;max-width:84px;padding:10px 8px;border:2px solid #1b1226;border-radius:14px;background:linear-gradient(#ffe36a,#ffb02e);color:#2b1530;font:900 13px/1.15 system-ui,sans-serif;box-shadow:0 3px 0 #7a4a00,0 6px 12px #0006;cursor:pointer;}
+.catalog-screen .tetuno-call-side:active{translate:0 calc(-50% + 2px);box-shadow:0 1px 0 #7a4a00;}
 .catalog-screen[data-game="tetuno"] .catalog-surface{display:flex;flex-direction:column;gap:6px;}
 .tetuno-stock .tetuno-banner{display:none;}
 /* Física de cartas: dorso durante el vuelo de una carta rival, dorsos que se roban y gritos del Tetuno. */

@@ -179,7 +179,7 @@ export class LocalHostSession {
   }
 
   startGame(seed, options = {}) {
-    seed ??= this.engine.id==='mus'?crypto.getRandomValues(new Uint32Array(1))[0]:Date.now()>>>0;
+    seed ??= crypto.getRandomValues(new Uint32Array(1))[0];
     if (this.closed || this.started) throw new Error('La partida ya ha empezado o la sala está cerrada.');
     const players = this.players().map((player) => player.id);
     if (players.length < this.engine.minPlayers) throw new Error("Se necesitan al menos " + this.engine.minPlayers + " jugadores.");

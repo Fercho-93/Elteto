@@ -1,9 +1,9 @@
 export default {
   tagline: 'El juego de descartes más gamberro de Elteto: suelta cartas por color o por símbolo, haz que los demás se chupen cartas y canta **¡Tetuno!** cuando te quede una.',
-  facts: [['Jugadores', '2 a 8'], ['Material', 'Baraja propia de 108 cartas'], ['Meta', '300 puntos'], ['Duración', '20–40 min']],
+  facts: [['Jugadores', '2 a 8'], ['Material', 'Baraja propia de 108 cartas'], ['Meta', '5 manos ganadas'], ['Duración', '20–40 min']],
   sections: [
     { title: 'Objetivo', blocks: [
-      'Quedarte **sin cartas** antes que nadie. Quien lo consigue gana la mano y se apunta los puntos de las cartas que les quedan a los demás. Gana la partida el primero que llega a **300 puntos**.',
+      'Quedarte **sin cartas** antes que nadie. Quien lo consigue **gana la mano**. No hay puntos: se juegan manos y gana la partida el primero que gane **5 manos**.',
     ] },
     { title: 'La baraja', blocks: [
       'Cuatro colores, cada uno con su avatar: **Rojo Boletus**, **Amarillo Banana**, **Verde Guaca** y **Azul Gotelé**. En cada color hay un 0, dos de cada número del 1 al 9 y dos de cada carta especial.',
@@ -40,23 +40,18 @@ export default {
       { note: 'Mientras haya un castigo pendiente, el Chúpate 4 se puede soltar aunque tengas cartas del color.' },
     ] },
     { title: '¡Tetuno!', blocks: [
-      'Cuando juegues tu penúltima carta tienes que **cantar ¡Tetuno!**: pulsa el botón antes de tocar la carta.',
-      'Si te olvidas, cualquier otro jugador puede pulsar **«¡Pillado!»** antes de la siguiente jugada y te **chupas dos cartas**. Si nadie te pilla a tiempo, te libras.',
+      'Cuando echas tu penúltima carta y te queda **una sola**, tienes que **cantar ¡Tetuno!** *después* de echarla: pulsa el botón **Cantar ¡Tetuno!** del lateral derecho de la mesa.',
+      'Tienes que cantar **antes de que el siguiente jugador eche su carta**. Si no lo haces, te llevas del mazo **tantas cartas como jugadores haya en la mesa**.',
     ] },
-    { title: 'Recuento y cómo se gana', blocks: [
-      'La mano termina cuando alguien suelta su última carta. Si era un Chúpate, el siguiente se come las cartas igualmente antes de contar.',
-      { table: { head: ['Carta en la mano de los demás', 'Puntos'], rows: [
-        ['Números', 'Su valor (0 a 9)'],
-        ['Chúpate 2, Te salto y Media vuelta', '20'],
-        ['Comodín y Chúpate 4', '50'],
-      ] } },
-      'Quien se queda sin cartas se lleva la suma de todas las manos ajenas. Gana la partida el primero que llega a **300**.',
+    { title: 'Cómo se gana', blocks: [
+      'La mano termina cuando alguien suelta su última carta. Si era un Chúpate, el siguiente se come las cartas igualmente.',
+      'Quien se queda sin cartas **gana la mano** y se apunta **una mano**. Las manos de cada jugador se ven abajo, en la mesa. Gana la partida el primero que llega a **5 manos**.',
     ] },
     { title: 'Así se juega en Elteto', blocks: [
       { list: [
         'Toca una carta para soltarla. Como en una mesa de verdad, la app no te marca cuáles valen: si tocas una que no casa, te avisa y no cuenta como jugada.',
         'Al tocar un comodín, la app te pregunta **qué color manda**.',
-        'El botón **«Cantar ¡Tetuno!»** aparece cuando te quedan dos cartas.',
+        'El botón **«Cantar ¡Tetuno!»** aparece en el lateral derecho cuando te queda una sola carta tras echar la anterior.',
         'Si el mazo se acaba, se baraja el descarte (menos la carta de arriba) y se sigue robando.',
         'El Chúpate 4 no se puede desafiar: la app solo te deja jugarlo cuando no tienes el color que manda.',
       ] },

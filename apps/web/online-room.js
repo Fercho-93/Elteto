@@ -450,7 +450,7 @@ export class OnlineSession {
   }
 
   async startGame(seed, options = {}) {
-    seed ??= this.engine.id==='mus'?crypto.getRandomValues(new Uint32Array(1))[0]:Date.now()>>>0;
+    seed ??= crypto.getRandomValues(new Uint32Array(1))[0];
     if (!this.isHost || this.room.status !== "lobby") throw new Error("Solo quien abrió la sala puede empezar la partida.");
     const players = this.players().map(p => p.id);
     if (players.length < this.engine.minPlayers) throw new Error(`Se necesitan al menos ${this.engine.minPlayers} jugadores.`);

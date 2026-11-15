@@ -51,8 +51,6 @@ export function chooseBotAction(engine: AnyEngine, v: any, playerId: string, ran
   if (v.turnPlayer !== playerId) return null;
   if (engine.id === 'tetuno') {
     if (v.phase === 'result') return {type: 'next-hand'};
-    // Pilla a quien no cantó antes de jugar, casi siempre.
-    if (v.catchable && random() < .7) return {type: 'catch', target: v.catchable};
     const playable = hand.filter((c: any) => v.playable.includes(c.id));
     if (!playable.length) return v.drawn ? {type: 'pass'} : {type: 'draw'};
     // Guarda los comodines para el final y suelta antes lo que más duele.

@@ -1,5 +1,5 @@
 export default {
-  tagline: 'La Oca de toda la vida en versión gamberra: 63 casillas, un dado y, en vez de ocas, los avatares de Elteto. De avatar en avatar y tiro porque me toca.',
+  tagline: 'La Oca de toda la vida en versión gamberra: 63 casillas, un dado y, en vez de ocas, los avatares de Elteto.',
   facts: [['Jugadores', '2 a 4'], ['Material', 'Tablero de 63 casillas y un dado'], ['Meta', 'Casilla 63, con tirada exacta'], ['Duración', '15–30 min']],
   sections: [
     { title: 'Objetivo', blocks: [
@@ -9,7 +9,7 @@ export default {
       { list: [
         'El tablero es una espiral de **63 casillas** numeradas. Solo se usa **un dado**.',
         'Cada jugador tiene una ficha. Todas **salen de la casilla 1** y comparten esa casilla al empezar.',
-        'Se juega por turnos, en el orden de la mesa. Empieza el primer jugador.',
+        'Antes de empezar, **cada jugador tira un dado**: sale quien saque más y el turno sigue por orden de tirada, **de mayor a menor**. Los empatados repiten la tirada entre ellos.',
       ] },
     ] },
     { title: 'Cómo se juega', blocks: [
@@ -22,7 +22,7 @@ export default {
     ] },
     { title: 'Casillas especiales', blocks: [
       { table: { head: ['Casilla', 'Qué pasa'], rows: [
-        ['**Avatares** (las ocas): 5, 9, 14, 18, 23, 27, 32, 36, 41, 45, 50, 54 y 59', '«De avatar en avatar y tiro porque me toca»: saltas al **siguiente avatar** y **vuelves a tirar**. El de la 59 te lleva directamente al Fiestón, la 63.'],
+        ['**Avatares** (las ocas): 5, 9, 14, 18, 23, 27, 32, 36, 41, 45, 50, 54 y 59', 'Saltas al **siguiente avatar** y **vuelves a tirar**. El de la 59 te lleva directamente al Fiestón, la 63.'],
         ['**6** · Tirolina (el puente)', 'Te tiras hasta el **Aterrizaje**, la **12**. No tiras de nuevo.'],
         ['**26** y **53** · Pedo-cohete (los dados)', 'Si caes en uno, sales disparado al otro (26 ↔ 53). No tiras de nuevo.'],
         ['**19** · Resaca (la posada)', 'Pierdes **dos turnos** durmiendo la mona.'],

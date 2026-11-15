@@ -26,7 +26,7 @@ Las seña físicas, corte manual y errores de reparto no se simulan como accione
 
 ## El Tetuno
 
-Juego propio de Elteto, sin reglamento externo: `packages/game-core/src/games/tetuno.ts`, mesa en `apps/web/tetuno-table.js` y reglamento en `apps/web/rulebooks/tetuno.js`. Baraja de 108 cartas (cuatro colores con 0, dos de cada 1–9, Chúpate 2, Te salto y Media vuelta; cuatro Comodines y cuatro Chúpate 4), siete cartas por jugador, de 2 a 8. Se descarta por color o símbolo; Chúpate acumulables (2 sobre 2, 4 sobre 2 o 4); Chúpate 4 solo sin cartas del color que manda; Media vuelta salta entre dos. Quien no canta ¡Tetuno! y es pillado antes de la siguiente jugada se chupa dos. El ganador de la mano suma los puntos ajenos (número, 20 especiales, 50 comodines); partida a 300. Las caras usan los avatares recortados en `apps/web/assets/avatars/`.
+Juego propio de Elteto, sin reglamento externo: `packages/game-core/src/games/tetuno.ts`, mesa en `apps/web/tetuno-table.js` y reglamento en `apps/web/rulebooks/tetuno.js`. Baraja de 108 cartas (cuatro colores con 0, dos de cada 1–9, Chúpate 2, Te salto y Media vuelta; cuatro Comodines y cuatro Chúpate 4), siete cartas por jugador, de 2 a 8. Se descarta por color o símbolo; Chúpate acumulables (2 sobre 2, 4 sobre 2 o 4); Chúpate 4 solo sin cartas del color que manda; Media vuelta salta entre dos. Con una sola carta hay que cantar ¡Tetuno! tras echarla y antes de que el siguiente eche la suya; si no, se roban tantas cartas como jugadores hay. Sin puntos: cada mano ganada cuenta uno y gana quien llegue a 5. Las caras usan los avatares recortados en `apps/web/assets/avatars/`.
 
 ## Parchís
 
