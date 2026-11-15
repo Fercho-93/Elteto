@@ -114,8 +114,8 @@ function trickTable(view,name,playerId){
 }
 // Recuento de mano compartido: las líneas públicas del historial desde el último marcador.
 function readLine(view,playerId,name,line){return readableTurn(secondPerson(line,playerId),view.players,id=>id===playerId?`${name(id)} (tú)`:name(id));}
-function handSummary(view,playerId,name,{since,title,footer='',only=null}){
- const log=view.log||[],start=log.map((l,i)=>since.test(l)?i:-1).filter(i=>i>=0).at(-1)??-1,lines=log.slice(start+1).filter(line=>!only||only.test(line));
+function handSummary(view,playerId,name,{since,title,footer='',only=null,skip=null}){
+ const log=view.log||[],start=log.map((l,i)=>since.test(l)?i:-1).filter(i=>i>=0).at(-1)??-1,lines=log.slice(start+1).filter(line=>(!only||only.test(line))&&!(skip&&skip.test(line)));
  return `<section class="trick-summary" aria-label="${esc(title)}"><h3>${esc(title)}</h3><ul>${lines.map(l=>`<li>${esc(readLine(view,playerId,name,l))}</li>`).join('')||'<li>Mano terminada.</li>'}</ul>${footer?`<p>${footer}</p>`:''}</section>`;
 }
 const youOr=(playerId,name)=>p=>p===playerId?'Tú':name(p);
@@ -166,8 +166,11 @@ function meldTable(view,name,playerId){
  const rule=view.id==='continental'?view.contract:view.id==='chinchon'?'Cierra con 5 puntos o menos sin ligar':'Cierra con las diez combinadas o del mismo palo';
  const piles=`<div class="meld-piles"><div class="meld-pile">${renderDrawPile(view.stockCount,frenchDeckView)||'<span class="meld-empty">Sin mazo</span>'}<small>Mazo · ${view.stockCount}</small></div><div class="meld-pile is-discard">${view.discard?cardHtml(view.discard):'<span class="meld-empty">Vacío</span>'}<small>Descarte</small></div></div>`;
  const groups=view.players.filter(p=>view.exposed[p]?.length).map(p=>`<section class="meld-owner"><small>${esc(who(p))}</small><div>${view.exposed[p].map((g,i)=>`<div class="meld-group" aria-label="${g.kind==='set'?'Grupo':'Escalera'} ${i+1} de ${esc(who(p))}">${g.cards.map(c=>cardHtml(c)).join('')}</div>`).join('')}</div></section>`).join('');
- const strip=scoreStrip(view,playerId,name,p=>out(p)?'Eliminado':`${view.scores[p]} ${view.scores[p]===1?'punto':'puntos'}`);
- if(view.phase==='result'||view.finished)return `<p class="meld-rule">${esc(rule)}</p>${handSummary(view,playerId,name,{since:/ (descarta|roba del mazo|coge el descarte)/,title:view.finished?'Final de la partida':`Recuento · mano ${view.handNumber}`,footer:view.id==='chinchon'?'Quien pasa de 100 queda eliminado. Gana el último que aguanta.':`Gana la menor suma tras ${view.id==='continental'?7:6} manos.`})}${groups?`<div class="catalog-melds">${groups}</div>`:''}${strip}`;
+ // Al recontar, lo que suma cada uno en la mano va en el marcador, no en líneas repetidas del resumen.
+ const scoreLine=/^(\S+): ([+-]?\d+) → -?\d+/,closing=view.phase==='result'||view.finished;
+ const gains=closing?Object.fromEntries((view.log||[]).slice(-view.players.length*3).map(l=>l.match(scoreLine)).filter(Boolean).map(m=>[m[1],Number(m[2])])):{};
+ const strip=scoreStrip(view,playerId,name,p=>`${out(p)?'Eliminado':`${view.scores[p]} ${view.scores[p]===1?'punto':'puntos'}`}${gains[p]!==undefined?` <small class="meld-gain ${gains[p]>0?'is-up':gains[p]<0?'is-down':''}">${gains[p]>0?'+':''}${gains[p]}</small>`:''}`);
+ if(closing)return `${handSummary(view,playerId,name,{skip:scoreLine,since:/ (descarta|roba del mazo|coge el descarte)/,title:view.finished?'Final de la partida':`Recuento · mano ${view.handNumber}`,footer:view.id==='chinchon'?'Quien pasa de 100 queda eliminado. Gana el último que aguanta.':`Gana la menor suma tras ${view.id==='continental'?7:6} manos.`})}${groups?`<div class="catalog-melds">${groups}</div>`:''}${strip}`;
  return `<p class="meld-rule">${esc(rule)}</p>${piles}${groups?`<div class="catalog-melds">${groups}</div>`:''}${strip}`;
 }
 function board(view,name,interactive=true,playerId=view.players[0]){

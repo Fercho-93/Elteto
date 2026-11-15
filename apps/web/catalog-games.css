@@ -451,3 +451,8 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
 .catalog-screen:is([data-phase="result"],[data-phase="finished"]) .meld-group{padding:2px;}
 .catalog-screen:is([data-phase="result"],[data-phase="finished"]) .meld-group .catalog-card{width:24px;padding:1px;border-width:1px;}
 .catalog-screen:is([data-phase="result"],[data-phase="finished"]) .meld-group .catalog-card+.catalog-card{margin-left:-11px;}
+/* Recuento de combinaciones: lo sumado en la mano junto a cada total, y tu mano reducida a referencia. */
+.meld-gain{display:table;margin:2px auto 0;padding:0 5px;border-radius:99px;font:800 10px/15px system-ui,sans-serif;background:#ffffff1f;color:#e9e3cc;}
+.meld-gain.is-up{background:#c3164a55;color:#ffb3c9;}
+.meld-gain.is-down{background:#1f9d4a55;color:#9ff0b8;}
+.catalog-screen:is([data-game="chinchon"],[data-game="remigio"],[data-game="continental"]):is([data-phase="result"],[data-phase="finished"]) .catalog-hand.is-fanned{--card-w:clamp(30px,calc((100cqw - 10px)/var(--hand-count) - 6px),46px);}
