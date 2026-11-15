@@ -54,7 +54,7 @@ export default {
     ] },
     { title: 'Así se juega en Elteto', blocks: [
       { list: [
-        'Toca una carta iluminada para soltarla; las que no casan se ven apagadas.',
+        'Toca una carta para soltarla. Como en una mesa de verdad, la app no te marca cuáles valen: si tocas una que no casa, te avisa y no cuenta como jugada.',
         'Al tocar un comodín, la app te pregunta **qué color manda**.',
         'El botón **«Cantar ¡Tetuno!»** aparece cuando te quedan dos cartas.',
         'Si el mazo se acaba, se baraja el descarte (menos la carta de arriba) y se sigue robando.',

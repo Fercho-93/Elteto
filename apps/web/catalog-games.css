@@ -370,8 +370,6 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
 .tetuno-face .tetuno-banner{position:absolute;left:0;right:0;bottom:0;padding:3% 2% 4%;background:#1b1226e6;color:#fff6d9;text-align:center;font:900 10.5cqw/1.05 system-ui,sans-serif;letter-spacing:.02em;white-space:nowrap;overflow:hidden;z-index:3;}
 .tetuno-face.is-special .tetuno-banner{color:#ffe36a;}
 .tetuno-face.tetuno-back .tetuno-banner{color:#57efff;font-style:italic;letter-spacing:.08em;}
-.catalog-hand .catalog-card.is-muted:has(.tetuno-face){filter:saturate(.45) brightness(.72);}
-.catalog-hand .catalog-card:has(.tetuno-face):not(.is-muted):not(:disabled){box-shadow:0 0 0 2px #fff7,0 4px 8px #0007;}
 .tetuno-meta{justify-content:space-between;}
 .tetuno-direction{display:flex;align-items:center;gap:6px;}
 .tetuno-direction b{font-size:26px;line-height:1;color:#57efff;display:inline-block;}

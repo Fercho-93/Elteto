@@ -30,6 +30,13 @@ try{
  const invalid=game.tiles.a.find(t=>t.left!==6&&t.right!==6);
  await page.locator(`[data-tile-id="${invalid.id}"]`).click();await page.locator('[data-side="left"]').click();
  assert.deepEqual(await snapshot(),game);assert.match(await page.locator('.catalog-instruction').textContent(),/encaje/);
+ // El Tetuno tampoco marca qué cartas casan: todas igual, y una que no casa se rechaza con aviso.
+ const tetuno=getGame('tetuno');game=tetuno.createInitialState(['a','b','c'],17);const tetunoHuman=game.players[game.turn];await show('tetuno',game,tetunoHuman);
+ const playableIds=tetuno.view(game,tetunoHuman).playable,cardsInHand=game.hands[tetunoHuman];
+ assert.equal(await page.locator('.catalog-hand button:enabled').count(),cardsInHand.length,'Every Tetuno card stays tappable');
+ assert.equal(await page.locator('.catalog-hand .catalog-card.is-muted').count(),0,'No Tetuno card is dimmed');
+ const nonMatching=cardsInHand.find(c=>!playableIds.includes(c.id));
+ if(nonMatching){await page.locator(`.catalog-hand [data-card-id="${nonMatching.id}"]`).click();assert.deepEqual(await snapshot(),game);assert.match(await page.locator('.catalog-instruction').textContent(),/no casa/);}
  const cinquillo=getGame('cinquillo');game=cinquillo.createInitialState(['a','b','c','d'],17);const human=game.players[game.turn];await show('cinquillo',game,human);
  assert.equal(await page.locator('.legal-card,.has-play,.lane-next').count(),0);
  assert.equal(await page.locator('.hand button:enabled').count(),game.hands[human].length);

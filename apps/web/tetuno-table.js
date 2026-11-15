@@ -65,7 +65,7 @@ export function tetunoControls(view,playerId,ui,actionButton){
  const mine=view.turnPlayer===playerId&&!view.finished&&view.phase==='play';
  if(!mine)return '';
  const wild=[...ui.cards].find(id=>view.myHand.some(c=>c.id===id&&c.suit==='comodin'));
- const call=view.myHand.length===2&&view.playable.length?actionButton(ui.call?'¡Tetuno! cantado':'Cantar ¡Tetuno!','catalog-tetuno-call',`class="tetuno-call ${ui.call?'is-on':''}" aria-pressed="${ui.call}"`):'';
+ const call=view.myHand.length===2?actionButton(ui.call?'¡Tetuno! cantado':'Cantar ¡Tetuno!','catalog-tetuno-call',`class="tetuno-call ${ui.call?'is-on':''}" aria-pressed="${ui.call}"`):'';
  if(wild)return `<span class="tetuno-color-caption">¿Qué color manda?</span>${TETUNO_COLORS.map(color=>actionButton(TETUNO_COLOR_LABELS[color],'catalog-tetuno-color',`class="tetuno-color-choice tetuno-${color}" data-color="${color}"`)).join('')}${call}${actionButton('Cancelar','catalog-clear')}`;
  return call;
 }
