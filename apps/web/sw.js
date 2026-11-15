@@ -5,7 +5,7 @@ const ASSETS = ['./mus-table.js','./mus-flow.js','./game-core/games/mus-legacy.j
   "./game-picker.js", "./board-games.js", "./board-games.css", "./board-motion.js", "./turn-events.js", "./card-names.js", "./turn-sequence.js", "./turn-sequence.css", "./game-physics.js", "./table-fit.js", "./bot-pacing.js", "./card-paint.js", "./table-speech.js",
   "./catalog-games.js", "./catalog-games.css", "./tetuno-table.js", "./card-motion.js", "./game-core/games/tetuno.js", "./rulebooks/tetuno.js", ...[0,1,2,3,4,5,6,7,8,9].map(n => `./assets/avatars/${n}.webp`), "./game-core/games/shared.js", "./game-core/games/boards.js", "./game-core/games/social-cards.js", "./game-core/games/tricks.js", "./game-core/games/melds.js", "./game-core/games/holdem.js",
   "./assets/elteto-cover-balanced-v5.png", "./assets/fuegote-transparent-v2.webp", "./assets/fuegote-finger-v2.webp", "./assets/juegos-tablero.webp", "./assets/juegos-cartas.webp",
-  "./avatar-art.js", "./assets/elteto-logo-neon-v3.png", "./assets/eltetoca-board-center.webp", "./assets/tetuno-tapete-wide.webp", "./assets/tetuno-tapete-tall.webp", "./assets/elteto-avatars-v3.png",
+  "./avatar-art.js", "./assets/elteto-logo-neon-v3.png", "./assets/eltetoca-board-center.webp", "./assets/tetuno-pared.webp", "./assets/tetuno-bando-izq.webp", "./assets/tetuno-bando-der.webp", "./assets/elteto-avatars-v3.png",
   "./parchis-dice.js", "./parchis-dice.css",
   "./parchis-board.js", "./parchis-geometry.js", "./parchis-board.css", "./game-core/games/parchis.js",
   "./mus-screen.js", "./mus-screen.css",

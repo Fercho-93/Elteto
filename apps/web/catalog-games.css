@@ -456,8 +456,10 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
 .meld-gain.is-down{background:#1f9d4a55;color:#9ff0b8;}
 .catalog-screen:is([data-game="chinchon"],[data-game="remigio"],[data-game="continental"]):is([data-phase="result"],[data-phase="finished"]) .catalog-hand.is-fanned{--card-w:clamp(30px,calc((100cqw - 10px)/var(--hand-count) - 6px),46px);}
 
-/* Tapete neón del Tetuno: muro de ladrillo con marco y los dos bandos de la casa. */
-.catalog-screen[data-game="tetuno"] .catalog-surface{border:0;border-radius:22px;box-shadow:0 0 22px #b13cff55,0 3px 10px #0007;background:#2a0f4d url("./assets/tetuno-tapete-wide.webp") center/cover no-repeat;padding:clamp(14px,3.2cqw,34px);}
-@media(max-aspect-ratio:1/1){.catalog-screen[data-game="tetuno"] .catalog-surface{background-image:url("./assets/tetuno-tapete-tall.webp");background-position:center 88%;padding:clamp(18px,5vw,30px) clamp(16px,4.5vw,28px);}}
+/* Tapete neón del Tetuno, en capas para que sirva con cualquier forma de pantalla:
+   los dos bandos van anclados a las esquinas, la pared se repite y el marco es un borde degradado. */
+.catalog-screen[data-game="tetuno"] .catalog-surface{border:4px solid transparent;border-radius:24px;--bando:min(50%,38vw);
+ background:url("./assets/tetuno-bando-izq.webp") left 1% bottom 1%/auto var(--bando) no-repeat padding-box,url("./assets/tetuno-bando-der.webp") right 1% bottom 1%/auto var(--bando) no-repeat padding-box,url("./assets/tetuno-pared.webp") center/min(720px,150%) auto repeat padding-box,linear-gradient(135deg,#ff2fd0,#3df0ff 35%,#6a5cff 65%,#ff2fd0) border-box #2a0f4d;
+ box-shadow:0 0 22px #b13cff66,inset 0 0 22px #ff2fd044,0 3px 10px #0007;padding:clamp(12px,3cqw,30px);}
 .catalog-screen[data-game="tetuno"] .tetuno-pile{text-shadow:0 1px 3px #000c;}
 .catalog-screen[data-game="tetuno"] .tetuno-last{text-shadow:0 1px 4px #000;}
