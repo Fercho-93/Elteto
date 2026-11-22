@@ -29,7 +29,7 @@ try{
    assert.equal(await page.locator('input[name="game"]:checked').inputValue(),id);
    assert.equal(await page.locator('.game-category.chosen').count(),1);
    assert.equal(await category.evaluate(el=>el.open),false);
-   const name=({'damas-espanolas':'Damas','texas-holdem':'Póker',oca:'Oca',escoba:'Escoba'})[id]||getGame(id).label;
+   const name=({'damas-espanolas':'Damas','texas-holdem':'Póker',oca:'Tetoca',escoba:'Escoba'})[id]||getGame(id).label;
    assert.ok((await category.locator('.category-title').textContent()).endsWith(': '+name));
   }
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));

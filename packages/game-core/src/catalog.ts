@@ -241,7 +241,7 @@ export const GAME_CATALOG: readonly GamePlan[] = [
   },
   {
     "id": "oca",
-    "label": "Juego de la oca",
+    "label": "Juego el Tetoca",
     "family": "race",
     "status": "playable",
     "players": [

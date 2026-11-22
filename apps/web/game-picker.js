@@ -14,7 +14,7 @@ export const GAME_GROUPS=[
 ];
 export const AVAILABLE_GAME_IDS=GAME_GROUPS.flatMap(group=>group.sections.flatMap(section=>section.ids));
 export function availableGames(games){return AVAILABLE_GAME_IDS.map(id=>games.find(game=>game.id===id)).filter(Boolean);}
-const label = game => ({'damas-espanolas':'Damas','texas-holdem':'Póker','oca':'Oca','escoba':'Escoba'})[game.id] || game.label;
+const label = game => ({'damas-espanolas':'Damas','texas-holdem':'Póker','oca':'Tetoca','escoba':'Escoba'})[game.id] || game.label;
 const choice=(game,selected,countLabel)=>`<label class="category-choice"><input type="radio" name="game" value="${esc(game.id)}" ${game.id===selected?'checked':''}><span>${esc(label(game))}</span><small>${countLabel(game)} jugadores</small></label>`;
 export function renderGameChoices(games,selected,countLabel){
  return `<div class="game-categories" aria-label="Juegos disponibles">${GAME_GROUPS.map(group=>{
