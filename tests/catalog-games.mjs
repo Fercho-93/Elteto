@@ -129,3 +129,7 @@ console.log('Julepe: plate carry-over, direct payments, split plate and substitu
  assert.equal(s.hands['player-0'].length,0+engine.createInitialState(ids(3),9).hands['player-0'].filter(c=>c.rank!=='12').length);
  assert.equal(engine.view(s,'player-2').lastQuads.player,'player-0');
  console.log('Mentiroso: only the next player answers and four of a kind are discarded: OK');}
+{const engine=getGame('mentiroso');let s=engine.createInitialState(ids(3),5);const c=s.hands['player-0'][0];
+ s=engine.applyAction(s,'player-0',{type:'play-facedown',cards:[c.id],rank:'12'});s=engine.applyAction(s,'player-1',{type:'challenge'});
+ const d=engine.view(s,'player-2').declaration;assert.equal(d.rank,'12');assert.equal(d.resolved,true);
+ console.log('Mentiroso: resolved declaration keeps its value: OK');}
