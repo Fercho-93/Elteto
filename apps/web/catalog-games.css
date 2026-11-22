@@ -399,8 +399,8 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
 .catalog-options .tetuno-color-choice{color:#fff;font-weight:800;border:2px solid #1b1226;text-shadow:0 1px 1px #0008;}
 .catalog-options .tetuno-color-choice.tetuno-rojo{background:#e53950}.catalog-options .tetuno-color-choice.tetuno-amarillo{background:#e0a800}.catalog-options .tetuno-color-choice.tetuno-verde{background:#1f9d4a}.catalog-options .tetuno-color-choice.tetuno-azul{background:#2a6fe0}
 .catalog-screen[data-game="tetuno"] .catalog-surface{position:relative;}
-.catalog-screen .tetuno-call-side{position:absolute;right:6px;top:50%;translate:0 -50%;z-index:5;max-width:84px;padding:10px 8px;border:2px solid #1b1226;border-radius:14px;background:linear-gradient(#ffe36a,#ffb02e);color:#2b1530;font:900 13px/1.15 system-ui,sans-serif;box-shadow:0 3px 0 #7a4a00,0 6px 12px #0006;cursor:pointer;}
-.catalog-screen .tetuno-call-side:active{translate:0 calc(-50% + 2px);box-shadow:0 1px 0 #7a4a00;}
+.catalog-screen .tetuno-call-side{position:relative;align-self:center;flex:none;z-index:5;padding:8px 18px;border:2px solid #1b1226;border-radius:14px;background:linear-gradient(#ffe36a,#ffb02e);color:#2b1530;font:900 13px/1.15 system-ui,sans-serif;box-shadow:0 3px 0 #7a4a00,0 6px 12px #0006;cursor:pointer;}
+.catalog-screen .tetuno-call-side:active{translate:0 2px;box-shadow:0 1px 0 #7a4a00;}
 .catalog-screen[data-game="tetuno"] .catalog-surface{display:flex;flex-direction:column;gap:6px;}
 .tetuno-stock .tetuno-banner{display:none;}
 /* Física de cartas: dorso durante el vuelo de una carta rival, dorsos que se roban y gritos del Tetuno. */
@@ -457,10 +457,16 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
 .meld-gain.is-down{background:#1f9d4a55;color:#9ff0b8;}
 .catalog-screen:is([data-game="chinchon"],[data-game="remigio"],[data-game="continental"]):is([data-phase="result"],[data-phase="finished"]) .catalog-hand.is-fanned{--card-w:clamp(30px,calc((100cqw - 10px)/var(--hand-count) - 6px),46px);}
 
-/* Tapete neón del Tetuno, en capas para que sirva con cualquier forma de pantalla:
-   los dos bandos van anclados a las esquinas, la pared se repite y el marco es un borde degradado. */
-.catalog-screen[data-game="tetuno"] .catalog-surface{border:4px solid transparent;border-radius:24px;--bando:min(50%,38vw);
- background:url("./assets/tetuno-bando-izq.webp") left 1% bottom 1%/auto var(--bando) no-repeat padding-box,url("./assets/tetuno-bando-der.webp") right 1% bottom 1%/auto var(--bando) no-repeat padding-box,url("./assets/tetuno-pared.webp") center/min(720px,150%) auto repeat padding-box,linear-gradient(135deg,#ff2fd0,#3df0ff 35%,#6a5cff 65%,#ff2fd0) border-box #2a0f4d;
+/* Tapete neón del Tetuno: pared en mosaico y marco degradado. Los dos bandos ya no son fondo:
+   flanquean el mazo y el descarte en la fila central, así nunca quedan debajo del texto. */
+.catalog-screen[data-game="tetuno"] .catalog-surface{border:4px solid transparent;border-radius:24px;
+ background:url("./assets/tetuno-pared.webp") center/min(720px,150%) auto repeat padding-box,linear-gradient(135deg,#ff2fd0,#3df0ff 35%,#6a5cff 65%,#ff2fd0) border-box #2a0f4d;
  box-shadow:0 0 22px #b13cff66,inset 0 0 22px #ff2fd044,0 3px 10px #0007;padding:clamp(12px,3cqw,30px);}
+.catalog-screen[data-game="tetuno"] .tetuno-center{align-self:stretch;align-items:center;gap:clamp(8px,3vw,40px);}
+.tetuno-bando{flex:0 1 auto;min-width:0;width:auto;max-width:clamp(60px,24%,190px);height:auto;max-height:clamp(80px,min(34vw,20dvh),220px);object-fit:contain;pointer-events:none;user-select:none;filter:drop-shadow(0 4px 8px #0008);}
+.tetuno-bando.is-left{margin-right:auto;}
+.tetuno-bando.is-right{margin-left:auto;}
+/* Marcador sobre un panel oscuro para que se lea con cualquier dibujo detrás. */
+.catalog-screen[data-game="tetuno"] .trick-score{margin:0 calc(clamp(12px,3cqw,30px) * -.5);padding:6px 8px;border:1px solid #ffffff1f;border-radius:14px;background:#140826d9;}
 .catalog-screen[data-game="tetuno"] .tetuno-pile{text-shadow:0 1px 3px #000c;}
 .catalog-screen[data-game="tetuno"] .tetuno-last{text-shadow:0 1px 4px #000;}
