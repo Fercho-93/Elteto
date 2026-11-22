@@ -311,6 +311,7 @@ html:has(.catalog-screen),body:has(.catalog-screen),body:has(.catalog-screen) #a
 /* Mentiroso */
 .catalog-bluff-pile strong{font-size:14px}.catalog-bluff-pile p{font-size:13px;color:#e8e1c8;text-align:center}.catalog-bluff-pile p b{color:#f6d36b;font-size:16px}
 .bluff-reveal{margin:0 auto;padding:8px 12px;border-radius:12px;text-align:center;background:#0004}.bluff-reveal p{margin:0 0 6px;font-weight:800}.bluff-reveal.is-truth p{color:#9eefec}.bluff-reveal.is-lie p{color:#ff8fb4}
+.bluff-quads{margin:6px auto 0;text-align:center;font-weight:700;color:#ffe08a}
 /* Burro */
 .burro-source{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;container-type:inline-size}
 .burro-source p{margin:0;font-size:13px;color:#e8e1c8}.burro-source b{color:#fff4d6}

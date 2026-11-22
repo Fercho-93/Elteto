@@ -114,3 +114,18 @@ payment=julepeScore({'player-0':3,'player-1':2});assert.equal(payment.pot,0);ass
 payment=julepeScore({'player-0':4,'player-1':1},'player-1');assert.equal(payment.pot,0);assert.equal(payment.scores['player-0'],10);assert.equal(payment.scores['player-1'],0);
 payment=julepeScore({'player-0':1,'player-1':4},'player-1');assert.equal(payment.pot,20);assert.equal(payment.scores['player-0'],-10);assert.equal(payment.scores['player-1'],0);
 console.log('Julepe: plate carry-over, direct payments, split plate and substitute: OK');
+{const engine=getGame('mentiroso');
+ // Solo responde el jugador inmediatamente siguiente; si se lo cree, juega él.
+ let s=engine.createInitialState(ids(4),31);assert.ok(Object.values(s.hands).every(h=>{const n={};for(const c of h)n[c.rank]=(n[c.rank]||0)+1;return Object.values(n).every(k=>k<4);}));
+ const card=s.hands['player-0'][0];s=engine.applyAction(s,'player-0',{type:'play-facedown',cards:[card.id],rank:'5'});
+ assert.equal(s.phase,'respond');assert.equal(s.players[s.turn],'player-1');assert.throws(()=>engine.applyAction(s,'player-2',{type:'challenge'}));
+ s=engine.applyAction(s,'player-1',{type:'trust'});assert.equal(s.phase,'play');assert.equal(s.players[s.turn],'player-1');
+ // Cuatro del mismo valor al recoger el montón se descartan.
+ s=engine.createInitialState(ids(3),9);const all=Object.values(s.hands).flat(),kings=all.filter(c=>c.rank==='12');
+ for(const p of s.players)s.hands[p]=s.hands[p].filter(c=>c.rank!=='12');s.hands['player-0'].push(kings[0]);const lie=s.hands['player-0'].find(c=>c.rank!=='1'&&c.rank!=='5');
+ s=engine.applyAction(s,'player-0',{type:'play-facedown',cards:[lie.id],rank:'5'});s.pile.push(...kings.slice(1));
+ const before=s.hands['player-1'].length;s=engine.applyAction(s,'player-1',{type:'challenge'});
+ assert.equal(s.reveal.truth,false);assert.ok(Object.values(s.hands).flat().every(c=>c.rank!=='12'));assert.equal(s.discard.filter(c=>c.rank==='12').length,4);assert.equal(s.hands['player-1'].length,before);
+ assert.equal(s.hands['player-0'].length,0+engine.createInitialState(ids(3),9).hands['player-0'].filter(c=>c.rank!=='12').length);
+ assert.equal(engine.view(s,'player-2').lastQuads.player,'player-0');
+ console.log('Mentiroso: only the next player answers and four of a kind are discarded: OK');}

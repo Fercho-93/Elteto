@@ -134,10 +134,11 @@ function captureTable(view,name,playerId,interactive){
  return `${meta}<div class="capture-cards capture-felt">${cards}</div>${last}${strip}`;
 }
 // Mentiroso: el montón boca abajo y la declaración en palabras.
+const BLUFF_PLURAL={'1':'ases','2':'doses','3':'treses','4':'cuatros','5':'cincos','6':'seises','7':'sietes','10':'sotas','11':'caballos','12':'reyes'};
 function bluffTable(view,name,playerId){
- const who=youOr(playerId,name),d=view.declaration;
+ const who=youOr(playerId,name),d=view.declaration,quads=/ reúne los cuatro /.test(view.log?.at(-1)||'')?view.lastQuads:null;
  const said=d?`${esc(who(d.player))} ${d.player===playerId?'has declarado':'declara'} <b>${esc(speechText({kind:'declare',count:d.count,rank:d.rank}))}</b>`:'Nadie ha declarado todavía';
- return `<div class="catalog-bluff-pile">${view.pileCount?`<span class="catalog-card-back bluff-pile-stack" style="--pile:${Math.min(4,view.pileCount-1)}">${renderCardBack(frenchDeckView)}</span>`:'<span class="bluff-pile-empty" aria-hidden="true"></span>'}<strong>${view.pileCount?`${view.pileCount} ${view.pileCount===1?'carta':'cartas'} en el montón`:'Montón vacío'}</strong><p>${said}</p></div>${view.reveal?`<div class="bluff-reveal ${view.reveal.truth?'is-truth':'is-lie'}"><p>${view.reveal.truth?'Decía la verdad':'Era mentira'}</p>${publicCards(view.reveal.cards)}</div>`:''}${scoreStrip(view,playerId,name,p=>`${view.handSizes[p]} cartas`)}`;
+ return `<div class="catalog-bluff-pile">${view.pileCount?`<span class="catalog-card-back bluff-pile-stack" style="--pile:${Math.min(4,view.pileCount-1)}">${renderCardBack(frenchDeckView)}</span>`:'<span class="bluff-pile-empty" aria-hidden="true"></span>'}<strong>${view.pileCount?`${view.pileCount} ${view.pileCount===1?'carta':'cartas'} en el montón`:'Montón vacío'}</strong><p>${said}</p></div>${view.reveal?`<div class="bluff-reveal ${view.reveal.truth?'is-truth':'is-lie'}"><p>${view.reveal.truth?'Decía la verdad':'Era mentira'}</p>${publicCards(view.reveal.cards)}</div>`:''}${quads?`<p class="bluff-quads">${esc(who(quads.player))} ${quads.player===playerId?'descartas':'descarta'} los cuatro ${esc(quads.ranks.map(r=>BLUFF_PLURAL[r]||r).join(' y los cuatro '))}</p>`:''}${scoreStrip(view,playerId,name,p=>`${view.handSizes[p]} cartas`)}`;
 }
 // Burro: eliges directamente una de las cartas boca abajo del vecino; las letras de cada uno a la vista.
 function burroTable(view,name,playerId,interactive){

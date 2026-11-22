@@ -16,10 +16,11 @@ export default {
       { steps: [
         'Cuando te toca jugar, eliges **una o varias cartas** de tu mano y las dejas **boca abajo** en el montón central.',
         'Dices en voz alta **cuántas** has jugado y de **qué valor** son («dos reyes»). La cantidad debe ser la real, pero el valor puede ser falso.',
-        'Los demás jugadores, por turno, deciden si **se lo creen** o si **te acusan de mentiroso**.',
-        'Si nadie te acusa, el turno pasa al siguiente jugador, que juega más cartas sobre el montón.',
+        'Solo el **jugador siguiente** decide si **se lo cree** o si **te acusa de mentiroso**.',
+        'Si se lo cree, le toca jugar a él: pone más cartas sobre el montón.',
         'Una acusación se resuelve al instante (ver abajo) y empieza una nueva ronda.',
       ] },
+      { note: 'Si en algún momento reúnes **las cuatro cartas de un mismo valor** (los cuatro reyes, por ejemplo), las **descartas** de la partida: salen del juego.' },
       { note: 'Mientras nadie acuse, **el valor declarado se mantiene**: el siguiente jugador debe declarar el mismo valor, aunque juegue cartas que no lo sean. Solo quien abre ronda elige el valor que quiere.' },
     ] },
     { title: 'La acusación', blocks: [
@@ -33,7 +34,7 @@ export default {
     ] },
     { title: 'Salir y perder', blocks: [
       { list: [
-        'Cuando juegas tu última carta, **todavía pueden acusarte**. Si nadie lo hace, quedas fuera y ya estás a salvo.',
+        'Cuando juegas tu última carta, **todavía puede acusarte** el siguiente. Si no lo hace, quedas fuera y ya estás a salvo.',
         'Si te acusan y era mentira, recoges el montón y sigues en la partida.',
         'Los jugadores sin cartas dejan de jugar y de acusar.',
         'La partida termina cuando **solo queda un jugador con cartas**: ese pierde.',
@@ -44,10 +45,11 @@ export default {
         'En tu turno marca las cartas que quieras jugar, elige el valor y pulsa **Jugar boca abajo**. Si ya hay un valor declarado, es el único que te dejan elegir.',
         'Los demás ven «N cartas de valor X» y el tamaño del montón, sin ver tus cartas.',
         'Cuando te toca responder tienes dos botones: **Me lo creo** o **Mentiroso**.',
-        'Responden en orden de mesa los jugadores con cartas. En cuanto uno acusa, se resuelve. Si todos se lo creen, juega el siguiente.',
+        'Solo responde el siguiente jugador con cartas. Si acusa, se resuelve; si se lo cree, juega él.',
         'Al resolver, la aplicación muestra las cartas y el mensaje «Decía la verdad» o «Era mentira», y quien recoge el montón vuelve a abrir.',
         'No hay puntos ni manos: es una única partida. Cuando solo queda un jugador con cartas, la partida termina y se anuncia quién pierde.',
         'Los valores disponibles son del 2 al rey; no se declaran ases.',
+        'Los cuatro iguales se descartan solos, tanto en el reparto como al recoger el montón, y la mesa lo anuncia.',
       ] },
     ] },
     { title: 'Consejos', blocks: [
