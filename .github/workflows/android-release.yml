@@ -56,7 +56,7 @@ jobs:
           # descripción siguen siempre a la versión de la app que acaba de subirse.
           VERSION=$(sed -n "s/.*versionName '\([^']*\)'.*/\1/p" apps/android-host/app/build.gradle)
           test -n "$VERSION"
-          gh release edit android-v0.2.0 --title "Elteto Android $VERSION" --notes "Elteto Android $VERSION. Incluye El Tetuno, la Oca gamberra con los avatares, físicas de cartas y la revisión de las mesas de los juegos de cartas. El anfitrión crea la mesa en la app y los invitados entran por navegador, en la misma Wi-Fi, sin instalar nada. Va firmada con la clave de Elteto: se instala encima de las versiones anteriores publicadas aquí. Descarga directa: https://github.com/${GITHUB_REPOSITORY}/releases/download/android-v0.2.0/Elteto.apk"
+          gh release edit android-v0.2.0 --title "Elteto Android $VERSION" --notes "Elteto Android $VERSION. Incluye el Mentiroso con las reglas nuevas, el tapete del Tetuno corregido, El Tetuno, la Oca gamberra con los avatares, físicas de cartas y la revisión de las mesas de los juegos de cartas. El anfitrión crea la mesa en la app y los invitados entran por navegador, en la misma Wi-Fi, sin instalar nada. Va firmada con la clave de Elteto: se instala encima de las versiones anteriores publicadas aquí. Descarga directa: https://github.com/${GITHUB_REPOSITORY}/releases/download/android-v0.2.0/Elteto.apk"
       - name: Borrar firma del runner
         if: always()
         run: rm -f "$RUNNER_TEMP/elteto.jks"
