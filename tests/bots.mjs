@@ -63,3 +63,24 @@ const snapshot=JSON.stringify(session.state);await new Promise(resolve=>setTimeo
 let called=0;const runner=new BotRunner(()=>({playerId:'b',action:{type:'pass'}}),()=>called++,()=>{},1);runner.schedule();runner.stop();
 await new Promise(resolve=>setTimeout(resolve,10));assert.equal(called,0);
 console.log(`IA: ${moves} legal moves, all 21 games, lobby, Mus discards and teardown OK`);
+
+// Póker: la IA juega según su mano. No se tira all-in al azar ni iguala cualquier all-in,
+// así que las partidas duran varias manos y gana con claridad a quien lo iguala todo.
+{
+  const poker = getGame('texas-holdem'); let hands = 0, wins = 0;
+  for (let seed = 1; seed <= 12; seed++) {
+    const r = createRng(seed), ids = ['station','ia']; let s = poker.createInitialState(ids, seed);
+    while (!poker.isOver(s)) {
+      let move;
+      if (s.players[s.turn] === 'station' && s.phase !== 'result') {
+        const o = poker.view(s,'station').options.map(x => x.action);
+        move = {playerId:'station', action:o.find(a => a.type === 'check') || o.find(a => a.type === 'call') || o.find(a => a.type === 'all-in')};
+      } else move = nextBotMove(poker, s, ids, r);
+      s = poker.applyAction(s, move.playerId, move.action);
+    }
+    hands += s.handNumber; if (s.chips.ia > 0) wins++;
+  }
+  assert.ok(hands / 12 >= 5, `póker: partidas demasiado cortas (${hands / 12} manos de media)`);
+  assert.ok(wins >= 8, `póker: la IA solo gana ${wins}/12 a quien lo iguala todo`);
+  console.log(`IA póker: ${(hands / 12).toFixed(1)} manos por partida y ${wins}/12 victorias contra quien lo iguala todo: OK`);
+}

@@ -2,6 +2,7 @@ import { AnyEngine } from './engine';
 import { canPlaceCinquillo } from './games/cinquillo';
 import { captures15 } from './games/social-cards';
 import { analyzeMelds, meldGroups, meldValue } from './games/melds';
+import { evaluatePokerHand } from './games/holdem';
 
 export type BotPlayer = { id: string; name: string; isHost: false; isBot: true };
 export const BOT_IDS = Array.from({length: 7}, (_, i) => `bot-${i + 1}`);
@@ -98,10 +99,7 @@ export function chooseBotAction(engine: AnyEngine, v: any, playerId: string, ran
   if (engine.id === 'julepe' && v.phase === 'discard') return {type: 'discard', cards: hand.slice(5).map((c: any) => c.id)};
   const options = (v.options || []).map((o: any) => o.action);
   const action = (type: string) => options.find((a: any) => a.type === type);
-  if (engine.id === 'texas-holdem' && v.phase !== 'result') {
-    if (action('all-in') && random() < .13) return action('all-in');
-    return action('check') || action('call') || action('all-in') || action('fold');
-  }
+  if (engine.id === 'texas-holdem' && v.phase !== 'result') return pokerDecision(v, playerId, options, random);
   if (engine.id === 'siete-y-medio' && !['bet','result'].includes(v.phase)) return (v.total < 5 && action('hit')) || action('stand');
   if (['chinchon','remigio','continental'].includes(engine.id)) {
     const id = engine.id;
@@ -146,6 +144,55 @@ export function chooseBotAction(engine: AnyEngine, v: any, playerId: string, ran
   }
   const safe = options.filter((a: any) => !a.selection && !a.singleCard && !['offer-draw','declare-capote','take-pinta','replace-joker'].includes(a.type));
   return safe.length ? pick(safe) : null;
+}
+
+const POKER_RANK = (c: any) => ['2','3','4','5','6','7','8','9','10','J','Q','K','A'].indexOf(c.rank) + 2;
+// 0..1: cuánto vale la mano propia. Antes del flop mira las dos cartas; después, lo que aportan a la mesa.
+export function pokerStrength(hand: any[], board: any[]): number {
+  if (hand.length < 2) return 0;
+  const [a, b] = hand.map(POKER_RANK).sort((x, y) => y - x);
+  if (!board.length) {
+    let value = a === b ? .5 + a / 30 : (a + b) / 32 - (a - b > 4 ? .08 : 0);
+    if (hand[0].suit === hand[1].suit) value += .06;
+    if (a !== b && a - b <= 2) value += .04;
+    return Math.max(0, Math.min(1, value));
+  }
+  const category = evaluatePokerHand([...hand, ...board]).score[0];
+  const counts = Object.values(board.reduce((m: Record<number, number>, c: any) => (m[POKER_RANK(c)] = (m[POKER_RANK(c)] || 0) + 1, m), {})) as number[];
+  const boardCategory = board.length >= 5 ? evaluatePokerHand(board).score[0] : counts.includes(3) ? 3 : counts.filter(n => n === 2).length >= 2 ? 2 : counts.includes(2) ? 1 : 0;
+  // Si la mejor jugada es la de la mesa, la tienen todos.
+  if (category <= boardCategory) return Math.min(.3, .1 + a / 70);
+  const top = Math.max(...board.map(POKER_RANK));
+  const table = [.15, .42, .64, .74, .82, .86, .93, .98, 1];
+  let value = table[category];
+  if (category === 1) value += hand.some((c: any) => POKER_RANK(c) >= top && board.some((x: any) => POKER_RANK(x) === POKER_RANK(c))) || a === b && a > top ? .14 : 0;
+  return Math.min(1, value);
+}
+
+function pokerDecision(v: any, playerId: string, options: any[], random: () => number) {
+  const find = (type: string) => options.find((a: any) => a.type === type);
+  const chips = v.chips?.[playerId] ?? 0, street = v.street?.[playerId] ?? 0, currentBet = v.currentBet ?? 0;
+  const owed = Math.max(0, currentBet - street), pot = v.pot ?? 0, bigBlind = v.bigBlindAmount || 10;
+  const opponents = (v.players || []).filter((p: string) => p !== playerId && !v.folded?.[p]).length;
+  // Con más rivales vivos hace falta más mano; un poco de ruido para no ser predecible.
+  const strength = pokerStrength(v.myHand || [], v.board || []) - Math.max(0, opponents - 1) * .03 + (random() - .5) * .12;
+  const raise = (share: number) => {
+    const r = find('raise');
+    if (!r?.amountInput) return null;
+    const {min, max} = r.amountInput;
+    return {type: 'raise', amount: Math.max(min, Math.min(max, Math.round((currentBet + share * Math.max(pot, bigBlind * 2)) / 5) * 5))};
+  };
+  const shortStack = chips <= bigBlind * 6;
+  if (find('all-in') && (strength > .93 && random() < .35 || shortStack && strength > .6)) return find('all-in');
+  if (!owed) {
+    if (strength > .68 && random() < .65 || random() < .06) return raise(strength > .85 ? .9 : .6) || find('check');
+    return find('check') || find('fold');
+  }
+  const odds = owed / (pot + owed), stake = owed / Math.max(1, chips + street);
+  if (strength > .82 && random() < .45) { const r = raise(.8); if (r) return r; }
+  if (owed >= chips) return strength > .72 ? find('call') || find('all-in') || find('fold') : find('fold');
+  if (strength > odds + .12 + stake * .5 || owed <= bigBlind && strength > .28) return find('call') || find('fold');
+  return find('fold') || find('call');
 }
 
 export function nextBotMove(engine: AnyEngine, state: any, botIds: string[], random = Math.random) {
