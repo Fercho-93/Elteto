@@ -198,13 +198,13 @@ export function skipTurnState(engine: AnyEngine, state: any, playerId: string, r
 // Minimum pause before a bot moves. The visible turn sequence can extend it (see BotPacing).
 // Card and tile games play many short moves per hand, so they use a brisker floor.
 const BRISK_GAMES=new Set(['cinquillo','tetuno','brisca','tute','guinote','butifarra','pocha','julepe','escoba','chinchon','remigio','continental','burro','domino','siete-y-medio']);
-export const botTurnDelay=(gameId:string,phase?:string)=>{const id=gameId.replace(/_/g,'-');if(['claim','layoff'].includes(phase||'')&&['continental','chinchon','remigio'].includes(id))return 900;return id==='oca'?6500:id==='damas-espanolas'?1500:id==='parchis'?5500:id==='mentiroso'?5200:BRISK_GAMES.has(id)?3400:4800;};
+export const botTurnDelay=(gameId:string,phase?:string)=>{const id=gameId.replace(/_/g,'-');if(['claim','layoff'].includes(phase||'')&&['continental','chinchon','remigio'].includes(id))return 1200;return id==='oca'?8500:id==='damas-espanolas'?2200:id==='parchis'?7200:id==='mentiroso'?6800:BRISK_GAMES.has(id)?4600:6200;};
 
 // One delayed move at a time. The host can resume from the saved state.
 export class BotRunner {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private generation = 0;
-  constructor(private next: () => ReturnType<typeof nextBotMove>, private apply: (move: NonNullable<ReturnType<typeof nextBotMove>>) => unknown | Promise<unknown>, private onError: (error: unknown) => void, private delay: number | (() => number) = 4800) {}
+  constructor(private next: () => ReturnType<typeof nextBotMove>, private apply: (move: NonNullable<ReturnType<typeof nextBotMove>>) => unknown | Promise<unknown>, private onError: (error: unknown) => void, private delay: number | (() => number) = 6200) {}
   schedule() {
     if (this.timer) return;
     const generation = this.generation;

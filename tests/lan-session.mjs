@@ -124,7 +124,7 @@ assert.equal(pokerHost.local.players().length,2);
 await pokerHost.sendAction({type:'call'});await tick();
 assert.equal(pokerHost.local.state.players[pokerHost.local.state.turn],pokerId);
 pokerHost.local.graceMs=40;
-for(let i=0;i<60&&pokerHost.local.state.phase==='preflop';i++)await new Promise(r=>setTimeout(r,100));
+for(let i=0;i<100&&pokerHost.local.state.phase==='preflop';i++)await new Promise(r=>setTimeout(r,100));
 assert.equal(pokerHost.local.state.phase,'flop','the absent guest checks instead of stalling the hand');
 const chips=pokerHost.local.state.chips[pokerId],hand=JSON.stringify(pokerHost.local.state.hands[pokerId]);
 await pokerGuest.connect();await tick();await tick();

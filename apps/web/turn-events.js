@@ -3,11 +3,11 @@ import {speechText} from './table-speech.js';
 import {cardName} from './card-names.js';
 import {DICE_DURATION,PAWN_STEP,CHECKER_STEP,PIECE_TRANSFER,CAPTURE_FADE,gooseFlights} from './game-physics.js';
 // Public differences only: never use an opponent's private hand or future options.
-export const TURN_INTRO=1000,TURN_RESULT=2000;
+export const TURN_INTRO=1400,TURN_RESULT=2700;
 // Card and tile games: about four seconds per play, enough to read who played what without
 // dragging long hands. Completing a trick or a hand leaves extra time to read the outcome.
 export const CARD_PACE_GAMES=new Set(['tricks','capture','melds','burro','bank','domino','tetuno']);
-export const turnTiming=event=>event?.kind==='checkers'?{intro:180,result:250,padding:150}:event?.pace==='cards'?{intro:900,result:event.settles?3200:event.collects?2600:1500,padding:600}:{intro:TURN_INTRO,result:TURN_RESULT,padding:800};
+export const turnTiming=event=>event?.kind==='checkers'?{intro:300,result:450,padding:250}:event?.pace==='cards'?{intro:1200,result:event.settles?4200:event.collects?3400:2100,padding:800}:{intro:TURN_INTRO,result:TURN_RESULT,padding:1100};
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 export const viewIdentity=(change)=>`${change.gameId||change.view.id}:${change.view.players.join('|')}:${change.playerId||''}:${change.view.boardKind==='poker'?'session':change.view.handNumber||1}`;
 export function parchisRoutes(before,after){

@@ -47,7 +47,7 @@ const longBefore={players:['a','b'],pieces:{a:[2],b:[8]},turnPlayer:'a',log:[]};
 const longAfter={...longBefore,pieces:{a:[22],b:[-1]},turnPlayer:'b',log:['captura']};
 pacing.observe(longBefore,runner,0);pacing.observe(longAfter,runner,100);
 const event=publicTurnEvent(longBefore,longAfter);
-assert.equal(pacing.delay(4800,100),TURN_INTRO+event.motion+TURN_RESULT+800);
+assert.equal(pacing.delay(4800,100),TURN_INTRO+event.motion+TURN_RESULT+1100);
 assert.equal(stops,1);pacing.observe(longAfter,runner,200);assert.equal(stops,1,'Presence redraws do not restart the bot timer');
 assert.equal(pacing.delay(4800,99999),4800);
 // Mus announcements come only from public events and remain identical in four POVs.
@@ -61,12 +61,12 @@ const automatic={...snapshots[1],view:{...snapshots[1].view,revision:42}};
 sequence.receive(automatic);advance(20000);assert.equal(sequence.current.view.revision,42);
 console.log('Pacing: slow ordered moves, complete-route AI waits, public Mus announcements and automatic-state retention: OK');
 
-// A simple checker move releases the opponent in under a second, after visible motion.
+// A simple checker move releases the opponent in about a second, after visible motion.
 sequence.reset();sequence.apply=()=>{};display=[];const checkers=getGame('damas-espanolas');let c=checkers.createInitialState(['a','b'],11);
 const checkerChange=g=>({gameId:'damas-espanolas',playerId:'a',view:checkers.view(g,'a')});
 sequence.receive(checkerChange(c));const cm=nextBotMove(checkers,c,c.players);c=checkers.applyAction(c,cm.playerId,cm.action);sequence.receive(checkerChange(c));
-assert.equal(sequence.phase,'announce');advance(180);assert.equal(sequence.phase,'move');advance(500);assert.equal(sequence.phase,'result');advance(250);assert.equal(sequence.busy,false);
-console.log('Damas: complete simple move and opponent turn in 930 ms: OK');
+assert.equal(sequence.phase,'announce');advance(300);assert.equal(sequence.phase,'move');advance(500);assert.equal(sequence.phase,'result');advance(450);assert.equal(sequence.busy,false);
+console.log('Damas: complete simple move and opponent turn in 1250 ms: OK');
 
 // Pieces retain chosen player characters, including crowns and pawn identifiers.
 const {renderCheckerPiece}=await import('../dist/board-games.js');

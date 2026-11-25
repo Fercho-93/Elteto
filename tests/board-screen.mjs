@@ -6,7 +6,7 @@ import {GOOSE_PATH,GOOSE_COLORS,gooseRadius} from '../dist/board-games.js';
 import {chromium,webkit} from 'playwright';
 assert.equal(GOOSE_PATH.length,63);assert.equal(new Set(GOOSE_PATH.map(p=>p.join(','))).size,63);
 for(let i=1;i<63;i++)assert.equal(Math.abs(GOOSE_PATH[i][0]-GOOSE_PATH[i-1][0])+Math.abs(GOOSE_PATH[i][1]-GOOSE_PATH[i-1][1]),1);
-assert.ok(botTurnDelay('oca')>=3200);assert.ok(botTurnDelay(checkersId())>=1000&&botTurnDelay(checkersId())<=1600);
+assert.ok(botTurnDelay('oca')>=3200);assert.ok(botTurnDelay(checkersId())>=1000&&botTurnDelay(checkersId())<=2400);
 function checkersId(){return getGame('damas-espanolas').id;}assert.ok(botTurnDelay('mus')>=2000);
 const oca=getGame('oca'),checkers=getGame('damas-espanolas');
 let initial={...oca.createInitialState(['a','b','c','d'],22),players:['a','b','c','d'],turn:0};
