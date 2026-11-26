@@ -176,13 +176,14 @@ body:has(.cinquillo-screen) { background:radial-gradient(ellipse at 50% 0,#352a3
 .game-page.cinquillo-screen .game-table{
  --felt-w:clamp(22px,min(11.5cqw,11cqh),92px);
  --felt-top:calc(var(--felt-w) * 142 / 192);
- --felt-bottom:calc(var(--felt-w) * 168 / 192);
+ --felt-deco:1.45;
+ --felt-bottom:calc(var(--felt-w) * (26 + 135 * var(--felt-deco)) / 192);
  --felt-in-top:calc(13px + var(--felt-top));
  --felt-in-bottom:calc(13px + var(--felt-bottom));
 }
 .game-page.cinquillo-screen .game-table .table-surface{
  border:3px solid transparent;
- border-image:url('./assets/tapete-cartas-marco.webp') 142 192 168 192 fill / var(--felt-top) var(--felt-w) var(--felt-bottom) var(--felt-w) / 0 stretch;
+ border-image:url('./assets/tapete-cartas-marco.webp') 142 192 168 192 fill / var(--felt-top) var(--felt-w) calc(var(--felt-w) * 168 / 192) var(--felt-w) / 0 stretch;
  border-radius:calc(var(--felt-w) * 54 / 192);
  background:none;
  box-shadow:0 5px 12px #0008;
@@ -200,5 +201,11 @@ body:has(.cinquillo-screen) { background:radial-gradient(ellipse at 50% 0,#352a3
 @media(min-width:900px) and (min-height:700px){
  .game-page.cinquillo-screen .game-table .table-center{--pile-w:clamp(28px,min(calc((100cqw - 132px) / 4),calc((100cqh - var(--felt-in-top) - var(--felt-in-bottom) - 124px) / 3.068)),94px);}
 }
+.game-page.cinquillo-screen .game-table .table-surface::after{
+ content:'';position:absolute;pointer-events:none;
+ left:0;right:0;bottom:calc(var(--felt-w) * 26 / 192 - 3px);height:calc(var(--felt-w) * 135 * var(--felt-deco) / 192);
+ background:url('./assets/tapete-cartas-copa.webp') left calc(var(--felt-w) * 20 / 192 - 3px) bottom 0 / calc(var(--felt-w) * 172 * var(--felt-deco) / 192) auto no-repeat,
+  url('./assets/tapete-cartas-monedas.webp') right calc(var(--felt-w) * 20 / 192 - 3px) bottom 0 / calc(var(--felt-w) * 158 * var(--felt-deco) / 192) auto no-repeat;
+}
 /* El aviso de jugada se apoya sobre el marco inferior, entre la copa y las monedas. */
-.game-page.cinquillo-screen .game-table .turn-story-slot{bottom:calc(10px + 3px + var(--felt-w) * 28 / 192);left:calc(2px + var(--felt-w) * 182 / 192);right:calc(2px + var(--felt-w) * 166 / 192);}
+.game-page.cinquillo-screen .game-table .turn-story-slot{bottom:calc(10px + 3px + var(--felt-w) * 28 / 192);left:calc(2px + var(--felt-w) * (20 + 172 * var(--felt-deco)) / 192);right:calc(2px + var(--felt-w) * (20 + 158 * var(--felt-deco)) / 192);}

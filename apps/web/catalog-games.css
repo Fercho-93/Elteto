@@ -482,17 +482,19 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
 /* ── Tapete clásico de cartas (marco dorado, banderas, copa y monedas) ─────────────────────────
    La imagen original (1536×571) se dibuja como border-image de 9 piezas: las cuatro esquinas, que
    llevan los adornos, conservan siempre su proporción; los lados y el centro son paño y se estiran.
-   Cortes de la imagen: 142 arriba · 192 a cada lado · 168 abajo (cubren banderas, copa y monedas).
-   El logo va aparte (::before) para que no se deforme al estirar la tira superior.
+   Cortes de la imagen: 142 arriba · 192 a cada lado · 168 abajo (cubren banderas y marco).
+   El logo va aparte (::before) para que no se deforme al estirar la tira superior, y la copa y las
+   monedas también (::after), dibujadas --felt-deco veces más grandes desde su esquina interior.
    El relleno del tapete reserva exactamente esas franjas: ninguna carta ni texto pisa un adorno. */
 .catalog-screen:is([data-game="brisca"],[data-game="tute"],[data-game="guinote"],[data-game="butifarra"],[data-game="pocha"],[data-game="julepe"],[data-game="escoba"],[data-game="chinchon"],[data-game="remigio"],[data-game="continental"],[data-game="burro"],[data-game="mentiroso"],[data-game="siete_y_medio"]) .catalog-surface{
  --felt-w:clamp(34px,min(11vw,9.5svh),92px);
  --felt-top:calc(var(--felt-w) * 142 / 192);
- --felt-bottom:calc(var(--felt-w) * 168 / 192);
+ --felt-deco:1.45;
+ --felt-bottom:calc(var(--felt-w) * (26 + 135 * var(--felt-deco)) / 192);
  --felt-side:calc(var(--felt-w) * 24 / 192);
  position:relative;isolation:isolate;
  border:3px solid transparent;
- border-image:url('./assets/tapete-cartas-marco.webp') 142 192 168 192 fill / var(--felt-top) var(--felt-w) var(--felt-bottom) var(--felt-w) / 0 stretch;
+ border-image:url('./assets/tapete-cartas-marco.webp') 142 192 168 192 fill / var(--felt-top) var(--felt-w) calc(var(--felt-w) * 168 / 192) var(--felt-w) / 0 stretch;
  border-radius:calc(var(--felt-w) * 54 / 192);
  background:none;
  box-shadow:0 5px 12px #0008;
@@ -504,4 +506,11 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
  top:calc(var(--felt-w) * 22 / 192 - 3px);left:50%;translate:-50% 0;
  width:calc(var(--felt-w) * 287 / 192);aspect-ratio:287 / 124;
  background:url('./assets/tapete-cartas-logo.webp') center / 100% 100% no-repeat;
+}
+
+.catalog-screen:is([data-game="brisca"],[data-game="tute"],[data-game="guinote"],[data-game="butifarra"],[data-game="pocha"],[data-game="julepe"],[data-game="escoba"],[data-game="chinchon"],[data-game="remigio"],[data-game="continental"],[data-game="burro"],[data-game="mentiroso"],[data-game="siete_y_medio"]) .catalog-surface::after{
+ content:'';position:absolute;z-index:-1;pointer-events:none;
+ left:0;right:0;bottom:calc(var(--felt-w) * 26 / 192 - 3px);height:calc(var(--felt-w) * 135 * var(--felt-deco) / 192);
+ background:url('./assets/tapete-cartas-copa.webp') left calc(var(--felt-w) * 20 / 192 - 3px) bottom 0 / calc(var(--felt-w) * 172 * var(--felt-deco) / 192) auto no-repeat,
+  url('./assets/tapete-cartas-monedas.webp') right calc(var(--felt-w) * 20 / 192 - 3px) bottom 0 / calc(var(--felt-w) * 158 * var(--felt-deco) / 192) auto no-repeat;
 }

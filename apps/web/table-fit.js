@@ -22,11 +22,13 @@ function fit(box,targets,min,start=1){
 // Tapete clásico: los adornos de las esquinas se dimensionan con el tapete real (no con la pantalla),
 // para que en mesas bajas reserven poco alto y el contenido no tenga que encogerse de más.
 // El tamaño del tapete lo fija la rejilla de la pantalla, no su relleno: medirlo no cambia el resultado.
+const FELT_MIN=22;
 function sizeFelt(surface){
- if(!getComputedStyle(surface).borderImageSource.includes('tapete-cartas'))return;
- const box=surface.getBoundingClientRect();if(!box.width||!box.height)return;
- const size=Math.max(22,Math.min(92,box.width*0.115,box.height*0.11));
+ if(!getComputedStyle(surface).borderImageSource.includes('tapete-cartas'))return 0;
+ const box=surface.getBoundingClientRect();if(!box.width||!box.height)return 0;
+ const size=Math.max(FELT_MIN,Math.min(92,box.width*0.115,box.height*0.11));
  surface.style.setProperty('--felt-w',size.toFixed(1)+'px');
+ return size;
 }
 const flowChildren=el=>[...el.children].filter(child=>getComputedStyle(child).position!=='absolute');
 export function fitTable(root){
@@ -35,9 +37,14 @@ export function fitTable(root){
   const hand=dock?[...dock.querySelectorAll(':scope > .catalog-hand')]:[];
   let handScale=fit(dock,hand,MIN_HAND);
   if(!surface)continue;
-  sizeFelt(surface);
+  let felt=sizeFelt(surface);
   const kids=flowChildren(surface);
   let tableScale=fit(surface,kids,MIN_TABLE);
+  // Si ni encogiendo al mínimo cabe la mesa, los adornos ceden sitio antes que el contenido.
+  while(felt>FELT_MIN&&surface.scrollHeight-surface.clientHeight>1){
+   felt=Math.max(FELT_MIN,felt*0.9);surface.style.setProperty('--felt-w',felt.toFixed(1)+'px');
+   tableScale=fit(surface,kids,MIN_TABLE);
+  }
   // A cramped felt borrows height from the hand: smaller private cards, larger table.
   while(tableScale<COMFORT&&hand.length&&handScale>MIN_HAND){
    handScale=Math.max(MIN_HAND,handScale*0.9);setZoom(hand,handScale);
