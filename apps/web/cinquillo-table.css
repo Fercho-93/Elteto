@@ -174,12 +174,12 @@ body:has(.cinquillo-screen) { background:radial-gradient(ellipse at 50% 0,#352a3
    esos márgenes reservan las franjas de banderas/logo (arriba) y copa/monedas (abajo), y el tamaño de
    carta descuenta exactamente esas franjas. La mesa es un contenedor, así que el marco escala con ella. */
 .game-page.cinquillo-screen .game-table{
- --felt-w:clamp(22px,min(11.5cqw,11cqh),92px);
+ --felt-w:clamp(22px,min(12.5cqw,13.5cqh),70px);
  --felt-top:calc(var(--felt-w) * 142 / 192);
- --felt-deco:1.45;
+ --felt-deco:2.1;
  --felt-bottom:calc(var(--felt-w) * (26 + 135 * var(--felt-deco)) / 192);
- --felt-in-top:calc(13px + var(--felt-top));
- --felt-in-bottom:calc(13px + var(--felt-bottom));
+ --felt-in-top:calc(14px + var(--felt-top));
+ --felt-in-bottom:calc(14px + var(--felt-bottom));
 }
 .game-page.cinquillo-screen .game-table .table-surface{
  border:3px solid transparent;
@@ -195,7 +195,7 @@ body:has(.cinquillo-screen) { background:radial-gradient(ellipse at 50% 0,#352a3
  background:url('./assets/tapete-cartas-logo.webp') center / 100% 100% no-repeat;
 }
 .game-page.cinquillo-screen .game-table .table-center{
- --pile-w:clamp(24px,min(calc((100cqw - 76px) / 4),calc((100cqh - var(--felt-in-top) - var(--felt-in-bottom) - 55px) / 3.068)),84px);
+ --pile-w:clamp(24px,min(calc((100cqw - 76px) / 4),calc((100cqh - var(--felt-in-top) - var(--felt-in-bottom) - 33px) / 3.068)),84px);
  inset:var(--felt-in-top) 16px var(--felt-in-bottom);
 }
 @media(min-width:900px) and (min-height:700px){
@@ -207,5 +207,7 @@ body:has(.cinquillo-screen) { background:radial-gradient(ellipse at 50% 0,#352a3
  background:url('./assets/tapete-cartas-copa.webp') left calc(var(--felt-w) * 20 / 192 - 3px) bottom 0 / calc(var(--felt-w) * 172 * var(--felt-deco) / 192) auto no-repeat,
   url('./assets/tapete-cartas-monedas.webp') right calc(var(--felt-w) * 20 / 192 - 3px) bottom 0 / calc(var(--felt-w) * 158 * var(--felt-deco) / 192) auto no-repeat;
 }
+/* La fila inferior de cada palo (el rango) está oculta en la mesa: se libera su altura para los adornos. */
+.game-page.cinquillo-screen .game-table .suit-lane{grid-template-rows:18px minmax(0,1fr);}
 /* El aviso de jugada se apoya sobre el marco inferior, entre la copa y las monedas. */
 .game-page.cinquillo-screen .game-table .turn-story-slot{bottom:calc(10px + 3px + var(--felt-w) * 28 / 192);left:calc(2px + var(--felt-w) * (20 + 172 * var(--felt-deco)) / 192);right:calc(2px + var(--felt-w) * (20 + 158 * var(--felt-deco)) / 192);}

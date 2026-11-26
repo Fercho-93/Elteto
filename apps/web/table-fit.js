@@ -22,11 +22,11 @@ function fit(box,targets,min,start=1){
 // Tapete clásico: los adornos de las esquinas se dimensionan con el tapete real (no con la pantalla),
 // para que en mesas bajas reserven poco alto y el contenido no tenga que encogerse de más.
 // El tamaño del tapete lo fija la rejilla de la pantalla, no su relleno: medirlo no cambia el resultado.
-const FELT_MIN=22;
+const HAND_SOFT=0.85,FELT_MIN=28,FELT_HARD_MIN=22,FELT_MAX=70,FELT_COMFORT=0.78,FELT_TIGHT=0.7;
 function sizeFelt(surface){
  if(!getComputedStyle(surface).borderImageSource.includes('tapete-cartas'))return 0;
  const box=surface.getBoundingClientRect();if(!box.width||!box.height)return 0;
- const size=Math.max(FELT_MIN,Math.min(92,box.width*0.115,box.height*0.11));
+ const size=Math.max(FELT_HARD_MIN,Math.min(FELT_MAX,box.width*0.125,box.height*0.135));
  surface.style.setProperty('--felt-w',size.toFixed(1)+'px');
  return size;
 }
@@ -40,16 +40,20 @@ export function fitTable(root){
   let felt=sizeFelt(surface);
   const kids=flowChildren(surface);
   let tableScale=fit(surface,kids,MIN_TABLE);
-  // Si ni encogiendo al mínimo cabe la mesa, los adornos ceden sitio antes que el contenido.
-  while(felt>FELT_MIN&&surface.scrollHeight-surface.clientHeight>1){
-   felt=Math.max(FELT_MIN,felt*0.9);surface.style.setProperty('--felt-w',felt.toFixed(1)+'px');
+  // 1) Una mesa justa pide prestado un poco de altura a la mano (hasta un 85 % de su tamaño).
+  const borrow=floor=>{while(tableScale<COMFORT&&hand.length&&handScale>floor){
+   handScale=Math.max(floor,handScale*0.9);setZoom(hand,handScale);
+   tableScale=fit(surface,kids,MIN_TABLE);
+  }};
+  borrow(HAND_SOFT);
+  // 2) Después ceden los adornos del tapete, hasta que el contenido cabe con holgura (o hasta su
+  //    mínimo). Si el contenido ya va muy apretado, también pueden bajar al mínimo absoluto.
+  while(felt>(tableScale<FELT_TIGHT?FELT_HARD_MIN:FELT_MIN)&&(tableScale<FELT_COMFORT||surface.scrollHeight-surface.clientHeight>1)){
+   felt=Math.max(FELT_HARD_MIN,felt*0.92);surface.style.setProperty('--felt-w',felt.toFixed(1)+'px');
    tableScale=fit(surface,kids,MIN_TABLE);
   }
-  // A cramped felt borrows height from the hand: smaller private cards, larger table.
-  while(tableScale<COMFORT&&hand.length&&handScale>MIN_HAND){
-   handScale=Math.max(MIN_HAND,handScale*0.9);setZoom(hand,handScale);
-   tableScale=fit(surface,kids,MIN_TABLE);
-  }
+  // 3) Solo si aun así no cabe con holgura, la mano cede hasta su mínimo.
+  borrow(MIN_HAND);
  }
 }
 let pending=0;

@@ -487,9 +487,9 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
    monedas también (::after), dibujadas --felt-deco veces más grandes desde su esquina interior.
    El relleno del tapete reserva exactamente esas franjas: ninguna carta ni texto pisa un adorno. */
 .catalog-screen:is([data-game="brisca"],[data-game="tute"],[data-game="guinote"],[data-game="butifarra"],[data-game="pocha"],[data-game="julepe"],[data-game="escoba"],[data-game="chinchon"],[data-game="remigio"],[data-game="continental"],[data-game="burro"],[data-game="mentiroso"],[data-game="siete_y_medio"]) .catalog-surface{
- --felt-w:clamp(34px,min(11vw,9.5svh),92px);
+ --felt-w:clamp(34px,min(12vw,10svh),70px);
  --felt-top:calc(var(--felt-w) * 142 / 192);
- --felt-deco:1.45;
+ --felt-deco:2.1;
  --felt-bottom:calc(var(--felt-w) * (26 + 135 * var(--felt-deco)) / 192);
  --felt-side:calc(var(--felt-w) * 24 / 192);
  position:relative;isolation:isolate;
@@ -514,3 +514,6 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
  background:url('./assets/tapete-cartas-copa.webp') left calc(var(--felt-w) * 20 / 192 - 3px) bottom 0 / calc(var(--felt-w) * 172 * var(--felt-deco) / 192) auto no-repeat,
   url('./assets/tapete-cartas-monedas.webp') right calc(var(--felt-w) * 20 / 192 - 3px) bottom 0 / calc(var(--felt-w) * 158 * var(--felt-deco) / 192) auto no-repeat;
 }
+/* La baza escala con el alto del tapete (--trick-w sale de cqh), así que no necesita 150 px de mínimo:
+   en pantallas bajas cede ese alto a los adornos del tapete en lugar de obligar a encoger todo. */
+.trick-table{min-height:92px;}
