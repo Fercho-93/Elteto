@@ -168,3 +168,37 @@ body:has(.cinquillo-screen) { background:radial-gradient(ellipse at 50% 0,#352a3
  .cinquillo-screen .game-table [data-position="upper"] { top:30px; }
  .cinquillo-screen .table-surface { top:26px; bottom:8px; }
 }
+
+/* ── Cinquillo sobre el tapete clásico de cartas (el mismo marco que el resto de juegos de cartas) ──
+   El paño es una capa (.table-surface, 10px dentro de la mesa) y el tablero va encima con márgenes:
+   esos márgenes reservan las franjas de banderas/logo (arriba) y copa/monedas (abajo), y el tamaño de
+   carta descuenta exactamente esas franjas. La mesa es un contenedor, así que el marco escala con ella. */
+.game-page.cinquillo-screen .game-table{
+ --felt-w:clamp(22px,min(11.5cqw,11cqh),92px);
+ --felt-top:calc(var(--felt-w) * 142 / 192);
+ --felt-bottom:calc(var(--felt-w) * 168 / 192);
+ --felt-in-top:calc(13px + var(--felt-top));
+ --felt-in-bottom:calc(13px + var(--felt-bottom));
+}
+.game-page.cinquillo-screen .game-table .table-surface{
+ border:3px solid transparent;
+ border-image:url('./assets/tapete-cartas-marco.webp') 142 192 168 192 fill / var(--felt-top) var(--felt-w) var(--felt-bottom) var(--felt-w) / 0 stretch;
+ border-radius:calc(var(--felt-w) * 54 / 192);
+ background:none;
+ box-shadow:0 5px 12px #0008;
+}
+.game-page.cinquillo-screen .game-table .table-surface::before{
+ content:'';inset:auto;border:0;border-radius:0;box-shadow:none;pointer-events:none;
+ top:calc(var(--felt-w) * 22 / 192 - 3px);left:50%;translate:-50% 0;
+ width:calc(var(--felt-w) * 287 / 192);aspect-ratio:287 / 124;
+ background:url('./assets/tapete-cartas-logo.webp') center / 100% 100% no-repeat;
+}
+.game-page.cinquillo-screen .game-table .table-center{
+ --pile-w:clamp(24px,min(calc((100cqw - 76px) / 4),calc((100cqh - var(--felt-in-top) - var(--felt-in-bottom) - 55px) / 3.068)),84px);
+ inset:var(--felt-in-top) 16px var(--felt-in-bottom);
+}
+@media(min-width:900px) and (min-height:700px){
+ .game-page.cinquillo-screen .game-table .table-center{--pile-w:clamp(28px,min(calc((100cqw - 132px) / 4),calc((100cqh - var(--felt-in-top) - var(--felt-in-bottom) - 124px) / 3.068)),94px);}
+}
+/* El aviso de jugada se apoya sobre el marco inferior, entre la copa y las monedas. */
+.game-page.cinquillo-screen .game-table .turn-story-slot{bottom:calc(10px + 3px + var(--felt-w) * 28 / 192);left:calc(2px + var(--felt-w) * 182 / 192);right:calc(2px + var(--felt-w) * 166 / 192);}

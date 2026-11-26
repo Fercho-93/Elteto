@@ -478,3 +478,30 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
 /* Centrar cada carta de la baza con márgenes (no con translate) evita que cada hueco cree su propia capa:
    así el nombre de quien la jugó queda siempre por encima de las cartas vecinas que lo solapan. */
 .trick-slot{translate:none;margin-left:calc(var(--trick-w) / -2);margin-top:calc(var(--trick-w) * 319 / 208 / -2);}
+
+/* ── Tapete clásico de cartas (marco dorado, banderas, copa y monedas) ─────────────────────────
+   La imagen original (1536×571) se dibuja como border-image de 9 piezas: las cuatro esquinas, que
+   llevan los adornos, conservan siempre su proporción; los lados y el centro son paño y se estiran.
+   Cortes de la imagen: 142 arriba · 192 a cada lado · 168 abajo (cubren banderas, copa y monedas).
+   El logo va aparte (::before) para que no se deforme al estirar la tira superior.
+   El relleno del tapete reserva exactamente esas franjas: ninguna carta ni texto pisa un adorno. */
+.catalog-screen:is([data-game="brisca"],[data-game="tute"],[data-game="guinote"],[data-game="butifarra"],[data-game="pocha"],[data-game="julepe"],[data-game="escoba"],[data-game="chinchon"],[data-game="remigio"],[data-game="continental"],[data-game="burro"],[data-game="mentiroso"],[data-game="siete_y_medio"]) .catalog-surface{
+ --felt-w:clamp(34px,min(11vw,9.5svh),92px);
+ --felt-top:calc(var(--felt-w) * 142 / 192);
+ --felt-bottom:calc(var(--felt-w) * 168 / 192);
+ --felt-side:calc(var(--felt-w) * 24 / 192);
+ position:relative;isolation:isolate;
+ border:3px solid transparent;
+ border-image:url('./assets/tapete-cartas-marco.webp') 142 192 168 192 fill / var(--felt-top) var(--felt-w) var(--felt-bottom) var(--felt-w) / 0 stretch;
+ border-radius:calc(var(--felt-w) * 54 / 192);
+ background:none;
+ box-shadow:0 5px 12px #0008;
+ padding:calc(var(--felt-top) - 1px) max(14px,calc(var(--felt-side) + 9px)) calc(var(--felt-bottom) - 1px);
+ gap:clamp(4px,calc(var(--felt-w) * .16),12px);
+}
+.catalog-screen:is([data-game="brisca"],[data-game="tute"],[data-game="guinote"],[data-game="butifarra"],[data-game="pocha"],[data-game="julepe"],[data-game="escoba"],[data-game="chinchon"],[data-game="remigio"],[data-game="continental"],[data-game="burro"],[data-game="mentiroso"],[data-game="siete_y_medio"]) .catalog-surface::before{
+ content:'';position:absolute;z-index:-1;pointer-events:none;
+ top:calc(var(--felt-w) * 22 / 192 - 3px);left:50%;translate:-50% 0;
+ width:calc(var(--felt-w) * 287 / 192);aspect-ratio:287 / 124;
+ background:url('./assets/tapete-cartas-logo.webp') center / 100% 100% no-repeat;
+}
