@@ -367,7 +367,7 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
 .tetuno-face .tetuno-avatar{width:90%;height:90%;object-fit:contain;rotate:9deg;filter:drop-shadow(0 2px 1px #0005);pointer-events:none;}
 .tetuno-face .tetuno-index{position:absolute;left:6%;top:3%;font:900 21cqw/1 system-ui,sans-serif;font-style:normal;color:#fff;-webkit-text-stroke:1px #1b1226;paint-order:stroke;text-shadow:0 2px 0 #1b1226;z-index:2;}
 .tetuno-face .tetuno-index.is-bottom{left:auto;top:auto;right:6%;bottom:13%;rotate:180deg;}
-.tetuno-face .tetuno-big{position:absolute;right:9%;top:46%;font:italic 900 46cqw/1 system-ui,sans-serif;color:#fff;-webkit-text-stroke:2px #1b1226;paint-order:stroke;text-shadow:0 3px 0 #1b1226;z-index:2;}
+.tetuno-face .tetuno-big{position:absolute;right:9%;top:37%;font:italic 900 44cqw/1 system-ui,sans-serif;color:#fff;-webkit-text-stroke:2px #1b1226;paint-order:stroke;text-shadow:0 3px 0 #1b1226;z-index:2;}
 .tetuno-face .tetuno-banner{position:absolute;left:0;right:0;bottom:0;padding:3% 2% 4%;background:#1b1226e6;color:#fff6d9;text-align:center;font:900 10.5cqw/1.05 system-ui,sans-serif;letter-spacing:.02em;white-space:nowrap;overflow:hidden;z-index:3;}
 .tetuno-face.is-special .tetuno-banner{color:#ffe36a;}
 .tetuno-face.tetuno-back .tetuno-banner{color:#57efff;font-style:italic;letter-spacing:.08em;}
@@ -470,3 +470,11 @@ button.burro-back{cursor:pointer}button.burro-back:hover,button.burro-back:focus
 .catalog-screen[data-game="tetuno"] .trick-score{margin:0 calc(clamp(12px,3cqw,30px) * -.5);padding:6px 8px;border:1px solid #ffffff1f;border-radius:14px;background:#140826d9;}
 .catalog-screen[data-game="tetuno"] .tetuno-pile{text-shadow:0 1px 3px #000c;}
 .catalog-screen[data-game="tetuno"] .tetuno-last{text-shadow:0 1px 4px #000;}
+
+/* Móviles: la marca pasa a ser un rótulo pequeño encima para que el nombre del juego quepa entero. */
+@media(max-width:479px){.play-header h1>span:first-child{display:block;font-size:9px;line-height:1.15;letter-spacing:.2em;margin:0}.play-header h1{line-height:1.2}}
+/* La ficha del repartidor va en la esquina del retrato, no encima del nombre. */
+.poker-seat>.poker-dealer{left:-2px;right:auto;top:-2px;}
+/* Centrar cada carta de la baza con márgenes (no con translate) evita que cada hueco cree su propia capa:
+   así el nombre de quien la jugó queda siempre por encima de las cartas vecinas que lo solapan. */
+.trick-slot{translate:none;margin-left:calc(var(--trick-w) / -2);margin-top:calc(var(--trick-w) * 319 / 208 / -2);}

@@ -16,7 +16,7 @@ export function finishTableSpeech(app,view,name){
  const state=previous?.key===key&&previous.signature===signature?previous:{key,signature,started:performance.now()-(fresh?0:480)};contexts.set(app,state);
  const bubble=document.createElement('div');bubble.className='player-speech';bubble.dataset.speaker=speech.player;bubble.dataset.speechSequence=signature;bubble.setAttribute('role','status');bubble.setAttribute('aria-label',`${name(speech.player)} dice: ${speechText(speech)}`);bubble.textContent=speechText(speech);panel.append(bubble);
  const origin=panel.getBoundingClientRect(),token=seat.querySelector('.rival-token').getBoundingClientRect(),width=bubble.getBoundingClientRect().width,centre=token.x+token.width/2-origin.x,left=Math.max(2,Math.min(origin.width-width-2,centre-width/2));
- bubble.style.left=left+'px';bubble.style.top=token.bottom-origin.y-3+'px';bubble.style.setProperty('--speech-pointer',Math.max(12,Math.min(width-12,centre-left))+'px');
+ bubble.style.left=left+'px';bubble.style.top=Math.max(token.bottom,seat.getBoundingClientRect().bottom)-origin.y+2+'px';bubble.style.setProperty('--speech-pointer',Math.max(12,Math.min(width-12,centre-left))+'px');
  const elapsed=performance.now()-state.started;
  if(elapsed<480&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const animation=bubble.animate([{opacity:0,transform:'translateY(8px) scale(.86)'},{opacity:1,transform:'translateY(-2px) scale(1.025)',offset:.72},{opacity:1,transform:'none'}],{duration:480,easing:'cubic-bezier(.2,.7,.3,1)'});animation.currentTime=elapsed;}
 }
